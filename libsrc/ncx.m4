@@ -38,7 +38,6 @@ dnl
  * An external data representation interface.
  */
 
-#include "nc.h"
 #include "ncx.h"
 #include "nc3dispatch.h"
 #include <string.h>
