@@ -36,10 +36,6 @@
 #define _NC3DISPATCH_H
 
 #include <stddef.h> /* size_t, ptrdiff_t */
-#include "netcdf.h"
-#include "dispatch.h"
-
-
 
 #if defined(__cplusplus)
 extern "C" {
@@ -76,6 +72,7 @@ NC3_open(const char *path, int mode,
          int basepe, size_t *chunksizehintp,
          int use_parallel, void* mpidata,
          NC_Dispatch*, NC** ncp);
+
 
 EXTERNL int
 NC3_redef(int ncid);

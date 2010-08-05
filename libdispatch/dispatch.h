@@ -23,6 +23,23 @@
 #include "dapurl.h"
 #endif
 
+/* Define longlong and ulonglong */
+#if defined(_MSC_VER) || defined(_WIN32_) || defined(WIN32)
+typedef long long longlong;
+typedef unsigned long long ulonglong;
+#error
+#else/*!_MSG_VER*/
+#ifdef HAVE_LONG_LONG_INT
+#ifndef HAVE_LONGLONG
+typedef long long longlong ;
+#endif /*HAVE_LONGLONG*/
+#ifndef HAVE_ULONGLONG
+typedef unsigned long long ulonglong ;
+#endif /* HAVE_ULONGLONG */
+#endif /* HAVE_LONG_LONG_INT */
+#endif /* _MSG_VER */
+
+
 extern int nc_get_vara_ubyte(int ncid, int varid,
                   const size_t* start, const size_t* count,
 		  unsigned char* value);
@@ -182,11 +199,11 @@ int model; /* one of the NC_DISPATCH #'s above */
 int (*create)(const char *path, int cmode,
 	  size_t initialsz, int basepe, size_t *chunksizehintp, 
 	  int use_parallel, void* parameters,
-	  struct NC_Dispatch* table, NC** ncp);
+	  struct NC_Dispatch* table, struct NC** ncp);
 int (*open)(const char *path, int mode,
 	    int basepe, size_t *chunksizehintp,
 	    int use_parallel, void* parameters,
-	    struct NC_Dispatch* table, NC** ncp);
+	    struct NC_Dispatch* table, struct NC** ncp);
 
 int (*redef)(int);
 int (*_enddef)(int,size_t,size_t,size_t,size_t);

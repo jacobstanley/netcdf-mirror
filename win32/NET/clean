@@ -1,0 +1,24 @@
+#!/bin/sh
+DIRS=". libsrc ncdump ncgen ncgen3 nctest nc_test examples"
+
+if test -f netcdf.sln.save ; then
+  rm -f netcdf.sln
+  cp netcdf.sln.save netcdf.sln
+fi
+rm -f ./*.suo*
+
+thisdir=`pwd`
+
+for d in $DIRS; do
+    cd $d;
+    rm -fr Debug
+    rm -f *.filelist
+    rm -f *.XML
+    rm -f *.vcxproj
+    rm -f *.vcxproj.user
+    rm -f *.vcxproj.filters
+    rm -fr _UpgradeReport_Files
+    if test "$d" != "examples" ; then rm -f *.vcproj ; fi
+    cd $thisdir
+done
+

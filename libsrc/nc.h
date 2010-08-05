@@ -9,7 +9,8 @@
 /*
  *	netcdf library 'private' data structures, objects and interfaces
  */
-#include <config.h>
+#include "config.h"
+#include "ncdispatch.h"
 #include <stddef.h>	/* size_t */
 #include <sys/types.h>	/* off_t */
 #ifdef USE_PARALLEL

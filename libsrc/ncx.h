@@ -7,8 +7,6 @@
 #ifndef _NCX_H_
 #define _NCX_H_
 
-#include "dispatch.h"
-
 /*
  * An external data representation interface.
 
@@ -25,7 +23,7 @@
  * 
  */
 
-#include <config.h> /* output of 'configure' */
+#include "config.h" /* output of 'configure' */
 #include "rnd.h"
 #include <stddef.h> /* size_t */
 #include <errno.h>
@@ -35,8 +33,6 @@
 #ifndef HAVE_UCHAR
 typedef unsigned char uchar;
 #endif
-
-#define longlong long long
 
 #if defined(_CRAY) && !defined(_CRAYIEEE) && !defined(__crayx1)
 #define CRAYFLOAT 1 /* CRAY Floating point */
@@ -446,7 +442,7 @@ ncx_getn_schar_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_getn_schar_longlong(const void **xpp, size_t nelems, longlong *ip);
 extern int
-ncx_getn_schar_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+ncx_getn_schar_ulonglong(const void **xpp, size_t nelems, ulonglong* ip); 
 
 extern int
 ncx_pad_getn_schar_schar(const void **xpp, size_t nelems, schar *ip);
