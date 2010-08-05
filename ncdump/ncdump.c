@@ -17,7 +17,7 @@
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif	/* HAVE_LOCALE_H */
-#include <netcdf.h>
+#include "netcdf.h"
 #include "nctime.h"		/* new iso time and calendar stuff */
 #include "ncdump.h"
 #include "dumplib.h"

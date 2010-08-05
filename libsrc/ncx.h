@@ -7,8 +7,6 @@
 #ifndef _NCX_H_
 #define _NCX_H_
 
-#include "ncdispatch.h"
-
 /*
  * An external data representation interface.
 

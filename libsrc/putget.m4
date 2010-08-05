@@ -20,6 +20,7 @@ dnl
 #include <assert.h>
 
 #include "netcdf.h"
+#include "ncdispatch.h"
 #include "nc.h"
 #include "ncx.h"
 #include "fbits.h"

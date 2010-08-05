@@ -4,11 +4,13 @@
  */
 /* $Id: var.c,v 1.144 2010/05/30 00:50:35 russ Exp $ */
 
-#include "nc.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <limits.h>
+#include "ncdispatch.h"
+#include "nc.h"
 #include "ncx.h"
 #include "rnd.h"
 #include "utf8proc.h"

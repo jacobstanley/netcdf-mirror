@@ -38,10 +38,13 @@ dnl
  * An external data representation interface.
  */
 
-#include "ncx.h"
-#include "nc3dispatch.h"
+#include "config.h"
 #include <string.h>
 #include <limits.h>
+#include "ncdispatch.h"
+#include "nc.h"
+#include "ncx.h"
+#include "nc3dispatch.h"
 
 
 /* alias poorly named limits.h macros */

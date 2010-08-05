@@ -18,9 +18,9 @@
 #endif /* HAVE_STDINT_H */
 #include <sys/types.h>	/* off_t */
 #ifdef USE_PARALLEL
-#include <netcdf_par.h>
+#include "netcdf_par.h"
 #else
-#include <netcdf.h>
+#include "netcdf.h"
 #endif /* USE_PARALLEL */
 #include "ncio.h"	
 #include "fbits.h"

@@ -4,10 +4,13 @@
  */
 /* $Id: dim.c,v 1.83 2010/05/25 17:54:15 dmh Exp $ */
 
-#include "nc.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "netcdf.h"
+#include "ncdispatch.h"
+#include "nc.h"
 #include "ncx.h"
 #include "fbits.h"
 #include "utf8proc.h"

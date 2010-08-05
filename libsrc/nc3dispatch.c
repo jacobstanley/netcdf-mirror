@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "netcdf.h"
+#include "ncdispatch.h"
 #include "nc.h"
 #include "nc3dispatch.h"
 

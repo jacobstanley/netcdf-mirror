@@ -6,8 +6,8 @@
 /* $Id: ncdispatch.h,v 1.18 2010/06/01 20:11:59 dmh Exp $ */
 /* $Header: /upc/share/CVS/netcdf-3/libdispatch/ncdispatch.h,v 1.18 2010/06/01 20:11:59 dmh Exp $ */
 
-#ifndef _DISPATCH_H
-#define _DISPATCH_H
+#ifndef _NCDISPATCH_H
+#define _NCDISPATCH_H
 
 #include "config.h"
 #include <stdlib.h>
@@ -18,10 +18,25 @@
 #include "netcdf_par.h"
 #endif
 #include "netcdf.h"
-#include "nc.h"
 #ifdef USE_DAP
 #include "dapurl.h"
 #endif
+
+/* Define longlong and ulonglong types */
+#ifdef WIN32
+typedef LONGLONG longlong;
+typedef ULONGLONG ulonglong;
+#else /*!WIN32*/
+#ifdef HAVE_LONG_LONG_INT
+/* assume HAVE_LONG_LONG_INT=>HAVE_UNSIGNED LONG_LONG_INT
+          and HAVE_LONGLONG=>HAVE_ULONGLONG
+*/
+#ifndef HAVE_LONGLONG
+typedef long long longlong;
+typedef unsigned long long ulonglong;
+#endif /*HAVE_LONGLONG*/
+#endif /*HAVE_LONG_LONG_INT*/
+#endif /*!WIN32*/
 
 extern int nc_get_vara_ubyte(int ncid, int varid,
                   const size_t* start, const size_t* count,
@@ -182,11 +197,11 @@ int model; /* one of the NC_DISPATCH #'s above */
 int (*create)(const char *path, int cmode,
 	  size_t initialsz, int basepe, size_t *chunksizehintp, 
 	  int use_parallel, void* parameters,
-	  struct NC_Dispatch* table, NC** ncp);
+	  struct NC_Dispatch* table, struct NC** ncp);
 int (*open)(const char *path, int mode,
 	    int basepe, size_t *chunksizehintp,
 	    int use_parallel, void* parameters,
-	    struct NC_Dispatch* table, NC** ncp);
+	    struct NC_Dispatch* table, struct NC** ncp);
 
 int (*redef)(int);
 int (*_enddef)(int,size_t,size_t,size_t,size_t);
@@ -319,5 +334,5 @@ extern int NCDAP_urlparse(const char* s, void** dapurl);
 extern void NCDAP_urlfree(void* dapurl);
 extern const char* NCDAP_urllookup(void* dapurl, const char* param);
 
-#endif /* _DISPATCH_H */
+#endif /* _NCDISPATCH_H */
 
