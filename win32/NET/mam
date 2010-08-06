@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+
+# Initialize
+use strict;
+use File::Copy;
+
+our $debug=1;
+
+# topdir is top src dir of the netcdf installation
+# Assume vsdir == $topdir/win32/NET
+our $topdir=$0;
+$topdir=~s|(.*)/win32/NET|$1|;
+if ($debug > 0) {print "topdir=$topdir\n";}
+
+#define arguments
+my $cmd="clean";
+if($#ARGV > 0) {$cmd=$ARGV[0];}
+
+my @MAM = (
+"Makefile.am",
+"include/Makefile.am",
+"libdispatch/Makefile.am",
+"liblib/Makefile.am",
+"libncdap4/Makefile.am",
+"libsrc4/Makefile.am",
+"ncgen3/Makefile.am",
+"ncgen/Makefile.am",
+"ncdump/Makefile.am",
+"nc_test/Makefile.am",
+"nctest/Makefile.am",
+"libsrc/Makefile.am"
+);
+
+if($cmd eq "remove") {
+    my $mam;
+    foreach $mam (@MAM) {
+        if(! -e "${mam}.bak") { copy(${mam}, "${mam}.bak");}
+	open SRC, "<${mam}.bak" || die "file not readable: ${mam}.bak";
+	open DST, "+>${mam}" || die "file not writeable: ${mam}";
+	while(<SRC>) {
+	    if( $_ =~ m/.*visualstudio.*/) {next;}
+	    if( $_ =~ m/.*perl -w.*/) {next;}
+	    if( $_ =~ m/.*VSTUDIODIRS.*/) {next;}
+	    print DST $_;
+        }
+	close SRC;
+	close DST;
+    }        
+
+} elsif($cmd eq "add") {
+    my $mam;
+    foreach $mam (@MAM) {
+        if(! -e "${mam}.bak") { copy(${mam}, "${mam}.bak");}
+	open SRC, "<${mam}.bak" || die "file not readable: ${mam}.bak";
+	open DST, "+>${mam}" || die "file not writeable: ${mam}";
+	while(<SRC>) {
+	    if( $_ =~ m/.*visualstudio.*/) {next;}
+	    if( $_ =~ m/.*perl -w.*/) {next;}
+	    if( $_ =~ m/.*VSTUDIODIRS.*/) {next;}
+	    print DST $_;
+        }
+	close SRC;
+	close DST;
+    }        
+
+} elsif($cmd eq "clean") {
+    my $mam;
+    foreach $mam (@MAM) {
+        if( -e "${mam}.bak") { unlink "${mam}.bak";}
+    }
+
+} else {
+  die "Unknown command: $cmd"
+}
+
+exit

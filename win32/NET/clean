@@ -4,6 +4,7 @@ DIRS=". libsrc ncdump ncgen ncgen3 nctest nc_test examples"
 if test -f netcdf.sln.save ; then
   rm -f netcdf.sln
   cp netcdf.sln.save netcdf.sln
+  rm -f netcdf.sln.old
 fi
 rm -f ./*.suo*
 rm config.h
