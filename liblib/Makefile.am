@@ -50,7 +50,4 @@ endif #BUILD_F77
 # We need at least one source file
 libnetcdf_la_SOURCES = stub.c 
 
-.PHONY: visualstudio
-visualstudio:
-	perl -w ${abs_top_srcdir}/win32/NET/vs add netcdf ${abs_srcdir} ${top_srcdir} "${libnetcdf_la_SOURCES}"
 

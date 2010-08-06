@@ -36,7 +36,4 @@ noinst_LTLIBRARIES += libnetcdf2.la
 libnetcdf2_la_SOURCES = v2i.c
 endif # BUILD_V2
 
-.PHONY: visualstudio
-visualstudio:
-	perl -w ${abs_top_srcdir}/win32/NET/vs add netcdf ${abs_srcdir} ${top_srcdir} "${libdispatch_la_SOURCES}"
 

@@ -55,7 +55,6 @@ our %projectmap=(
 our $cmd="";
 our $project="";
 our $absdir="";
-our $reldir="";
 our $sources="";
 our @srclist=();
 our $usenetcdf4=0;
@@ -66,15 +65,13 @@ $cmd=$ARGV[0];
 if($cmd eq "add") {
     $project=$ARGV[1];
     $absdir=$ARGV[2];
-    $reldir=$ARGV[3];
-    $sources=$ARGV[4];
+    $sources=$ARGV[3];
 } elsif($cmd eq "build") {
     $usenetcdf4=$ARGV[1];   
     $usedap=$ARGV[2];
 }
 
 #fixups
-if ($reldir eq  "") {$reldir=".";}
 
 $sources=trim($sources);
 @srclist=split(/[\t ]+/, $sources);
@@ -91,7 +88,6 @@ if ($debug > 1) {
     print "cmd=$cmd\n";
     print "project=$project\n";
     print "absdir=$absdir\n";
-    print "reldir=$reldir\n";
     print "srclist=@srclist\n";
     print "usenetcdf4=$usenetcdf4\n";
     print "usedap=$usedap\n";
@@ -124,7 +120,7 @@ if($cmd eq "start") {
 } elsif($cmd eq "build") {
     build();
     install();
-    clean();
+#    clean();
 } elsif($cmd eq "clean") {
     clean();
 } elsif($cmd eq "install") {

@@ -46,6 +46,7 @@ sub extractfiles {
     @{$href}=();
     @{$cref}=();
     open MODFILE, "$vsdir/$project.filelist" || return;
+    if($debug > 0) {print "extracting: $vsdir/$project.filelist\n"}
     while(<MODFILE>) {
 	processfile $_, $href, $cref;
     }

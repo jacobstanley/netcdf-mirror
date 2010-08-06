@@ -65,6 +65,3 @@ makencgentab: ncgen.y
 	mv ncgen.tab.c ncgentab.c
 	mv ncgen.tab.h ncgentab.h
 
-.PHONY: visualstudio
-visualstudio:
-	perl -w ${abs_top_srcdir}/win32/NET/vs add ncgen3 ${abs_srcdir} ${top_srcdir} "${ncgen3_SOURCES}"

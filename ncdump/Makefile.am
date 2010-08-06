@@ -107,7 +107,3 @@ if USE_NETCDF4
 TESTS += tst_ncgen4.sh
 endif
 
-.PHONY: visualstudio
-visualstudio:
-	perl -w ${abs_top_srcdir}/win32/NET/vs add ncdump ${abs_srcdir} ${top_srcdir} "${ncdump_SOURCES}"
-	perl -w ${abs_top_srcdir}/win32/NET/vs add nccopy ${abs_srcdir} ${top_srcdir} "${nccopy_SOURCES}"

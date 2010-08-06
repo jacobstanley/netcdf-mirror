@@ -214,25 +214,3 @@ install-data-hook:
 	@echo '+-------------------------------------------------------------+'
 	@echo ''
 
-
-# Provide parameters for vs
-if USE_NETCDF4
-USENETCDF4=1
-else
-USENETCDF4=0
-endif
-if USE_DAP
-USEDAP=1
-else
-USEDAP=0
-endif
-
-# Define the set of subdirs that
-# contain sources for visual studio
-VSTUDIODIRS=include $(DISPATCHDIR) $(LIBSRC_DIR) ${ASSEMBLEDIR} \
-	    ${NCGEN} ${NCGEN3} ${NCDUMP} ${V2_TEST} ${NC_TEST_DIR}
-.PHONY: visualstudio
-visualstudio:
-	perl -w ${abs_top_srcdir}/win32/NET/vs start
-	for dir in $(VSTUDIODIRS); do $(MAKE) -C $$dir visualstudio ; done
-	perl -w ${abs_top_srcdir}/win32/NET/vs build ${USENETCDF4} ${USEDAP}
