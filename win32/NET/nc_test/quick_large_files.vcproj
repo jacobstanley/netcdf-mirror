@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\libsrc4;..\..\..\nc_test;\include"
+				AdditionalIncludeDirectories="..;..\..\..\libsrc4;..\..\..\nc_test;..\..\..\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;DLL_NETCDF"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +120,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..;..\..\..\libsrc4;..\..\..\nc_test;\include"
+				AdditionalIncludeDirectories="..;..\..\..\libsrc4;..\..\..\nc_test;..\..\..\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -186,10 +186,7 @@
 				RelativePath="..\getopt.c"
 				>
 			</File>
-			<File
-				RelativePath="..\..\..\nc_test\quick_large_files.c"
-				>
-			</File>
+<File RelativePath="..\..\..\nc_test\quick_large_files.c"></File>
 		</Filter>
 		<Filter
 			Name="Header Files"

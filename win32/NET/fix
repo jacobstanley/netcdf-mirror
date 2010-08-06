@@ -1,0 +1,17 @@
+TEMPLATES="libsrc/netcdf ncdump/nccopy ncdump/ncdump \
+ncgen3/ncgen3 ncgen/ncgen \
+nctest/nctest nc_test/nc_test \
+nc_test/large_files nc_test/quick_large_files"
+
+STATIC="./examples/tst_netcdf"
+
+E1="-e s/;C:[\\]include/;..\\\..\\\..\\\include/"
+E2="-e s/;[\\]include/;..\\\..\\\..\\\include/"
+E="$E1 $E2"
+
+for f in $TEMPLATES ; do
+    if ! test -f ${f}.bak ; then cp ${f}.template ${f}.bak ; fi
+    sed $E < ${f}.bak > ${f}.template
+done
+exit
+
