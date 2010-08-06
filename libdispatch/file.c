@@ -4,10 +4,10 @@
 
  This file defines the file create and open functions.
 
- "$Id: nc4.c,v 1.1 2010/06/01 15:46:50 ed Exp $" 
+ "$Id$" 
 */
 
-#include "ncdispatch.h"
+#include "nc.h"
 
 static int nc_initialized = 0;
 

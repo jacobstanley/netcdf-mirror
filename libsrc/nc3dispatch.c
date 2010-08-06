@@ -5,12 +5,9 @@
    $Id: nc3dispatch.c,v 2.8 2010/05/26 11:11:26 ed Exp $
  *********************************************************************/
 
-#include "config.h"
+#include "nc.h"
 #include <stdlib.h>
 #include <string.h>
-
-#include "netcdf.h"
-#include "nc.h"
 #include "nc3dispatch.h"
 
 #ifndef NC_CONTIGUOUS

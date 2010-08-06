@@ -32,9 +32,8 @@
  */
 /* "$Id: nc3stub.c,v 1.3 2010/05/26 18:11:10 dmh Exp $" */
 
-#include <stdlib.h>
-#include "config.h"
 #include "nc.h"
+#include <stdlib.h>
 
 #ifndef MPI_INCLUDED
 #define MPI_Comm int

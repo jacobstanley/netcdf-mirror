@@ -14,10 +14,9 @@ conditions.
 $Id: nc4attr.c,v 1.78 2010/05/25 17:54:23 dmh Exp $
 */
 
-#include "nc4internal.h"
 #include "nc.h"
+#include "nc4internal.h"
 #include "nc4dispatch.h"
-#include "ncdispatch.h"
 
 #ifdef USE_PNETCDF
 #include <pnetcdf.h>

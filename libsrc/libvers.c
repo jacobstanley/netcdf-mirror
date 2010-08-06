@@ -4,7 +4,7 @@
  */
 /* $Id: libvers.c,v 2.17 2010/05/26 21:43:33 dmh Exp $ */
 
-#include <config.h>
+#include "nc.h"
 
 /*
  * A version string. This whole function is not needed in netCDF-4,
