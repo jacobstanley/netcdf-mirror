@@ -11,8 +11,7 @@ conditions.
 $Id: nc4var.c,v 1.148 2010/05/27 21:34:15 dmh Exp $
 */
 
-#include "nc.h"
-#include "nc4internal.h"
+#include <nc4internal.h>
 #include "nc4dispatch.h"
 #include <math.h>
 

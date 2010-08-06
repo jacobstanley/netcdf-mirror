@@ -4,10 +4,10 @@
 
   This file defines the opendap-related functions.
 
-  "$Id$" 
+  "$Id: nc4.c,v 1.1 2010/06/01 15:46:50 ed Exp $" 
 */
 
-#include "nc.h"
+#include "ncdispatch.h"
 
 /* allow access dapurlparse and params while minimizing exposing dapurl.h */
 int

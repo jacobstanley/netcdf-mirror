@@ -4,12 +4,14 @@
  *   $Header: /upc/share/CVS/netcdf-3/libncdap4/ncd4dispatch.c,v 1.8 2010/05/27 21:34:10 dmh Exp $
  *********************************************************************/
 
-#include "nc.h"
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "ncdap4.h"
+#include "nc.h"
 #include "ncd4dispatch.h"
+#include "ncdispatch.h"
 
 static int
 NCD4_create(const char *path, int cmode,

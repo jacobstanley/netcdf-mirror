@@ -4,6 +4,7 @@
  */
 /* $Id: string.c,v 1.76 2010/05/26 21:43:33 dmh Exp $ */
 
+#include "config.h"
 #include "nc.h"
 #include <stdio.h>
 #include <stdlib.h>

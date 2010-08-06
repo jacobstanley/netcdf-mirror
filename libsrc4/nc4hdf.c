@@ -13,7 +13,7 @@
   $Id: nc4hdf.c,v 1.273 2010/05/27 21:34:14 dmh Exp $
 */
 
-#include "nc.h"
+#include "config.h"
 #include "nc4internal.h"
 #include <H5DSpublic.h>
 #include <math.h>

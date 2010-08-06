@@ -3,10 +3,10 @@
 
    This file has the strerror function.
 
-   "$Id$" 
+   "$Id: copy.c,v 1.1 2010/06/01 15:46:49 ed Exp $" 
 */
 
-#include "nc.h"
+#include "ncdispatch.h"
 
 /* Tell the user the version of netCDF. */
 static const char nc_libvers[] = PACKAGE_VERSION " of "__DATE__" "__TIME__" $";

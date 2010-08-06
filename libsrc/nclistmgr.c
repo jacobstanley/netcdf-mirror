@@ -5,10 +5,11 @@
    $Id: nclistmgr.c,v 2.3 2010/05/26 11:11:26 ed Exp $
  *********************************************************************/
 
-#include "nc.h"
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "nc.h"
 
 #define ID_SHIFT (16)
 #define NCFILELISTLENGTH 0x10000

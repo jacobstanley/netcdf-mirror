@@ -106,4 +106,3 @@ TESTS += tst_ncgen4_classic.sh
 if USE_NETCDF4
 TESTS += tst_ncgen4.sh
 endif
-

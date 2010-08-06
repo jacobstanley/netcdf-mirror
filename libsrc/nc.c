@@ -3,7 +3,7 @@
  *      See netcdf/COPYRIGHT file for copying and redistribution conditions.
  */
 
-#include "nc.h"
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -11,10 +11,12 @@
 #  include <mpp/shmem.h>
 #  include <intrinsics.h>
 #endif
-#ifdef HAVE_UNISTD
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#include "nc.h"
+#include "ncdispatch.h"
 #include "rnd.h"
 #include "ncx.h"
 

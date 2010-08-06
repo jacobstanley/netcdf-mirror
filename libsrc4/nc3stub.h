@@ -35,6 +35,11 @@
 #ifndef _NC3STUB_H
 #define _NC3STUB_H
 
+#ifndef MPI_INCLUDED
+#define MPI_Comm int
+#define MPI_Info int
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

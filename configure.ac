@@ -1060,7 +1060,7 @@ AC_STRUCT_ST_BLKSIZE
 UD_CHECK_IEEE
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
-AC_CHECK_TYPES([size_t, off_t,ssize_t, ptrdiff_t, uchar, longlong, ulonglong])
+AC_CHECK_TYPES([ssize_t, ptrdiff_t, uchar, longlong])
 #AC_CHECK_TYPE(ssize_t, int)
 #AC_CHECK_TYPE(ptrdiff_t, int)
 #AC_CHECK_TYPE(uchar, unsigned char)
@@ -1285,14 +1285,13 @@ AM_CONDITIONAL(USE_DISPATCH, [test x$enable_dispatch = xyes])
 
 # If the machine doesn't have a long long, and we want netCDF-4, then
 # we've got problems!
-# Always define
-dnl if test "x$enable_netcdf_4" = xyes; then
+if test "x$enable_netcdf_4" = xyes; then
    AC_TYPE_LONG_LONG_INT
    AC_TYPE_UNSIGNED_LONG_LONG_INT
 dnl    if test ! "x$ac_cv_type_long_long_int" = xyes -o ! "x$ac_cv_type_unsigned_long_long_int" = xyes; then
 dnl       AC_MSG_ERROR([This platform does not support long long types. These are required for netCDF-4.])
 dnl    fi
-dnl fi
+fi
 
 # Create the file name for a "make ftpbin" which is used to generate a
 # binary distribution. For each release we generate binary releases on

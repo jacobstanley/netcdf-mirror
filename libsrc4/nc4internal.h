@@ -12,6 +12,7 @@
 #ifndef _NC4INTERNAL_
 #define _NC4INTERNAL_
 
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -19,6 +20,14 @@
 #include <string.h>
 #include <hdf5.h>
 #include <nc_logging.h>
+
+#ifdef USE_PARALLEL
+#include <netcdf_par.h>
+#else
+#define MPI_Info int
+#define MPI_Comm int
+#include <netcdf.h>
+#endif /* USE_PARALLEL */
 
 #ifdef USE_HDF4
 #include <mfhdf.h>

@@ -35,4 +35,4 @@ emalloc.c emalloc.h error.c error.h misctest.c rec.c slabs.c testcdf.h	\
 tests.h val.c val.h vardef.c varget.c vargetg.c varput.c varputg.c	\
 vartests.c vputget.c vputgetg.c
 
-
+# For those who can't remember to type make check instead of make test.

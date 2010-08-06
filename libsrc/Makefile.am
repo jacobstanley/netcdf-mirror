@@ -7,8 +7,8 @@
 # $Id: Makefile.am,v 2.98 2010/06/01 15:34:50 ed Exp $
 
 # We may have to add to these later.
-AM_CPPFLAGS = -I$(top_srcdir)/include -I${top_srcdir}/libdispatch       \
--I${top_srcdir}/liblib -I${top_srcdir}/libsrc -I${top_srcdir}/oc	\
+AM_CPPFLAGS = -I$(top_srcdir)/include -I${top_srcdir}/liblib		\
+-I${top_srcdir}/libsrc -I${top_srcdir}/libdispatch -I${top_srcdir}/oc	\
 @EXTERN_CFLAGS@
 AM_LDFLAGS = @EXTERN_LDFLAGS@
 
@@ -62,3 +62,6 @@ EXTRA_DIST = attr.c ncx.c putget.c $(man_MANS) stub3.c
 .m4.c:
 	m4 $(AM_M4FLAGS) $(M4FLAGS) $< >$@
 
+.PHONY: visualstudio
+visualstudio:
+	sh ${abs_top_srcdir}/visualbuild add ${abs_srcdir} "${libnetcdf3_la_SOURCES}"
