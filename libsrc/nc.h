@@ -9,7 +9,8 @@
 /*
  *	netcdf library 'private' data structures, objects and interfaces
  */
-#include <config.h>
+#include "config.h"
+#include "ncdispatch.h"
 #include <stddef.h>	/* size_t */
 #ifndef HAVE_STDINT_H
 #  include "pstdint.h"	/* attempts to define uint32_t etc portably */
@@ -22,6 +23,7 @@
 #else
 #include "netcdf.h"
 #endif /* USE_PARALLEL */
+
 #include "ncio.h"	
 #include "fbits.h"
 

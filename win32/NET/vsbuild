@@ -3,6 +3,7 @@
 sub extractfiles;
 sub processfile;
 sub generate;
+sub genconfig;
 
 sub build {
     my $m;
@@ -16,13 +17,10 @@ sub build {
     # that should be included everywhere
     @ghfiles=();
     @gcfiles=();
-    if(-e "$vsdir/global.filelist") {
-        extractfiles "global", \@ghfiles, \@gfiles;
-        if($debug > 0) {
-            print "global hfiles=@ghfiles\n";
-            print "global cfiles=@gcfiles\n";
-	}
-    }
+    extractfiles "global", \@ghfiles, \@gfiles;
+
+    # create config.h from the ../../config.h
+    genconfig;
 
     foreach $m (@projects) {
         @hfiles=();
@@ -39,6 +37,7 @@ sub build {
 
 	# create the .vcproj for each project
 	generate $m, \@hfiles, \@cfiles;
+
     }
 }
 
@@ -46,7 +45,7 @@ sub extractfiles {
     ($project, $href, $cref) = @_;
     @{$href}=();
     @{$cref}=();
-    open MODFILE, "$vsdir/$project.filelist" or die "$project.filelist does not exist";
+    open MODFILE, "$vsdir/$project.filelist" || return;
     while(<MODFILE>) {
 	processfile $_, $href, $cref;
     }
@@ -93,6 +92,8 @@ print "processing $vsdir/$projectdir/$project.template =>$vsdir/$projectdir/$pro
             my $param = $line;
             $param =~ s/^@([a-zA-Z0-9_]+)@/$1/;
             if($param eq "hfiles") {
+		# Insert config.h as special case
+                print VCPROJ "<File RelativePath=\"..\\config.h\"></File>\n";
                 foreach (@hfiles) {
                     # convert / -> \
                     my $winfile=$_;
@@ -115,5 +116,110 @@ print "processing $vsdir/$projectdir/$project.template =>$vsdir/$projectdir/$pro
     close VCPROJ;
     close TEMPLATE;
 }
+
+# Define forced config defines for windows
+%forceddefines = (
+"CRAY_STACKSEG_END" => "undef",
+"C_ALLOCA" => "undef",
+"DLL_NETCDF" => "undef",
+"HAVE_ALLOCA" => "undef",
+"HAVE_ALLOCA_H" => "undef",
+"HAVE_CTYPE_H" => "define",
+"HAVE_DECL_ISFINITE" => "undef",
+"HAVE_DECL_ISINF" => "define",
+"HAVE_DECL_ISNAN" => "define",
+"HAVE_DECL_SIGNBIT" => "undef",
+"HAVE_DIRENT_H" => "undef",
+"HAVE_DLFCN_H" => "undef",
+"HAVE_DOPRNT" => "undef",
+"HAVE_ERRNO_H" => "undef",
+"HAVE_FCNTL_H" => "define",
+"HAVE_FSYNC" => "undef",
+"HAVE_GETOPT_H" => "undef",
+"HAVE_GETRLIMIT" => "undef",
+"HAVE_GETTIMEOFDAY" => "undef",
+"HAVE_INTTYPES_H" => "undef",
+"HAVE_LOCALE_H" => "undef",
+"HAVE_LONGLONG" => "undef",
+"HAVE_ULONGLONG" => "undef",
+"HAVE_ULONGLONG" => "undef",
+"HAVE_MALLOC_H" => "define",
+"HAVE_MEMORY_H" => "undef",
+"HAVE_MKTEMP" => "undef",
+"HAVE_NDIR_H" => "undef",
+"HAVE_PTRDIFF_T" => "undef",
+"HAVE_RPC_TYPES_H" => "undef",
+"HAVE_RPC_XDR_H" => "undef",
+"HAVE_SNPRINTF" => "define",
+"HAVE_SSIZE_T" => "undef",
+"HAVE_STDARG_H" => "define",
+"HAVE_STDBOOL_H" => "undef",
+"HAVE_STDINT_H" => "define",
+"HAVE_STDLIB_H" => "define",
+"HAVE_STRCASECMP" => "define",
+"HAVE_STRCAT" => "define",
+"HAVE_STRCHR" => "define",
+"HAVE_STRCPY" => "define",
+"HAVE_STRDUP" => "define",
+"HAVE_STRERROR" => "define",
+"HAVE_STRINGS_H" => "undef",
+"HAVE_STRING_H" => "define",
+"HAVE_STRLCAT" => "undef",
+"HAVE_STRRCHR" => "define",
+"HAVE_STRUCT_STAT_ST_BLKSIZE" => "undef",
+"HAVE_ST_BLKSIZE" => "undef",
+"HAVE_SYS_DIR_H" => "undef",
+"HAVE_SYS_NDIR_H" => "undef",
+"HAVE_SYS_RESOURCE_H" => "undef",
+"HAVE_SYS_STAT_H" => "undef",
+"HAVE_SYS_TIME_H" => "undef",
+"HAVE_SYS_TYPES_H" => "undef",
+"HAVE_SYS_WAIT_H" => "undef",
+"HAVE_UCHAR" => "undef",
+"HAVE_UNISTD_H" => "undef",
+"HAVE_VPRINTF" => "define",
+"HAVE__BOOL" => "undef",
+"TIME_WITH_SYS_TIME" => "undef"
+);
+
+# Generate a usable config.h from ../../config.h
+sub genconfig {
+    open TOPCONFIG,  "<$topdir/config.h" || die "$topdir/config.h not writable";
+    open CONFIG,  "+>$vsdir/config.h" || die "config.h not writable";
+    print "processing $topdir/config.h =>$vsdir/config.h\n";
+    while(<TOPCONFIG>) {
+	my $line=$_;
+	my $option = "";
+	# remove newlines and returns
+	$line =~ s/[\r\n]+//g;
+	# Process relevant defines from config.h
+       	if($line =~ m/^#[ ]*define[ ]+[a-zA-Z0-9_]+/) {
+	    $option = $line;
+	    $option =~ s/^#[ ]*define[ ]+([a-zA-Z0-9_]+).*$/$1/;
+	} elsif($line =~ m|^/[*][ ]*#[ ]*undef[ ]+[a-zA-Z0-9_]+|) {
+	    $option = $line;
+	    $option =~ s|^/[*][ ]*#[ ]*undef[ ]+([a-zA-Z0-9_]+).*$|$1|;
+        }
+	if ("$option" ne "") {
+	    my $def = "";
+	    $def = ($forceddefines{$option} || "");
+	    if($def eq "undef") {
+		$line = "/* #undef $option */";
+	    } elsif($def eq "define") {
+		$line = "#define $option 1";
+	    }
+	}
+	print CONFIG "$line\n";
+    }
+    # add some definitions
+    print CONFIG "#ifndef longlong\n";
+    print CONFIG "#define longlong LONGLONG\n";
+    print CONFIG "#define ulonglong ULONGLONG\n";
+    print CONFIG "#endif\n";
+
+    close TOPCONFIG;
+    close CONFIG;
+}
+
 
 1;

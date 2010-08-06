@@ -13,6 +13,7 @@ conditions.
 $Id: ncfunc.c,v 1.51 2010/05/26 20:13:32 dmh Exp $
 */
 
+#include "nc.h"
 #include "nc4internal.h"
 #include "nc3dispatch.h"
 

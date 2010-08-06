@@ -15,9 +15,8 @@ conditions.
 $Id: nc4internal.c,v 1.121 2010/05/26 21:43:35 dmh Exp $
 */
 
-#include "config.h"
+#include "nc.h"
 #include "nc4internal.h"
-#include "nc.h" /* from libsrc */
 #include <utf8proc.h>
 
 #define MEGABYTE 1048576

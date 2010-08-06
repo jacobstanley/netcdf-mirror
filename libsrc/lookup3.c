@@ -41,7 +41,7 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 */
 /* #define SELF_TEST 1 */
 
-#include <config.h>
+#include <nc.h>
 #include <stdio.h>      /* defines printf for tests */
 #include <time.h>       /* defines time_t for timings in the test */
 #ifndef HAVE_STDINT_H
@@ -294,7 +294,7 @@ hashlittle( const void *key, size_t length, uint32_t initval)
   u.ptr = key;
   if (HASH_LITTLE_ENDIAN && ((u.i & 0x3) == 0)) {
     const uint32_t *k = (const uint32_t *)key;         /* read 32-bit chunks */
-    const uint8_t  *k8;
+    /*unused? const uint8_t  *k8;*/
 
     /*------ all but last block: aligned reads and affect 32 bits of (a,b,c) */
     while (length > 12)
@@ -480,7 +480,7 @@ hashlittle2(
   u.ptr = key;
   if (HASH_LITTLE_ENDIAN && ((u.i & 0x3) == 0)) {
     const uint32_t *k = (const uint32_t *)key;         /* read 32-bit chunks */
-    const uint8_t  *k8;
+    /*unused? const uint8_t  *k8;*/
 
     /*------ all but last block: aligned reads and affect 32 bits of (a,b,c) */
     while (length > 12)
@@ -658,7 +658,7 @@ hashbig( const void *key, size_t length, uint32_t initval)
   u.ptr = key;
   if (HASH_BIG_ENDIAN && ((u.i & 0x3) == 0)) {
     const uint32_t *k = (const uint32_t *)key;         /* read 32-bit chunks */
-    const uint8_t  *k8;
+    /* unused? const uint8_t  *k8;*/
 
     /*------ all but last block: aligned reads and affect 32 bits of (a,b,c) */
     while (length > 12)

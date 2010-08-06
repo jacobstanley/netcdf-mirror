@@ -7,8 +7,6 @@
  "$Id: parallel.c,v 1.1 2010/06/01 15:46:50 ed Exp $" 
 */
 
-#include "config.h"
-#include "ncdispatch.h"
 #include "nc.h"
 
 /* This function creates a file for use with parallel I/O. */

@@ -6,12 +6,10 @@
 
 /*LINTLIBRARY*/
 
-#include <config.h>
+#include <nc.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-
-#include "netcdf.h"
 
 #ifdef HAVE_STRERROR
 #include <string.h> /* contains prototype for ansi libc function strerror() */

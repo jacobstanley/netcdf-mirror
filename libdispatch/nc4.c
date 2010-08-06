@@ -7,7 +7,7 @@
  "$Id: nc4.c,v 1.1 2010/06/01 15:46:50 ed Exp $" 
 */
 
-#include "ncdispatch.h"
+#include "nc.h"
 
 /* When you read string type the library will allocate the storage
  * space for the data. This storage space must be freed, so pass the

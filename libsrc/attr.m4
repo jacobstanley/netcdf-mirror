@@ -11,7 +11,6 @@ dnl
 /* $Id: attr.m4,v 2.39 2010/05/26 18:11:08 dmh Exp $ */
 
 #include "nc.h"
-#include "ncdispatch.h"
 #include "nc3dispatch.h"
 #include <stdlib.h>
 #include <string.h>

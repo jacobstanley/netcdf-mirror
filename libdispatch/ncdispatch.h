@@ -22,22 +22,24 @@
 #include "dapurl.h"
 #endif
 
+#if defined(_WIN32) || defined(_WIN32_) || defined(_MSC_VER)
+#ifndef WIN32
+#define WIN32 1
+#endif
+#endif
+
+
 /* Define longlong and ulonglong types */
-#ifdef WIN32
-typedef LONGLONG longlong;
-typedef ULONGLONG ulonglong;
-#else /*!WIN32*/
-#ifdef HAVE_LONG_LONG_INT
-/* assume HAVE_LONG_LONG_INT=>HAVE_UNSIGNED LONG_LONG_INT
-          and HAVE_LONGLONG=>HAVE_ULONGLONG
-*/
+/* assume HAVE_LONGLONG=>HAVE_ULONGLONG */
+
+#ifndef WIN32
 #ifndef HAVE_LONGLONG
 typedef long long longlong;
 typedef unsigned long long ulonglong;
 #endif /*HAVE_LONGLONG*/
-#endif /*HAVE_LONG_LONG_INT*/
 #endif /*!WIN32*/
 
+#ifdef IGNORE
 extern int nc_get_vara_ubyte(int ncid, int varid,
                   const size_t* start, const size_t* count,
 		  unsigned char* value);
@@ -60,6 +62,7 @@ extern int nc_put_vara_uint(int ncid, int varid,
 extern int nc_put_vara_ulonglong(int ncid, int varid,
                   const size_t* start, const size_t* count,
 		  const unsigned long long* value);
+#endif
 
 #define X_INT_MAX	2147483647
 
@@ -112,11 +115,6 @@ extern int nc_put_vara_ulonglong(int ncid, int varid,
 #define	NC_STRING 	12	/* char* */
 #endif
 
-#ifndef HAVE_LONGLONG
-#define longlong long long
-#define ulonglong unsigned long long
-#endif
-
 /* Define the range of Atomic types */
 #ifdef USE_NETCDF4
 #define ATOMICTYPEMAX NC_STRING
@@ -124,15 +122,24 @@ extern int nc_put_vara_ulonglong(int ncid, int varid,
 #define ATOMICTYPEMAX NC_DOUBLE
 #endif
 
+#ifndef MPI_INCLUDED
+#ifndef MPI_Comm
+#define MPI_Comm int
+#define MPI_Info int
+#define MPI_COMM_WORLD 0
+#ifndef MPI_INFO_NULL
+#define MPI_INFO_NULL 0
+#endif
+#endif
+#endif
+
 /* Define a struct to hold the MPI info so it can be passed down the
  * call stack. This is used internally by the netCDF library. It
  * should not be used by netcdf users. */
-#ifdef USE_PARALLEL
 typedef struct NC_MPI_INFO {
     MPI_Comm comm;
     MPI_Info info;
 } NC_MPI_INFO;
-#endif
 
 /* Define known dispatch tables */
 /*Forward*/
@@ -163,18 +170,6 @@ struct nc_vlen_t;
 #endif /*USE_NETCDF4*/
 
 struct NC;
-
-/* WARNING: this must match libsrc4/netcdf.h */
-#ifndef MPI_INCLUDED
-#ifndef MPI_Comm
-#define MPI_Comm int
-#define MPI_Info int
-#define MPI_COMM_WORLD 0
-#ifndef MPI_INFO_NULL
-#define MPI_INFO_NULL 0
-#endif
-#endif
-#endif
 
 int NC_create(const char *path, int cmode,
 	      size_t initialsz, int basepe, size_t *chunksizehintp, 

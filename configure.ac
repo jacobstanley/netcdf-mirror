@@ -1060,7 +1060,7 @@ AC_STRUCT_ST_BLKSIZE
 UD_CHECK_IEEE
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
-AC_CHECK_TYPES([ssize_t, ptrdiff_t, uchar, longlong, ulonglong])
+AC_CHECK_TYPES([size_t, off_t,ssize_t, ptrdiff_t, uchar, longlong, ulonglong])
 #AC_CHECK_TYPE(ssize_t, int)
 #AC_CHECK_TYPE(ptrdiff_t, int)
 #AC_CHECK_TYPE(uchar, unsigned char)

@@ -4,7 +4,7 @@
  */
 /* $Id: posixio.c,v 1.89 2010/05/22 21:59:08 dmh Exp $ */
 
-#include <config.h>
+#include <nc.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>

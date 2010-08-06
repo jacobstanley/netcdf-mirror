@@ -4,13 +4,11 @@
  *   $Header: /upc/share/CVS/netcdf-3/libncdap3/ncd3dispatch.c,v 1.7 2010/05/27 21:34:09 dmh Exp $
  *********************************************************************/
 
-#include "config.h"
+#include "nc.h"
 #include <stdlib.h>
 #include <string.h>
 
-#include "nc.h"
 #include "ncdap3.h"
-#include "ncdispatch.h"
 #include "ncd3dispatch.h"
 
 static int

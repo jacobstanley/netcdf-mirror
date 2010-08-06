@@ -36,8 +36,6 @@
 #define _NCD3DISPATCH_H
 
 #include <stddef.h> /* size_t, ptrdiff_t */
-#include "netcdf.h"
-#include "ncdispatch.h"
 
 #if defined(__cplusplus)
 extern "C" {

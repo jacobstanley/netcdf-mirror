@@ -18,6 +18,7 @@
  * Whine to cray about IEG function limiting behavior.
  */
 
+#include "nc.h"
 #include <string.h>
 #include <limits.h>
 /* alias poorly named limits.h macros */

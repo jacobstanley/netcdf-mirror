@@ -6,8 +6,7 @@
 /* $Id: stub3.c,v 1.4 2010/05/24 19:48:16 dmh Exp $ */
 /* $Header: /upc/share/CVS/netcdf-3/libsrc/stub3.c,v 1.4 2010/05/24 19:48:16 dmh Exp $ */
 
-#include "config.h"
-#include "netcdf.h"
+#include "nc.h"
 
 /* Need to re-direct certain functions that are
    duplicated in netcdf4

@@ -54,11 +54,17 @@ test: check
 # This is used if someone wants to rebuild ncgenyy.c or ncgentab.c
 # Otherwise never invoked, but records how to do it. Don't forget to
 # manually insert #include <config.h> in ncgenyy.c!
-ncgenyy.c: ncgen.l
+.PHONY: makencgenyy makencgentab
+
+makencgenyy: ncgen.l
 	flex -Pncg -8 ncgen.l
 	mv lex.ncg.c ncgenyy.c
 
-ncgentab.c ncgentab.h: ncgen.y
+makencgentab: ncgen.y
 	bison -pncg -d ncgen.y
 	mv ncgen.tab.c ncgentab.c
 	mv ncgen.tab.h ncgentab.h
+
+.PHONY: visualstudio
+visualstudio:
+	perl -w ${abs_top_srcdir}/win32/NET/vs add ncgen3 ${abs_srcdir} ${top_srcdir} "${ncgen3_SOURCES}"

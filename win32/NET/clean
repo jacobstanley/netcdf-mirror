@@ -6,6 +6,7 @@ if test -f netcdf.sln.save ; then
   cp netcdf.sln.save netcdf.sln
 fi
 rm -f ./*.suo*
+rm config.h
 
 thisdir=`pwd`
 

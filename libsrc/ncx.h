@@ -34,8 +34,6 @@
 typedef unsigned char uchar;
 #endif
 
-#define longlong long long
-
 #if defined(_CRAY) && !defined(_CRAYIEEE) && !defined(__crayx1)
 #define CRAYFLOAT 1 /* CRAY Floating point */
 #elif defined(_SX) && defined(_FLOAT2)	/* NEC SUPER-UX in CRAY mode */
@@ -443,8 +441,10 @@ extern int
 ncx_getn_schar_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_getn_schar_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_getn_schar_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_pad_getn_schar_schar(const void **xpp, size_t nelems, schar *ip);
@@ -464,8 +464,10 @@ extern int
 ncx_pad_getn_schar_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_pad_getn_schar_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_pad_getn_schar_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_putn_schar_schar(void **xpp, size_t nelems, const schar *ip);
@@ -485,8 +487,10 @@ extern int
 ncx_putn_schar_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_putn_schar_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_putn_schar_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
  
 extern int
 ncx_pad_putn_schar_schar(void **xpp, size_t nelems, const schar *ip);
@@ -506,8 +510,10 @@ extern int
 ncx_pad_putn_schar_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_pad_putn_schar_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_pad_putn_schar_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
 
 
 extern int
@@ -528,8 +534,10 @@ extern int
 ncx_getn_short_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_getn_short_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_getn_short_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_pad_getn_short_schar(const void **xpp, size_t nelems, schar *ip);
@@ -549,8 +557,10 @@ extern int
 ncx_pad_getn_short_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_pad_getn_short_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_pad_getn_short_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_putn_short_schar(void **xpp, size_t nelems, const schar *ip);
@@ -570,8 +580,10 @@ extern int
 ncx_putn_short_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_putn_short_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_putn_short_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
  
 extern int
 ncx_pad_putn_short_schar(void **xpp, size_t nelems, const schar *ip);
@@ -591,8 +603,10 @@ extern int
 ncx_pad_putn_short_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_pad_putn_short_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_pad_putn_short_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
 
 
 extern int
@@ -613,8 +627,10 @@ extern int
 ncx_getn_int_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_getn_int_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_getn_int_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_putn_int_schar(void **xpp, size_t nelems, const schar *ip);
@@ -634,8 +650,10 @@ extern int
 ncx_putn_int_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_putn_int_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_putn_int_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
  
 
 extern int
@@ -656,8 +674,10 @@ extern int
 ncx_getn_float_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_getn_float_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_getn_float_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_putn_float_schar(void **xpp, size_t nelems, const schar *ip);
@@ -677,8 +697,10 @@ extern int
 ncx_putn_float_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_putn_float_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_putn_float_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
  
 
 extern int
@@ -699,8 +721,10 @@ extern int
 ncx_getn_double_uint(const void **xpp, size_t nelems, unsigned int *ip);
 extern int
 ncx_getn_double_longlong(const void **xpp, size_t nelems, longlong *ip);
+#ifndef WIN32
 extern int
 ncx_getn_double_ulonglong(const void **xpp, size_t nelems, ulonglong *ip);
+#endif
 
 extern int
 ncx_putn_double_schar(void **xpp, size_t nelems, const schar *ip);
@@ -720,8 +744,10 @@ extern int
 ncx_putn_double_uint(void **xpp, size_t nelems, const unsigned int *ip);
 extern int
 ncx_putn_double_longlong(void **xpp, size_t nelems, const longlong *ip);
+#ifndef WIN32
 extern int
 ncx_putn_double_ulonglong(void **xpp, size_t nelems, const ulonglong *ip);
+#endif
  
 
 /*

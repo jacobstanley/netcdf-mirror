@@ -6,7 +6,7 @@
 #ifndef NCDAP3_H
 #define NCDAP3_H 1
 
-#include "config.h"
+#include "nc.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -14,16 +14,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "nc.h"
-#include "netcdf.h"
-
  /* netcdf overrides*/
 #include "dapnc.h"
 
 #include "ncdap.h"
 #include "getvara.h"
 #include "constraints3.h"
-#include "ncdispatch.h"
 
 
 #ifndef USE_NETCDF4

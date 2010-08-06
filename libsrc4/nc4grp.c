@@ -11,6 +11,7 @@ conditions.
 $Id: nc4grp.c,v 1.44 2010/05/25 17:54:23 dmh Exp $
 */
 
+#include "nc.h"
 #include "nc4internal.h"
 #include "nc4dispatch.h"
 

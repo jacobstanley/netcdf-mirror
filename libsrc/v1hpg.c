@@ -4,13 +4,11 @@
  */
 /* $Id: v1hpg.c,v 1.70 2010/05/26 21:43:34 dmh Exp $ */
 
-#include "config.h"
+#include "nc.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include "ncdispatch.h"
-#include "nc.h"
 #include "ncx.h"
 #include "rnd.h"
 

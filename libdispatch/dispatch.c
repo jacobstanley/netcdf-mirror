@@ -1,4 +1,14 @@
-#include "ncdispatch.h"
+/*
+  Copyright 2010 University Corporation for Atmospheric
+  Research/Unidata. See COPYRIGHT file for more info.
+
+  This file defines the opendap-related functions.
+
+  "$Id$" 
+*/
+
+#include "nc.h"
+
 #define INITCOORD1 if(coord_one[0] != 1) {int i; for(i=0;i<NC_MAX_VAR_DIMS;i++) coord_one[i] = 1;}
 
 /*
