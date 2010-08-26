@@ -61,6 +61,28 @@ main(int argc, char **argv)
 /* #endif /\* USE_DAP *\/ */
    }
    SUMMARIZE_ERR;
+   printf("*** Checking format setting...");
+   {
+#define NUM_FORMAT 4
+      int ncid, varid, dimid, format, i;
+      int form[NUM_FORMAT] = {NC_FORMAT_CLASSIC, NC_FORMAT_64BIT, 
+			      NC_FORMAT_NETCDF4, NC_FORMAT_NETCDF4_CLASSIC};
+
+      for (i = 0; i < NUM_FORMAT; i++)
+      {
+	 if (nc_set_default_format(form[i], NULL)) ERR;
+	 if (nc_create(FILE_NAME, NC_CLOBBER,&ncid)) ERR;
+	 if (nc_def_dim(ncid, "x", 1,&dimid)) ERR;
+	 if (nc_def_var(ncid, "y", NC_FLOAT, 1, &dimid, &varid)) ERR;
+	 if (nc_close(ncid)) ERR;
+
+	 if (nc_open(FILE_NAME, NC_NOWRITE, &ncid)) ERR;
+	 if (nc_inq_format(ncid, &format)) ERR;
+	 if (format != form[i]) ERR;
+	 if (nc_close(ncid)) ERR;
+      }
+   }
+   SUMMARIZE_ERR;
    FINAL_RESULTS;
 }
 
