@@ -89,7 +89,7 @@ if BUILD_DLL
 AM_CPPFLAGS += -DNC_DLL_EXPORT
 endif
 
-AM_LDFLAGS += @EXTERN_LDFLAGS@
+#AM_LDFLAGS += @EXTERN_LDFLAGS@
 
 # The nfconfig.in file is turned into nfconfig.inc by the configure
 # script. The man page is generated on the developers machine for the
