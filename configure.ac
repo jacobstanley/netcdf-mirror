@@ -49,9 +49,6 @@ AC_CONFIG_SRCDIR([libsrc/nc.c])
 
 AC_MSG_NOTICE([checking user options])
 
-# Turn off shared libraries by default
-AM_DISABLE_SHARED
-
 # For backward compatibility, check to see if the user has set CXX,
 # FC, and/or F90 to null. If so, treat that as the equivilent
 # --disable- option to configure. The autoconf manual suggests the
