@@ -10,9 +10,11 @@
 
 # $Id: Makefile.am,v 1.51 2010/05/29 00:20:53 dmh Exp $
 
-AM_FCFLAGS = @EXTERN_CFLAGS@
+AM_FCFLAGS =
 AM_LDFLAGS =
 
+AM_FCFLAGS += @EXTERN_CFLAGS@
+AM_LDFLAGS += @EXTERN_LDFLAGS@
 
 # This is the F90 API man page.
 man_MANS = netcdf_f90.3

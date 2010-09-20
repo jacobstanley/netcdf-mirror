@@ -49,6 +49,9 @@ AC_CONFIG_SRCDIR([libsrc/nc.c])
 
 AC_MSG_NOTICE([checking user options])
 
+# Turn off shared libraries by default
+AM_DISABLE_SHARED
+
 # For backward compatibility, check to see if the user has set CXX,
 # FC, and/or F90 to null. If so, treat that as the equivilent
 # --disable- option to configure. The autoconf manual suggests the
@@ -463,6 +466,10 @@ fi
 
 if test "x$enable_dap" = xyes; then
    AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
+   AC_DEFINE([ENABLE_DAP], [1], [if true, build DAP Client])
+fi
+if test "x$enable_dap_remote_tests" = xyes; then
+   AC_DEFINE([ENABLE_DAP_REMOTE_TESTS], [1], [if true, do remote tests])
 fi
 
 # Default is now to always do the short remote tests
@@ -475,6 +482,7 @@ if test "x$enable_dap" = "xno" ; then
   enable_dap_remote_tests=no
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
+
 
 AC_MSG_CHECKING([whether the time-consuming dap tests should be enabled (default off)])
 AC_ARG_ENABLE([dap-long-tests],
@@ -788,10 +796,11 @@ fi
 # libraries.)
 AC_MSG_CHECKING([whether separate fortran libs are desired])
 AC_ARG_ENABLE([separate-fortran],
-              [AS_HELP_STRING([--disable-separate-fortran],
-                              [build F77 and F90 libraries with the C library \
-                              (requires F90 libs in LD_LIBRARY_PATH)])])
-test "x$enable_separate_fortran" = xno || enable_separate_fortran=yes
+              [AS_HELP_STRING([--enable-separate-fortran],
+                              [build F77 and F90 libraries separate from C library \
+                              (turned on automatically when shared libraries are built)])])
+test "x$enable_separate_fortran" != xno && test "x$enable_shared" = xyes && enable_separate_fortran=yes
+test "x$enable_separate_fortran" = xyes || enable_separate_fortran=no
 AC_MSG_RESULT([$enable_separate_fortran])
 AM_CONDITIONAL(BUILD_SEPARATE_FORTRAN, [test x$enable_separate_fortran = xyes])
 
