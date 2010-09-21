@@ -1837,7 +1837,7 @@ nc4_rec_read_types(NC_GRP_INFO_T *grp)
       /* Deal with groups and types; ignore the rest. */
       if (link_info.obj_type == H5I_GROUP)
       {
-	 LOG((3, "found group %s", obj_name));
+	 LOG((3, "found group %s", link_info.name));
 	 if ((retval = nc4_grp_list_add(&(grp->children), h5->next_nc_grpid++, 
 					grp, grp->file, link_info.name, &child_grp)))
 	    return retval;
