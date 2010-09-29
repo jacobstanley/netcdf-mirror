@@ -62,13 +62,16 @@ extern "C" {
 #define	NC_INT64 	10	/* signed 8-byte int */
 #define	NC_UINT64 	11	/* unsigned 8-byte int */
 #define	NC_STRING 	12	/* string */
+#define	NC_REFERENCE 	13	/* reference */
+
+#define NC_MAX_ATOMIC NC_REFERENCE
 
 /* The following are use internally in support of user-defines
  * types. They are also the class returned by nc_inq_user_type. */
-#define	NC_VLEN 	13	/* used internally for vlen types */
-#define	NC_OPAQUE 	14	/* used internally for opaque types */
-#define	NC_ENUM 	15	/* used internally for enum types */
-#define	NC_COMPOUND 	16	/* used internally for compound types */
+#define	NC_VLEN 	14	/* used internally for vlen types */
+#define	NC_OPAQUE 	15	/* used internally for opaque types */
+#define	NC_ENUM 	16	/* used internally for enum types */
+#define	NC_COMPOUND 	17	/* used internally for compound types */
 
 /* Define the first user defined type id (leave some room) */
 #define NC_FIRSTUSERTYPEID 32

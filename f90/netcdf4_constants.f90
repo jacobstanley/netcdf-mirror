@@ -13,10 +13,11 @@ integer, parameter, public :: &
      nf90_int64 = 10, &
      nf90_uint64 = 11, &
      nf90_string = 12, &
-     nf90_vlen = 13, &
-     nf90_opaque = 14, &
-     nf90_enum = 15, &
-     nf90_compound = 16
+     nf90_reference = 13, &
+     nf90_vlen = 14, &
+     nf90_opaque = 15, &
+     nf90_enum = 16, &
+     nf90_compound = 17
 
                         
 ! extra default fill values:
