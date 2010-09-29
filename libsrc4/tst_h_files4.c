@@ -15,8 +15,6 @@
 #include <H5DSpublic.h>
 
 #define FILE_NAME "tst_h_files4.h5"
-/* Heavy duty test file...*/
-/*#define FILE_NAME "/machine/downloads/T159_1978110112.nc4"*/
 
 herr_t
 obj_iter(hid_t o_id, const char *name, const H5O_info_t *object_info, 
@@ -62,21 +60,21 @@ op_func (hid_t g_id, const char *name, const H5L_info_t *info,
    if ((obj_type = H5Iget_type(id)) < 0) ERR;
    if (H5Oclose(id) < 0) ERR;
 
-/* Turn this on to learn what type of object you've opened. */
-/*    switch (obj_type) */
-/*    { */
-/*       case H5I_GROUP: */
-/* 	 printf("group %s\n", name); */
-/* 	 break; */
-/*       case H5I_DATATYPE: */
-/* 	 printf("type %s\n", name); */
-/* 	 break; */
-/*       case H5I_DATASET: */
-/* 	 printf("data %s\n", name); */
-/* 	 break; */
-/*       default: */
-/* 	 printf("unknown class\n"); */
-/*    } */
+   /*Turn this on to learn what type of object you've opened.*/
+   switch (obj_type)
+   {
+      case H5I_GROUP:
+	 printf("group %s\n", name);
+	 break;
+      case H5I_DATATYPE:
+	 printf("type %s\n", name);
+	 break;
+      case H5I_DATASET:
+	 printf("data %s\n", name);
+	 break;
+      default:
+	 printf("unknown class\n");
+   }
    return 1;
 }
 
@@ -138,7 +136,7 @@ main()
       if (H5Pclose(fapl_id) < 0) ERR;
    }
    SUMMARIZE_ERR;
-   printf("*** Opening a HDF5 file with H5Literate...");
+   printf("*** Opening a HDF5 file with H5Literate ...");
    {
       hid_t fapl_id, fileid, grpid;
       hsize_t idx = 0;

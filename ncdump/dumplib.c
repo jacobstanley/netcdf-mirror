@@ -412,6 +412,8 @@ get_default_fmt(nc_type typeid) {
 	return "%llu";
     case NC_STRING:
 	return "\"%s\"";
+    case NC_REFERENCE:
+	return "\"%u\"";
 #endif	/* USE_NETCDF4 */
     default:
 	break;
@@ -526,6 +528,8 @@ prim_type_name(nc_type type)
 	return "uint64";
       case NC_STRING:
 	return "string";
+      case NC_REFERENCE:
+	return "reference";
 #endif /* USE_NETCDF4 */
       default:
 	error("prim_type_name: bad type %d", type);
@@ -571,7 +575,7 @@ max_typeid(int ncid) {
     int maxtypes = NC_DOUBLE; /*ignore NC_NAT?*/
 #ifdef USE_NETCDF4
     int nuser = 0;
-    maxtypes = NC_STRING; /* extra netCDF-4 primitive types */
+    maxtypes = NC_MAX_ATOMIC; /* extra netCDF-4 primitive types */
     maxtypes += 4;		/* user-defined classes */
     nuser = count_udtypes(ncid);
     if(nuser > 0) 
@@ -1586,7 +1590,8 @@ init_prim_types(int ncid) {
 	NC_UINT,
 	NC_INT64,
 	NC_UINT64,
-	NC_STRING
+	NC_STRING,
+	NC_REFERENCE
 #endif /* USE_NETCDF4 */
     };
     size_t sizes[] = {

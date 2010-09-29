@@ -844,9 +844,7 @@ read_hdf5_att(NC_GRP_INFO_T *grp, hid_t attid, NC_ATT_INFO_T *att)
    size_t fixed_size = 0;
 
    assert(att->name);
-   LOG((4, "read_hdf5_att: att->attnum %d att->name %s "
-        "att->xtype %d att->len %d", att->attnum, att->name,
-        att->xtype, att->len));
+   LOG((4, "read_hdf5_att: att->attnum %d att->name %s", att->attnum, att->name));
 
    /* Get type of attribute in file. */
    if ((file_typeid = H5Aget_type(attid)) < 0)
@@ -864,7 +862,6 @@ read_hdf5_att(NC_GRP_INFO_T *grp, hid_t attid, NC_ATT_INFO_T *att)
    if ((retval = get_netcdf_type(grp->file->nc4_info, att->native_typeid, &(att->xtype))))
       BAIL(retval);
 
-
    /* Get len. */
    if ((spaceid = H5Aget_space(attid)) < 0)
       BAIL(NC_EATTMETA); 
@@ -875,6 +872,16 @@ read_hdf5_att(NC_GRP_INFO_T *grp, hid_t attid, NC_ATT_INFO_T *att)
       BAIL(NC_EATTMETA);
    if ((att_npoints = H5Sget_simple_extent_npoints(spaceid)) < 0)
       BAIL(NC_EATTMETA);
+
+   /* For NPP fies, the Raytheon company only had afew hundred million
+    * dollars, so they couldn't afford to read the HDF5 manuals. They
+    * store atts as 2D arrays with one element. So convert that to a
+    * scalar. */
+   if (att_ndims > 1)
+   {
+      att_ndims = 1;
+      dims[0] = att_npoints;
+   }
 
    /* If both att_ndims and att_npoints are zero, then this is a
     * zero length att. */
