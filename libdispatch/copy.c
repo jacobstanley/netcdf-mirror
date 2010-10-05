@@ -207,8 +207,10 @@ NC_find_equal_type(int ncid1, nc_type xtype1, int ncid2, nc_type *xtype2)
       return NC_EINVAL;
 
    /* Handle atomic types. */
-   if (xtype1 <= ATOMICTYPEMAX) {
-      if(xtype2) *xtype2 = xtype1;
+   if (xtype1 <= NC_MAX_ATOMIC_TYPE) 
+   {
+      if(xtype2) 
+	 *xtype2 = xtype1;
       return NC_NOERR;
    }
 
