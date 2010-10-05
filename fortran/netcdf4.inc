@@ -12,7 +12,6 @@
       integer nf_int64
       integer nf_uint64
       integer nf_string
-      integer nf_reference
       integer nf_vlen
       integer nf_opaque
       integer nf_enum
@@ -24,11 +23,10 @@
       parameter (nf_int64 = 10)
       parameter (nf_uint64 = 11)
       parameter (nf_string = 12)
-      parameter (nf_reference = 12)
-      parameter (nf_vlen = 14)
-      parameter (nf_opaque = 15)
-      parameter (nf_enum = 16)
-      parameter (nf_compound = 17)
+      parameter (nf_vlen = 13)
+      parameter (nf_opaque = 14)
+      parameter (nf_enum = 15)
+      parameter (nf_compound = 16)
 
 !     New netCDF-4 fill values.
       integer           nf_fill_ubyte

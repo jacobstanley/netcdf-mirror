@@ -60,7 +60,7 @@ static int virgin = 1;
 
 /* For performance, fill this array only the first time, and keep it
  * in global memory for each further use. */
-#define NUM_TYPES NC_MAX_ATOMIC
+#define NUM_TYPES 12
 static hid_t native_type_constant[NUM_TYPES];
 
 int nc4_free_global_hdf_string_typeid();
@@ -654,10 +654,6 @@ get_netcdf_type(NC_HDF5_FILE_INFO_T *h5, hid_t native_typeid,
          return NC_NOERR;
       }
    }
-   else if (class == H5T_REFERENCE)
-   {
-      *xtype = NC_REFERENCE;
-   }
 
    /* Maybe we already know about this type. */
    if (!equal)
@@ -686,15 +682,15 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
    int endianness;
    nc_type nc_type_constant[NUM_TYPES] = {NC_CHAR, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT,
 					  NC_DOUBLE, NC_UBYTE, NC_USHORT, NC_UINT,
-					  NC_INT64, NC_UINT64, NC_STRING, NC_REFERENCE};
+					  NC_INT64, NC_UINT64, NC_STRING};
    char type_name[NUM_TYPES][NC_MAX_NAME + 1] = {"char", "byte", "short", "int", "float",
 						 "double", "ubyte", "ushort", "uint", 
-						 "int64", "uint64", "string", "reference"};
+						 "int64", "uint64", "string"};
    int type_size[NUM_TYPES] = {sizeof(char), sizeof(char), sizeof(short), 
 			       sizeof(int), sizeof(float), sizeof(double),
 			       sizeof(unsigned char), sizeof(unsigned short), 
 			       sizeof(unsigned int), sizeof(long long), 
-			       sizeof(unsigned long long), 0, 0};
+			       sizeof(unsigned long long), 0};
    int t;
 
    assert(h5 && xtype && type_info);
@@ -733,8 +729,7 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
       return NC_EHDFERR;
 
    /* Is this an atomic type? */
-   if (class == H5T_STRING || class == H5T_INTEGER || class == H5T_FLOAT || 
-       class == H5T_REFERENCE)
+   if (class == H5T_STRING || class == H5T_INTEGER || class == H5T_FLOAT)
    {
       /* Allocate a phony NC_TYPE_INFO_T struct to hold type info. */
       if (!(*type_info = calloc(1, sizeof(NC_TYPE_INFO_T))))
@@ -748,13 +743,13 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
 	 if ((is_str = H5Tis_variable_str(native_typeid)) < 0)
 	    return NC_EHDFERR;
 	 if (is_str)
-	    t = NUM_TYPES - 2;
+	    t = NUM_TYPES - 1;
 	 else
 	    t = 0;
       }
       else if (class == H5T_INTEGER || class == H5T_FLOAT)
       {
-	 for (t = 1; t < NUM_TYPES - 2; t++)
+	 for (t = 1; t < NUM_TYPES - 1; t++)
 	 {
 	    if ((equal = H5Tequal(native_typeid, native_type_constant[t])) < 0)
 	       return NC_EHDFERR;
@@ -777,21 +772,10 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
 	    /* Copy this into the type_info struct. */
 	    (*type_info)->endianness = endianness;
 	 }
-      } 
-      else if (class == H5T_REFERENCE)
-      {
-	 t = NUM_TYPES - 1;
       }
-
       *xtype = nc_type_constant[t];
       (*type_info)->nc_typeid = nc_type_constant[t];
-      if (class == H5T_REFERENCE)
-      {
-	 if (((*type_info)->size = H5Tget_size(hdf_typeid)) < 0)
-	    return NC_EHDFERR;
-      }
-      else
-	 (*type_info)->size = type_size[t];
+      (*type_info)->size = type_size[t];
       if (!((*type_info)->name = malloc((strlen(type_name[t]) + 1) * sizeof(char))))
 	 return NC_ENOMEM;
       strcpy((*type_info)->name, type_name[t]);
@@ -800,9 +784,6 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
       (*type_info)->native_typeid = native_typeid;
       (*type_info)->close_hdf_typeid = 1;
       return NC_NOERR;
-   }
-   else if (class == H5T_REFERENCE)
-   {
    }
    else
    {
@@ -844,7 +825,9 @@ read_hdf5_att(NC_GRP_INFO_T *grp, hid_t attid, NC_ATT_INFO_T *att)
    size_t fixed_size = 0;
 
    assert(att->name);
-   LOG((4, "read_hdf5_att: att->attnum %d att->name %s", att->attnum, att->name));
+   LOG((5, "read_hdf5_att: att->attnum %d att->name %s "
+        "att->xtype %d att->len %d", att->attnum, att->name,
+        att->xtype, att->len));
 
    /* Get type of attribute in file. */
    if ((file_typeid = H5Aget_type(attid)) < 0)
@@ -862,6 +845,7 @@ read_hdf5_att(NC_GRP_INFO_T *grp, hid_t attid, NC_ATT_INFO_T *att)
    if ((retval = get_netcdf_type(grp->file->nc4_info, att->native_typeid, &(att->xtype))))
       BAIL(retval);
 
+
    /* Get len. */
    if ((spaceid = H5Aget_space(attid)) < 0)
       BAIL(NC_EATTMETA); 
@@ -872,16 +856,6 @@ read_hdf5_att(NC_GRP_INFO_T *grp, hid_t attid, NC_ATT_INFO_T *att)
       BAIL(NC_EATTMETA);
    if ((att_npoints = H5Sget_simple_extent_npoints(spaceid)) < 0)
       BAIL(NC_EATTMETA);
-
-   /* For NPP fies, the Raytheon company only had afew hundred million
-    * dollars, so they couldn't afford to read the HDF5 manuals. They
-    * store atts as 2D arrays with one element. So convert that to a
-    * scalar. */
-   if (att_ndims > 1)
-   {
-      att_ndims = 1;
-      dims[0] = att_npoints;
-   }
 
    /* If both att_ndims and att_npoints are zero, then this is a
     * zero length att. */

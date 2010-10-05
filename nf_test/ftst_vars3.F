@@ -121,7 +121,7 @@ C     Use nf_inq_user_type to confirm this is an enum type.
       if (retval .ne. nf_noerr) call handle_err(retval)
       if (type_name(1:len(enum_type_name)) .ne. enum_type_name .or.
      &     type_size .ne. 4 .or. base_type .ne. NF_INT .or. 
-     &     nfields .ne. 2 .or. class .ne. nf_enum) stop 3
+     &     nfields .ne. 2 .or. class .ne. nf_enum) stop 2
 
 C     Use nf_inq_enum and make sure we get the same answers as we did
 C     with nf_inq_user_type.
@@ -129,25 +129,25 @@ C     with nf_inq_user_type.
      &     base_size, num_members)
       if (retval .ne. nf_noerr) call handle_err(retval)
       if (type_name(1:len(enum_type_name)) .ne. enum_type_name .or.
-     &     base_type .ne. NF_INT .or. num_members .ne. 2) stop 4
+     &     base_type .ne. NF_INT .or. num_members .ne. 2) stop 2
 
 C     Check the members of the enum type.
       retval = nf_inq_enum_member(ncid, typeids(1), 1, member_name, 
      &     member_value)
       if (retval .ne. nf_noerr) call handle_err(retval)
       if (member_name(1:len(zero_name)) .ne. zero_name .or.
-     &     member_value .ne. 0) stop 5
+     &     member_value .ne. 0) stop 2
       retval = nf_inq_enum_member(ncid, typeids(1), 2, member_name, 
      &     member_value)
       if (retval .ne. nf_noerr) call handle_err(retval)
       if (member_name(1:len(one_name)) .ne. one_name .or.
-     &     member_value .ne. 1) stop 6
+     &     member_value .ne. 1) stop 2
       retval = nf_inq_enum_ident(ncid, typeids(1), 0, member_name)
       if (retval .ne. nf_noerr) call handle_err(retval)
-      if (member_name(1:len(zero_name)) .ne. zero_name) stop 7
+      if (member_name(1:len(zero_name)) .ne. zero_name) stop 2
       retval = nf_inq_enum_ident(ncid, typeids(1), 1, member_name)
       if (retval .ne. nf_noerr) call handle_err(retval)
-      if (member_name(1:len(one_name)) .ne. one_name) stop 8
+      if (member_name(1:len(one_name)) .ne. one_name) stop 2
 
 C     Use nf_inq_user_type to confirm that the second typeid is an
 C     opaque type.
@@ -156,7 +156,7 @@ C     opaque type.
       if (retval .ne. nf_noerr) call handle_err(retval)
       if (type_name(1:len(opaque_type_name)) .ne. opaque_type_name .or.
      &     type_size .ne. opaque_size .or. base_type .ne. 0 .or. 
-     &     nfields .ne. 0 .or. class .ne. nf_opaque) stop 9
+     &     nfields .ne. 0 .or. class .ne. nf_opaque) stop 2
 
 C     Use nf_inq_opaque and make sure we get the same answers as we did
 C     with nf_inq_user_type.
@@ -164,13 +164,13 @@ C     with nf_inq_user_type.
       if (retval .ne. nf_noerr) call handle_err(retval)
       if (base_size .ne. opaque_size .or. 
      &     type_name(1:len(opaque_type_name)) .ne. opaque_type_name) 
-     &     stop 10
+     &     stop 2
 
 C     Read the variable.
       index(1) = 1
       retval = nf_get_var1(ncid, varid, index, opaque_data_in)
       if (retval .ne. nf_noerr) call handle_err(retval)
-      if (opaque_data_in .ne. opaque_data) stop 11
+      if (opaque_data_in .ne. opaque_data) stop 2
 
 C     Read the attribute.
       retval = nf_get_att(ncid, varid, 'att', data_in)
@@ -178,7 +178,7 @@ C     Read the attribute.
 
 C     Check the values.
       do x = 1, NX
-         if (data_in(x) .ne. data_out(x)) stop 12
+         if (data_in(x) .ne. data_out(x)) stop 2
       end do
 
 C     Close the file. 
