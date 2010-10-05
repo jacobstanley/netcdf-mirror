@@ -176,15 +176,19 @@ NC_rec_find_nc_type(int ncid1, nc_type tid1, int ncid2, nc_type* tid2)
       return ret;
    if (nids)
    {
-      if (!(ids = (int*)malloc(nids*sizeof(int))))
+      if (!(ids = (int *)malloc(nids * sizeof(int))))
 	 return NC_ENOMEM;
-      if ((ret = nc_inq_grps(ncid1,&nids,ids)))
+      if ((ret = nc_inq_grps(ncid1, &nids, ids)))
+      {
+	 free(ids);
 	 return ret;
-      for(i = 0; i < nids; i++) 
+      }
+      for (i = 0; i < nids; i++) 
       {
 	 ret = NC_rec_find_nc_type(ncid1, tid1, ids[i], tid2);
-	 if(ret && ret != NC_EBADTYPE) break;
-	 if(tid2 && *tid2 != 0) /* found */
+	 if (ret && ret != NC_EBADTYPE) 
+	    break;
+	 if (tid2 && *tid2 != 0) /* found */
 	 {
 	    free(ids);
 	    return NC_NOERR;
@@ -515,37 +519,35 @@ nc_copy_att(int ncid_in, int varid_in, const char *name,
 	 which we had to "duplicate" here */
       if ((res = NC_find_equal_type(ncid_in, xtype, ncid_out, &xtype_out)))
 	 return res;
-      if(xtype_out) 
+      if (xtype_out) 
       {
 	 /* We found an equal type! */
-	 if((res = nc_inq_user_type(ncid_in, xtype, NULL, &size, 
+	 if ((res = nc_inq_user_type(ncid_in, xtype, NULL, &size, 
 				    NULL, NULL, &class)))
 	    return res;
-	 if(class == NC_VLEN) /* VLENs are different... */
+	 if (class == NC_VLEN) /* VLENs are different... */
 	 { 
 	    nc_vlen_t *vldata;
 	    int i;
-	    if(!(vldata = malloc(sizeof(nc_vlen_t) * len)))
+	    if (!(vldata = malloc(sizeof(nc_vlen_t) * len)))
 	       return NC_ENOMEM;
-	    if((res = nc_get_att(ncid_in, varid_in, name, vldata)))
+	    if ((res = nc_get_att(ncid_in, varid_in, name, vldata)))
 	       return res;
-	    if((res = nc_put_att(ncid_out, varid_out, name, xtype_out, 
+	    if ((res = nc_put_att(ncid_out, varid_out, name, xtype_out, 
 				 len, vldata)))
 	       return res;
-	    for(i = 0; i < len; i++) 
+	    for (i = 0; i < len; i++) 
 	       if((res = nc_free_vlen(&vldata[i]))) 
 		  return res;
 	    free(vldata);
          } 
 	 else /* not VLEN */
 	 {
-	    if(!(data = malloc(size * len)))
+	    if (!(data = malloc(size * len)))
 	       return NC_ENOMEM;
-	    if((res = nc_get_att(ncid_in, varid_in, name, data)))
-	       return res;
-	    if((res = nc_put_att(ncid_out, varid_out, name, xtype_out, 
-				 len, data)))
-	       return res;
+	    res = nc_get_att(ncid_in, varid_in, name, data);
+	    if (!res)
+	       res = nc_put_att(ncid_out, varid_out, name, xtype_out, len, data);
 	    free(data);
          }
       }
