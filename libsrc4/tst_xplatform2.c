@@ -360,194 +360,194 @@ main(int argc, char **argv)
 		     DIM1_LEN, vlen_of_comp_out)) ERR;
 
       /* How does it look? */
-/*      if (check_file_1(ncid, vlen_of_comp_out)) ERR;*/
+      if (check_file_1(ncid, vlen_of_comp_out)) ERR;
 
       /* We're done - wasn't that easy? */
       if (nc_close(ncid)) ERR;
 
-/*       /\* Check it out. *\/ */
-/*       if (nc_open(FILE_NAME_1, NC_NOWRITE, &ncid)) ERR; */
-/*       if (check_file_1(ncid, vlen_of_comp_out)) ERR; */
-/*       if (nc_close(ncid)) ERR; */
+      /* Check it out. */
+      if (nc_open(FILE_NAME_1, NC_NOWRITE, &ncid)) ERR;
+      if (check_file_1(ncid, vlen_of_comp_out)) ERR;
+      if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;
-/*    printf("*** testing Solaris-written vlen of compound type..."); */
+   printf("*** testing Solaris-written vlen of compound type...");
+   {
+      char file_in[NC_MAX_NAME + 1];
+
+      strcpy(file_in, "");
+      if (getenv("srcdir"))
+      {
+	 strcat(file_in, getenv("srcdir"));
+	 strcat(file_in, "/");
+      }
+      strcat(file_in, REF_FILE_NAME_1);
+
+      /* Check out the same file, generated on buddy and included with
+       * the distribution. */
+      if (nc_open(file_in, NC_NOWRITE, &ncid)) ERR;
+      if (check_file_1(ncid, vlen_of_comp_out)) ERR;
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing compound type containing array of compound type...");
+   {
+      nc_type s1_typeid, s2_typeid;
+      int dimsizes[1] = {NUM_S1};
+
+      /* Create a netCDF-4 file. */
+      if (nc_create(FILE_NAME_2, NC_NETCDF4, &ncid)) ERR;
+
+      /* Create a simple compound type which has different sizes on
+       * different platforms - our old friend struct s1. */
+      if (nc_def_compound(ncid, sizeof(struct s1), S1_TYPE_NAME, &s1_typeid)) ERR;
+      if (nc_insert_compound(ncid, s1_typeid, X_NAME,
+			     NC_COMPOUND_OFFSET(struct s1, x), NC_FLOAT)) ERR;
+      if (nc_insert_compound(ncid, s1_typeid, Y_NAME,
+			     NC_COMPOUND_OFFSET(struct s1, y), NC_DOUBLE)) ERR;
+
+      /* Now make a compound type that holds an array of the struct s1
+       * type. */
+      if (nc_def_compound(ncid, sizeof(struct s2), S2_TYPE_NAME, &s2_typeid)) ERR;
+      if (nc_insert_array_compound(ncid, s2_typeid, S1_NAME,
+				   NC_COMPOUND_OFFSET(struct s2, data),
+				   s1_typeid, 1, dimsizes)) ERR;
+
+
+      /* Write the output data as an attribute. */
+      if (nc_put_att(ncid, NC_GLOBAL, S2_ATT_NAME, s2_typeid,
+		     DIM2_LEN, comp_array_of_comp_out)) ERR;
+
+      /* How does it look? */
+      if (check_file_2(ncid, comp_array_of_comp_out)) ERR;
+
+      /* We're done - wasn't that easy? */
+      if (nc_close(ncid)) ERR;
+
+      /* Check it out. */
+      if (nc_open(FILE_NAME_2, NC_NOWRITE, &ncid)) ERR;
+      if (check_file_2(ncid, comp_array_of_comp_out)) ERR;
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing Solaris-written compound type containing array of compound type...");
+   {
+      char file_in[NC_MAX_NAME + 1];
+
+      strcpy(file_in, "");
+      if (getenv("srcdir"))
+      {
+	 strcat(file_in, getenv("srcdir"));
+	 strcat(file_in, "/");
+      }
+      strcat(file_in, REF_FILE_NAME_2);
+
+      /* Check out the same file, generated on buddy and included with
+       * the distribution. */
+      if (nc_open(file_in, NC_NOWRITE, &ncid)) ERR;
+      if (check_file_2(ncid, comp_array_of_comp_out)) ERR;
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+#ifdef EXTRA_TESTS
+   printf("*** testing compound attribute containing array of vlen of compound type...");
+   {
+      nc_type vlen_typeid, s3_typeid, s1_typeid;
+      int dimsizes[1] = {NUM_VL};
+
+      /* Create a netCDF-4 file. */
+      if (nc_create(FILE_NAME_3, NC_NETCDF4, &ncid)) ERR;
+
+      /* Create a simple compound type which has different sizes on
+       * different platforms - our old friend struct s1. */
+      if (nc_def_compound(ncid, sizeof(struct s1), S1_TYPE_NAME, &s1_typeid)) ERR;
+      if (nc_insert_compound(ncid, s1_typeid, X_NAME,
+			     NC_COMPOUND_OFFSET(struct s1, x), NC_FLOAT)) ERR;
+      if (nc_insert_compound(ncid, s1_typeid, Y_NAME,
+			     NC_COMPOUND_OFFSET(struct s1, y), NC_DOUBLE)) ERR;
+
+      /* Now make a new type: a vlen of our s1 compound type. */
+      if (nc_def_vlen(ncid, VLEN_NAME, s1_typeid, &vlen_typeid)) ERR;
+
+      /* Now make a compound type that holds an array of the VLEN
+       * type. */
+      if (nc_def_compound(ncid, sizeof(struct s3), S3_TYPE_NAME, &s3_typeid)) ERR;
+      if (nc_insert_array_compound(ncid, s3_typeid, VL_NAME,
+				   NC_COMPOUND_OFFSET(struct s3, data),
+				   vlen_typeid, 1, dimsizes)) ERR;
+
+
+      /* Write the output data as an attribute. */
+      if (nc_put_att(ncid, NC_GLOBAL, S3_ATT_NAME, s3_typeid,
+		     DIM3_LEN, comp_array_of_vlen_of_comp_out)) ERR;
+
+      /* How does it look? */
+      if (check_file_3(ncid, comp_array_of_vlen_of_comp_out)) ERR;
+
+      /* We're done - wasn't that easy? */
+      if (nc_close(ncid)) ERR;
+
+      /* Check it out. */
+      if (nc_open(FILE_NAME_3, NC_NOWRITE, &ncid)) ERR;
+      if (check_file_3(ncid, comp_array_of_vlen_of_comp_out)) ERR;
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+/*    printf("*** testing Solaris-written compound containing array of vlen of compound type..."); */
 /*    { */
-/*       char file_in[NC_MAX_NAME + 1]; */
-
-/*       strcpy(file_in, ""); */
-/*       if (getenv("srcdir")) */
-/*       { */
-/* 	 strcat(file_in, getenv("srcdir")); */
-/* 	 strcat(file_in, "/"); */
-/*       } */
-/*       strcat(file_in, REF_FILE_NAME_1); */
-
 /*       /\* Check out the same file, generated on buddy and included with */
 /*        * the distribution. *\/ */
-/*       if (nc_open(file_in, NC_NOWRITE, &ncid)) ERR; */
-/*       if (check_file_1(ncid, vlen_of_comp_out)) ERR; */
-/*       if (nc_close(ncid)) ERR; */
-/*    } */
-/*    SUMMARIZE_ERR; */
-/*    printf("*** testing compound type containing array of compound type..."); */
-/*    { */
-/*       nc_type s1_typeid, s2_typeid; */
-/*       int dimsizes[1] = {NUM_S1}; */
-
-/*       /\* Create a netCDF-4 file. *\/ */
-/*       if (nc_create(FILE_NAME_2, NC_NETCDF4, &ncid)) ERR; */
-
-/*       /\* Create a simple compound type which has different sizes on */
-/*        * different platforms - our old friend struct s1. *\/ */
-/*       if (nc_def_compound(ncid, sizeof(struct s1), S1_TYPE_NAME, &s1_typeid)) ERR; */
-/*       if (nc_insert_compound(ncid, s1_typeid, X_NAME, */
-/* 			     NC_COMPOUND_OFFSET(struct s1, x), NC_FLOAT)) ERR; */
-/*       if (nc_insert_compound(ncid, s1_typeid, Y_NAME, */
-/* 			     NC_COMPOUND_OFFSET(struct s1, y), NC_DOUBLE)) ERR; */
-
-/*       /\* Now make a compound type that holds an array of the struct s1 */
-/*        * type. *\/ */
-/*       if (nc_def_compound(ncid, sizeof(struct s2), S2_TYPE_NAME, &s2_typeid)) ERR; */
-/*       if (nc_insert_array_compound(ncid, s2_typeid, S1_NAME, */
-/* 				   NC_COMPOUND_OFFSET(struct s2, data), */
-/* 				   s1_typeid, 1, dimsizes)) ERR; */
-
-
-/*       /\* Write the output data as an attribute. *\/ */
-/*       if (nc_put_att(ncid, NC_GLOBAL, S2_ATT_NAME, s2_typeid, */
-/* 		     DIM2_LEN, comp_array_of_comp_out)) ERR; */
-
-/*       /\* How does it look? *\/ */
-/*       if (check_file_2(ncid, comp_array_of_comp_out)) ERR; */
-
-/*       /\* We're done - wasn't that easy? *\/ */
-/*       if (nc_close(ncid)) ERR; */
-
-/*       /\* Check it out. *\/ */
-/*       if (nc_open(FILE_NAME_2, NC_NOWRITE, &ncid)) ERR; */
-/*       if (check_file_2(ncid, comp_array_of_comp_out)) ERR; */
-/*       if (nc_close(ncid)) ERR; */
-/*    } */
-/*    SUMMARIZE_ERR; */
-/*    printf("*** testing Solaris-written compound type containing array of compound type..."); */
-/*    { */
-/*       char file_in[NC_MAX_NAME + 1]; */
-
-/*       strcpy(file_in, ""); */
-/*       if (getenv("srcdir")) */
-/*       { */
-/* 	 strcat(file_in, getenv("srcdir")); */
-/* 	 strcat(file_in, "/"); */
-/*       } */
-/*       strcat(file_in, REF_FILE_NAME_2); */
-
-/*       /\* Check out the same file, generated on buddy and included with */
-/*        * the distribution. *\/ */
-/*       if (nc_open(file_in, NC_NOWRITE, &ncid)) ERR; */
-/*       if (check_file_2(ncid, comp_array_of_comp_out)) ERR; */
-/*       if (nc_close(ncid)) ERR; */
-/*    } */
-/*    SUMMARIZE_ERR; */
-/* #ifdef EXTRA_TESTS */
-/*    printf("*** testing compound attribute containing array of vlen of compound type..."); */
-/*    { */
-/*       nc_type vlen_typeid, s3_typeid, s1_typeid; */
-/*       int dimsizes[1] = {NUM_VL}; */
-
-/*       /\* Create a netCDF-4 file. *\/ */
-/*       if (nc_create(FILE_NAME_3, NC_NETCDF4, &ncid)) ERR; */
-
-/*       /\* Create a simple compound type which has different sizes on */
-/*        * different platforms - our old friend struct s1. *\/ */
-/*       if (nc_def_compound(ncid, sizeof(struct s1), S1_TYPE_NAME, &s1_typeid)) ERR; */
-/*       if (nc_insert_compound(ncid, s1_typeid, X_NAME, */
-/* 			     NC_COMPOUND_OFFSET(struct s1, x), NC_FLOAT)) ERR; */
-/*       if (nc_insert_compound(ncid, s1_typeid, Y_NAME, */
-/* 			     NC_COMPOUND_OFFSET(struct s1, y), NC_DOUBLE)) ERR; */
-
-/*       /\* Now make a new type: a vlen of our s1 compound type. *\/ */
-/*       if (nc_def_vlen(ncid, VLEN_NAME, s1_typeid, &vlen_typeid)) ERR; */
-
-/*       /\* Now make a compound type that holds an array of the VLEN */
-/*        * type. *\/ */
-/*       if (nc_def_compound(ncid, sizeof(struct s3), S3_TYPE_NAME, &s3_typeid)) ERR; */
-/*       if (nc_insert_array_compound(ncid, s3_typeid, VL_NAME, */
-/* 				   NC_COMPOUND_OFFSET(struct s3, data), */
-/* 				   vlen_typeid, 1, dimsizes)) ERR; */
-
-
-/*       /\* Write the output data as an attribute. *\/ */
-/*       if (nc_put_att(ncid, NC_GLOBAL, S3_ATT_NAME, s3_typeid, */
-/* 		     DIM3_LEN, comp_array_of_vlen_of_comp_out)) ERR; */
-
-/*       /\* How does it look? *\/ */
-/*       if (check_file_3(ncid, comp_array_of_vlen_of_comp_out)) ERR; */
-
-/*       /\* We're done - wasn't that easy? *\/ */
-/*       if (nc_close(ncid)) ERR; */
-
-/*       /\* Check it out. *\/ */
-/*       if (nc_open(FILE_NAME_3, NC_NOWRITE, &ncid)) ERR; */
+/*       if (nc_open(REF_FILE_NAME_3, NC_NOWRITE, &ncid)) ERR; */
 /*       if (check_file_3(ncid, comp_array_of_vlen_of_comp_out)) ERR; */
 /*       if (nc_close(ncid)) ERR; */
 /*    } */
 /*    SUMMARIZE_ERR; */
-/* /\*    printf("*** testing Solaris-written compound containing array of vlen of compound type..."); *\/ */
-/* /\*    { *\/ */
-/* /\*       /\\* Check out the same file, generated on buddy and included with *\/ */
-/* /\*        * the distribution. *\\/ *\/ */
-/* /\*       if (nc_open(REF_FILE_NAME_3, NC_NOWRITE, &ncid)) ERR; *\/ */
-/* /\*       if (check_file_3(ncid, comp_array_of_vlen_of_comp_out)) ERR; *\/ */
-/* /\*       if (nc_close(ncid)) ERR; *\/ */
-/* /\*    } *\/ */
-/* /\*    SUMMARIZE_ERR; *\/ */
-/*    printf("*** testing compound variable containing array of vlen of compound type..."); */
-/*    { */
-/*       nc_type vlen_typeid, s3_typeid, s1_typeid; */
-/*       int varid, dimid; */
-/*       int dimsizes[1] = {NUM_VL}; */
+   printf("*** testing compound variable containing array of vlen of compound type...");
+   {
+      nc_type vlen_typeid, s3_typeid, s1_typeid;
+      int varid, dimid;
+      int dimsizes[1] = {NUM_VL};
 
-/*       /\* Create a netCDF-4 file. *\/ */
-/*       if (nc_create(FILE_NAME_4, NC_NETCDF4, &ncid)) ERR; */
+      /* Create a netCDF-4 file. */
+      if (nc_create(FILE_NAME_4, NC_NETCDF4, &ncid)) ERR;
 
-/*       /\* Create a simple compound type which has different sizes on */
-/*        * different platforms - our old friend struct s1. *\/ */
-/*       if (nc_def_compound(ncid, sizeof(struct s1), S1_TYPE_NAME, &s1_typeid)) ERR; */
-/*       if (nc_insert_compound(ncid, s1_typeid, X_NAME, */
-/* 			     NC_COMPOUND_OFFSET(struct s1, x), NC_FLOAT)) ERR; */
-/*       if (nc_insert_compound(ncid, s1_typeid, Y_NAME, */
-/* 			     NC_COMPOUND_OFFSET(struct s1, y), NC_DOUBLE)) ERR; */
+      /* Create a simple compound type which has different sizes on
+       * different platforms - our old friend struct s1. */
+      if (nc_def_compound(ncid, sizeof(struct s1), S1_TYPE_NAME, &s1_typeid)) ERR;
+      if (nc_insert_compound(ncid, s1_typeid, X_NAME,
+			     NC_COMPOUND_OFFSET(struct s1, x), NC_FLOAT)) ERR;
+      if (nc_insert_compound(ncid, s1_typeid, Y_NAME,
+			     NC_COMPOUND_OFFSET(struct s1, y), NC_DOUBLE)) ERR;
 
-/*       /\* Now make a new type: a vlen of our s1 compound type. *\/ */
-/*       if (nc_def_vlen(ncid, VLEN_NAME, s1_typeid, &vlen_typeid)) ERR; */
+      /* Now make a new type: a vlen of our s1 compound type. */
+      if (nc_def_vlen(ncid, VLEN_NAME, s1_typeid, &vlen_typeid)) ERR;
 
-/*       /\* Now make a compound type that holds an array of the VLEN */
-/*        * type. *\/ */
-/*       if (nc_def_compound(ncid, sizeof(struct s3), S3_TYPE_NAME, &s3_typeid)) ERR; */
-/*       if (nc_insert_array_compound(ncid, s3_typeid, VL_NAME, */
-/* 				   NC_COMPOUND_OFFSET(struct s3, data), */
-/* 				   vlen_typeid, 1, dimsizes)) ERR; */
+      /* Now make a compound type that holds an array of the VLEN
+       * type. */
+      if (nc_def_compound(ncid, sizeof(struct s3), S3_TYPE_NAME, &s3_typeid)) ERR;
+      if (nc_insert_array_compound(ncid, s3_typeid, VL_NAME,
+				   NC_COMPOUND_OFFSET(struct s3, data),
+				   vlen_typeid, 1, dimsizes)) ERR;
 
-/*       /\* Create a dimension and a var of s3 type, then write the */
-/*        * data. *\/ */
-/*       if (nc_def_dim(ncid, DIM3_NAME, DIM3_LEN, &dimid)) ERR; */
-/*       if (nc_def_var(ncid, VAR3_NAME, s3_typeid, 1, &dimid, &varid)) ERR; */
-/*       if (nc_put_var(ncid, varid, comp_array_of_vlen_of_comp_out)) ERR; */
+      /* Create a dimension and a var of s3 type, then write the
+       * data. */
+      if (nc_def_dim(ncid, DIM3_NAME, DIM3_LEN, &dimid)) ERR;
+      if (nc_def_var(ncid, VAR3_NAME, s3_typeid, 1, &dimid, &varid)) ERR;
+      if (nc_put_var(ncid, varid, comp_array_of_vlen_of_comp_out)) ERR;
 
-/*       /\* How does it look? *\/ */
-/*       if (check_file_4(ncid, comp_array_of_vlen_of_comp_out)) ERR; */
+      /* How does it look? */
+      if (check_file_4(ncid, comp_array_of_vlen_of_comp_out)) ERR;
 
-/*       /\* We're done - wasn't that easy? *\/ */
-/*       if (nc_close(ncid)) ERR; */
+      /* We're done - wasn't that easy? */
+      if (nc_close(ncid)) ERR;
 
-/*       /\* Check it out. *\/ */
-/*       if (nc_open(FILE_NAME_4, NC_NOWRITE, &ncid)) ERR; */
-/*       if (check_file_4(ncid, comp_array_of_vlen_of_comp_out)) ERR; */
-/*       if (nc_close(ncid)) ERR; */
-/*    } */
-/*    SUMMARIZE_ERR; */
-/* #endif */
+      /* Check it out. */
+      if (nc_open(FILE_NAME_4, NC_NOWRITE, &ncid)) ERR;
+      if (check_file_4(ncid, comp_array_of_vlen_of_comp_out)) ERR;
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+#endif
 
    /* Free our mallocs. */
    for (i = 0; i < DIM1_LEN; i++)
