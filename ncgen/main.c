@@ -32,7 +32,6 @@ char* mainname; /* name to use for main function; defaults to "main"*/
 int c_flag;
 int binary_flag;
 int f77_flag;
-int cml_flag;
 int java_flag; /* 1=> use netcdf java interface (=>usingclassic)*/
 
 size_t nciterbuffersize;
@@ -149,7 +148,6 @@ main(
     datasetname = NULL;
     c_flag = 0;
     f77_flag = 0;
-    cml_flag = 0;
     java_flag = 0;
     binary_flag = 0;
     kflag_flag = 0;
@@ -260,7 +258,6 @@ main(
     if(c_flag) languages++;
     if(binary_flag) languages++;
     if(f77_flag)languages++;
-    if(cml_flag) languages++;
     if(java_flag) languages++;
     if(languages > 1) {
 	fprintf(stderr,"Please specify only one language\n");
