@@ -67,17 +67,13 @@ else
 AM_CPPFLAGS += -I$(top_srcdir)/libsrc
 endif
 
-if INTERNAL_OCLIB
-  AM_CPPFLAGS += -I${top_srcdir}/oc
-endif # INTERNAL_OCLIB
+AM_CPPFLAGS += -I${top_srcdir}/oc
 
 AM_CPPFLAGS += @EXTERN_CPPFLAGS@
 
 LDADD +=  ${top_builddir}/libncdap3/libncdap3.la
 
-if INTERNAL_OCLIB
-  LDADD += ${top_builddir}/oc/liboc.la
-endif # INTERNAL_OCLIB
+LDADD += ${top_builddir}/oc/liboc.la
 
 LDADD += @EXTERN_LDFLAGS@
 

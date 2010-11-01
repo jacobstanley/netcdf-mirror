@@ -1181,7 +1181,6 @@ genc_write(Symbol* vsym, Bytebuffer* code, Odometer* odom, int isscalar)
 			cname(vsym),
 			cname(vsym),
 			cname(vsym));
-			codedump(stmt);
 	codedump(stmt);
 	codelined(1,"check_err(stat,__LINE__,__FILE__);");
 	
