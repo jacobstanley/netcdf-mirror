@@ -126,6 +126,14 @@ extern const char* f77name(Symbol*);
 extern const char* f77typename(Symbol*);
 #endif
 
+#ifdef ENABLE_CML
+/* from: gencml.c */
+extern void gen_nccml(const char *filename);
+extern void cl_cml(void);
+extern char* xname(struct Symbol* sym);
+extern char* xtypename(struct Symbol* tsym);
+#endif
+
 #ifdef ENABLE_JAVA
 /* from: genj.c */
 extern void gen_ncjava(const char *filename);

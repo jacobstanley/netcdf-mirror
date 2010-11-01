@@ -119,6 +119,17 @@ char* f77data_const(Constant* ci);
 void f77quotestring(Bytebuffer* databuf);
 #endif
 
+#ifdef ENABLE_CML
+/* from: cmldata.c */
+void gencml_attrdata(struct Symbol* asym, Bytebuffer*);
+void gencml_scalardata(struct Symbol* vsym, Bytebuffer*);
+void gencml_arraydata(struct Symbol* vsym, Bytebuffer*);
+void gencml_vlenconstants(List*, Bytebuffer*);
+void gencml_fillvalue(struct Symbol*, Datalist*, Datasrc*, Bytebuffer*);
+void xquotestring(Bytebuffer* databuf);
+char* xconst(Constant* ci);
+#endif
+
 #ifdef ENABLE_JAVA
 /* from: jdata.c */
 void jdata_array(struct Symbol*,Bytebuffer*,Datasrc*,Odometer*,int,Datalist*);
