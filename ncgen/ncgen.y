@@ -251,7 +251,15 @@ typename: IDENT
 
 type_or_attr_decl: typedecl {} | attrdecl ';' {} ;
 
-typedecl: enumdecl ';' | compounddecl ';' | vlendecl ';' | opaquedecl ';' ;
+typedecl:
+	  enumdecl optsemicolon
+	| compounddecl optsemicolon
+	| vlendecl optsemicolon
+	| opaquedecl optsemicolon
+	;
+
+optsemicolon: /*empty*/ | ';' ;
+
 
 enumdecl: primtype ENUM typename
           '{' enumidlist '}'
