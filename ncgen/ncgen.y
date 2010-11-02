@@ -974,9 +974,12 @@ makeconstdata(nc_type nctype)
         case NC_BYTE: con.value.int8v = byte_val; break;
         case NC_SHORT: con.value.int16v = int16_val; break;
         case NC_INT: con.value.int32v = int32_val; break;
-        case NC_FLOAT: con.value.floatv = float_val; break;
-        case NC_DOUBLE: con.value.doublev = double_val; break;
-
+        case NC_FLOAT:
+	    con.value.floatv = float_val;
+	    break;
+        case NC_DOUBLE:
+	    con.value.doublev = double_val;
+	    break;
         case NC_STRING: { /* convert to a set of chars*/
 	    int len;
 	    len = strlen(lextext);
