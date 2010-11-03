@@ -61,9 +61,6 @@ extern int
 NC4_inq(int ncid, int *ndimsp, int *nvarsp, int *nattsp, int *unlimdimidp);
 
 extern int
-NC4_inq_path(int, size_t *, char *);
-
-extern int
 NC4_inq_type(int, nc_type, char *, size_t *);
 
 /* Begin _dim */

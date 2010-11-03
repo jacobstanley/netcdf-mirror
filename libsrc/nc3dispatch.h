@@ -109,9 +109,6 @@ EXTERNL int
 NC3_inq(int ncid, int *ndimsp, int *nvarsp, int *nattsp, int *unlimdimidp);
 
 EXTERNL int
-NC3_inq_path(int, size_t *, char *);
-
-EXTERNL int
 NC3_inq_type(int, nc_type, char *, size_t *);
 
 /* Begin _dim */

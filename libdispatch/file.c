@@ -316,10 +316,17 @@ int
 nc_inq_path(int ncid, size_t *pathlen, char *path)
 {
    NC* ncp;
-   int stat;
+   int stat = NC_NOERR;
    if ((stat = NC_check_id(ncid, &ncp)))
       return stat;
-   return ncp->path;
+   if(ncp->path == NULL) {
+	if(pathlen) *pathlen = 0;
+	if(path) path[0] = '\0';
+   } else {
+       if (pathlen) *pathlen = strlen(ncp->path);
+       if (path) strcpy(path, ncp->path);
+   }
+   return stat;
 }
 
 int

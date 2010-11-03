@@ -27,7 +27,6 @@ NC4_set_base_pe,
 NC4_inq_format,
 
 NC4_inq,
-NC4_inq_path,
 NC4_inq_type,
 
 NC4_def_dim,

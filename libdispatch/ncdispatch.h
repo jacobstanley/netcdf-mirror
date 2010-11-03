@@ -199,7 +199,6 @@ int (*set_base_pe)(int,int);
 int (*inq_format)(int,int*);
 
 int (*inq)(int,int*,int*,int*,int*);
-int (*inq_path)(int, size_t *, char*);
 int (*inq_type)(int, nc_type, char*, size_t*);
 
 int (*def_dim)(int, const char*, size_t, int*);

@@ -1511,25 +1511,6 @@ NC3_inq_type(int ncid, nc_type typeid, char *name, size_t *size)
    return NC_NOERR;
 }
 
-/* If you wanted to know the path, why don't you just remember it in
- * your program? */
-int
-NC3_inq_path(int ncid, size_t *pathlen, char *path)
-{
-   int status;
-   NC *ncp;
-
-   if ((status = NC_check_id(ncid, &ncp)))
-      return status;
-
-   if (pathlen)
-      *pathlen = strlen(ncp->path);
-   if (path)
-      strcpy(path, ncp->path);
-   
-   return NC_NOERR;
-}
-
 int
 nc_delete_mp(const char * path, int basepe)
 {
