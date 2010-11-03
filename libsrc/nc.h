@@ -266,6 +266,7 @@ struct NC {
 	struct NC_Dispatch* dispatch;	
 	struct NCDRNO* drno;
         struct NC_Dispatch3* dapdispatch;
+	char* path; /* as specified at open or create */
 /*END COMMON*/
 	/* contains the previous NC during redef. */
 	struct NC *old;
