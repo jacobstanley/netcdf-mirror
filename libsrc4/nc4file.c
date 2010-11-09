@@ -356,7 +356,7 @@ NC4_create(const char* path, int cmode, size_t initialsz, int basepe,
    /* Allocate the storage for this file info struct, and fill it with
       zeros. This add the file metadata to the front of the global
       nc_file list. */
-   if ((res = nc4_file_list_add(&nc_file)))
+   if ((res = nc4_file_list_add(&nc_file,dispatch)))
       return res;
 
    /* Apply default create format. */
@@ -2387,7 +2387,7 @@ NC4_open(const char *path, int mode, int basepe, size_t *chunksizehintp,
 
    /* Allocate the storage for this file info struct, and fill it with
       zeros. */
-   if ((res = nc4_file_list_add(&nc_file)))
+   if ((res = nc4_file_list_add(&nc_file,dispatch)))
       return res;
 
    /* Depending on the type of file, open it. */
@@ -2738,7 +2738,7 @@ NC4_abort(int ncid)
    if (nc->nc4_info->flags & NC_INDEF && !nc->nc4_info->redef)
    {
       delete_file++;
-      strcpy(path, nc->nc4_info->path);
+      strcpy(path, nc->path);
    }
 
    /* Free any resources the netcdf-4 library has for this file's

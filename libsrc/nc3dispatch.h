@@ -78,6 +78,9 @@ NC3_open(const char *path, int mode,
          NC_Dispatch*, NC** ncp);
 
 EXTERNL int
+NC3_new_nc(NC**);
+
+EXTERNL int
 NC3_redef(int ncid);
 
 EXTERNL int

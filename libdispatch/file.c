@@ -190,7 +190,8 @@ NC_create(const char *path, int cmode, size_t initialsz,
    if(stat == NC_NOERR) {
       ncp->dispatch = dispatcher;
       if(ncidp) *ncidp = ncp->ext_ncid;
-      ncp->path = (path == NULL ? NULL :strdup(path));
+      ncp->path = strdup(path);
+      if(path == NULL) stat = NC_ENOMEM;	
    }
    return stat;
 }
@@ -305,7 +306,8 @@ NC_open(const char *path, int cmode,
    if(stat == NC_NOERR) {
       ncp->dispatch = dispatcher;
       if(ncidp) *ncidp = ncp->ext_ncid;
-      ncp->path = (path == NULL ? NULL : strdup(path));
+      ncp->path = strdup(path);
+      if(path == NULL) stat = NC_ENOMEM;	
    }
    return stat;
 }
@@ -366,12 +368,21 @@ nc_sync(int ncid)
    return ncp->dispatch->sync(ncid);
 }
 
+static void
+NC_reclaim(NC* ncp)
+{
+   /* reclaim the path */
+   if(ncp->path != NULL) free(ncp->path);
+   ncp->path = NULL;   
+}
+
 int
 nc_abort(int ncid)
 {
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   NC_reclaim(ncp);
    return ncp->dispatch->abort(ncid);
 }
 
@@ -381,9 +392,6 @@ nc_close(int ncid)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
-   /* reclaim the path */
-   if(ncp->path != NULL) free(ncp->path);
-   ncp->path = NULL;   
    return ncp->dispatch->close(ncid);
 }
 

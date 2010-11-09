@@ -30,6 +30,12 @@ NC4_open(const char *path, int mode,
 	 NC_Dispatch*, NC**);
 
 extern int
+NC4_new_nc(NC**);
+
+extern int
+NC4_free_nc(NC*);
+
+extern int
 NC4_redef(int ncid);
 
 extern int

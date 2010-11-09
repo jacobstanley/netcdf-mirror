@@ -80,6 +80,8 @@ NC_Dispatch NC3_dispatcher = {
 
 NC_DISPATCH_NC3,
 
+NC3_new_nc,
+
 NC3_create,
 NC3_open,
 

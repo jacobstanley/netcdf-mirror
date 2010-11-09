@@ -256,15 +256,17 @@ typedef unsigned short int	ushmem_t;
 typedef short int		 shmem_t;
 #endif
 
-/* Warning: fields down to END COMMON must be same
-   for NC (libsrc/nc.h) and NC_FILE_INFO (libsrc4/nc4internal.h)
+/* Warning: fields from BEGIN COMMON to END COMMON must be same for:
+	1. NC (libsrc/nc.h)
+	2. NC_FILE_INFO (libsrc4/nc4internal.h)
+	3. NCDAP3 (libncdap3/ncdap3.h)
+	4. NCDAP4 (libncdap4/ncdap4.h)
 */
 struct NC {
 /*BEGIN COMMON*/
 	int ext_ncid; /* uid << 16 */
 	int int_ncid; /* unspecified other id */
 	struct NC_Dispatch* dispatch;	
-	struct NCDRNO* drno;
         struct NC_Dispatch3* dapdispatch;
 	char* path; /* as specified at open or create */
 /*END COMMON*/
@@ -405,9 +407,6 @@ extern int
 nc_put_rec(int ncid, size_t recnum, void *const *datap);
 
 /* End defined in putget.c */
-
-extern NC* new_NC(const size_t *chunkp);
-extern void free_NC(NC *ncp);
 
 extern int add_to_NCList(NC*);
 extern void del_from_NCList(NC*);/* does not free object */
