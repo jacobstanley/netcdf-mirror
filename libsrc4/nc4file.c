@@ -2738,7 +2738,8 @@ NC4_abort(int ncid)
    if (nc->nc4_info->flags & NC_INDEF && !nc->nc4_info->redef)
    {
       delete_file++;
-      strcpy(path, nc->path);
+      strcpy(path, nc->nc4_info->path);
+      /*strcpy(path, nc->path);*/
    }
 
    /* Free any resources the netcdf-4 library has for this file's
