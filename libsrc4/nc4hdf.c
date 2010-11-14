@@ -243,9 +243,6 @@ get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp)
     * one. */
    if (var->xtype == NC_STRING)
    {
-      if (var->fill_value)
-         size = strlen((char *)var->fill_value) + 1;
-      else
          size = 1;
    }
    
@@ -276,6 +273,9 @@ get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp)
       }
       else if (var->xtype == NC_STRING)
       {
+         if (!(*(char **)fillp = malloc((strlen((char *)var->fill_value) + 1) * 
+					sizeof(char))))
+	    return NC_ENOMEM;
          strcpy(*(char **)fillp, (char *)var->fill_value);
       }
       else
@@ -542,7 +542,8 @@ nc4_put_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
    LOG((3, "nc4_put_vara: var->name %s mem_nc_type %d is_long %d", 
         var->name, mem_nc_type, is_long));
 
-   /* Check some stuff about the type and the file. */
+   /* Check some stuff about the type and the file. If the file must
+    * be switched from define mode, it happens here. */
    if ((retval = check_for_vara(&mem_nc_type, var, h5)))
       return retval;
 
@@ -896,7 +897,7 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
                      BAIL(retval);
                   
                   /* Check for out of bound requests. */
-                  if (start[d2] >= (hssize_t)ulen)
+                  if (start[d2] > (hssize_t)ulen)
                      BAIL_QUIET(NC_EINVALCOORDS);
                   if (start[d2] + count[d2] > ulen)
                      BAIL_QUIET(NC_EEDGE);
@@ -2199,8 +2200,8 @@ write_dim(NC_DIM_INFO_T *dim, NC_GRP_INFO_T *grp, int write_dimid)
          dims[0] = dim->len;
          max_dims[0] = dim->len;
          if (dim->unlimited) 
-         {
-            max_dims[0] = H5S_UNLIMITED;
+         
+{            max_dims[0] = H5S_UNLIMITED;
             if (H5Pset_chunk(create_propid, 1, chunk_dims) < 0)
                BAIL(NC_EHDFERR);
          }

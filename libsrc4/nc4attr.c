@@ -148,13 +148,11 @@ nc4_get_att(int ncid, NC_FILE_INFO_T *nc, int varid, const char *name,
       }
       else if (att->stdata)
       {
-	 char **stdata = (char **)data;
 	 for (i = 0; i < att->len; i++)
 	 {
-	    if (!(*stdata = malloc(strlen(att->stdata[i]) + 1)))
+	    if (!(((char **)data)[i] = malloc(strlen(att->stdata[i]) + 1)))
 	       BAIL(NC_ENOMEM);
-	    strcpy(*stdata, att->stdata[i]);
-	    stdata++;
+	    strcpy(((char **)data)[i], att->stdata[i]);
 	 }
       }
       else
@@ -354,10 +352,11 @@ nc4_put_att(int ncid, NC_FILE_INFO_T *nc, int varid, const char *name,
       if (type_info && type_info->class == NC_VLEN)
 	 size = sizeof(hvl_t);
       else if (var->xtype == NC_STRING)
-	 size = strlen(*(char **)data) + 1;
+	 size = sizeof(char *);
       else
 	 size = type_size;
 
+      /* 	 size = strlen(*(char **)data) + 1; */
       if (!(var->fill_value = malloc(size)))
 	 return NC_ENOMEM;
 
@@ -372,7 +371,11 @@ nc4_put_att(int ncid, NC_FILE_INFO_T *nc, int varid, const char *name,
 	 memcpy(fv_vlen->p, in_vlen->p, in_vlen->len * size);
       }
       else if (var->xtype == NC_STRING)
-	 strcpy((char *)(var->fill_value), *(char **)data);
+      {
+	 if (!(*(char **)var->fill_value = malloc(strlen(*(char **)data) + 1)))
+	    return NC_ENOMEM;
+	 strcpy(*(char **)(var->fill_value), *(char **)data);
+      }
       else
 	 memcpy(var->fill_value, data, type_size);
 
