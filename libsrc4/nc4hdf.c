@@ -897,7 +897,7 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
                      BAIL(retval);
                   
                   /* Check for out of bound requests. */
-                  if (start[d2] > (hssize_t)ulen)
+                  if (start[d2] >= (hssize_t)ulen && count[d2])
                      BAIL_QUIET(NC_EINVALCOORDS);
                   if (start[d2] + count[d2] > ulen)
                      BAIL_QUIET(NC_EEDGE);
@@ -2200,8 +2200,8 @@ write_dim(NC_DIM_INFO_T *dim, NC_GRP_INFO_T *grp, int write_dimid)
          dims[0] = dim->len;
          max_dims[0] = dim->len;
          if (dim->unlimited) 
-         
-{            max_dims[0] = H5S_UNLIMITED;
+	 {
+            max_dims[0] = H5S_UNLIMITED;
             if (H5Pset_chunk(create_propid, 1, chunk_dims) < 0)
                BAIL(NC_EHDFERR);
          }
