@@ -29,6 +29,12 @@ TESTPROGRAMS = nctest
 check_PROGRAMS = $(TESTPROGRAMS)
 TESTS = $(TESTPROGRAMS) compare_test_files.sh
 
+# This will the test program with valgrind, the memory checking
+# tool. (Valgrind must be present for this to work.)
+if USE_VALGRIND_TESTS
+TESTS += run_valgrind_tests.sh
+endif # USE_VALGRIND_TESTS
+
 # These are the source files for the nctest program.
 nctest_SOURCES = add.c add.h atttests.c cdftests.c dimtests.c driver.c	\
 emalloc.c emalloc.h error.c error.h misctest.c rec.c slabs.c testcdf.h	\
