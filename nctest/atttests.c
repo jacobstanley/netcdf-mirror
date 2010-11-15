@@ -323,6 +323,7 @@ test_ncattput(path)
 	ncclose(cdfid); return ++nerrs;
     }
     free(tmp.name);
+    free(ww.dims);
     if (nerrs > 0)
       (void) fprintf(stderr,"FAILED! ***\n");
     else
@@ -441,6 +442,7 @@ test_ncattinq(path)
     else
       (void) fprintf(stderr,"ok ***\n");
 
+    free(vv.dims);
     return nerrs;
 }
 
@@ -608,6 +610,7 @@ test_ncattget(path)
     else
       (void) fprintf(stderr,"ok ***\n");
 
+    free(uu.dims);
     return nerrs;
 }
 
@@ -884,6 +887,9 @@ test_ncattcopy(path1, path2)
       (void) fprintf(stderr,"FAILED! ***\n");
     else
       (void) fprintf(stderr,"ok ***\n");
+
+    free(tt.dims);
+    free(tu.dims);
 
     return nerrs;
 }

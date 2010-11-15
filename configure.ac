@@ -985,7 +985,7 @@ AC_PROG_LIBTOOL
 # Valgrind tests don't work with shared builds because of some libtool
 # weirdness.
 if test "x$enable_shared" = xyes; then
-   if test $enable_valgrind_tests=yes; then
+   if test $enable_valgrind_tests = yes; then
       AC_MSG_ERROR([No valgrind tests with shared libraries])
    fi
 fi
