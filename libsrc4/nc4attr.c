@@ -637,15 +637,15 @@ NC4_rename_att(int ncid, int varid, const char *name,
    {
       if (varid == NC_GLOBAL)
       {
-	 retval = nc4_delete_hdf5_att(grp->hdf_grpid, att->name);
+         if (H5Adelete(grp->hdf_grpid, att->name) < 0)
+	    return NC_EHDFERR;
       }
       else
       {
 	 if ((retval = nc4_open_var_grp2(grp, varid, &datasetid)))
 	    return retval;
-	 retval = nc4_delete_hdf5_att(datasetid, att->name);
-	 if (retval)
-	    return retval;
+         if (H5Adelete(datasetid, att->name) < 0)
+	    return NC_EHDFERR;
       }
    }
 

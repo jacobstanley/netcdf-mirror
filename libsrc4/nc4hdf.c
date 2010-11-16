@@ -1582,9 +1582,10 @@ put_att_grpa(NC_GRP_INFO_T *grp, int varid, NC_ATT_INFO_T *att)
    }
 
    /* Delete the att if it exists already. */
-   if ((retval = nc4_delete_hdf5_att(locid, att->name)))
-      BAIL(retval);
-
+   H5E_BEGIN_TRY {
+      H5Adelete(locid, att->name);
+   } H5E_END_TRY;
+      
    /* Get the length ready, and find the HDF type we'll be
     * writing. */
    dims[0] = att->len;
@@ -1672,41 +1673,6 @@ put_att_grpa(NC_GRP_INFO_T *grp, int varid, NC_ATT_INFO_T *att)
 #ifdef EXTRA_TESTS
    num_spaces--;
 #endif
-   return retval;
-}
-
-/* This will delete HDF5 attribute name from loc, if it exists. If the
-   att doesn't exists, nothing will happen (and the function will
-   return NC_NOERR). */
-int
-nc4_delete_hdf5_att(hid_t loc, const char *name)
-{
-   hid_t att = 0;
-   char att_name[NC_MAX_HDF5_NAME + 1];
-   int a, num, finished = 0;
-   int retval = NC_NOERR;
-
-   if ((num = H5Aget_num_attrs(loc)) < 0)
-      return NC_EHDFERR;
-
-   for (a = 0; a < num && !finished; a++) 
-   {
-      if ((att = H5Aopen_idx(loc, (unsigned int)a)) < 0)
-         BAIL(NC_EHDFERR);
-      if (H5Aget_name(att, NC_MAX_HDF5_NAME, att_name) < 0)
-         BAIL(NC_EHDFERR);
-      if (!strcmp(att_name, name))
-      {
-         LOG((4, "nc4_delete_hdf5_att: deleting HDF5 att %s", name));
-         if (H5Adelete(loc, name) < 0)
-            BAIL(NC_EHDFERR);
-         finished++;
-      }
-      if (att > 0 && H5Aclose(att) < 0)
-         BAIL(NC_EHDFERR);
-   }
-   
-  exit:
    return retval;
 }
 
