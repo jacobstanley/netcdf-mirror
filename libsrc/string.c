@@ -274,10 +274,13 @@ set_NC_string(NC_string *ncstrp, const char *str)
 	if(ncstrp->nchars < slen)
 		return NC_ENOTINDEFINE;
 
-	(void) memcpy(ncstrp->cp, str, slen);
-	diff = ncstrp->nchars - slen;
-	if(diff != 0)
-		(void) memset(ncstrp->cp + slen, 0, diff);
+	/* (void) memcpy(ncstrp->cp, str, slen); */
+	/* diff = ncstrp->nchars - slen; */
+	/* if(diff != 0) */
+	/* 	(void) memset(ncstrp->cp + slen, 0, diff); */
+	
+	strcpy(ncstrp->cp, str);
+	ncstrp->nchars = slen;
 
 	return NC_NOERR;
 }

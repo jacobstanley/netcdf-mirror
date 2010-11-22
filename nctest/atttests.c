@@ -1157,6 +1157,7 @@ test_ncattrename(path)
     if (val_cmp(tmp.type, tmp.len, tmp.val, atty.val) != 0) {
 	error("%s: ncattget got bad values after rename attrs", pname);
 	nerrs++;
+	return ++nerrs;
     }
     if (ncattinq(cdfid, NC_GLOBAL, atty.name, &tmp.type, &tmp.len) != -1) {
 	error("%s: ncattrename left attribute with old name", pname);
@@ -1203,6 +1204,7 @@ test_ncattrename(path)
     if (val_cmp(tmp.type, tmp.len, tmp.val, atty.val) != 0) {
 	error("%s: ncattget got bad values after data mode rename", pname);
 	nerrs++;
+	return ++nerrs;
     }
     free (tmp.val);
     if (ncclose (cdfid) == -1) {

@@ -25,7 +25,7 @@ nctest_netcdf4.nc test2.nc temp.tmp
 
 # Run nctest and the script that compares the output with the
 # reference file.
-TESTPROGRAMS = nctest
+TESTPROGRAMS = nctest tst_rename
 check_PROGRAMS = $(TESTPROGRAMS)
 TESTS = $(TESTPROGRAMS) compare_test_files.sh
 
@@ -41,4 +41,3 @@ emalloc.c emalloc.h error.c error.h misctest.c rec.c slabs.c testcdf.h	\
 tests.h val.c val.h vardef.c varget.c vargetg.c varput.c varputg.c	\
 vartests.c vputget.c vputgetg.c
 
-# For those who can't remember to type make check instead of make test.

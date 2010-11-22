@@ -647,6 +647,7 @@ NC4_rename_att(int ncid, int varid, const char *name,
          if (H5Adelete(datasetid, att->name) < 0)
 	    return NC_EHDFERR;
       }
+      att->created = 0;
    }
 
    /* Copy the new name into our metadata. */
