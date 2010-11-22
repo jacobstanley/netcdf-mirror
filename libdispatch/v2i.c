@@ -992,7 +992,7 @@ ncattinq(
 	if(len != NULL)
 		*len = (int) ll;
 
-	return 0;
+	return 1;
 
 }
 
@@ -1011,7 +1011,7 @@ ncattget(
 		nc_advise("ncattget", status, "ncid %d", ncid);
 		return -1;
 	}
-	return 0;
+	return 1;
 }
 
 
@@ -1066,7 +1066,7 @@ ncattrename(
 		nc_advise("ncattrename", status, "ncid %d", ncid);
 		return -1;
 	}
-	return 0;
+	return 1;
 }
 
 
@@ -1083,7 +1083,7 @@ ncattdel(
 		nc_advise("ncattdel", status, "ncid %d", ncid);
 		return -1;
 	}
-	return 0;
+	return 1;
 }
 
 #endif /* NO_NETCDF_2 */
