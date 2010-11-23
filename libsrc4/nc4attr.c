@@ -255,7 +255,7 @@ nc4_put_att(int ncid, NC_FILE_INFO_T *nc, int varid, const char *name,
    else
    {
       /* For an existing att, if we're not in define mode, the len
-	 must not be greater than the existing len. */
+	 must not be greater than the existing len for classic model. */
       if (!(h5->flags & NC_INDEF) && 
 	  len * nc4typelen(file_type) > (size_t)att->len * nc4typelen(att->xtype))
       {
@@ -301,6 +301,8 @@ nc4_put_att(int ncid, NC_FILE_INFO_T *nc, int varid, const char *name,
 
    /* Now fill in the metadata. */
    att->dirty++;
+   if (att->name)
+      free(att->name);
    if (!(att->name = malloc((strlen(norm_name) + 1) * sizeof(char))))
       return NC_ENOMEM;
    strcpy(att->name, norm_name);

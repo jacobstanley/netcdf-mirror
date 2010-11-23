@@ -21,7 +21,7 @@ EXTRA_DIST = ref_nctest_classic.nc ref_nctest_64bit_offset.nc	\
 compare_test_files.sh
 
 CLEANFILES = nctest_classic.nc nctest_64bit_offset.nc	\
-nctest_netcdf4.nc test2.nc temp.tmp
+nctest_netcdf4.nc test2.nc temp.tmp tst_*.nc
 
 # Run nctest and the script that compares the output with the
 # reference file.
