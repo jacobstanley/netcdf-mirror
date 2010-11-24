@@ -279,8 +279,9 @@ main(int argc, char **argv)
       if (nc_rename_dim(ncid, 12, ANOTHER_NAME) != NC_EBADDIM) ERR;
       if (nc_enddef(ncid)) ERR;
       if (nc_rename_dim(ncid, pp_dimid, P_NAME)) ERR;
-      if (nc_inq_dimid(ncid, P_NAME, dimid_in)) ERR;
+      if (nc_inq_dimid(ncid, P_NAME, &dimid_in)) ERR;
       if (dimid_in != pp_dimid) ERR;
+      if (nc_inq_dimid(ncid, P_NAME, NULL)) ERR;
       if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;
