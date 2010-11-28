@@ -21,7 +21,7 @@ set F="http://dods.ndbc.noaa.gov/thredds/dodsC/data/stdmet/46029/46029h9999.nc"
 set CON="wind_dir[1:10][0:0][0:0]"
 endif
 
-#set PARMS="${PARMS}[netcdf4]"
+set PARMS="${PARMS}[netcdf4]"
 set PARMS="${PARMS}[cache]"
 set PARMS="${PARMS}[show=fetch]"
 #set PARMS="${PARMS}[compile]"
