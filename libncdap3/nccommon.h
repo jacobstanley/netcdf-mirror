@@ -70,7 +70,7 @@ typedef unsigned int NCFLAGS;
 #define NCF_VLEN     (0x10) /* map sequences to vlen+struct */
 
 /*  Cache control flags */
-#define NCF_CACHE	    (0x20) /* Cache enabled/disabled */
+#define NCF_CACHE    (0x20) /* Cache enabled/disabled */
 
 /*  Misc control flags */
 #define NCF_NOUNLIM         (0x40) /* suppress bad sequences 
