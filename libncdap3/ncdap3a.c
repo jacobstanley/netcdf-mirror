@@ -268,6 +268,9 @@ fprintf(stderr,"minconstraints: %s\n",ncbytescontents(minconstraints));
     xseq = seq->attachment;
     ncstat = countsequence(nccomm,xseq,&seqsize);
     if(ncstat) goto fail;
+#ifdef DEBUG
+fprintf(stderr,"sequencesize: %s = %lu\n",seq->name,(unsigned long)seqsize);
+#endif
     /* throw away the fetch'd trees */
     unattach34(nccomm->cdf.ddsroot);
     freecdfroot34(dxdroot);
