@@ -117,7 +117,7 @@ fprintf(stderr,"Unconstrained: reusing prefetch\n");
     } else if(iscached(&drno->dap,varaprojection->var->leaf,&cachenode)) {
 #ifdef DEBUG
 fprintf(stderr,"Reusing cached fetch constraint: %s\n",
-	dumpconstraint(&cachenode->constraint));
+	dumpconstraint(cachenode->constraint));
 #endif
     } else { /* Load with constraints */
 	NClist* vars = nclistnew();

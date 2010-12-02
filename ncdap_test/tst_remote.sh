@@ -123,9 +123,14 @@ test.03;2;s1"
 # Unknown problem: test.07;2;&age>2
 IGNORE="test.07.2" 
 
-# Temporarily suppress
+# Known to fail
+
 XFAILTESTS3=""
-XFAILTESTS4=""
+XFAILTESTS4="$XFAILTESTS3"
+
+# Server is down at the moment
+SVCFAILTESTS3="GLOBEC_cetaceans.1 GLOBEC_cetaceans.2"
+SVCFAILTESTS4="$SVCFAILTESTS3"
 
 # Misc tests not currently used
 REMOTEURL0="http://test.opendap.org/dap/netcdf/examples"
@@ -156,12 +161,14 @@ case "$mode" in
     TITLE="DAP to netCDF-3 translation"
     PARAMS="${CACHE}[netcdf3]"
     XFAILTESTS="$XFAILTESTS3"
+    SVCFAILTESTS="$SVCFAILTESTS3"
     ;;
 4)
     EXPECTED="$expected4"
     TITLE="DAP to netCDF-4 translation"
     PARAMS="${CACHE}[netcdf4]"
     XFAILTESTS="$XFAILTESTS4"
+    SVCFAILTESTS="$SVCFAILTESTS4"
     ;;
 esac
 
@@ -180,6 +187,7 @@ mkdir "${RESULTSDIR}"
 
 passcount=0
 xfailcount=0
+svcfailcount=0
 failcount=0
 
 echo "*** Testing $TITLE "
@@ -237,6 +245,13 @@ for t in ${TESTSET} ; do
   for x in ${XFAILTESTS} ; do
     if test "x${name}" = "x${x}" ; then isxfail=1; fi
   done
+
+  # determine if this is a down server test
+  issvcfail=0
+  for x in ${SVCFAILTESTS} ; do
+    if test "x${name}" = "x${x}" ; then issvcfail=1; fi
+  done
+
   status=0
 
   if ${TIMECMD} ${VALGRIND} ${NCDUMP} "${url}" > ${name}.dmp ; then status=$status; else status=1; fi
@@ -245,6 +260,7 @@ for t in ${TESTSET} ; do
     then status=$status; else status=1; fi
   if test "x$status" = "x1" ; then
     if test "x$isxfail" = "x1" ; then status=2; fi  # xfail
+    if test "x$issvcfail" = "x1" ; then status=3; fi  # svcfail
   fi
 
   case "$status" in
@@ -260,6 +276,10 @@ for t in ${TESTSET} ; do
     xfailcount=`expr $xfailcount + 1`
     echo "*** XFAIL: ${name}"
     ;;
+  3)
+    svcfailcount=`expr $svcfailcount + 1`
+    echo "*** SVCFAIL: ${name}"
+    ;;
   esac
 
 done
@@ -270,10 +290,13 @@ cd ..
 
 done
 
-totalcount=`expr $passcount + $failcount + $xfailcount`
-okcount=`expr $passcount + $xfailcount`
+totalcount=`expr $passcount + $failcount + $xfailcount + $svcfailcount`
+okcount=`expr $passcount + $xfailcount + $svcfailcount`
 
 echo "*** PASSED: ${okcount}/${totalcount} ; ${xfailcount} expected failures ; ${failcount} unexpected failures"
+if test "$svcfailcount" -gt 0 ; then
+echo "            ${svcfailcount} failures from unavailable server"
+fi
 
 # Ignore failures for now
 #failcount=0

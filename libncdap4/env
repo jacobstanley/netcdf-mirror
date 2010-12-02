@@ -1,9 +1,7 @@
 set PARMS=""; set ARGS=""; set CON="" ; set CE=""; set OCON=""
 set PARMS="[log]"
 
-
-set F="http://dapper.pmel.noaa.gov/dapper/argo/argo_all.cdp"
-set CON="&location.LATITUDE<1&location.LATITUDE>-1"
+set F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/synth2"
 if (1 == 0) then
 set F="http://dapper.pmel.noaa.gov/dapper/argo/argo_all.cdp"
 #set CON="&location.LATITUDE<1&location.LATITUDE>-1"
@@ -22,9 +20,9 @@ set F="http://dods.ndbc.noaa.gov/thredds/dodsC/data/stdmet/46029/46029h9999.nc"
 set CON="wind_dir[1:10][0:0][0:0]"
 endif
 
-#set PARMS="${PARMS}[netcdf4]"
+set PARMS="${PARMS}[netcdf4]"
 set PARMS="${PARMS}[cache]"
-set PARMS="${PARMS}[show=fetch]"
+#set PARMS="${PARMS}[show=fetch]"
 #set PARMS="${PARMS}[compile]"
 if ( "x$CE" != "x" ) set PARMS="${PARMS}[ce=${CE}]"
 set PROG="./ncd"
