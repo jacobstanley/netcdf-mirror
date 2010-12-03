@@ -285,9 +285,6 @@ typedef struct CDFdim {
     CDFdimflags    dimflags;
     struct CDFnode* basedim; /* for duplicate dimensions*/
     struct CDFnode* array; /* parent array node */
-#ifdef IGNORE
-    unsigned int arrayindex;
-#endif
     size_t declsize;	    /* from constrained DDS*/
     size_t declsize0;	    /* from unconstrained DDS*/
 } CDFdim;

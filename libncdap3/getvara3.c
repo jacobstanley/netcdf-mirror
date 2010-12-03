@@ -140,7 +140,7 @@ fprintf(stderr,"Reusing cached fetch constraint: %s\n",
 #endif
     } else { /*not cached: load using constraints */
 	nclistpush(vars,(ncelem)varainfo->target);
-	constraint = createncconstraint(!FILLCONSTRAINT);
+	constraint = createncconstraint();
         constraint->projections = clonencprojections(drno->dap.oc.dapconstraint->projections);
         if(!FLAGSET(drno->dap.controls,NCF_CACHE)) {
 	    /* If we are not caching, then merge the getvara projections */

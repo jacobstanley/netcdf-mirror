@@ -39,7 +39,7 @@ extern NCvalue* createncvalue(void);
 extern NCfcn* createncfcn(void);
 extern NCvar* createncvar(void);
 extern NCconstant* createncconstant(void);
-extern NCconstraint* createncconstraint(int);
+extern NCconstraint* createncconstraint(void);
 
 /* Watch out, input==struct and output==struct */
 extern NCslice clonencslice(NCslice slice);

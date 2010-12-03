@@ -1181,15 +1181,11 @@ createncselection(void)
 }
 
 NCconstraint*
-createncconstraint(int fill)
+createncconstraint(void)
 {
     NCconstraint* con = (NCconstraint*)emalloc(sizeof(NCconstraint));
     memset((void*)con,0,sizeof(NCconstraint));
     con->sort = NS_CONSTRAINT;
-    if(fill) {
-	con->projections = nclistnew();
-	con->selections = nclistnew();
-    }
     return con;
 }
 
@@ -1344,7 +1340,7 @@ clonencconstraint(NCconstraint* con)
 {
     NCconstraint* clone;
     if(con == NULL) return NULL;
-    clone = createncconstraint(!FILLCONSTRAINT);
+    clone = createncconstraint();
     clone->projections = clonencprojections(con->projections);
     clone->selections = clonencselections(con->selections);
     return clone;

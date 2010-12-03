@@ -115,7 +115,7 @@ prefetchdata3(NCDAPCOMMON* nccomm)
 	goto done;
     }
 
-    newconstraint = createncconstraint(!FILLCONSTRAINT);
+    newconstraint = createncconstraint();
     /* Construct the projections for this set of vars */
     /* Initially, the constraints are same as the merged constraints */
     newconstraint->projections = clonencprojections(constraint->projections);
@@ -226,11 +226,11 @@ fprintf(stderr,"buildcachenode: purge cache node: %s\n",
 	}
 	/* Remove cache nodes to get below the max cache count */
 	/* If not caching, then cachecount should be 0 */
-	while(nclistlength(cache->nodes) >= cache->cachecount) {
+	while(nclistlength(cache->nodes) > cache->cachecount) {
 	    NCcachenode* node = (NCcachenode*)nclistremove(cache->nodes,0);
 #ifdef DEBUG
 fprintf(stderr,"buildcachenode: count purge cache node: %s\n",
-	dumpcachenode(cachenode));
+	dumpcachenode(node));
 #endif
 	    cache->cachesize -= node->xdrsize;
 	    freenccachenode(nccomm,node);

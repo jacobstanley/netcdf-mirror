@@ -128,7 +128,9 @@ NCD3_open(const char * path, int mode,
     /* process control client parameters */
     applyclientparamcontrols3(&drno->dap);
 
-    drno->dap.oc.dapconstraint = createncconstraint(FILLCONSTRAINT);
+    drno->dap.oc.dapconstraint = createncconstraint();
+    drno->dap.oc.dapconstraint->projections = nclistnew();
+    drno->dap.oc.dapconstraint->selections = nclistnew();
 
     /* Check to see if we are unconstrainable */
     if(FLAGSET(drno->dap.controls,NCF_UNCONSTRAINABLE)) {

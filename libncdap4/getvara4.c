@@ -178,8 +178,6 @@ fprintf(stderr,"cache.datadds=%s\n",dumptree(cachenode->datadds));
 fail:
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
 ok:
-    if(!FLAGSET(drno->dap.controls,NCF_UNCONSTRAINABLE) && !FLAGSET(drno->dap.controls,NCF_CACHE))
-	freenccachenode(nccomm,cachenode);
     efree(constraint);
     freegetvara(varainfo);
     freencprojection(varaprojection);
