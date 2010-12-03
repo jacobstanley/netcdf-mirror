@@ -52,6 +52,7 @@ WHICHTESTS="L1 LC1"
 else
 WHICHTESTS="S1 C1 C2"
 fi
+WHICHTESTS="C2"
 
 # For special testing
 REMOTEURLX="http://test.opendap.org:8080/dods/dts"
@@ -112,7 +113,12 @@ test.07;4;types.f32"
 REMOTEURLC2="http://oceanwatch.pfeg.noaa.gov/opendap/GLOBEC"
 REMOTETESTSC2="\
 GLOBEC_cetaceans;1;number&number>6 \
-GLOBEC_cetaceans;2;lat,lon&lat>42.0&lat<=42.5 \
+GLOBEC_cetaceans;2;lat,lon&lat>42.0&lat<=42.5\
+"
+
+REMOTEURLC3="http://dapper.pmel.noaa.gov/dapper/argo"
+REMOTETESTSC3="\
+argo_all.cdp;1;&location.LATITUDE<1&location.LATITUDE>-1\
 "
 
 # Constrained long tests
@@ -191,7 +197,6 @@ svcfailcount=0
 failcount=0
 
 echo "*** Testing $TITLE "
-echo "        Base URL: ${TESTURL}"
 echo "        Client Parameters: ${PARAMS}"
 if test "$cache" = 0; then
 echo "        Caching: off"
@@ -211,6 +216,7 @@ for i in $WHICHTESTS ; do
   L2) TESTURL="$REMOTEURLL2" ; TESTSET="$REMOTETESTSL2" ;;
   C1) TESTURL="$REMOTEURLC1" ; TESTSET="$REMOTETESTSC1" ; constrained=1 ;;
   C2) TESTURL="$REMOTEURLC2" ; TESTSET="$REMOTETESTSC2" ; constrained=1 ;ncconstrained=0 ;;
+  C3) TESTURL="$REMOTEURLC3" ; TESTSET="$REMOTETESTSC3" ; constrained=1 ;ncconstrained=0 ;;
   LC1) TESTURL="$REMOTEURLLC1" ; TESTSET="$REMOTETESTSLC1" ; constrained=1 ;;
   X) TESTURL="$REMOTEURLX" ; TESTSET="$REMOTETESTSX" ; constrained=0 ;;
   XC) TESTURL="$REMOTEURLXC" ; TESTSET="$REMOTETESTSXC" ; constrained=1 ;;

@@ -1,7 +1,8 @@
 set PARMS=""; set ARGS=""; set CON="" ; set CE=""; set OCON=""
 set PARMS="[log]"
 
-set F="http://test.opendap.org:8080/dods/dts/test.07a"
+set F="http://oceanwatch.pfeg.noaa.gov/opendap/GLOBEC/GLOBEC_cetaceans"
+set CON="number&number>6"
 if (1 == 0) then
 set F="http://dapper.pmel.noaa.gov/dapper/argo/argo_all.cdp"
 #set CON="&location.LATITUDE<1&location.LATITUDE>-1"
