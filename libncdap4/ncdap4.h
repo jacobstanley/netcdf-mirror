@@ -17,12 +17,14 @@
 #include "nclist.h"
 #include "nchashmap.h"
 
+#include "netcdf.h"
+#include "ncdispatch.h"
+#include "nc4internal.h"
+#include "nc.h"
+
 #include "oc.h"
 #include "dapurl.h"
 
-#include "nc4internal.h"
-#include "nc.h"
-#include "netcdf.h"
 
 #include "nccommon.h"
 #include "ncdap3.h"
@@ -78,7 +80,7 @@ extern short drno_delta_file_id(short);
 extern int drno_delta_numfiles(int);
 
 /**********************************************************/
-extern int ncceparse(char*, int, NClist**, NClist**, char**);
+extern int ncceparse(char*, int, NCconstraint*, char**);
 
 extern NCerror computecdfnodesets4(NCDAPCOMMON*);
 extern NCerror fixgrids4(NCDAPCOMMON*);

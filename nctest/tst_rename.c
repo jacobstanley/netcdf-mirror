@@ -206,37 +206,13 @@ int
 main(int argc, char **argv)
 {
    printf("\n*** Testing v3/v4 API versions of some v2 tests.\n");
-   printf("*** testing simple att rename...");
-   {
-#define ATT_NAME "Larry"
-#define ATT_NEW_NAME "Laryr"
-#define PP1_SIZE 7
-#define P1_NAME "p"
-
-      int ncid, pp_dimid, qq_dimid, dimid_in;
-      int larry = 42, larry_in;
-      char name_in[NC_MAX_NAME + 1];
-
-      if (nc_create(FILE_NAME, NC_NETCDF4|NC_CLASSIC_MODEL|NC_CLOBBER, &ncid)) ERR;
-      if (nc_put_att(ncid, NC_GLOBAL, ATT_NAME, NC_INT, 1, &larry)) ERR;
-      if (nc_enddef(ncid)) ERR;
-      if (nc_rename_att(ncid, NC_GLOBAL, ATT_NAME, ATT_NEW_NAME)) ERR;
-      if (nc_close(ncid)) ERR;
-
-      if (nc_open(FILE_NAME, NC_NOWRITE, &ncid)) ERR;
-      if (nc_get_att(ncid, NC_GLOBAL, ATT_NEW_NAME, &larry_in)) ERR;
-      if (larry_in != larry) ERR;
-      if (nc_close(ncid)) ERR;
-   }
-   SUMMARIZE_ERR;
    printf("*** testing simple dim rename...");
    {
 #define PP1 "pp"
 #define PP1_SIZE 7
 #define P1_NAME "p"
 
-      int ncid, pp_dimid, qq_dimid, dimid_in;
-      char name_in[NC_MAX_NAME + 1];
+      int ncid, pp_dimid, dimid_in;
 
       /* Create a file with one dimension. */
       if (nc_create(FILE_NAME, NC_CLOBBER, &ncid)) ERR;
