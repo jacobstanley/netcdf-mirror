@@ -421,6 +421,7 @@ else
 fi
 
 # CURLOPT_KEYPASSWD is not defined until curl version 7.16.4
+
 # Save/restore CFLAGS
 SAVECFLAGS="$CFLAGS"
 CFLAGS="${curl_cflags}"
@@ -435,6 +436,7 @@ AC_MSG_RESULT([${havekeypassword}])
 if test "x$havekeypasswd" = "xyes"; then
 AC_DEFINE([HAVE_CURLOPT_KEYPASSWD], [1], [CURLOPT_KEYPASSWD is defined])
 fi
+
 
 else #!require_curl
 
