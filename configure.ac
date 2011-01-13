@@ -372,7 +372,7 @@ else
   fi  
   #verify
   if $with_curl_config --prefix >/dev/null 2>&1 ; then ignore=1; else
-    AC_MSG_ERROR([Erroneous --with-curl-config value])
+    AC_MSG_ERROR([Erroneous --with-curl-config value: ${with_curl_config}])
   fi
 fi
 
