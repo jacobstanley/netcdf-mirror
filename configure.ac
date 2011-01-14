@@ -447,7 +447,6 @@ if test -z "$curlsrc" ; then
   enable_cdmremote=no
 fi
 
-
 # CURLOPT_KEYPASSWD is not defined until curl version 7.16.4
 
 # Save/restore CFLAGS
@@ -458,16 +457,12 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [[int x = CURLOPT_KEYPASSWD;]])],
                    [havekeypassword=yes],
                    [havekeypassword=no])
+AC_MSG_CHECKING([whether a CURLOPT_KEYPASSWD is defined])
+AC_MSG_RESULT([${havekeypassword}])
+if test $havekeypassword = yes; then
+  AC_DEFINE([HAVE_CURLOPT_KEYPASSWD],[1],[Is CURLOPT_KEYPASSWD defined])
+fi
 CFLAGS="$SAVECFLAGS"
-
-if test "$require_curl" = yes ; then
-  AC_MSG_CHECKING([whether a CURLOPT_KEYPASSWD is defined])
-  AC_MSG_RESULT([${havekeypassword}])
-fi
-if test "x$havekeypasswd" = "xyes"; then
-  AC_DEFINE([HAVE_CURLOPT_KEYPASSWD], [1], [CURLOPT_KEYPASSWD is defined])
-fi
-
 
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
