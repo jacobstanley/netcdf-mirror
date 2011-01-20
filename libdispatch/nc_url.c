@@ -67,7 +67,7 @@ nc_urlparse(const char* url0, NC_URL** ncurlp)
         goto done;
     }
     /* Check that the : is followed by "//" */
-    if(p1[0] != '/' || p1[1] != '//') {
+    if(p1[1] != '/' || p1[2] != '/') {
 	ncstat = NC_EINVAL;
 	goto done;
     }

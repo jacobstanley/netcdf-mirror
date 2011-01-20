@@ -1,5 +1,4 @@
 #define NETCDF3ONLY
-
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,7 +114,7 @@ int main()
     char* topsrcdir;
     size_t len;
 
-    /* location of our target url: use file// to avoid remote
+    /* location of our target url: use file:// to avoid remote
 	server downtime issues
      */
     
