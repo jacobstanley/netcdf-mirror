@@ -106,8 +106,8 @@ makece::
 # This rule are used if someone wants to rebuild t_dap3a.c
 # Otherwise never invoked, but records how to do it.
 t_dap3a.c: ${srcdir}/t_dap.c
-	echo "#define NETCDF3ONLY" > ${srcdir}/t_dap3a.c
-	cat ${srcdir}/t_dap.c >> ${srcdir}/t_dap3a.c
+	echo "#define NETCDF3ONLY" > t_dap3a.c
+	cat t_dap.c >> t_dap3a.c
 
 # One last thing
 BUILT_SOURCES = .dodsrc
