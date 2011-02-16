@@ -206,42 +206,220 @@ nc_get_var_chunk_cache_ints(int ncid, int varid, int *sizep,
    return NC_NOERR;
 }
 
+/* Check a set of chunksizes to see if they add up to a chunk that is too big. */
+static int
+check_chunksizes(NC_GRP_INFO_T *grp, NC_VAR_INFO_T *var, const size_t *chunksizes)
+{
+   NC_TYPE_INFO_T *type_info;
+   float total;
+   size_t type_len;
+   int d;
+   int retval;
+   
+   if ((retval = nc4_get_typelen_mem(grp->file->nc4_info, var->xtype, 0, &type_len)))
+      return retval;
+   if ((retval = nc4_find_type(grp->file->nc4_info, var->xtype, &type_info)))
+      return retval;
+   if (type_info && type_info->class == NC_VLEN)
+      total = sizeof(hvl_t);
+   else
+      total = type_len;
+   for (d = 0; d < var->ndims; d++)
+   {
+      if (chunksizes[d] < 1)
+	 return NC_EINVAL;
+      total *= chunksizes[d];
+   }
+   
+   if (total > NC_MAX_UINT)
+      return NC_EBADCHUNK;
+
+   return NC_NOERR;
+}
+
 /* Find the default chunk nelems (i.e. length of chunk along each
  * dimension). */
 static int 
-nc4_find_default_chunksizes(NC_VAR_INFO_T *var)
+nc4_find_default_chunksizes(NC_GRP_INFO_T *grp, NC_VAR_INFO_T *var)
 {
-   int d;
-   size_t type_size, num_values = 1, num_unlim = 0;
+   int d, max_dim;
+   size_t type_size, max_len = 0;
+   float num_values = 1, num_set = 0;
+   float total_chunk_size;
+   int retval;
 
    if (var->type_info->nc_typeid == NC_STRING)
       type_size = sizeof(char *);
    else
       type_size = var->type_info->size;
 
-   /* How many values in the non-unlimited dimensions? */
+   /* Later this will become the total number of bytes in the default
+    * chunk. */
+   total_chunk_size = type_size;
+
+   /* How many values in the variable (or one record, if there are
+    * unlimited dimensions); which is the largest dimension, and how
+    * long is it? */
    for (d = 0; d < var->ndims; d++)
    {
       assert(var->dim[d]);
       if (var->dim[d]->len) 
-	 num_values *= var->dim[d]->len;
+	 num_values *= (float)var->dim[d]->len;
       else
-	 num_unlim++;
+	 num_set++;
+      
+      if (var->dim[d]->len > max_len)
+      {
+	 max_len = var->dim[d]->len;
+	 max_dim = d;
+      }
+      LOG((4, "d = %d max_dim %d max_len %ld num_values %f", d, max_dim, max_len, 
+	   num_values));
    }
 
-   /* Pick a chunk length for each dimension. */
+   /* If a dim is several orders of magnitude smaller than the max
+    * dimension, set it's chunk size to the full extent of the smaller
+    * dimension. */
+#define NC_DIM_MULTIPLIER 1000
    for (d = 0; d < var->ndims; d++)
       if (var->dim[d]->unlimited)
 	 var->chunksizes[d] = 1;
-      else
+      else if (!var->dim[d]->unlimited && var->dim[d]->len * NC_DIM_MULTIPLIER < max_len)
       {
-	 var->chunksizes[d] = (pow((double)DEFAULT_CHUNK_SIZE/(num_values * type_size), 
-				   1/(double)(var->ndims - num_unlim)) * var->dim[d]->len + .5);
-	 LOG((4, "nc_def_var_nc4: name %s dim %d DEFAULT_CHUNK_SIZE %d num_values %d type_size %d "
-	      "chunksize %d", var->name, d, DEFAULT_CHUNK_SIZE, num_values, type_size, var->chunksizes[d]));
-	 if (var->chunksizes[d] > var->dim[d]->len)
-	    var->chunksizes[d] = var->dim[d]->len;
+	 var->chunksizes[d] = var->dim[d]->len;
+	 num_set++; 
       }
+   
+   /* Pick a chunk length for each dimension, if one has not already
+    * been picked above. */
+   for (d = 0; d < var->ndims; d++)
+      if (!var->chunksizes[d])
+      {
+	 size_t suggested_size;
+	 suggested_size = (pow((double)DEFAULT_CHUNK_SIZE/(num_values * type_size), 
+			       1/(double)(var->ndims - num_set)) * var->dim[d]->len - .5);
+	 if (suggested_size > var->dim[d]->len)
+	    suggested_size = var->dim[d]->len;
+	 var->chunksizes[d] = suggested_size ? suggested_size : 1;
+	 total_chunk_size *= var->chunksizes[d];
+	 LOG((4, "nc_def_var_nc4: name %s dim %d DEFAULT_CHUNK_SIZE %d num_values %f type_size %d "
+	      "chunksize %ld", var->name, d, DEFAULT_CHUNK_SIZE, num_values, type_size, var->chunksizes[d]));
+      }
+   LOG((4, "total_chunk_size %f", total_chunk_size));
+   
+   /* But did this add up to a chunk that is too big? */
+   retval = check_chunksizes(grp, var, var->chunksizes);
+   if (retval)
+   {
+      /* Other error? */
+      if (retval != NC_EBADCHUNK)
+	 return retval;
+
+      /* Chunk is too big! Reduce each dimension by half and try again. */
+      for ( ; retval == NC_EBADCHUNK; retval = check_chunksizes(grp, var, var->chunksizes))
+    	 for (d = 0; d < var->ndims; d++)
+	    var->chunksizes[d] /= 2;
+   }
+
+   return NC_NOERR;
+}
+
+/* Find the default chunk nelems (i.e. length of chunk along each
+ * dimension). */
+static int 
+nc4_find_default_chunksizes2(NC_GRP_INFO_T *grp, NC_VAR_INFO_T *var)
+{
+   int d, max_dim;
+   size_t type_size, max_len = 0;
+   float num_values = 1, num_set = 0;
+   float total_chunk_size;
+   int retval;
+
+   if (var->type_info->nc_typeid == NC_STRING)
+      type_size = sizeof(char *);
+   else
+      type_size = var->type_info->size;
+
+   /* Later this will become the total number of bytes in the default
+    * chunk. */
+   total_chunk_size = type_size;
+
+   /* How many values in the variable (or one record, if there are
+    * unlimited dimensions); which is the largest dimension, and how
+    * long is it? */
+   for (d = 0; d < var->ndims; d++)
+   {
+      assert(var->dim[d]);
+      if (var->dim[d]->len) 
+	 num_values *= (float)var->dim[d]->len;
+      else
+	 num_set++;
+      
+      if (var->dim[d]->len > max_len)
+      {
+	 max_len = var->dim[d]->len;
+	 max_dim = d;
+      }
+      LOG((4, "d = %d max_dim %d max_len %ld num_values %f", d, max_dim, max_len, 
+	   num_values));
+   }
+
+   /* If a dim is several orders of magnitude smaller than the max
+    * dimension, set it's chunk size to the full extent of the smaller
+    * dimension. */
+#define NC_DIM_MULTIPLIER 10000
+   for (d = 0; d < var->ndims; d++)
+      if (var->dim[d]->unlimited)
+	 var->chunksizes[d] = 1;
+      else if (!var->dim[d]->unlimited && var->dim[d]->len * NC_DIM_MULTIPLIER < max_len)
+      {
+	 var->chunksizes[d] = var->dim[d]->len;
+	 num_set++; 
+      }
+   
+   /* Pick a chunk length for each dimension, if one has not already
+    * been picked above. */
+   for (d = 0; d < var->ndims; d++)
+      if (!var->chunksizes[d])
+      {
+	 size_t suggested_size;
+	 suggested_size = (pow((double)DEFAULT_CHUNK_SIZE/(num_values * type_size), 
+			       1/(double)(var->ndims - num_set)) * var->dim[d]->len - .5);
+	 if (suggested_size > var->dim[d]->len)
+	    suggested_size = var->dim[d]->len;
+	 var->chunksizes[d] = suggested_size ? suggested_size : 1;
+	 LOG((4, "nc_def_var_nc4: name %s dim %d DEFAULT_CHUNK_SIZE %d num_values %f type_size %d "
+	      "chunksize %ld", var->name, d, DEFAULT_CHUNK_SIZE, num_values, type_size, var->chunksizes[d]));
+      }
+
+   /* Find total chunk size. */
+#ifdef LOGGING   
+   for (d = 0; d < var->ndims; d++)
+      total_chunk_size *= var->chunksizes[d];
+   LOG((4, "total_chunk_size %f", total_chunk_size));
+#endif
+   
+   /* But did this add up to a chunk that is too big? */
+   retval = check_chunksizes(grp, var, var->chunksizes);
+   if (retval)
+   {
+      /* Other error? */
+      if (retval != NC_EBADCHUNK)
+	 return retval;
+
+      /* Chunk is too big! Reduce each dimension by half and try again. */
+      for ( ; retval == NC_EBADCHUNK; retval = check_chunksizes(grp, var, var->chunksizes))
+    	 for (d = 0; d < var->ndims; d++)
+	    var->chunksizes[d] = var->chunksizes[d]/2 ? var->chunksizes[d]/2 : 1;
+   }
+
+   /* Do we have any big data overhangs? They can be dangerous to
+    * babies, the elderly, or confused campers who have had too much
+    * beer. */
+#define NC_ALLOWED_OVERHANG .1
+   for (d = 0; d < var->ndims; d++)
+      for ( ; var->dim[d]->len % var->chunksizes[d] > var->dim[d]->len * NC_ALLOWED_OVERHANG; )
+	 var->chunksizes[d] -= var->dim[d]->len * NC_ALLOWED_OVERHANG;
 
    return NC_NOERR;
 }
@@ -376,9 +554,9 @@ nc_def_var_nc4(int ncid, const char *name, nc_type xtype,
    /* Allocate space for dimension information. */
    if (ndims)
    {
-      if (!(var->dim = malloc(sizeof(NC_DIM_INFO_T *) * ndims)))
+      if (!(var->dim = calloc(ndims, sizeof(NC_DIM_INFO_T *))))
 	 return NC_ENOMEM;
-      if (!(var->dimids = malloc(sizeof(int) * ndims)))
+      if (!(var->dimids = calloc(ndims, sizeof(int))))
 	 return NC_ENOMEM;
    }
 
@@ -406,10 +584,10 @@ nc_def_var_nc4(int ncid, const char *name, nc_type xtype,
    LOG((4, "allocating array of %d size_t to hold chunksizes for var %s",
 	var->ndims, var->name));
    if (var->ndims)
-      if (!(var->chunksizes = malloc(var->ndims * sizeof(size_t))))
+      if (!(var->chunksizes = calloc(var->ndims, sizeof(size_t))))
 	 return NC_ENOMEM;
 
-   if ((retval = nc4_find_default_chunksizes(var)))
+   if ((retval = nc4_find_default_chunksizes2(grp, var)))
       return retval;
 
    /* Is this a variable with a chunksize greater than the current
@@ -764,28 +942,9 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
        * big, and that their total size of chunk is less than 4 GB. */
       if (chunksizes)
       {
-	 NC_TYPE_INFO_T *type_info;
-	 long long total;
-	 size_t type_len;
-	 
-	 if ((retval = nc4_get_typelen_mem(grp->file->nc4_info, var->xtype, 
-					   0, &type_len)))
+
+	 if ((retval = check_chunksizes(grp, var, chunksizes)))
 	    return retval;
-	 if ((retval = nc4_find_type(grp->file->nc4_info, var->xtype, &type_info)))
-	    return retval;
-	 if (type_info && type_info->class == NC_VLEN)
-	    total = sizeof(hvl_t);
-	 else
-	    total = type_len;
-	 for (d = 0; d < var->ndims; d++)
-	 {
-	    if (chunksizes[d] < 1)
-	       return NC_EBADCHUNK;
-	    total *= chunksizes[d];
-	 }
-         
-	 if (total > NC_MAX_UINT)
-	    return NC_EBADCHUNK;
 
 	 /* Set the chunksizes for this variable. */
 	 for (d = 0; d < var->ndims; d++)
@@ -799,7 +958,7 @@ nc_def_var_extra(int ncid, int varid, int *shuffle, int *deflate,
    {
       /* Determine default chunksizes for this variable. */
       if (!var->chunksizes[0])
-	 if ((retval = nc4_find_default_chunksizes(var)))
+	 if ((retval = nc4_find_default_chunksizes2(grp, var)))
 	    return retval;
 
       /* Adjust the cache. */
