@@ -23,6 +23,8 @@ static size_t coord_one[NC_MAX_VAR_DIMS];
 
 static nc_type longtype = (sizeof(long) == sizeof(int) ? NC_INT : NC_INT64);
 
+#define MINVARSSPACE 1024;
+
 static int
 getshape(int ncid, int varid, int ndims, size_t* shape)
 {
@@ -232,6 +234,59 @@ is_recvar(int ncid, int varid, size_t* nrecs)
 }
 
 /* Most dispatch tables will use the default procedures */
+
+#ifdef VARSOPTIMIZE
+int
+NCDEFAULT_get_vars(int ncid, int varid, const size_t * start,
+	    const size_t * edges, const ptrdiff_t * stride,
+	    void *value, nc_type memtype)
+{
+    NC* ncp;
+    int stat = NC_check_id(ncid, &ncp);
+    size_t vartypesize = 0;
+    nc_type xtype;
+    size_t memtypesize = 0;
+
+    if(stat != NC_NOERR) return stat;
+
+    /* Get the variable's type size */
+    stat = nc_inq_vartype(ncid,varid,&vartype);
+    if(stat != NC_NOERR) return stat;
+
+    stat = nc_inq_type(ncid,vartype,NULL,&vartypesize);
+    if(stat != NC_NOERR) return stat;
+
+    memtypesize = vartypesize;
+    if(memtype != NC_NAT) {
+       stat = nc_inq_type(ncid,memtype,NULL,&memtypesize);
+        if(stat != NC_NOERR) return stat;
+    }
+    
+    /* Basically, what we do is read as much as possible
+       into the memory provided by the user and then
+       apply the stride to get compaction. Then we repeat
+       with the remaining space until we get to some
+       minimum space.
+    */
+
+    /* Get the variable's rank */
+    stat = nc_inq_varndims(ncid, varid, &ndims); 
+    if(stat != NC_NOERR) return stat;
+
+    /* Compute available memory space */
+    size_t space,edgeproduct = 1;
+    for(i=0;i<ndims;i++)
+        edgeproduct *= edges[i];
+    space = edgeproduct * memtypesize;
+
+    /* Repeatedly vara into the user's memory */
+    while(space > MINVARSSPACE) {
+/* Complete later */
+    }
+    
+}
+#else
+
 int
 NCDEFAULT_get_vars(int ncid, int varid, const size_t * start,
 	    const size_t * edges, const ptrdiff_t * stride,
@@ -261,6 +316,7 @@ NCDEFAULT_put_vars(int ncid, int varid, const size_t * start,
 #endif
    return ncp->dispatch->put_varm(ncid,varid,start,edges,stride,NULL,value,memtype);
 }
+#endif /*VARSOPTIMIZE*/
 
 int
 NCDEFAULT_get_varm(int ncid, int varid, const size_t *start,
@@ -284,6 +340,9 @@ NCDEFAULT_get_varm(int ncid, int varid, const size_t *start,
 
    status = nc_inq_vartype(ncid, varid, &vartype); 
    if(status != NC_NOERR) return status;
+   /* Check that this is an atomic type */
+   if(vartype >= NC_MAX_ATOMIC_TYPE)
+	return NC_EMAPTYPE;
 
    status = nc_inq_varndims(ncid, varid, &varndims); 
    if(status != NC_NOERR) return status;
@@ -543,6 +602,9 @@ NCDEFAULT_put_varm(
    /* mid body */
    status = nc_inq_vartype(ncid, varid, &vartype); 
    if(status != NC_NOERR) return status;
+   /* Check that this is an atomic type */
+   if(vartype >= NC_MAX_ATOMIC_TYPE)
+	return NC_EMAPTYPE;
 
    status = nc_inq_varndims(ncid, varid, &varndims); 
    if(status != NC_NOERR) return status;
