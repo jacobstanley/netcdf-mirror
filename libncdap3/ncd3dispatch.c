@@ -78,6 +78,11 @@ NULL, /*inq_varid*/
 NULL, /*rename_var*/
 NCD3_get_vara,
 NCD3_put_vara,
+NULL, /*get_vars*/
+NULL, /*put_vars*/
+NULL, /*get_varm*/
+NULL, /*put_varm*/
+
 NULL, /*inq_var_all*/
 
 #ifdef USE_NETCDF4
