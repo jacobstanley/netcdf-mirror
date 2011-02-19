@@ -8,6 +8,7 @@
 */
 
 #include "ncdispatch.h"
+#include "vars.h"
 
 #if defined(__cplusplus)
 /* C++ consts default to internal linkage and must be initialized */
@@ -150,7 +151,7 @@ NC_put_vara(int ncid, int varid, const size_t *start,
       return ncp->dispatch->put_vara(ncid,varid,start,edges,value,memtype);
 }
 
-static int
+int
 NC_get_vara(int ncid, int varid,
 	    const size_t *start, const size_t *edges,
             void *value, nc_type memtype)
@@ -234,59 +235,6 @@ is_recvar(int ncid, int varid, size_t* nrecs)
 }
 
 /* Most dispatch tables will use the default procedures */
-
-#ifdef VARSOPTIMIZE
-int
-NCDEFAULT_get_vars(int ncid, int varid, const size_t * start,
-	    const size_t * edges, const ptrdiff_t * stride,
-	    void *value, nc_type memtype)
-{
-    NC* ncp;
-    int stat = NC_check_id(ncid, &ncp);
-    size_t vartypesize = 0;
-    nc_type xtype;
-    size_t memtypesize = 0;
-
-    if(stat != NC_NOERR) return stat;
-
-    /* Get the variable's type size */
-    stat = nc_inq_vartype(ncid,varid,&vartype);
-    if(stat != NC_NOERR) return stat;
-
-    stat = nc_inq_type(ncid,vartype,NULL,&vartypesize);
-    if(stat != NC_NOERR) return stat;
-
-    memtypesize = vartypesize;
-    if(memtype != NC_NAT) {
-       stat = nc_inq_type(ncid,memtype,NULL,&memtypesize);
-        if(stat != NC_NOERR) return stat;
-    }
-    
-    /* Basically, what we do is read as much as possible
-       into the memory provided by the user and then
-       apply the stride to get compaction. Then we repeat
-       with the remaining space until we get to some
-       minimum space.
-    */
-
-    /* Get the variable's rank */
-    stat = nc_inq_varndims(ncid, varid, &ndims); 
-    if(stat != NC_NOERR) return stat;
-
-    /* Compute available memory space */
-    size_t space,edgeproduct = 1;
-    for(i=0;i<ndims;i++)
-        edgeproduct *= edges[i];
-    space = edgeproduct * memtypesize;
-
-    /* Repeatedly vara into the user's memory */
-    while(space > MINVARSSPACE) {
-/* Complete later */
-    }
-    
-}
-#else
-
 int
 NCDEFAULT_get_vars(int ncid, int varid, const size_t * start,
 	    const size_t * edges, const ptrdiff_t * stride,
@@ -296,9 +244,6 @@ NCDEFAULT_get_vars(int ncid, int varid, const size_t * start,
    int stat = NC_check_id(ncid, &ncp);
 
    if(stat != NC_NOERR) return stat;
-#ifdef USE_NETCDF4
-   if(memtype >= NC_FIRSTUSERTYPEID) memtype = NC_NAT;
-#endif
    return ncp->dispatch->get_varm(ncid,varid,start,edges,stride,NULL,value,memtype);
 }
 
@@ -311,12 +256,8 @@ NCDEFAULT_put_vars(int ncid, int varid, const size_t * start,
    int stat = NC_check_id(ncid, &ncp);
 
    if(stat != NC_NOERR) return stat;
-#ifdef USE_NETCDF4
-   if(memtype >= NC_FIRSTUSERTYPEID) memtype = NC_NAT;
-#endif
    return ncp->dispatch->put_varm(ncid,varid,start,edges,stride,NULL,value,memtype);
 }
-#endif /*VARSOPTIMIZE*/
 
 int
 NCDEFAULT_get_varm(int ncid, int varid, const size_t *start,
