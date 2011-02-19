@@ -8,7 +8,6 @@
 */
 
 #include "ncdispatch.h"
-#include "vars.h"
 
 #if defined(__cplusplus)
 /* C++ consts default to internal linkage and must be initialized */
