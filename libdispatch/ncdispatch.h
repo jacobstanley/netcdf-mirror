@@ -155,7 +155,7 @@ struct nc_vlen_t;
 struct NC;
 
 /* WARNING: this must match libsrc4/netcdf.h */
-#ifndef MPI_INCLUDED
+#ifndef USE_PARALLEL
 #ifndef MPI_Comm
 #define MPI_Comm int
 #define MPI_Info int
@@ -174,6 +174,18 @@ int NC_open(const char *path, int cmode,
 	    int basepe, size_t *chunksizehintp,
 	    int useparallel, void* mpi_info,
 	    int *ncidp);
+
+/* Expose the default vars and varm dispatch entries */
+extern int NCDEFAULT_get_vars(int, int, const size_t*,
+	       const size_t*, const ptrdiff_t*, void*, nc_type);
+extern int NCDEFAULT_put_vars(int, int, const size_t*,
+	       const size_t*, const ptrdiff_t*, const void*, nc_type);
+extern int NCDEFAULT_get_varm(int, int, const size_t*,
+               const size_t*, const ptrdiff_t*, const ptrdiff_t*,
+               void*, nc_type);
+extern int NCDEFAULT_put_varm(int, int, const size_t*,
+               const size_t*, const ptrdiff_t*, const ptrdiff_t*,
+               const void*, nc_type);
 
 /**************************************************/
 /* Forward */
@@ -231,6 +243,14 @@ int (*rename_var)(int, int, const char*);
 
 int (*get_vara)(int, int, const size_t*, const size_t*, void*, nc_type);
 int (*put_vara)(int, int, const size_t*, const size_t*, const void*, nc_type);
+
+/* Added to solve Ferret performance problem with Opendap */
+int (*get_vars)(int, int, const size_t*, const size_t*, const ptrdiff_t*, void*, nc_type);
+int (*put_vars)(int, int, const size_t*, const size_t*, const ptrdiff_t*, const void*, nc_type);
+
+int (*get_varm)(int, int, const size_t*, const size_t*, const ptrdiff_t*, const ptrdiff_t*, void*, nc_type);
+int (*put_varm)(int, int, const size_t*, const size_t*, const ptrdiff_t*, const ptrdiff_t*, const void*, nc_type);
+
 
 int (*inq_var_all)(int ncid, int varid, char *name, nc_type *xtypep, 
                int *ndimsp, int *dimidsp, int *nattsp, 
