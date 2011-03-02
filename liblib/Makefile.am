@@ -9,13 +9,13 @@
 AM_LDFLAGS = @EXTERN_LDFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I${top_srcdir}/libsrc	\
 -I${top_srcdir}/libdispatch
-libnetcdf_la_LIBADD = 
 
 # This is our output, the netcdf library the user will install.
 lib_LTLIBRARIES = libnetcdf.la
 
 # These linker flags specify libtool version info.
 libnetcdf_la_LDFLAGS = -version-number 7:0:1
+libnetcdf_la_LIBADD = -lhdf5_hl -lhdf5 -lz
 
 if BUILD_DLL
 libnetcdf_la_LDFLAGS += -no-undefined

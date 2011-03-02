@@ -1221,22 +1221,23 @@ if test "x$enable_netcdf_4" = xyes; then
       --disable-netcdf-4, or see config.log for errors.])
    fi
    
+   AC_CHECK_FUNCS([H5Pget_fapl_mpiposix H5Pget_fapl_mpio H5Pset_deflate H5Z_can_apply_szip])
    # The user may have parallel HDF5 based on MPI POSIX.
-   AC_CHECK_LIB([hdf5], [H5Pget_fapl_mpiposix], [enable_parallel_posix=yes], [])
-   if test "x$enable_parallel_posix" = xyes; then
+#   AC_CHECK_LIB([hdf5], [H5Pget_fapl_mpiposix], [enable_parallel_posix=yes], [])
+   if test "x$ac_cv_func_H5Pget_fapl_mpiposix" = xyes; then
       AC_DEFINE([USE_PARALLEL_POSIX], [1], [if true, compile in parallel netCDF-4 based on MPI/POSIX])
    fi
    
    # The user may have parallel HDF5 based on MPI mumble mumble.
-   AC_CHECK_LIB([hdf5], [H5Pget_fapl_mpio], [enable_parallel_mpio=yes], [])
-   if test "x$enable_parallel_mpio" = xyes; then
+ #  AC_CHECK_LIB([hdf5], [H5Pget_fapl_mpio], [enable_parallel_mpio=yes], [])
+   if test "x$ac_cv_func_H5Pget_fapl_mpio" = xyes; then
       AC_DEFINE([USE_PARALLEL_MPIO], [1], [if true, compile in parallel netCDF-4 based on MPI/IO])
    fi
 
    # If parallel is in use, enable it in the C code. Also add some stuff to netcdf.h.
    enable_parallel=no
   # AC_MSG_CHECKING([how to modify netcdf.h to deal with parallel I/O])
-   if test "x$enable_parallel_mpio" = xyes -o "x$enable_parallel_posix" = xyes; then
+   if test "x$ac_cv_func_H5Pget_fapl_mpio" = xyes -o "x$ac_cv_func_H5Pget_fapl_mpiposix" = xyes; then
       enable_parallel=yes
       AC_DEFINE([USE_PARALLEL], [1], [if true, parallel netCDF-4 is in use])
       # Modify netcdf.h to include parallel stuff.
@@ -1274,14 +1275,14 @@ dnl 	 fi
    AC_MSG_RESULT([$enable_parallel])         
    
    # The user must have build HDF5 with the ZLIB library.
-   AC_CHECK_LIB([hdf5], [H5Pset_deflate], [enable_zlib=yes], [])
-   if test "x$enable_zlib" = xyes; then
+   #AC_CHECK_LIB([hdf5], [H5Pset_deflate], [enable_zlib=yes], [])
+   if test "x$ac_cv_func_H5Pset_deflate" = xyes; then
       AC_DEFINE([USE_ZLIB], [1], [if true, compile in zlib compression in netCDF-4 variables])
    fi
 
    # The user must have build HDF5 with the ZLIB library.
-   AC_CHECK_LIB([hdf5], [H5Z_can_apply_szip], [enable_szip=yes], [])
-   if test "x$enable_szip" = xyes; then
+   #   AC_CHECK_LIB([hdf5], [H5Z_can_apply_szip], [enable_szip=yes], [])
+   if test "x$ac_cv_func_H5Z_can_apply_szip" = xyes; then
       AC_DEFINE([USE_SZIP], [1], [if true, compile in szip compression in netCDF-4 variables])
    fi
 
