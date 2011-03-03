@@ -15,7 +15,7 @@ lib_LTLIBRARIES = libnetcdf.la
 
 # These linker flags specify libtool version info.
 libnetcdf_la_LDFLAGS = -version-number 7:0:1
-libnetcdf_la_LIBADD = -lhdf5_hl -lhdf5 -lz
+libnetcdf_la_LIBADD = 
 
 if BUILD_DLL
 libnetcdf_la_LDFLAGS += -no-undefined
