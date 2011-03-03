@@ -10,7 +10,7 @@
 # Initialize
 AM_CPPFLAGS = -I$(top_srcdir)/include @EXTERN_CFLAGS@	\
 -I${top_srcdir}/libsrc -I${top_srcdir}/libdispatch
-AM_LDFLAGS = @EXTERN_LDFLAGS@
+AM_LDFLAGS = 
 LDADD =
 
 if USE_DAP
