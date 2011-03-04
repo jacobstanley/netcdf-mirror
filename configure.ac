@@ -1128,68 +1128,66 @@ AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(size_t)
 UD_MAKEWHATIS
 
-# Save the old value of LDFLAGS, it will be restored later.
-OLD_LDFLAGS=${LDFLAGS}
-OLD_LIBS=${LIBS}
-OLD_CPPFLAGS=${CPPFLAGS}
+dnl # Save the old value of LDFLAGS, it will be restored later.
+dnl OLD_LDFLAGS=${LDFLAGS}
+dnl OLD_LIBS=${LIBS}
+dnl OLD_CPPFLAGS=${CPPFLAGS}
 
-# Add the HDF5 directory and the math library info for the linker
-# to use in the tests below.
-if test ! "x$ZLIBDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${ZLIBDIR}/lib"
-   CPPFLAGS="${CPPFLAGS} -I${ZLIBDIR}/include"
-fi    
-if test ! "x$HDF5DIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${HDF5DIR}/lib"
-   CPPFLAGS="${CPPFLAGS} -I${HDF5DIR}/include"
-fi    
-LIBS="${LIBS} -lm -lz -lhdf5"
+dnl # Add the HDF5 directory and the math library info for the linker
+dnl # to use in the tests below.
+dnl if test ! "x$ZLIBDIR" = x; then
+dnl    LDFLAGS="${LDFLAGS} -L${ZLIBDIR}/lib"
+dnl    CPPFLAGS="${CPPFLAGS} -I${ZLIBDIR}/include"
+dnl fi    
+dnl if test ! "x$HDF5DIR" = x; then
+dnl    LDFLAGS="${LDFLAGS} -L${HDF5DIR}/lib"
+dnl    CPPFLAGS="${CPPFLAGS} -I${HDF5DIR}/include"
+dnl fi    
+dnl LIBS="${LIBS} -lm -lz -lhdf5"
 
-# Add the HDF4 directory and library if needed.
-if test "x$enable_hdf4" = xyes; then
-   if test ! "x$HDF4DIR" = x; then
-      LDFLAGS="${LDFLAGS} -L${HDF4DIR}/lib"
-      CPPFLAGS="${CPPFLAGS} -I${HDF4DIR}/include"
-   fi    
-   LIBS="${LIBS} -lmfhdf -ldf -ljpeg -lz"
-fi
+dnl # Add the HDF4 directory and library if needed.
+dnl if test "x$enable_hdf4" = xyes; then
+dnl    if test ! "x$HDF4DIR" = x; then
+dnl       LDFLAGS="${LDFLAGS} -L${HDF4DIR}/lib"
+dnl       CPPFLAGS="${CPPFLAGS} -I${HDF4DIR}/include"
+dnl    fi    
+dnl    LIBS="${LIBS} -lmfhdf -ldf -ljpeg -lz"
+dnl fi
 
-# Add the szlib dir and library if needed.
-nc_has_szlib=no
-if test ! "x$SZLIBDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${SZLIBDIR}/lib"
-   LIBS="-lsz ${LIBS}"
-   CPPFLAGS="${CPPFLAGS} -I${SZLIBDIR}/include"
-   nc_has_szlib=yes
-fi
+dnl # Add the szlib dir and library if needed.
+dnl nc_has_szlib=no
+dnl if test ! "x$SZLIBDIR" = x; then
+dnl    LDFLAGS="${LDFLAGS} -L${SZLIBDIR}/lib"
+dnl    LIBS="-lsz ${LIBS}"
+dnl    CPPFLAGS="${CPPFLAGS} -I${SZLIBDIR}/include"
+dnl    nc_has_szlib=yes
+dnl fi
 
-# Add the parallel-netcdf dir and library if needed.
-if test ! "x$PNETCDFDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${PNETCDFDIR}/lib"
-   LIBS="-lpnetcdf ${LIBS}"
-   CPPFLAGS="${CPPFLAGS} -I${PNETCDFDIR}/include"
-fi
+dnl # Add the parallel-netcdf dir and library if needed.
+dnl if test ! "x$PNETCDFDIR" = x; then
+dnl    LDFLAGS="${LDFLAGS} -L${PNETCDFDIR}/lib"
+dnl    LIBS="-lpnetcdf ${LIBS}"
+dnl    CPPFLAGS="${CPPFLAGS} -I${PNETCDFDIR}/include"
+dnl fi
 
-# Check for the header.
-AC_CHECK_HEADERS([hdf5.h], [], [nc_hdf5_h_missing=yes])
 
 # If HDF5 is not found, error out if the user specifically asked for
 # netcdf-4, otherwise just turn netCDF-4 off.
-if test "x$nc_hdf5_h_missing" = xyes; then
-# I think this should only check the
-# enable_netcdf4 flag
-#   if test "x$enable_netcdf_4" = xyes -o "x$HDF5DIR" != x; then
-   if test "x$enable_netcdf_4" = xyes ; then
-      AC_MSG_ERROR([NetCDF-4 requires HDF5, but hdf5.h cannot be found. Try using \
-      the --with-hdf5 option to specify location of HDF5.])
-   else	  
-      enable_netcdf_4=no
-   fi
-else
-   if test ! "x$enable_netcdf_4" = xno; then
-      enable_netcdf_4=yes
-   fi
-fi
+dnl if test "x$nc_hdf5_h_missing" = xyes; then
+dnl # I think this should only check the
+dnl # enable_netcdf4 flag
+dnl #   if test "x$enable_netcdf_4" = xyes -o "x$HDF5DIR" != x; then
+dnl    if test "x$enable_netcdf_4" = xyes ; then
+dnl       AC_MSG_ERROR([NetCDF-4 requires HDF5, but hdf5.h cannot be found. Try using \
+dnl       the --with-hdf5 option to specify location of HDF5.])
+dnl    else	  
+dnl       enable_netcdf_4=no
+dnl    fi
+dnl else
+dnl    if test ! "x$enable_netcdf_4" = xno; then
+dnl       enable_netcdf_4=yes
+dnl    fi
+dnl fi
 
 AC_MSG_CHECKING([whether we should try to build netCDF-4])
 AC_MSG_RESULT([$enable_netcdf_4])
@@ -1199,7 +1197,6 @@ if test "x$enable_netcdf_4" = xyes || test "x$enable_dap" = xyes; then
    AC_MSG_ERROR([Can't find or link to the z library. Configure with --with-zlib, or turn off netCDF-4 and \
    opendap with --disable-netcdf-4 --disable-dap, or see config.log for errors.])])
 fi
-
 
 if test "x$enable_netcdf_4" = xyes; then
    AC_DEFINE([USE_NETCDF4], [1], [if true, build netCDF-4])
@@ -1212,7 +1209,9 @@ if test "x$enable_netcdf_4" = xyes; then
    # We also require the HDF5 High Level library.
    AC_CHECK_LIB([hdf5_hl], [H5DSis_scale], [], [AC_MSG_ERROR([Can't find or link to the hdf5 high-level. Configure with --with-hdf5, or use \
       --disable-netcdf-4, or see config.log for errors.])])
-   
+
+   AC_CHECK_HEADERS([hdf5.h], [], [AC_MSG_ERROR([NetCDF-4 requires HDF5, but hdf5.h cannot be found. Try using \
+      the --with-hdf5 option to specify location of HDF5.])])
    AC_CHECK_FUNCS([H5Pget_fapl_mpiposix H5Pget_fapl_mpio H5Pset_deflate H5Z_can_apply_szip])
 
    # The user may have parallel HDF5 based on MPI POSIX.
@@ -1268,17 +1267,12 @@ dnl 	 fi
       AC_CHECK_LIB([mfhdf], [SDcreate], [], [])
       AC_DEFINE([USE_HDF4], [1], [if true, use HDF4 too])
    fi
-else
-# !netcdf-4
-   # Modify netcdf.h to include defs for missing parallel stuff.
-   #sed '/#include <errno.h>/{G;s/$/\/* These defs added by netCDF configure because parallel HDF5 is not present. *\//;G;s/$/#ifndef MPI_INCLUDED/;G;s/$/#define MPI_Comm int/;G;s/$/#define MPI_Info int/;G;s/$/#define MPI_COMM_WORLD 0/;G;s/$/#define MPI_INFO_NULL 0/;G;s/$/#endif/;}' libsrc4/netcdf_base.h > libsrc4/netcdf.h
- ignore=1;
 fi
 
-# Restore LDFLAGS to it's old value.
-LDFLAGS=${OLD_LDFLAGS}
-LIBS=${OLD_LIBS}
-CPPFLAGS=${OLD_CPPFLAGS}
+dnl # Restore LDFLAGS to it's old value.
+dnl LDFLAGS=${OLD_LDFLAGS}
+dnl LIBS=${OLD_LIBS}
+dnl CPPFLAGS=${OLD_CPPFLAGS}
 
 # No logging for netcdf-3.
 if test "x$enable_netcdf_4" = xno; then

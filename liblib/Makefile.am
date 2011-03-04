@@ -6,7 +6,7 @@
 # libraries have been built (e.g. libsrc, libsrc4, libncdap3, libcdmr,
 # libncdap4, fortran).
 
-AM_LDFLAGS = @EXTERN_LDFLAGS@
+AM_LDFLAGS = 
 AM_CPPFLAGS = -I$(top_srcdir)/include -I${top_srcdir}/libsrc	\
 -I${top_srcdir}/libdispatch
 
