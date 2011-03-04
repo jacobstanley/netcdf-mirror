@@ -8,7 +8,7 @@
 # Point pre-preprocessor to netcdf-4 directory (libsrc4).
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/libsrc4	\
 -I${top_srcdir}/liblib
-AM_LDFLAGS = ${top_builddir}/liblib/libnetcdf.la
+AM_LDFLAGS = ${top_builddir}/liblib/libnetcdf.la @EXTERN_LDFLAGS@
 LDADD = $(top_builddir)/cxx4/libnetcdf_c++4.la 
 
 # See comments in libsrc/Makefile.am about the version number.
