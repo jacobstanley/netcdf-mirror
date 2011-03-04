@@ -13,6 +13,24 @@ AM_CPPFLAGS = -I$(top_srcdir)/include @EXTERN_CFLAGS@	\
 AM_LDFLAGS = 
 LDADD =
 
+# If the user specified a root location for HDF5, use it.
+if USE_HDF5_DIR
+AM_CPPFLAGS += -I@HDF5DIR@/include
+AM_LDFLAGS += -L@HDF5DIR@/lib
+endif
+
+# If the user specified a root location for ZLIB, use it.
+if USE_ZLIB_DIR
+AM_CPPFLAGS += -I@ZLIBDIR@/include
+AM_LDFLAGS += -L@ZLIBDIR@/lib
+endif
+
+# If the user specified a root location for SZLIB, use it.
+if USE_SZLIB_DIR
+AM_CPPFLAGS += -I@SZLIBDIR@/include
+AM_LDFLAGS += -L@SZLIBDIR@/lib
+endif
+
 if USE_DAP
 AM_CPPFLAGS += -I${top_srcdir}/oc
 endif
