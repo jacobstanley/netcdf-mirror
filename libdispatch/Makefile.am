@@ -10,7 +10,8 @@
 # $Id: Makefile.am,v 1.10 2010/06/01 15:34:50 ed Exp $
 
 # Set up include directories.
-AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/liblib -I${top_srcdir}/libsrc
+AM_CPPFLAGS = -I${top_srcdir}/include 
+libdispatch_la_CPPFLAGS = ${AM_CPPFLAGS}
 
 # This is our output, the dispatch convenience library.
 noinst_LTLIBRARIES = libdispatch.la
@@ -27,6 +28,11 @@ libdispatch_la_SOURCES += nc_url.c
 # than one later library.
 # TODO: move logging code here so it can be used anywhere.
 libdispatch_la_SOURCES += nclist.c ncbytes.c ncbytes.h
+
+# Turn on some extra stuff when building a DLL for windows.
+if BUILD_DLL
+libdispatch_la_CPPFLAGS += -DDLL_EXPORT
+endif # BUILD_DLL
 
 # Add functions only found in netCDF-4.
 if USE_NETCDF4

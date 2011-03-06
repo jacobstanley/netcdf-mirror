@@ -11,6 +11,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include 
 AM_LDFLAGS = 
 LDADD =
+libnetcdf4_la_CPPFLAGS = ${AM_CPPFLAGS}
 
 # If the user specified a root location for HDF5, use it.
 if USE_HDF5_DIR
@@ -34,11 +35,6 @@ if USE_DAP
 AM_CPPFLAGS += -I${top_srcdir}/oc
 endif
 
-# This turns on declspec magic in netcdf.h for windows DLLs.
-if BUILD_DLL
-#libnetcdf4_la_CPPFLAGS = ${AM_CPPFLAGS} -DDLL_EXPORT
-endif
-
 # Netcdf-4 source.
 NC4SOURCES = nc4internal.h error4.c nc4dispatch.c nc4dispatch.h		\
 nc4attr.c nc4dim.c nc4file.c nc4grp.c nc4type.c nc4var.c ncfunc.c	\
@@ -48,6 +44,11 @@ nc4internal.c nc4hdf.c
 noinst_LTLIBRARIES = libnetcdf4.la
 libnetcdf4_la_SOURCES = ${NC4SOURCES}
 libnetcdf4_la_LIBADD = -lhdf5_hl -lhdf5 -lz
+
+# This turns on declspec magic in netcdf.h for windows DLLs.
+if BUILD_DLL
+libnetcdf4_la_CPPFLAGS += -DDLL_EXPORT
+endif
 
 # These linker flags will be applied to all test program compiles.
 # Currently we cannot get away from loading libnetcdf3.la and libnetcdf2.la

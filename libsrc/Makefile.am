@@ -7,10 +7,14 @@
 # $Id: Makefile.am,v 2.98 2010/06/01 15:34:50 ed Exp $
 
 # We may have to add to these later.
-AM_CPPFLAGS = -I$(top_srcdir)/include -I${top_srcdir}/liblib		\
--I${top_srcdir}/libsrc -I${top_srcdir}/libdispatch -I${top_srcdir}/oc	\
-@EXTERN_CFLAGS@
-AM_LDFLAGS = #@EXTERN_LDFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I${top_srcdir}/oc
+libnetcdf3_la_CPPFLAGS = ${AM_CPPFLAGS}
+
+# Turn on some extra stuff when building a DLL for windows.
+if BUILD_DLL
+libnetcdf3_la_CPPFLAGS += -DDLL_EXPORT
+endif # BUILD_DLL
+
 
 # The C API man page.
 man_MANS = netcdf.3 
