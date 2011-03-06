@@ -35,6 +35,11 @@ if USE_DAP
 AM_CPPFLAGS += -I${top_srcdir}/oc
 endif
 
+# This turns on declspec magic in netcdf.h for windows DLLs.
+if BUILD_DLL
+libnetcdf4_la_CPPFLAGS += -DDLL_EXPORT
+endif
+
 # Netcdf-4 source.
 NC4SOURCES = nc4internal.h error4.c nc4dispatch.c nc4dispatch.h		\
 nc4attr.c nc4dim.c nc4file.c nc4grp.c nc4type.c nc4var.c ncfunc.c	\
