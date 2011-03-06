@@ -43,7 +43,7 @@ nc4internal.c nc4hdf.c
 # This is our output. The big enchilada.
 noinst_LTLIBRARIES = libnetcdf4.la
 libnetcdf4_la_SOURCES = ${NC4SOURCES}
-libnetcdf4_la_LDADD = -lhdf5_hl -lhdf5 -lz
+libnetcdf4_la_LIBADD = -lhdf5_hl -lhdf5 -lz
 
 # These linker flags will be applied to all test program compiles.
 # Currently we cannot get away from loading libnetcdf3.la and libnetcdf2.la
