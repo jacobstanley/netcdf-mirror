@@ -37,7 +37,7 @@ endif
 
 # This turns on declspec magic in netcdf.h for windows DLLs.
 if BUILD_DLL
-libnetcdf4_la_CPPFLAGS += -DDLL_EXPORT
+libnetcdf4_la_CPPFLAGS = -DDLL_EXPORT
 endif
 
 # Netcdf-4 source.
