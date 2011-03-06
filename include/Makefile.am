@@ -10,4 +10,5 @@ if BUILD_PARALLEL
 include_HEADERS += netcdf_par.h 
 endif 
 
-noinst_HEADERS = nc_logging.h nc_tests.h 
+noinst_HEADERS = nc_logging.h nc_tests.h fbits.h nc3dispatch.h nc.h	\
+ncio.h nclist.h nc_url.h utf8proc.h ncdispatch.h
