@@ -8,8 +8,7 @@
 # $Id: Makefile.am,v 1.194 2010/06/01 15:34:50 ed Exp $
 
 # Initialize
-AM_CPPFLAGS = -I$(top_srcdir)/include @EXTERN_CFLAGS@	\
--I${top_srcdir}/libsrc -I${top_srcdir}/libdispatch
+AM_CPPFLAGS = -I$(top_srcdir)/include 
 AM_LDFLAGS = 
 LDADD =
 
@@ -37,7 +36,7 @@ endif
 
 # This turns on declspec magic in netcdf.h for windows DLLs.
 if BUILD_DLL
-libnetcdf4_la_CPPFLAGS = -DDLL_EXPORT
+#libnetcdf4_la_CPPFLAGS = ${AM_CPPFLAGS} -DDLL_EXPORT
 endif
 
 # Netcdf-4 source.
