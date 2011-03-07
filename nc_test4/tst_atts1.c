@@ -4,7 +4,7 @@
 
    Test attributes. 
 
-   $Id: tst_atts.c,v 1.39 2009/09/27 20:52:13 ed Exp $
+   $Id$
 */
 
 #include <nc_tests.h>

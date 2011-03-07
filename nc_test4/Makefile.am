@@ -14,7 +14,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/liblib @EXTERN_CFLAGS@
 AM_CPPFLAGS += -I$(top_srcdir)/libsrc4 -I$(top_srcdir)/libsrc
 
 # Our test programs and sources. (tst_h_vl2 must come after tst_vl.)
-NC4_TEST_PROGS = t_type cdm_sea_soundings tst_camrun tst_vl tst_atts	\
+NC4_TEST_PROGS = t_type cdm_sea_soundings tst_camrun tst_vl tst_atts1	\
 tst_atts2 tst_vars2 tst_files tst_files2
 
 check_PROGRAMS = $(NC4_TEST_PROGS)
