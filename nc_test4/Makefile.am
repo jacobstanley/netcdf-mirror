@@ -168,9 +168,9 @@ ref_tst_xplatform2_2.nc ref_tst_dims.nc ref_tst_interops4.nc
 # These linker flags will be applied to all test program compiles.
 # Currently we cannot get away from loading libnetcdf3.la and libnetcdf2.la
 # and various other things
-LDADD += ${top_builddir}/libsrc4/libnetcdf4.la	\
-${top_builddir}/libsrc/libnetcdf3.la			\
-${top_builddir}/libdispatch/libdispatch.la
+LDADD += ${top_builddir}/libdispatch/libdispatch.la     \
+${top_builddir}/libsrc4/libnetcdf4.la                   \
+${top_builddir}/libsrc/libnetcdf3.la
 
 if USE_DAP
 LDADD += ${top_builddir}/oc/liboc.la
