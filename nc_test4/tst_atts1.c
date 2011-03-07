@@ -9,7 +9,6 @@
 
 #include <nc_tests.h>
 #include "netcdf.h"
-#include "nc4internal.h"
 #include <signal.h>
 
 #define FILE_NAME "tst_atts.nc"
