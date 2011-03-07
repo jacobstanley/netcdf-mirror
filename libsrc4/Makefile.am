@@ -31,6 +31,18 @@ AM_CPPFLAGS += -I@SZLIBDIR@/include
 AM_LDFLAGS += -L@SZLIBDIR@/lib
 endif
 
+# If the user specified a root location for pnetcdf, use it.
+if USE_PNETCDF_DIR
+AM_CPPFLAGS += -I@PNETCDFDIR@/include
+AM_LDFLAGS += -L@PNETCDFDIR@/lib
+endif
+
+# If the user specified a root location for HDF4, use it.
+if USE_HDF4_DIR
+AM_CPPFLAGS += -I@HDF4DIR@/include
+AM_LDFLAGS += -L@HDF4DIR@/lib
+endif
+
 if USE_DAP
 AM_CPPFLAGS += -I${top_srcdir}/oc
 endif
@@ -131,7 +143,6 @@ endif # USE_VALGRIND_TESTS
 # Clean up. Each test program creates one data file, with the same
 # name as the test program, and either a .h5 or .nc, for "pure" HDF5
 # files and netCDF-4 files.
-CLEANFILES = tst_nc_converts.nc tst_h_*.h5 tst_*.nc tst_interops*.h5	\
-tst_interops2.h4 tst_interops4.nc AMSR_E_* MYD29.A2* 
+CLEANFILES = tst_h_*.h5 tst_*.nc tst_*.h5
 
 
