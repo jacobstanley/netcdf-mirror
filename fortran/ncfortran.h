@@ -9,9 +9,9 @@
 #ifndef UD_NCFORTRAN_H
 #define UD_NCFORTRAN_H
 
+#include "netcdf_f.h"
 #include "cfortran.h"
 #include "nfconfig.inc"
-
 
 /*
  * The type of a Fortran INTEGER:
