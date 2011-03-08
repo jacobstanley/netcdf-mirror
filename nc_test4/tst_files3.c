@@ -9,8 +9,8 @@
 #include <config.h>
 #include <stdio.h>
 #include <nc_tests.h>
-#include <nc4internal.h>
 #include "netcdf.h"
+#include <hdf5.h>
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h> /* Extra high precision time info. */
