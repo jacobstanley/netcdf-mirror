@@ -40,7 +40,7 @@ endif # USE_VALGRIND_TESTS
 
 CLEANFILES = tst_h_*.h5 
 
-EXTRA_DIST = run_par_test.sh run_valgrind_tests.sh
+EXTRA_DIST = run_par_tests.sh run_valgrind_tests.sh
 
 LDADD = -lhdf5_hl -lhdf5 -lz -lm
 
