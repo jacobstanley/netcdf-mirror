@@ -27,11 +27,6 @@ if LARGE_FILE_TESTS
 check_PROGRAMS += tst_large tst_large2
 endif
 
-# The parallel program is run from a script.
-if TEST_PARALLEL
-check_PROGRAMS += tst_h_par
-endif
-
 TESTS = $(NC4_TESTS)
 
 if BUILD_V2
