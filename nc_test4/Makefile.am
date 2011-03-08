@@ -11,12 +11,7 @@ include $(top_srcdir)/lib_flags.am
 AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la
 
 # tst_h_strings3 core dumps! Ed 11/10/10
-NC4_TESTS = tst_h_files tst_h_files2 tst_h_files4 tst_h_atts		\
-tst_h_atts3 tst_h_atts4 tst_h_vars tst_h_vars2 tst_h_vars3 tst_h_grps	\
-tst_h_compounds tst_h_compounds2 tst_h_wrt_cmp tst_h_rd_cmp tst_h_vl	\
-tst_h_opaques tst_h_strings tst_h_strings1 tst_h_strings2 tst_h_ints	\
-tst_h_dimscales tst_h_dimscales1 tst_h_dimscales2 tst_h_dimscales3	\
-tst_h_enums tst_dims tst_dims2 tst_dims3 tst_files tst_files4 tst_vars	\
+NC4_TESTS = tst_dims tst_dims2 tst_dims3 tst_files tst_files4 tst_vars	\
 tst_varms tst_unlim_vars tst_converts tst_converts2 tst_grps tst_grps2	\
 tst_compounds tst_compounds2 tst_compounds3 tst_opaques tst_strings	\
 tst_strings2 tst_interops tst_interops4 tst_interops5 tst_interops6	\
@@ -79,11 +74,6 @@ tst_interops2_LDADD = ${lib_LTLIBRARIES} -lmfhdf -ldf -ljpeg -lhdf5_hl	\
 -lhdf5 -lz
 endif # USE_HDF4
 
-# This script will run all the parallel test programs.
-if TEST_PARALLEL
-TESTS += run_par_tests.sh
-endif
-
 # Add this if --enable-benchmarks was used.
 if BUILD_BENCHMARKS
 TESTS += tst_files2 tst_files3 tst_ar5 tst_h_files3
@@ -137,7 +127,10 @@ EXTRA_DIST = run_par_test.sh run_bm.sh run_bm_test1.sh run_bm_test2.sh	\
 run_bm_radar_2D.sh run_bm_radar_2D_compression1.sh run_par_bm_test.sh	\
 run_bm_elena.sh run_par_bm_radar_2D.sh run_bm_radar_2D_endianness1.sh	\
 run_tst_chunks.sh ref_chunks1.cdl ref_chunks2.cdl run_pnetcdf_test.sh	\
-run_get_hdf4_files.sh run_valgrind_tests.sh run_bm_ar4.sh
+run_get_hdf4_files.sh run_valgrind_tests.sh run_bm_ar4.sh		\
+ref_tst_compounds.nc run_hdf4_valgrind_tests.sh				\
+ref_tst_xplatform2_1.nc ref_tst_xplatform2_2.nc ref_tst_dims.nc		\
+ref_tst_interops4.nc
 
 if USE_HDF4_FILE_TESTS
 DISTCLEANFILES = AMSR_E_L2_Rain_V10_200905312326_A.hdf	\
@@ -148,7 +141,7 @@ MOD29.A2000055.0005.005.2006267200024.hdf
 endif # HDF4_FILE_TESTS
 
 # These linker flags will be applied to all test program compiles.
-LDADD = ${lib_LTLIBRARIES} 
+LDADD = -lnetcdf
 
 if USE_HDF4
 LDADD += -lmfhdf -ldf -ljpeg
@@ -160,24 +153,6 @@ if USE_PNETCDF
 LDADD += -lpnetcdf
 endif
 
-EXTRA_DIST += ref_tst_compounds.nc ref_tst_h_compounds.h5		\
-ref_tst_h_compounds2.h5 run_par_tests.sh run_valgrind_tests.sh		\
-run_hdf4_valgrind_tests.sh ref_tst_xplatform2_1.nc			\
-ref_tst_xplatform2_2.nc ref_tst_dims.nc ref_tst_interops4.nc 
-
-# These linker flags will be applied to all test program compiles.
-# Currently we cannot get away from loading libnetcdf3.la and libnetcdf2.la
-# and various other things
-LDADD += ${top_builddir}/libdispatch/libdispatch.la     \
-${top_builddir}/libsrc4/libnetcdf4.la                   \
-${top_builddir}/libsrc/libnetcdf3.la
-
-if USE_DAP
-LDADD += ${top_builddir}/oc/liboc.la
-endif
-if BUILD_V2
-LDADD += ${top_builddir}/libdispatch/libnetcdf2.la
-endif 
 
 
 

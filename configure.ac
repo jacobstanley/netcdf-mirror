@@ -1538,6 +1538,7 @@ AC_CONFIG_FILES([Makefile
                  nc-config
                  netcdf.pc
                  include/Makefile
+                 h5_test/Makefile
                  man4/Makefile
                  fortran/Makefile
                  libsrc/Makefile
