@@ -11,7 +11,7 @@
 #include <nc_tests.h>		/* The ERR macro is here... */
 #include <netcdf.h>
 
-#define FILENAME "tst_chunks.nc"
+#define FILENAME "tst_chunks3.nc"
 
 /*
  * The following timing macros can be used by including the necessary
