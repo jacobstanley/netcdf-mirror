@@ -18,7 +18,7 @@ chunk2=3
 dim3=4
 chunk3=1
 ./tst_chunks3 $compress_level $dim1 $chunk1 $dim2 $chunk2 $dim3 $chunk3
-../ncdump/ncdump -s tst_chunks3.nc > tst_chunks3.cdl
+../ncdump/ncdump -n tst_chunks -s tst_chunks3.nc > tst_chunks3.cdl
 diff tst_chunks3.cdl ref_chunks1.cdl
 echo '*** SUCCESS!!!'
 
@@ -35,7 +35,7 @@ cachesize=10000000
 cachehash=10000
 cachepre=0.0
 ./tst_chunks3 $compress_level $dim1 $chunk1 $dim2 $chunk2 $dim3 $chunk3 $cachesize $cachehash $cachepre
-../ncdump/ncdump -s -h tst_chunks3.nc > tst_chunks3.cdl
+../ncdump/ncdump -n tst_chunks -s -h tst_chunks3.nc > tst_chunks3.cdl
 diff tst_chunks3.cdl ref_chunks2.cdl
 echo '*** SUCCESS!!!'
 
