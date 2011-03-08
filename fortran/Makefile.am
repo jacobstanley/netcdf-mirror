@@ -5,8 +5,8 @@
 
 # $Id: Makefile.am,v 1.60 2010/05/29 00:21:22 dmh Exp $
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/liblib @EXTERN_CFLAGS@
-AM_LDFLAGS = @EXTERN_LDFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir)/include 
+AM_LDFLAGS = #@EXTERN_LDFLAGS@
 
 # May need to set this.
 libnetcdff_la_LIBADD = 
