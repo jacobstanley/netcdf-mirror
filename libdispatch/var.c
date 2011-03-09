@@ -6,6 +6,7 @@
 */
 
 #include "ncdispatch.h"
+#include "netcdf_f.h"
 
 #if defined(__cplusplus)
 /* C++ consts default to internal linkage and must be initialized */

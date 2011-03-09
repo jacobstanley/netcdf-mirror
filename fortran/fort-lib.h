@@ -11,6 +11,7 @@
 
 #include <stddef.h>	/* for ptrdiff_t, size_t */
 #include "ncfortran.h"
+#include <netcdf_f.h>
 
 /*
  * PURPOSE: Convert a C dimension-ID vector into a FORTRAN dimension-ID
