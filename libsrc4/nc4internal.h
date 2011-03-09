@@ -29,6 +29,7 @@
 #define MPI_Comm int
 #include <netcdf.h>
 #endif /* USE_PARALLEL */
+#include <netcdf_f.h>
 
 #ifdef USE_HDF4
 #include <mfhdf.h>

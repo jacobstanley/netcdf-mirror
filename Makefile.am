@@ -106,8 +106,6 @@ if BUILD_CDMREMOTE
 LIBCDMR=libcdmr
 endif
 
-#WIN32=win32
-
 # This is the list of subdirs for which Makefiles will be constructed
 # and run. ncgen must come before ncdump and cxx, because their tests
 # depend on it. nf_test depends upon ncgen as well.
@@ -165,6 +163,11 @@ endif
 if BUILD_CXX
 BINFILES += include/netcdf.hh include/ncvalues.h  include/netcdfcpp.h lib/libnetcdf_c++.a 
 endif
+
+if BUILD_DLL
+BINFILES += liblib/.libs/cygnetcdf-7.dll liblib/.libs/libnetcdf.dll.a	\
+liblib/.libs/libnetcdf.a liblib/.libs/libnetcdf.la
+endif # BUILD_DLL
 
 # At Unidata, package up binaries.
 ftpbin: install
