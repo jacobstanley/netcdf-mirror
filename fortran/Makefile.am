@@ -88,7 +88,7 @@ endif
 
 # If we are building the dll (under MinGW) then set the correct flags.
 if BUILD_DLL
-AM_CPPFLAGS += -DNC_DLL_EXPORT
+AM_CPPFLAGS += -DDLL_EXPORT
 endif
 
 # The nfconfig.in file is turned into nfconfig.inc by the configure

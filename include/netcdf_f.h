@@ -6,19 +6,11 @@
 #ifndef _NETCDF_F_
 #define _NETCDF_F_
 
-/* Declaration modifiers for DLL support (MSC et al) */
+#include <netcdf.h>
 
-#if defined(DLL_NETCDF) /* define when library is a DLL */
-#  if defined(DLL_EXPORT) /* define when building the library */
-#   define MSC_EXTRA __declspec(dllexport)
-#  else
-#   define MSC_EXTRA __declspec(dllimport)
-#  endif
-#else
-#define MSC_EXTRA
-#endif	/* defined(DLL_NETCDF) */
-
-# define EXTERNL extern MSC_EXTRA
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 EXTERNL int
 nc_inq_var_chunking_ints(int ncid, int varid, int *contiguousp, int *chunksizesp);
@@ -46,5 +38,9 @@ nc_set_var_chunk_cache_ints(int ncid, int varid, int size, int nelems,
 EXTERNL int
 nc_get_var_chunk_cache_ints(int ncid, int varid, int *sizep, 
 			    int *nelemsp, int *preemptionp);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif

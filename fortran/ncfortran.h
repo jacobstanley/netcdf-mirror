@@ -1,5 +1,3 @@
-/* $Id: ncfortran.h,v 1.41 2010/04/05 17:29:17 ed Exp $ */
-
 /*
  * This file contains `cfortran.h' definitions that are specific to the
  * netCDF-3 package.
