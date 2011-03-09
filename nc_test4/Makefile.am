@@ -2,15 +2,17 @@
 # Copyright 2005 University Corporation for Atmospheric Research/Unidata
 # See COPYRIGHT file for conditions of use.
 # 
-# This entire directory will be skipped, unless the configure script
-# is run with --enable-netcdf-4.
+# This entire directory will be skipped if netCDF-4 is not enabled.
 #
 
+# Put together our FLAGS.
 include $(top_srcdir)/lib_flags.am
+AM_LDFLAGS += @EXTERN_LDFLAGS@
 
+# Link to our assembled library.
 AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la
 
-# tst_h_strings3 core dumps! Ed 11/10/10
+# These are netCDF-4 test programs.
 NC4_TESTS = tst_dims tst_dims2 tst_dims3 tst_files tst_files4 tst_vars	\
 tst_varms tst_unlim_vars tst_converts tst_converts2 tst_grps tst_grps2	\
 tst_compounds tst_compounds2 tst_compounds3 tst_opaques tst_strings	\
@@ -23,12 +25,14 @@ tst_vars2 tst_files5 tst_files6
 
 check_PROGRAMS = $(NC4_TESTS)
 
+# Add these if large file tests are turned on.
 if LARGE_FILE_TESTS
 check_PROGRAMS += tst_large tst_large2
 endif
 
 TESTS = $(NC4_TESTS)
 
+# If the v2 API was built, add its test program.
 if BUILD_V2
 check_PROGRAMS += tst_v2 
 TESTS += tst_v2
@@ -39,12 +43,17 @@ check_PROGRAMS += tst_large
 TESTS += tst_large
 endif # LARGE_FILE_TESTS
 
+# If benchmarks were turned on, build and run a bunch more tests.
 if BUILD_BENCHMARKS
 check_PROGRAMS += tst_create_files bm_file tst_chunks3 tst_ar4	\
-tst_ar4_3d tst_ar4_4d bm_many_objs tst_h_many_atts bm_many_atts
-TESTS += tst_ar4_3d tst_create_files run_bm_test1.sh run_bm_elena.sh	\
-run_bm_test2.sh run_tst_chunks.sh run_bm_ar4.sh
+tst_ar4_3d tst_ar4_4d bm_many_objs tst_h_many_atts bm_many_atts	\
+tst_files2 tst_files3 tst_ar5 tst_h_files3
 
+TESTS += tst_ar4_3d tst_create_files run_bm_test1.sh run_bm_elena.sh	\
+run_bm_test2.sh run_tst_chunks.sh run_bm_ar4.sh tst_files2 tst_files3	\
+tst_ar5 tst_h_files3
+
+# This will run a parallel I/O benchmark for parallel builds.
 if TEST_PARALLEL
 TESTS += run_par_bm_test.sh
 endif # TEST_PARALLEL
@@ -69,12 +78,6 @@ tst_interops2_LDADD = ${lib_LTLIBRARIES} -lmfhdf -ldf -ljpeg -lhdf5_hl	\
 -lhdf5 -lz
 endif # USE_HDF4
 
-# Add this if --enable-benchmarks was used.
-if BUILD_BENCHMARKS
-TESTS += tst_files2 tst_files3 tst_ar5 tst_h_files3
-check_PROGRAMS += tst_files2 tst_files3 tst_ar5 tst_h_files3
-endif # BUILD_BENCHMARKS
-
 # This will run a bunch of the test programs with valgrind, the memory
 # checking tool. (Valgrind must be present for this to work.)
 if USE_VALGRIND_TESTS
@@ -84,28 +87,17 @@ TESTS += run_hdf4_valgrind_tests.sh
 endif # USE_HDF4
 endif # USE_VALGRIND_TESTS
 
-CLEANFILES = cdm_sea_soundings.nc bm_chunking.nc bm_radar.nc		\
-bm_radar1.nc radar_3d_compression_test.txt radar_3d_compression.txt	\
-radar_2d_compression.txt radar_3d_chunking.txt tst_floats_1D.cdl	\
-floats_1D_3.nc floats_1D.cdl tst_*.nc tst_floats2_*.cdl	\
-tst_ints2_*.cdl tst_shorts2_*.cdl tst_elena_*.cdl tst_simple*.cdl	\
-tst_chunks.cdl pr_A1.* tauu_A1.* usi_01.* thetau_01.*
-
 # This are extra tests that will only be run if netcdf-4 is configured
 # with --enable-parallel-tests.
 if TEST_PARALLEL
 check_PROGRAMS += tst_mpi_parallel tst_parallel tst_parallel3	\
 tst_parallel4 tst_nc4perf
-CLEANFILES += tst_mpi_parallel.bin tst_parallel.nc tst_parallel3.nc	\
-tst_parallel4.nc tst_nc4perf.nc tst_parallel2.nc
 TESTS += run_par_test.sh
 if USE_PNETCDF
 check_PROGRAMS += tst_parallel2
 TESTS += run_pnetcdf_test.sh
 endif
 endif
-
-CLEANFILES += tst_h_*.h5 tst_*.nc tst_*.h5
 
 EXTRA_DIST = run_par_test.sh run_bm.sh run_bm_test1.sh run_bm_test2.sh	\
 run_bm_radar_2D.sh run_bm_radar_2D_compression1.sh run_par_bm_test.sh	\
@@ -115,6 +107,14 @@ run_get_hdf4_files.sh run_valgrind_tests.sh run_valgrind_tests2.sh	\
 run_bm_ar4.sh ref_tst_compounds.nc run_hdf4_valgrind_tests.sh		\
 ref_tst_xplatform2_1.nc ref_tst_xplatform2_2.nc ref_tst_dims.nc		\
 ref_tst_interops4.nc
+
+CLEANFILES = tst_mpi_parallel.bin cdm_sea_soundings.nc bm_chunking.nc	\
+bm_radar.nc bm_radar1.nc radar_3d_compression_test.txt			\
+radar_3d_compression.txt radar_2d_compression.txt			\
+radar_3d_chunking.txt tst_floats_1D.cdl floats_1D_3.nc floats_1D.cdl	\
+tst_*.nc tst_floats2_*.cdl tst_ints2_*.cdl tst_shorts2_*.cdl		\
+tst_elena_*.cdl tst_simple*.cdl tst_chunks.cdl pr_A1.* tauu_A1.*	\
+usi_01.* thetau_01.* tst_*.nc tst_*.h5
 
 if USE_HDF4_FILE_TESTS
 DISTCLEANFILES = AMSR_E_L2_Rain_V10_200905312326_A.hdf	\
