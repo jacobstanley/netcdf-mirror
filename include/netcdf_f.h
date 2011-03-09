@@ -39,6 +39,23 @@ EXTERNL int
 nc_get_var_chunk_cache_ints(int ncid, int varid, int *sizep, 
 			    int *nelemsp, int *preemptionp);
 
+/* Prototypes for some extra functions in fort-lib.c. */
+EXTERNL int 
+nc_inq_varids_f(int ncid, int *nvars, int *fvarids);
+
+EXTERNL int 
+nc_inq_dimids_f(int ncid, int *ndims, int *fdimids, int parent);
+
+EXTERNL int 
+nc_insert_array_compound_f(int ncid, int typeid, char *name, 
+			   size_t offset, nc_type field_typeid,
+			   int ndims, int *dim_sizesp);
+
+EXTERNL int 
+nc_inq_compound_field_f(int ncid, nc_type xtype, int fieldid, char *name, 
+			size_t *offsetp, nc_type *field_typeidp, int *ndimsp, 
+			int *dim_sizesp);
+
 #if defined(__cplusplus)
 }
 #endif
