@@ -124,17 +124,17 @@ MOD29.A2000055.0005.005.2006267200024.hdf
 endif # HDF4_FILE_TESTS
 
 # These linker flags will be applied to all test program compiles.
-LDADD = -lnetcdf
+#LDADD = -lnetcdf
 
-if USE_HDF4
-LDADD += -lmfhdf -ldf -ljpeg
-endif # USE_HDF4
+# if USE_HDF4
+# LDADD += -lmfhdf -ldf -ljpeg
+# endif # USE_HDF4
 
-LDADD += -lhdf5_hl -lhdf5 -lz -lm
+# LDADD += -lhdf5_hl -lhdf5 -lz -lm
 
-if USE_PNETCDF
-LDADD += -lpnetcdf
-endif
+# if USE_PNETCDF
+# LDADD += -lpnetcdf
+# endif
 
 
 
