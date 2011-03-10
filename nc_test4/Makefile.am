@@ -5,9 +5,8 @@
 # This entire directory will be skipped if netCDF-4 is not enabled.
 #
 
-# Put together our FLAGS.
+# Put together AM_CPPFLAGS and AM_LDFLAGS.
 include $(top_srcdir)/lib_flags.am
-AM_LDFLAGS += @EXTERN_LDFLAGS@
 
 # Link to our assembled library.
 AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la

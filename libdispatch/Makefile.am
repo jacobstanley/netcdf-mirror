@@ -7,8 +7,6 @@
 # code. It also contains code that sit above the dispatch layer, like
 # the v2 API.
 
-# $Id: Makefile.am,v 1.10 2010/06/01 15:34:50 ed Exp $
-
 # Set up include directories.
 AM_CPPFLAGS = -I${top_srcdir}/include 
 libdispatch_la_CPPFLAGS = ${AM_CPPFLAGS}
@@ -29,7 +27,7 @@ libdispatch_la_SOURCES += nc_url.c
 # TODO: move logging code here so it can be used anywhere.
 libdispatch_la_SOURCES += nclist.c ncbytes.c ncbytes.h
 
-# Turn on some extra stuff when building a DLL for windows.
+# Turn on pre-processor flag when building a DLL for windows.
 if BUILD_DLL
 libdispatch_la_CPPFLAGS += -DDLL_EXPORT
 endif # BUILD_DLL
