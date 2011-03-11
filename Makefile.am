@@ -167,6 +167,9 @@ endif
 if BUILD_DLL
 BINFILES += liblib/.libs/cygnetcdf-7.dll liblib/.libs/libnetcdf.dll.a	\
 liblib/.libs/libnetcdf.a liblib/.libs/libnetcdf.la
+if BUILD_F77
+BINFILES += 
+endif # BUILD_F77
 endif # BUILD_DLL
 
 # At Unidata, package up binaries.
@@ -178,7 +181,7 @@ ftpbin: install
 	echo "CFLAGS=$(CFLAGS) CXXFLAGS=$(CXXFLAGS)" >> ${prefix}/README_BINARIES.txt
 	echo "FCFLAGS=$(FCFLAGS) F77FLAGS=$(F77FLAGS) $F90FLAGS=$(F90FLAGS)" >> ${prefix}/README_BINARIES.txt
 	which tar
-	echo "PATH: $PATH"
+	echo "PATH: $(PATH)"
 	tar cf @BINFILE_NAME@ -C ${prefix} ${BINFILES}
 	gzip -f @BINFILE_NAME@
 
