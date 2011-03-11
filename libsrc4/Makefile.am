@@ -22,14 +22,19 @@ libnetcdf4_la_SOURCES = ${NC4SOURCES}
 
 # Tell libtool what libraries are we will depend on.
 libnetcdf4_la_LIBADD =
+
+# HDF4 used?
 if USE_HDF4
 libnetcdf4_la_LIBADD += -lmfhdf -ldf
 endif # USE_HDF4
+
+# How about pnetcdf?
 if USE_PNETCDF
 libnetcdf4_la_LIBADD += -lpnetcdf
 endif # USE_PNETCDF
-libnetcdf4_la_LIBADD += -lhdf5_hl -lhdf5 -lz
 
+# Always link to hdf5_hl, hdf5, and z.
+libnetcdf4_la_LIBADD += -lhdf5_hl -lhdf5 -lz
 
 # This turns on declspec magic in netcdf.h for windows DLLs.
 if BUILD_DLL

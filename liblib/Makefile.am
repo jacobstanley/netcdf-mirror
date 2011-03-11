@@ -13,7 +13,7 @@ libnetcdf_la_CPPFLAGS = ${AM_CPPFLAGS}
 lib_LTLIBRARIES = libnetcdf.la
 
 # These linker flags specify libtool version info.
-libnetcdf_la_LDFLAGS = ${AM_LDFLAGS} -version-number 7:0:1 
+libnetcdf_la_LDFLAGS = -version-number 7:0:1 
 libnetcdf_la_LIBADD = 
 
 # Turn on some extra stuff when building a DLL for windows.
