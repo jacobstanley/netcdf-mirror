@@ -1085,10 +1085,10 @@ AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(size_t)
 UD_MAKEWHATIS
 
-# Save the old value of LDFLAGS, it will be restored later.
-OLD_LDFLAGS=${LDFLAGS}
-OLD_LIBS=${LIBS}
-OLD_CPPFLAGS=${CPPFLAGS}
+dnl # Save the old value of LDFLAGS, it will be restored later.
+dnl OLD_LDFLAGS=${LDFLAGS}
+dnl OLD_LIBS=${LIBS}
+dnl OLD_CPPFLAGS=${CPPFLAGS}
 
 # Add the HDF5 directory and the math library info for the linker
 # to use in the tests below.
@@ -1100,7 +1100,7 @@ if test ! "x$HDF5DIR" = x; then
    LDFLAGS="${LDFLAGS} -L${HDF5DIR}/lib"
    CPPFLAGS="${CPPFLAGS} -I${HDF5DIR}/include"
 fi    
-LIBS="${LIBS} -lm -lz -lhdf5"
+#LIBS="${LIBS} -lm -lz -lhdf5"
 
 # Add the HDF4 directory and library if needed.
 if test "x$enable_hdf4" = xyes; then
@@ -1108,14 +1108,14 @@ if test "x$enable_hdf4" = xyes; then
       LDFLAGS="${LDFLAGS} -L${HDF4DIR}/lib"
       CPPFLAGS="${CPPFLAGS} -I${HDF4DIR}/include"
    fi    
-   LIBS="${LIBS} -lmfhdf -ldf -ljpeg -lz"
+#   LIBS="${LIBS} -lmfhdf -ldf -ljpeg -lz"
 fi
 
 # Add the szlib dir and library if needed.
 nc_has_szlib=no
 if test ! "x$SZLIBDIR" = x; then
    LDFLAGS="${LDFLAGS} -L${SZLIBDIR}/lib"
-   LIBS="-lsz ${LIBS}"
+#   LIBS="-lsz ${LIBS}"
    CPPFLAGS="${CPPFLAGS} -I${SZLIBDIR}/include"
    nc_has_szlib=yes
 fi
@@ -1123,7 +1123,7 @@ fi
 # Add the parallel-netcdf dir and library if needed.
 if test ! "x$PNETCDFDIR" = x; then
    LDFLAGS="${LDFLAGS} -L${PNETCDFDIR}/lib"
-   LIBS="-lpnetcdf ${LIBS}"
+#   LIBS="-lpnetcdf ${LIBS}"
    CPPFLAGS="${CPPFLAGS} -I${PNETCDFDIR}/include"
 fi
 
@@ -1214,9 +1214,9 @@ dnl 	 fi
 fi
 
 # Restore LDFLAGS to it's old value.
-LDFLAGS=${OLD_LDFLAGS}
-LIBS=${OLD_LIBS}
-CPPFLAGS=${OLD_CPPFLAGS}
+dnl LDFLAGS=${OLD_LDFLAGS}
+dnl LIBS=${OLD_LIBS}
+dnl CPPFLAGS=${OLD_CPPFLAGS}
 
 # No logging for netcdf-3.
 if test "x$enable_netcdf_4" = xno; then
