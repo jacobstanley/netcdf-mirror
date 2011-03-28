@@ -5,17 +5,15 @@
    Test HDF5 file code. These are not intended to be exhaustive tests,
    but they use HDF5 the same way that netCDF-4 does, so if these
    tests don't work, than netCDF-4 won't work either.
-
-   $Id: tst_h_files.c,v 1.20 2010/02/04 17:17:49 ed Exp $
 */
-#include <config.h>
-#include <nc_tests.h>
-#include "netcdf.h"
+
+#include <err_macros.h>
 #include <hdf5.h>
 #include <H5DSpublic.h>
 
 #define FILE_NAME "tst_h_files.h5"
 #define GRP_NAME "Dectectives"
+#define STR_LEN 255
 
 int
 main()
@@ -32,7 +30,7 @@ main()
       unsigned char data[DIM_LEN][OPAQUE_SIZE];
       hsize_t num_obj, i;
       int obj_class;
-      char obj_name[NC_MAX_NAME + 1];
+      char obj_name[STR_LEN + 1];
       H5T_class_t class;
       size_t type_size;
       int j, k;
@@ -81,7 +79,7 @@ main()
       {
 	 if ((obj_class = H5Gget_objtype_by_idx(grpid, i)) < 0) ERR;
 	 if (H5Gget_objname_by_idx(grpid, i, obj_name, 
-				   NC_MAX_NAME) < 0) ERR;
+				   STR_LEN) < 0) ERR;
 	 if (obj_class != H5G_TYPE) ERR;
 	 if ((typeid = H5Topen(grpid, obj_name)) < 0) ERR;
 	 if ((class = H5Tget_class(typeid)) < 0) ERR;
@@ -230,6 +228,7 @@ main()
 #define DIM2 2097153		/* DIM1*DIM2*sizeof(char)   > 2**32 */
 #define DIM_WITHOUT_VARIABLE "This is a netCDF dimension but not a netCDF variable."
 #define VAR_NAME2 "var"
+#define MAX_DIMS 255
 
    printf("*** large file test for HDF5...");
    {
@@ -237,10 +236,10 @@ main()
       hid_t dim1_dimscaleid, dim2_dimscaleid, plistid, datasetid2, file_spaceid;
       hid_t mem_spaceid, xfer_plistid, native_typeid;
       hsize_t *chunksize, dims[1], maxdims[1], *dimsize, *maxdimsize;
-      hsize_t fdims[NC_MAX_DIMS], fmaxdims[NC_MAX_DIMS];
-      hsize_t start[NC_MAX_DIMS],  count[NC_MAX_DIMS];
-      char file_name[NC_MAX_NAME + 1];
-      char dimscale_wo_var[NC_MAX_NAME];
+      hsize_t fdims[MAX_DIMS], fmaxdims[MAX_DIMS];
+      hsize_t start[MAX_DIMS],  count[MAX_DIMS];
+      char file_name[STR_LEN + 1];
+      char dimscale_wo_var[STR_LEN];
       void *bufr;
       void *fillp;
 
@@ -301,7 +300,8 @@ main()
       /* Now create the 2D dataset. */
       if ((plistid = H5Pcreate(H5P_DATASET_CREATE)) < 0) ERR;      
       if (!(fillp = malloc(1))) ERR;
-      *(signed char *)fillp = NC_FILL_BYTE;
+#define FILL_BYTE 255
+      *(signed char *)fillp = FILL_BYTE;
       if (H5Pset_fill_value(plistid, H5T_NATIVE_SCHAR, fillp) < 0) ERR;
       if (!(chunksize = malloc(NDIMS2 * sizeof(hsize_t)))) ERR;
       chunksize[0] = 1024;
