@@ -77,9 +77,6 @@ main(
 	int argc,
 	char *argv[])
 {
-    MSC_EXTRA extern int optind;
-    MSC_EXTRA extern int opterr;
-    MSC_EXTRA extern char *optarg;
     int any_error;
     int c;
     FILE *fp;

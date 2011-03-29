@@ -8,6 +8,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/nc_test	\
 -I${top_srcdir}/liblib @EXTERN_CPPFLAGS@
 LDADD = -lm ${top_builddir}/liblib/libnetcdf.la @EXTERN_LDFLAGS@
 
+if !BUILD_DLL
 # These tests are run for both netCDF-4 and non-netCDF-4 builds.
 check_PROGRAMS = rewrite-scalar ctest ctest64 ncdump tst_utf8
 TESTS = run_tests.sh tst_64bit.sh ctest ctest64 tst_output.sh	\
@@ -33,7 +34,7 @@ endif # EXTRA_TESTS
 tst_h_rdc0_CPPFLAGS = -I${top_srcdir}/nc_test ${AM_CPPFLAGS}
 
 endif #!USE_NETCDF4
-
+endif
 CLEANFILES = test0.nc test1.cdl test1.nc test2.cdl ctest1.cdl ctest.c	\
 ctest64.c ctest0.nc ctest0_64.nc c1.cdl ctest1_64.cdl c0.nc small.nc	\
 small2.nc c0tmp.nc c1.ncml utf8.cdl utf8_64.cdl utf8.nc utf8_64.nc	\
@@ -87,7 +88,10 @@ BUILT_SOURCES = ctest.c ctest64.c
 
 # Can't run ncgen to generate ctest.c and ctest64.c on cross-compiles.
 if CROSS_COMPILING
+ctest.c:
 	cp ref_ctest.c ctest.c
+
+ctest64.c:
 	cp ref_ctest64.c ctest64.c
 else
 ctest.c:
@@ -103,7 +107,9 @@ EXTRA_DIST += tst_ncgen4_shared.sh tst_ncgen4.sh tst_ncgen4_classic.sh	\
 tst_ncgen4_diff.sh tst_ncgen4_cycle.sh ref_ctest.c ref_ctest64.c
 
 CLEANFILES += results/*.nc results/*.dmp results/*.dmp2 tmp*.cdl
+if !BUILD_DLL
 TESTS += tst_ncgen4_classic.sh
 if USE_NETCDF4
 TESTS += tst_ncgen4.sh
+endif
 endif

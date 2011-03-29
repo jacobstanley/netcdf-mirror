@@ -21,7 +21,9 @@ EXTRA_DIST = ncgen.y ncgenyy.c ncgen.l c0.cdl run_tests.sh run_nc4_tests.sh \
 
 # This shell script causes ncgen3 to build a classic and a 64-bit
 # offset file from a cdl file shipped with the distribution.
+if !BUILD_DLL
 TESTS = run_tests.sh 
+endif
 
 # The tests produce these files.
 CLEANFILES = c0.nc c0_64.nc
@@ -30,7 +32,9 @@ if USE_NETCDF4
 
 # This shell script causes ncgen to build a netcdf-4 and netcdf-4
 # classic file from a cdl file shipped with the distribution.
+if !BUILD_DLL
 TESTS += run_nc4_tests.sh
+endif
 
 # The nc4 tests produce these files.
 CLEANFILES += c0_4.nc c0_4c.nc
