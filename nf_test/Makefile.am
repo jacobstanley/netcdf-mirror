@@ -168,7 +168,6 @@ endif # TEST_F77
 
 endif #USE_NETCDF4
 
-if BUILD_C
 # This is the fortran v2 test. It depends on the utilities being built
 # to generate it's input file.
 if BUILD_V2
@@ -179,7 +178,6 @@ TESTS += ftest
 CLEANFILES += test.nc
 endif # BUILD_UTILITIES
 endif # BUILD_V2
-endif #BUILD_C
 
 if BUILD_F90
 check_PROGRAMS += tst_f90

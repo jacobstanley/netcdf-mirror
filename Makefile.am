@@ -31,9 +31,6 @@ F77_DIR = fortran
 F77_TEST = nf_test
 endif
 
-# Does the user want C API?
-if BUILD_C
-
 LIBSRC_DIR = libsrc
 NC_TEST_DIR = nc_test
 
@@ -68,8 +65,6 @@ endif
 
 DISPATCHDIR = libdispatch
 ASSEMBLEDIR = liblib
-
-endif # BUILD_C
 
 # Does the user want F90 API?
 if BUILD_F90
@@ -127,9 +122,7 @@ bin_SCRIPTS = nc-config
 
 # What needs to go in the binrary dist?
 BINFILES = README_BINARIES.txt
-if BUILD_C
 BINFILES += include/netcdf.h share/man/man3/netcdf.3 lib/libnetcdf.a
-endif
 
 if BUILD_UTILITIES
 BINFILES += bin/ncgen3$(EXEEXT) bin/ncgen$(EXEEXT) bin/ncdump$(EXEEXT)	\
