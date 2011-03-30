@@ -42,7 +42,6 @@ endif # USE_DAP
 # NetCDF-4 ...
 if USE_NETCDF4
 
-AM_CPPFLAGS += -I${top_srcdir}/libsrc4
 libnetcdf_la_LIBADD += ${top_builddir}/libsrc4/libnetcdf4.la
 
 # netcdf4+dap
@@ -56,12 +55,6 @@ libnetcdf_la_LIBADD += ${top_builddir}/libcdmr/libnccr.la
 endif # BUILD_CDMREMOTE
 
 endif #USE_NETCDF4
-
-if BUILD_F77
-if ! BUILD_SEPARATE_FORTRAN
-libnetcdf_la_LIBADD += ${top_builddir}/fortran/libnetcdff.la
-endif #!BUILD_SEPARATE_FORTRAN
-endif #BUILD_F77
 
 # We need at least one source file
 libnetcdf_la_SOURCES = stub.c 

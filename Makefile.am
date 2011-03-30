@@ -113,19 +113,11 @@ endif
 # built right before LIBSRC_DIR and NC4DAPDIR must be 
 # built right before LIBSRC4_DIR.
 # If using dispatch, then the order is different
-if BUILD_SEPARATE_FORTRAN
 SUBDIRS = include $(UDUNITS) $(H5_TEST_DIR) $(DISPATCHDIR) $(OCLIB)	\
 $(LIBSRC_DIR) $(LIBSRC4_DIR) $(NCDAP3) $(NCDAP4) $(LIBCDMR)		\
 ${ASSEMBLEDIR} $(V2_TEST) $(NC_TEST_DIR) $(F90_DIR) $(F77_DIR)		\
 $(NCGEN3) $(NCGEN) $(NCDUMP) $(F77_TEST) ${CXX_DIR} $(CXX4)		\
 $(NC_TEST4) $(NCDAPTESTDIR) man4 $(EXAMPLES) $(LIBCF)
-else
-SUBDIRS = include $(UDUNITS) $(H5_TEST_DIR) $(DISPATCHDIR) $(OCLIB)	\
-$(F90_DIR) $(F77_DIR) $(LIBSRC_DIR) $(LIBSRC4_DIR) $(NCDAP3) $(NCDAP4)	\
-$(LIBCDMR) ${ASSEMBLEDIR} $(V2_TEST) $(NCGEN3) $(NCGEN) $(NCDUMP)	\
-$(F77_TEST) ${CXX_DIR} $(CXX4) $(NC_TEST4) $(NC_TEST_DIR)		\
-$(NCDAPTESTDIR) man4 $(EXAMPLES) $(LIBCF)
-endif
 
 # Remove these generated files, for a distclean.
 DISTCLEANFILES = VERSION comps.txt test_prog
@@ -145,10 +137,8 @@ share/man/man1/ncgen.1 share/man/man1/ncdump.1
 endif
 
 if BUILD_F77
-BINFILES += include/netcdf.inc share/man/man3/netcdf_f77.3 
-if BUILD_SEPARATE_FORTRAN
-BINFILES += lib/libnetcdff.a
-endif
+BINFILES += include/netcdf.inc share/man/man3/netcdf_f77.3	\
+lib/libnetcdff.a
 endif
 
 if BUILD_F90

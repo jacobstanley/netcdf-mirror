@@ -221,26 +221,26 @@ AC_ARG_ENABLE([parallel-tests],
 test "x$enable_parallel_tests" = xyes || enable_parallel_tests=no
 AC_MSG_RESULT($enable_parallel_tests)
 
-# Did the user specify a location for the HDF5 library?
-AC_MSG_CHECKING([whether a location for the HDF5 library was specified])
-AC_ARG_WITH([hdf5],
-              [AS_HELP_STRING([--with-hdf5=<directory>],
-                              [Specify location of HDF5 library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [HDF5DIR=$with_hdf5])
-AC_MSG_RESULT([$HDF5DIR])
-AC_SUBST(HDF5DIR, [$HDF5DIR])
+dnl # Did the user specify a location for the HDF5 library?
+dnl AC_MSG_CHECKING([whether a location for the HDF5 library was specified])
+dnl AC_ARG_WITH([hdf5],
+dnl               [AS_HELP_STRING([--with-hdf5=<directory>],
+dnl                               [Specify location of HDF5 library. Configure will \
+dnl 			      expect to find subdirs include and lib.])],
+dnl             [HDF5DIR=$with_hdf5])
+dnl AC_MSG_RESULT([$HDF5DIR])
+dnl AC_SUBST(HDF5DIR, [$HDF5DIR])
 
-# Did the user specify a location for the ZLIB library?
-AC_MSG_CHECKING([whether a location for the ZLIB library was specified])
-AC_ARG_WITH([zlib],
-              [AS_HELP_STRING([--with-zlib=<directory>],
-                              [Specify location of ZLIB library. ZLIB is required \
-			      for netCDF-4. Configure will expect to find subdirs \
-			      include and lib.])],
-            [ZLIBDIR=$with_zlib])
-AC_MSG_RESULT([$ZLIBDIR])
-AC_SUBST(ZLIBDIR, [$ZLIBDIR])
+dnl # Did the user specify a location for the ZLIB library?
+dnl AC_MSG_CHECKING([whether a location for the ZLIB library was specified])
+dnl AC_ARG_WITH([zlib],
+dnl               [AS_HELP_STRING([--with-zlib=<directory>],
+dnl                               [Specify location of ZLIB library. ZLIB is required \
+dnl 			      for netCDF-4. Configure will expect to find subdirs \
+dnl 			      include and lib.])],
+dnl             [ZLIBDIR=$with_zlib])
+dnl AC_MSG_RESULT([$ZLIBDIR])
+dnl AC_SUBST(ZLIBDIR, [$ZLIBDIR])
 
 # Did the user specify a location for the SZLIB library?
 AC_MSG_CHECKING([whether a location for the SZLIB library was specified])
@@ -777,19 +777,19 @@ fi
 # on. (Otherwise C programmers using the shared netcdf library would
 # not be able to run C/netCDF programs without the F90 shared
 # libraries.)
-AC_MSG_CHECKING([whether separate fortran libs are desired])
-AC_ARG_ENABLE([separate-fortran],
-              [AS_HELP_STRING([--enable-separate-fortran],
-                              [build F77 and F90 libraries separate from C library \
-                              (turned on automatically when shared libraries are built)])])
-test "x$enable_separate_fortran" = xno || enable_separate_fortran=yes
-AC_MSG_RESULT([$enable_separate_fortran])
-AM_CONDITIONAL(BUILD_SEPARATE_FORTRAN, [test x$enable_separate_fortran = xyes])
+dnl AC_MSG_CHECKING([whether separate fortran libs are desired])
+dnl AC_ARG_ENABLE([separate-fortran],
+dnl               [AS_HELP_STRING([--enable-separate-fortran],
+dnl                               [build F77 and F90 libraries separate from C library \
+dnl                               (turned on automatically when shared libraries are built)])])
+dnl test "x$enable_separate_fortran" = xno || enable_separate_fortran=yes
+dnl AC_MSG_RESULT([$enable_separate_fortran])
+dnl AM_CONDITIONAL(BUILD_SEPARATE_FORTRAN, [test x$enable_separate_fortran = xyes])
 
-# If the C API is turned off, separate fortran must be turned on.
-if test "x$nc_build_c" = xno -a x$enable_separate_fortran != xyes; then
-   AC_MSG_ERROR([If the C API is disabled, you must use --enable-separate-fortran.])
-fi
+dnl # If the C API is turned off, separate fortran must be turned on.
+dnl if test "x$nc_build_c" = xno -a x$enable_separate_fortran != xyes; then
+dnl    AC_MSG_ERROR([If the C API is disabled, you must use --enable-separate-fortran.])
+dnl fi
 
 
 ## Does the user want to allow UTF8 characters
@@ -1092,14 +1092,14 @@ dnl OLD_CPPFLAGS=${CPPFLAGS}
 
 # Add the HDF5 directory and the math library info for the linker
 # to use in the tests below.
-if test ! "x$ZLIBDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${ZLIBDIR}/lib"
-   CPPFLAGS="${CPPFLAGS} -I${ZLIBDIR}/include"
-fi    
-if test ! "x$HDF5DIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${HDF5DIR}/lib"
-   CPPFLAGS="${CPPFLAGS} -I${HDF5DIR}/include"
-fi    
+dnl if test ! "x$ZLIBDIR" = x; then
+dnl    LDFLAGS="${LDFLAGS} -L${ZLIBDIR}/lib"
+dnl    CPPFLAGS="${CPPFLAGS} -I${ZLIBDIR}/include"
+dnl fi    
+dnl if test ! "x$HDF5DIR" = x; then
+dnl    LDFLAGS="${LDFLAGS} -L${HDF5DIR}/lib"
+dnl    CPPFLAGS="${CPPFLAGS} -I${HDF5DIR}/include"
+dnl fi    
 #LIBS="${LIBS} -lm -lz -lhdf5"
 
 # Add the HDF4 directory and library if needed.
@@ -1129,9 +1129,9 @@ fi
 
 # If the user specified a HDF5 directory, assume they want netcdf-4
 # turned on.
-if test "x$HDF5DIR" != x; then
-   enable_netcdf_4=yes
-fi
+dnl if test "x$HDF5DIR" != x; then
+dnl    enable_netcdf_4=yes
+dnl fi
 
 AC_MSG_CHECKING([whether we should try to build netCDF-4])
 AC_MSG_RESULT([$enable_netcdf_4])
@@ -1236,7 +1236,7 @@ AM_CONDITIONAL(ENABLE_DAP_REMOTE_TESTS, [test "x$enable_dap_remote_tests" = xyes
 AM_CONDITIONAL(ENABLE_DAP_LONG_TESTS, [test "x$enable_dap_long_tests" = xyes])
 AM_CONDITIONAL(BUILD_CXX4, [test x$enable_cxx_4 = xyes])
 AM_CONDITIONAL(EXTRA_EXAMPLE_TESTS, [test "x$enable_extra_example_tests" = xyes])
-AM_CONDITIONAL(USE_HDF5_DIR, [test ! "x$HDF5DIR" = x])
+#AM_CONDITIONAL(USE_HDF5_DIR, [test ! "x$HDF5DIR" = x])
 AM_CONDITIONAL(USE_HDF4_DIR, [test ! "x$HDF4DIR" = x])
 AM_CONDITIONAL(USE_ZLIB_DIR, [test ! "x$ZLIBDIR" = x])
 AM_CONDITIONAL(USE_SZLIB_DIR, [test ! "x$SZLIBDIR" = x])

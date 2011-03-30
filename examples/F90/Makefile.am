@@ -19,11 +19,8 @@ AM_LDFLAGS =
 AM_FCFLAGS +=  -I$(top_srcdir) -I$(top_srcdir)/fortran -I$(top_builddir)/f90 @MOD_FLAG@$(top_builddir)/f90
 AM_FFLAGS += ${AM_FCFLAGS}
 
-if BUILD_SEPARATE_FORTRAN
-AM_LDFLAGS += ${top_builddir}/fortran/libnetcdff.la
-endif #BUILD_SEPARATE_FORTRAN
-
-AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la @EXTERN_LDFLAGS@
+AM_LDFLAGS += ${top_builddir}/fortran/libnetcdff.la	\
+${top_builddir}/liblib/libnetcdf.la @EXTERN_LDFLAGS@
 
 # These are the example programs.
 TESTPROGRAMS = simple_xy_wr simple_xy_rd sfc_pres_temp_wr	\
