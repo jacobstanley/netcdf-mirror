@@ -21,7 +21,7 @@ noinst_LTLIBRARIES = libnetcdf4.la
 libnetcdf4_la_SOURCES = ${NC4SOURCES}
 
 # Tell libtool what libraries are we will depend on.
-libnetcdf4_la_LIBADD =
+libnetcdf4_la_LIBADD = -lm
 
 # HDF4 used?
 if USE_HDF4
