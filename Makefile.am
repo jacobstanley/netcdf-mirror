@@ -91,10 +91,10 @@ if BUILD_UDUNITS
 UDUNITS=udunits
 endif
 
-# Build libcf?
-if BUILD_LIBCF
-LIBCF=libcf
-endif
+# # Build libcf?
+# if BUILD_LIBCF
+# LIBCF=libcf
+# endif
 
 # Build libcdmr
 if BUILD_CDMREMOTE
