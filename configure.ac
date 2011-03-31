@@ -1123,7 +1123,8 @@ AC_SUBST(HAS_F90,[$nc_build_f90])
 AC_SUBST(HAS_CXX,[$nc_build_cxx])
 AC_SUBST(HAS_SZLIB,[$nc_has_szlib])
 
-AC_CONFIG_SUBDIRS([udunits libcf])
+#AC_CONFIG_SUBDIRS([udunits libcf])
+AC_CONFIG_SUBDIRS([udunits])
 
 ##################################################
 # Remove redundant constructions of AM_CPPFLAGS, etc
