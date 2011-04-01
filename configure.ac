@@ -107,7 +107,7 @@ AC_MSG_RESULT($enable_valgrind_tests)
 AC_MSG_CHECKING([whether we should try to build netCDF-4])
 AC_ARG_ENABLE([netcdf-4], [AS_HELP_STRING([--disable-netcdf-4],
               [turn off netcdf-4 features (this build will not be able to access netCDF-4/HDF5 files)])])
-test "x$disable_netcdf_4" = xyes || enable_netcdf_4=yes
+test "x$enable_netcdf_4" = xno || enable_netcdf_4=yes
 AC_MSG_RESULT([$enable_netcdf_4])
 
 # Does the user want to also build the libcf library?
