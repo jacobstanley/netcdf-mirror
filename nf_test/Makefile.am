@@ -39,11 +39,17 @@ AM_FCFLAGS += @MOD_FLAG@../f90
 
 endif #BUILD_F90
 
+# If building a separate fortran library, include it so the tests can
+# find it.
+
 AM_CPPFLAGS += -I$(top_builddir)/liblib @EXTERN_CPPFLAGS@
 AM_FFLAGS +=  ${AM_CPPFLAGS}
 AM_FCFLAGS +=  ${AM_CPPFLAGS}
 
-LDADD += ${top_builddir}/fortran/libnetcdff.la ${top_builddir}/liblib/libnetcdf.la -lm
+if BUILD_SEPARATE_FORTRAN
+LDADD += ${top_builddir}/fortran/libnetcdff.la -lm
+endif
+LDADD += ${top_builddir}/liblib/libnetcdf.la 
 LDADD += @EXTERN_LDFLAGS@
 
 if BUILD_UTILITIES
@@ -168,6 +174,7 @@ endif # TEST_F77
 
 endif #USE_NETCDF4
 
+if BUILD_C
 # This is the fortran v2 test. It depends on the utilities being built
 # to generate it's input file.
 if BUILD_V2
@@ -178,6 +185,7 @@ TESTS += ftest
 CLEANFILES += test.nc
 endif # BUILD_UTILITIES
 endif # BUILD_V2
+endif #BUILD_C
 
 if BUILD_F90
 check_PROGRAMS += tst_f90

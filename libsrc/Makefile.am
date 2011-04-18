@@ -16,8 +16,15 @@ endif # BUILD_DLL
 # These files comprise the netCDF-3 classic library code.
 libnetcdf3_la_SOURCES = string.c v1hpg.c onstack.h rnd.h utf8proc.c	\
 utf8proc_data.h nclistmgr.c putget.m4 attr.m4 nc3dispatch.c nc.c var.c	\
-dim.c ncx.m4 ncx.h lookup3.c pstdint.h posixio.c
+dim.c ncx.m4 ncx.h lookup3.c pstdint.h
 
+# Does the user want to use ffio, a replacement for posixio for Cray
+# computers?
+if USE_FFIO
+libnetcdf3_la_SOURCES += ffio.c
+else
+libnetcdf3_la_SOURCES += posixio.c
+endif
 noinst_LTLIBRARIES = libnetcdf3.la
 
 # These files are cleaned on developer workstations (and then rebuilt
