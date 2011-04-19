@@ -130,10 +130,13 @@ bin_SCRIPTS = nc-config
 # What needs to go in the binrary dist?
 BINFILES = README_BINARIES.txt
 BINFILES += include/netcdf.h share/man/man3/netcdf.3 lib/libnetcdf.a
+ZIPBINFILES = ${prefix}/include/netcdf.h ${prefix}/share/man/man3/netcdf.3 ${prefix}/lib/libnetcdf.a
 
 if BUILD_UTILITIES
 BINFILES += bin/ncgen3$(EXEEXT) bin/ncgen$(EXEEXT) bin/ncdump$(EXEEXT)	\
 share/man/man1/ncgen.1 share/man/man1/ncdump.1
+ZIPBINFILES += ${prefix}/bin/ncgen3$(EXEEXT) ${prefix}/bin/ncgen$(EXEEXT) ${prefix}/bin/ncdump$(EXEEXT)	\
+${prefix}/share/man/man1/ncgen.1 ${prefix}/share/man/man1/ncdump.1
 endif
 
 # if BUILD_F77
@@ -159,6 +162,8 @@ endif
 if BUILD_DLL
 BINFILES += bin/libnetcdf-7.dll lib/libnetcdf.dll.a lib/libnetcdf.a	\
 lib/libnetcdf.la lib/netcdfdll.def
+ZIPBINFILES += ${prefix}/bin/libnetcdf-7.dll ${prefix}/lib/libnetcdf.dll.a ${prefix}/lib/libnetcdf.a	\
+${prefix}/lib/libnetcdf.la ${prefix}/lib/netcdfdll.def
 if BUILD_F77
 BINFILES += 
 endif # BUILD_F77
@@ -176,7 +181,7 @@ ftpbin: install
 	echo "PATH: $(PATH)"
 	tar cf @BINFILE_NAME@ -C ${prefix} ${BINFILES}
 	gzip -f @BINFILE_NAME@
-	cd ${prefix} && zip -j netcdf_${VERSION}.zip ${BINFILES} && pwd && ls && cp netcdf_${VERSION}.zip ..
+	zip -j netcdf_${VERSION}.zip ${ZIPBINFILES}
 
 check_nc_config:
 	$(CC) `./nc-config --cflags` test_prog.c -o test_prog `./nc-config --libs`
