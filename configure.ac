@@ -559,30 +559,12 @@ AC_ARG_ENABLE([compiler-recover],
 test "x$enable_compiler_recover" = "xno" || enable_compiler_recover=yes
 AC_MSG_RESULT([$enable_compiler_recover])
 
-# If --enable-c-only is specified only the C lib will be built.
-AC_MSG_CHECKING([whether only the C library is desired])
-AC_ARG_ENABLE([c-only],
-              [AS_HELP_STRING([--enable-c-only],
-                              [build only the netCDF C library; same as \
-                              --disable-f77 --disable-cxx --disable-v2 --disable-examples \
-                              --disable-utilities])])
-test "x$enable_c_only" = xyes || enable_c_only=no
-AC_MSG_RESULT([$enable_c_only])
-if test "x$enable_c_only" = xyes; then
-nc_build_f77=no
-nc_build_f90=no
-nc_build_cxx=no
-nc_build_v2=no
-nc_build_utilities=no
-nc_build_examples=no
-else
 nc_build_f77=yes
 nc_build_f90=yes
 nc_build_cxx=yes
 nc_build_v2=yes
 nc_build_utilities=yes
 nc_build_examples=yes
-fi
 
 # Does the user want to build examples?
 AC_MSG_CHECKING([whether examples should be built])

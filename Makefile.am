@@ -5,8 +5,6 @@
 # netcdf directories. Not all directories are built, depending on the
 # options selected during configure.
 
-# $Id: Makefile.am,v 1.137 2010/06/01 15:34:49 ed Exp $
-
 # This directory stores libtool macros, put there by aclocal.
 ACLOCAL_AMFLAGS = -I m4
 
@@ -30,9 +28,6 @@ if BUILD_F77
 F77_DIR = fortran
 F77_TEST = nf_test
 endif
-
-# Does the user want C API?
-if BUILD_C
 
 LIBSRC_DIR = libsrc
 NC_TEST_DIR = nc_test
@@ -68,8 +63,6 @@ endif
 
 DISPATCHDIR = libdispatch
 ASSEMBLEDIR = liblib
-
-endif # BUILD_C
 
 # Does the user want F90 API?
 if BUILD_F90
@@ -111,21 +104,21 @@ endif
 # and run. ncgen must come before ncdump and cxx, because their tests
 # depend on it. nf_test depends upon ncgen as well.
 # If not using dispatch then NC3DAPDIR must be
-# built right before LIBSRC_DIR and NC4DAPDIR must be 
+# built right before libsrc and NC4DAPDIR must be 
 # built right before LIBSRC4_DIR.
 # If using dispatch, then the order is different
 if BUILD_SEPARATE_FORTRAN
 SUBDIRS = include $(UDUNITS) $(H5_TEST_DIR) $(DISPATCHDIR) $(OCLIB)	\
-$(LIBSRC_DIR) $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR)		\
-${ASSEMBLEDIR} $(V2_TEST) $(NC_TEST_DIR) $(F90_DIR) $(F77_DIR)		\
-$(NCGEN3) $(NCGEN) $(NCDUMP) $(F77_TEST) ${CXX_DIR} $(CXX4)		\
-$(NC_TEST4) $(NCDAPTESTDIR) man4 $(EXAMPLES) $(LIBCF)
+libsrc $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) ${ASSEMBLEDIR} $(V2_TEST)	\
+nc_test $(F90_DIR) $(F77_DIR) $(NCGEN3) $(NCGEN) $(NCDUMP) $(F77_TEST)	\
+${CXX_DIR} $(CXX4) $(NC_TEST4) $(NCDAPTESTDIR) man4 $(EXAMPLES)		\
+$(LIBCF)
 else
 SUBDIRS = include $(UDUNITS) $(H5_TEST_DIR) $(DISPATCHDIR) $(OCLIB)	\
-$(F90_DIR) $(F77_DIR) $(LIBSRC_DIR) $(LIBSRC4_DIR) $(DAP2)	\
-$(LIBCDMR) ${ASSEMBLEDIR} $(V2_TEST) $(NCGEN3) $(NCGEN) $(NCDUMP)	\
-$(F77_TEST) ${CXX_DIR} $(CXX4) $(NC_TEST4) $(NC_TEST_DIR)		\
-$(NCDAPTESTDIR) man4 $(EXAMPLES) $(LIBCF)
+$(F90_DIR) $(F77_DIR) libsrc $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR)		\
+${ASSEMBLEDIR} $(V2_TEST) $(NCGEN3) $(NCGEN) $(NCDUMP) $(F77_TEST)	\
+${CXX_DIR} $(CXX4) $(NC_TEST4) nc_test $(NCDAPTESTDIR) man4		\
+$(EXAMPLES) $(LIBCF)
 endif
 
 # Remove these generated files, for a distclean.
@@ -136,9 +129,7 @@ bin_SCRIPTS = nc-config
 
 # What needs to go in the binrary dist?
 BINFILES = README_BINARIES.txt
-if BUILD_C
 BINFILES += include/netcdf.h share/man/man3/netcdf.3 lib/libnetcdf.a
-endif
 
 if BUILD_UTILITIES
 BINFILES += bin/ncgen3$(EXEEXT) bin/ncgen$(EXEEXT) bin/ncdump$(EXEEXT)	\
