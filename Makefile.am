@@ -136,29 +136,29 @@ BINFILES += bin/ncgen3$(EXEEXT) bin/ncgen$(EXEEXT) bin/ncdump$(EXEEXT)	\
 share/man/man1/ncgen.1 share/man/man1/ncdump.1
 endif
 
-if BUILD_F77
-BINFILES += include/netcdf.inc share/man/man3/netcdf_f77.3 
-if BUILD_SEPARATE_FORTRAN
-BINFILES += lib/libnetcdff.a
-endif
-endif
+# if BUILD_F77
+# BINFILES += include/netcdf.inc share/man/man3/netcdf_f77.3 
+# if BUILD_SEPARATE_FORTRAN
+# BINFILES += lib/libnetcdff.a
+# endif
+# endif
 
-if BUILD_F90
-if UPPER_CASE_MOD
-BINFILES += include/NETCDF.mod include/TYPESIZES.mod
-else
-BINFILES += include/netcdf.mod include/typesizes.mod
-endif
-BINFILES += share/man/man3/netcdf_f90.3
-endif
+# if BUILD_F90
+# if UPPER_CASE_MOD
+# BINFILES += include/NETCDF.mod include/TYPESIZES.mod
+# else
+# BINFILES += include/netcdf.mod include/typesizes.mod
+# endif
+# BINFILES += share/man/man3/netcdf_f90.3
+# endif
 
-if BUILD_CXX
-BINFILES += include/netcdf.hh include/ncvalues.h  include/netcdfcpp.h lib/libnetcdf_c++.a 
-endif
+# if BUILD_CXX
+# BINFILES += include/netcdf.hh include/ncvalues.h  include/netcdfcpp.h lib/libnetcdf_c++.a 
+# endif
 
 if BUILD_DLL
-BINFILES += liblib/.libs/cygnetcdf-7.dll liblib/.libs/libnetcdf.dll.a	\
-liblib/.libs/libnetcdf.a liblib/.libs/libnetcdf.la
+BINFILES += bin/libnetcdf-7.dll lib/libnetcdf.dll.a lib/libnetcdf.a	\
+lib/libnetcdf.la include/netcdfdll.def
 if BUILD_F77
 BINFILES += 
 endif # BUILD_F77
@@ -176,6 +176,7 @@ ftpbin: install
 	echo "PATH: $(PATH)"
 	tar cf @BINFILE_NAME@ -C ${prefix} ${BINFILES}
 	gzip -f @BINFILE_NAME@
+	cd ${prefix} && zip -j netcdf_${VERSION}.zip ${BINFILES} && pwd && ls && cp netcdf_${VERSION}.zip ..
 
 check_nc_config:
 	$(CC) `./nc-config --cflags` test_prog.c -o test_prog `./nc-config --libs`
