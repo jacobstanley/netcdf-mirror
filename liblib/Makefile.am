@@ -21,7 +21,6 @@ libnetcdf_la_LIBADD =
 if BUILD_DLL
 libnetcdf_la_LDFLAGS += -no-undefined -Wl,--output-def,netcdfdll.def
 libnetcdf_la_CPPFLAGS += -DDLL_EXPORT
-include_HEADERS = netcdfdll.def
 endif # BUILD_DLL
 
 # The v2 API...

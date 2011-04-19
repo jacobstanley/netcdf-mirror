@@ -158,7 +158,7 @@ endif
 
 if BUILD_DLL
 BINFILES += bin/libnetcdf-7.dll lib/libnetcdf.dll.a lib/libnetcdf.a	\
-lib/libnetcdf.la include/netcdfdll.def
+lib/libnetcdf.la lib/netcdfdll.def
 if BUILD_F77
 BINFILES += 
 endif # BUILD_F77
@@ -187,6 +187,9 @@ check_nc_config:
 	./test_prog
 
 install-data-hook:
+if BUILD_DLL
+	cp liblib/netcdfdll.def ${prefix}/lib
+endif
 	@echo ''
 	@echo '+-------------------------------------------------------------+'
 	@echo '| Congratulations! You have successfully installed netCDF!    |'
