@@ -775,7 +775,7 @@ fixzerodims3(NCDAPCOMMON* nccomm)
 void
 applyclientparamcontrols3(NCDAPCOMMON* nccomm)
 {
-    NClist* params = NULL;
+    char** params = NULL;
     const char* value;
 
     /* Get client parameters */

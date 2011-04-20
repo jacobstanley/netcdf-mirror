@@ -404,6 +404,17 @@ occlose(OCstate* state)
 	    curr = next;
 	}
     }
+    ocfree(state->curlflags.useragent);
+    ocfree(state->curlflags.cookiejar);
+    ocfree(state->curlflags.cookiefile);
+    ocfree(state->ssl.certificate);
+    ocfree(state->ssl.key);
+    ocfree(state->ssl.keypasswd);
+    ocfree(state->ssl.cainfo);
+    ocfree(state->ssl.capath); 
+    ocfree(state->proxy.host);
+    ocfree(state->creds.username);
+    ocfree(state->creds.password);
     if(state->curl != NULL) occurlclose(state->curl);
     if(state->clientparams != NULL) ocparamfree(state->clientparams);
     ocfree(state);
@@ -553,7 +564,10 @@ ocupdatelastmodifieddata(OCstate* state)
 {
     OCerror status = OC_NOERR;
     long lastmodified;
-    status = ocfetchlastmodified(state->curl, state->url.base, &lastmodified);
+    char* base = NULL;
+    base = dapurlgeturl(&state->url,NULL,NULL,0);
+    status = ocfetchlastmodified(state->curl, base, &lastmodified);
+    free(base);
     if(status == OC_NOERR) {
 	state->datalastmodified = lastmodified;
     }
@@ -575,11 +589,6 @@ ocsetcurlproperties(OCstate* state)
 	oc_log(LOGERR,"Malformed .dodsrc");
 	goto fail;
     }
-    /* Set username+password from .dodsrc */
-    stat=ocset_user_password(curl,state->creds.username,
-                                  state->creds.password);
-    if(stat != OC_NOERR) goto fail;    
-
     if (occredentials_in_url(state->url.url)) {
 	/* this overrides .dodsrc */
         char *result_url = NULL;
@@ -599,6 +608,11 @@ ocsetcurlproperties(OCstate* state)
             state->creds.username = userName;
 	}
     }
+
+    /* Set username+password */
+    stat=ocset_user_password(curl,state->creds.username,
+                                  state->creds.password);
+    if(stat != OC_NOERR) goto fail;    
 
     /* Set curl properties */
     if((stat=ocset_curl_flags(curl,state)) != OC_NOERR) goto fail;

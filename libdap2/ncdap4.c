@@ -775,7 +775,7 @@ cvtunlimiteddim(NCDAPCOMMON* nccomm, CDFnode* dim)
 static void
 applyclientparamcontrols4(NCDAPCOMMON* nccomm)
 {
-    NClist* params = NULL;
+    char** params = NULL;
     const char* value;
 
     /* Get client parameters */

@@ -354,7 +354,7 @@ int
 ocdodsrc_process(OCstate* state)
 {
     char* value;
-    char* url = state->url.base;
+    char* url = dapurlgeturl(&state->url,NULL,NULL,0);
     if(ocdodsrc == NULL) return 0;
     value = ocdodsrc_lookup("CURL.DEFLATE",url);
     if(value != NULL) {
@@ -443,6 +443,8 @@ ocdodsrc_process(OCstate* state)
         if(!state->creds.password) return OC_ENOMEM;
     }
     /* else ignore */    
+
+    free(url);
 
     return OC_NOERR;
 }

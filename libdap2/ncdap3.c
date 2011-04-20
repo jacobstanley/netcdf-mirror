@@ -276,7 +276,7 @@ done:
 	cleanNCDAP3(drno);
 	NC3_abort(ncid);
     }
-    if(ce) nullfree(ce);
+    if(ce!=NULL) nullfree(ce);
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     return THROW(ncstat);
 }

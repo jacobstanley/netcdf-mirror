@@ -63,23 +63,27 @@ readpacket(CURL* curl,DAPURL* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
    int stat;
    int fileprotocol = 0;
    char* suffix = ocdxdextension[dxd];
+   char* fetchurl = NULL;
 
-   fileprotocol = (strncmp(url->base,"file",4)==0);
+   fileprotocol = (strcmp(url->protocol,"file")==0);
 
    if(fileprotocol && !oc_curl_file_supported) {
         /* Short circuit file://... urls*/
 	/* We do this because the test code always needs to read files*/
-	stat = readfile(url->base,suffix,packet);
+	fetchurl = dapurlgeturl(url,NULL,NULL,0);
+	stat = readfile(fetchurl,suffix,packet);
     } else {
-        char* fetchurl = dapurlgeturl(url,NULL,suffix,!fileprotocol,0);
+	int flags = DAPURLUSERPWD;
+	if(!fileprotocol) flags |= DAPURLCONSTRAINTS;
+        fetchurl = dapurlgeturl(url,NULL,suffix,flags);
 	MEMCHECK(fetchurl,OC_ENOMEM);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch url=%s\n",fetchurl); fflush(stderr);}
         stat = ocfetchurl(curl,fetchurl,packet,lastmodified);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
-        free(fetchurl);
     }
+    free(fetchurl);
     return THROW(stat);
 }
 
@@ -95,28 +99,31 @@ readDATADDS(OCstate* state, OCtree* tree)
         state->datalastmodified = lastmod;
    tree->data.datasize = ocbyteslength(state->packet);
 #else /*OC_DISK_STORAGE*/
-   DAPURL* url = &state->url;
-   int fileprotocol = 0;
+    DAPURL* url = &state->url;
+    int fileprotocol = 0;
+    char* readurl = NULL;
 
-   fileprotocol = (strncmp(url->base,"file",4)==0);
+    fileprotocol = (strcmp(url->protocol,"file")==0);
 
     if(fileprotocol && !oc_curl_file_supported) {
-	stat = readfiletofile(url->base, ".dods", tree->data.file, &tree->data.datasize);
+	readurl = dapurlgeturl(url,NULL,NULL,0);
+	stat = readfiletofile(readurl, ".dods", tree->data.file, &tree->data.datasize);
     } else {
-        char* fetchurl;
+	int flags = DAPURLUSERPWD;
+	if(!fileprotocol) flags |= DAPURLCONSTRAINTS;
         dapurlsetconstraints(url,tree->constraint);
-        fetchurl = dapurlgeturl(url,NULL,".dods",!fileprotocol,0);
-        MEMCHECK(fetchurl,OC_ENOMEM);
+        readurl = dapurlgeturl(url,NULL,".dods",flags);
+        MEMCHECK(readurl,OC_ENOMEM);
 	if (ocdebug > 0) 
-	    {fprintf(stderr, "fetch url=%s\n", fetchurl);fflush(stderr);}
-	stat = ocfetchurl_file(state->curl, fetchurl, tree->data.file,
+	    {fprintf(stderr, "fetch url=%s\n", readurl);fflush(stderr);}
+	stat = ocfetchurl_file(state->curl, readurl, tree->data.file,
                                &tree->data.datasize, &lastmod);
         if(stat == OC_NOERR)
 	    state->datalastmodified = lastmod;
 	if (ocdebug > 0) 
             {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
-	free(fetchurl);
     }
+    free(readurl);
 #endif /*OC_DISK_STORAGE*/
     return THROW(stat);
 }
