@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 ## Process this file with autoconf to produce a configure script.
 
-# This is part of Unidata's netCDF package. Copyright 2005-2006, see
+# This is part of Unidata's netCDF package. Copyright 2005-2011, see
 # the COPYRIGHT file for more information.
 
 # Recall that ${VAR-exp} expands to $VAR if var is set (even to null),
@@ -487,6 +487,7 @@ AC_ARG_ENABLE([compiler-recover],
 test "x$enable_compiler_recover" = "xno" || enable_compiler_recover=yes
 AC_MSG_RESULT([$enable_compiler_recover])
 
+nc_build_c=yes
 nc_build_f77=yes
 nc_build_f90=yes
 nc_build_cxx=yes
@@ -543,38 +544,6 @@ AC_ARG_ENABLE([fortran-type-check],
 test "x$enable_fortran_type_check" = xno || enable_fortran_type_check=yes
 AC_MSG_RESULT($enable_fortran_type_check)
 
-# Do we want to build the C API? If not, the location of an existing C
-# library must be specified with --with-netcdf=
-nc_build_c=yes
-AC_MSG_CHECKING([whether C API is desired])
-AC_ARG_ENABLE([c],
-              [AS_HELP_STRING([--disable-c],
-                              [don't try to build the netCDF C API (if this option \
-                               is specified, the --with-netcdf-c-lib option must \
-                               also be used)])])
-test "x$enable_c" = xno && nc_build_c=no
-AC_MSG_RESULT([$nc_build_c])
-
-# If building without the C API (for example to build some Fortran API
-# for a new Fortran compiler), the --with-netcdf-c-lib= option must be
-# used to tell where to find the netCDF C API. This must point to a
-# netCDF C library which does NOT contain the F77 or F90 functions.
-AC_MSG_CHECKING([where to get netCDF C-only library for separate fortran libraries])
-AC_ARG_WITH([netcdf-c-lib],
-            [AS_HELP_STRING([--netcdf-c-lib=<directory>],
-                            [Specify location of netCDF C-only library (only \
-                            valid when --disable-c is also specified).])],
-            [NETCDF_C_LIB=$with_netcdf_c_lib])
-AM_CONDITIONAL(USE_NETCDF_C_LIB_DIR, [test ! "x$NETCDF_C_LIB" = x])
-AC_MSG_RESULT($NETCDF_C_LIB)
-AC_SUBST(NETCDF_C_LIB)
-
-# If the C API is turned off, a C-only library must be specified.
-if test "x$nc_build_c" = xno -a "x$NETCDF_C_LIB" = x; then
-   AC_MSG_ERROR([If the C API is disabled, you must specify a location of \
-   a netCDF C-only library with --with-netcdf-c-lib.])
-fi
-
 # Do we want to build the C++ API? Check for --disable-cxx as a
 # configure argument.
 AC_MSG_CHECKING([whether CXX API is desired])
@@ -584,11 +553,6 @@ AC_ARG_ENABLE([cxx],
 test "x$enable_cxx" = xno && nc_build_cxx=no
 test "x$nc_null_cxx" = xyes && nc_build_cxx=no
 AC_MSG_RESULT([$nc_build_cxx])
-
-# If the C API is turned off, a C++ must also be disabled.
-if test "x$nc_build_c" = xno -a "x$nc_build_cxx" = xyes; then
-   AC_MSG_ERROR([If the C API is disabled, you must also disable C++ API with --disable-cxx.])
-fi
 
 # Does the user want to disable the V2 API?
 AC_MSG_CHECKING([whether v2 netCDF API should be built])
@@ -684,39 +648,6 @@ AM_CONDITIONAL(BUILD_DLL, [test x$enable_dll = xyes])
 if test "x$enable_dll" = xyes; then
    AC_DEFINE(DLL_NETCDF, 1, [set this only when building a DLL under MinGW])
 fi
-
-# If --enable-separate-fortran is selected the F77 and F90 APIs will
-# each get their own libraray instead of being crammed in with the C
-# functions. If shared libraries are being built, this is turned
-# on. (Otherwise C programmers using the shared netcdf library would
-# not be able to run C/netCDF programs without the F90 shared
-# libraries.)
-AC_MSG_CHECKING([whether separate fortran libs are desired])
-AC_ARG_ENABLE([separate-fortran],
-              [AS_HELP_STRING([--enable-separate-fortran],
-                              [build F77 and F90 libraries separate from C library \
-                              (turned on automatically when shared libraries are built)])])
-test "x$enable_separate_fortran" = xno || enable_separate_fortran=yes
-AC_MSG_RESULT([$enable_separate_fortran])
-AM_CONDITIONAL(BUILD_SEPARATE_FORTRAN, [test x$enable_separate_fortran = xyes])
-
-# If the C API is turned off, separate fortran must be turned on.
-if test "x$nc_build_c" = xno -a x$enable_separate_fortran != xyes; then
-   AC_MSG_ERROR([If the C API is disabled, you must use --enable-separate-fortran.])
-fi
-
-
-## Does the user want to allow UTF8 characters
-#AC_MSG_CHECKING([whether UTF8 is allowed in identifiers])
-#AC_ARG_ENABLE([utf8],
-#              [AS_HELP_STRING([--enable-utf8],
-#                              [Allow UTF8.])])
-#test "x$enable_utf8" = xyes || enable_utf8=no
-#AC_MSG_RESULT($enable_utf8)
-#if test "x$enable_utf8" = xyes; then
-#   AC_DEFINE([ALLOW_UTF8], 1, [set this to allow UTF8 characters in identifiers])
-#fi
-#AM_CONDITIONAL(ALLOW_UTF8, [test x$enable_utf8 = xyes])
 
 # According to the autoconf mailing list gurus, we must test for
 # compilers unconditionally. That is, we can't skip looking for the
@@ -1157,11 +1088,7 @@ xsolaris*)
 *);;
 esac
 
-if test "x$enable_separate_fortran" = xyes ; then 
-   NC_FLIBS="-lnetcdff $NC_LIBS"
-else
-   NC_FLIBS="$NC_LIBS"
-fi
+NC_FLIBS="-lnetcdff $NC_LIBS"
 
 AC_SUBST(NC_LIBS,[$NC_LIBS])
 AC_SUBST(NC_FLIBS,[$NC_FLIBS])

@@ -27,16 +27,11 @@ AM_FCFLAGS += @MOD_FLAG@../f90
 
 endif #BUILD_F90
 
-# If building a separate fortran library, include it so the tests can
-# find it.
-
 AM_CPPFLAGS += -I$(top_builddir)/liblib @EXTERN_CPPFLAGS@
 AM_FFLAGS +=  ${AM_CPPFLAGS}
 AM_FCFLAGS +=  ${AM_CPPFLAGS}
 
-if BUILD_SEPARATE_FORTRAN
 LDADD += ${top_builddir}/fortran/libnetcdff.la -lm
-endif
 LDADD += ${top_builddir}/liblib/libnetcdf.la 
 LDADD += @EXTERN_LDFLAGS@
 
