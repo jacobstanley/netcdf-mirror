@@ -133,22 +133,10 @@ test "x$with_libcf" = xyes || with_libcf=no
 AC_MSG_RESULT($with_libcf)
 
 # Does the user want to turn on HDF4 read ability?
+AC_MSG_CHECKING([whether reading of HDF4 SD files is to be enabled])
 AC_ARG_ENABLE([hdf4], [AS_HELP_STRING([--enable-hdf4],
               [build netcdf-4 with HDF4 read capability (HDF4, HDF5 and zlib required)])])
 test "x$enable_hdf4" = xyes || enable_hdf4=no
-
-# Did the user specify a location for the HDF4 library?
-AC_MSG_CHECKING([whether a location for the HDF4 library was specified])
-AC_ARG_WITH([hdf4],
-              [AS_HELP_STRING([--with-hdf4=<directory>],
-                              [Specify location of HDF4 library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [HDF4DIR=$with_hdf4])
-AC_MSG_RESULT([$HDF4DIR])
-AC_SUBST(HDF4DIR, [$HDF4DIR])
-test "x$with_hdf4" = "x" || enable_hdf4=yes
-
-AC_MSG_CHECKING([whether reading of HDF4 SD files is to be enabled])
 AC_MSG_RESULT($enable_hdf4)
 
 # Does the user want to turn on extra HDF4 file tests?
@@ -168,21 +156,6 @@ AC_ARG_ENABLE([pnetcdf], [AS_HELP_STRING([--enable-pnetcdf],
 test "x$enable_pnetcdf" = xyes || enable_pnetcdf=no
 AC_MSG_RESULT($enable_pnetcdf)
 
-# Did the user specify a location for the PNETCDF library?
-AC_MSG_CHECKING([whether a location for the parallel-netcdf library was specified])
-AC_ARG_WITH([pnetcdf],
-              [AS_HELP_STRING([--with-pnetcdf=<directory>],
-                              [Specify location of parallel-netcdf library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [PNETCDFDIR=$with_pnetcdf])
-if test "x$PNETCDFDIR" = "x" ; then
-AC_MSG_RESULT([no])
-else
-AC_MSG_RESULT([$PNETCDFDIR])
-enable_pnetcdf=yes
-fi
-AC_SUBST(PNETCDFDIR, [$PNETCDFDIR])
-
 # Does the user want to build cxx-4?
 AC_MSG_CHECKING([whether new netCDF-4 C++ API is to be built])
 AC_ARG_ENABLE([cxx-4],
@@ -193,18 +166,6 @@ if test "x$enable_netcdf_4" = xno; then
    enable_cxx_4=no
 fi
 AC_MSG_RESULT($enable_cxx_4)
-
-# Should netcdf-4 do data conversions, or should HDF5?
-# (Note: netCDF-4 should always do conversions, because HDF5 has different handling of extreme numbers.
-dnl AC_MSG_CHECKING([whether HDF5 should do data conversions])
-dnl AC_ARG_ENABLE([hdf5-convert],
-dnl               [AS_HELP_STRING([--enable-hdf5-convert],
-dnl                               [have HDF5 do data conversions instead of netCDF-4])])
-dnl test "x$enable_hdf5_convert" = xyes || enable_hdf5_convert=no
-dnl AC_MSG_RESULT($enable_hdf5_convert)
-dnl if test "x$enable_hdf5_convert" = xyes; then
-dnl    AC_DEFINE([HDF5_CONVERT], 1, [if true, use HDF5 data conversions])
-dnl fi
 
 # Does the user want to run extra example tests
 AC_MSG_CHECKING([whether extra example tests should be run])
@@ -224,39 +185,6 @@ AC_ARG_ENABLE([parallel-tests],
                                without parallel I/O support.])])
 test "x$enable_parallel_tests" = xyes || enable_parallel_tests=no
 AC_MSG_RESULT($enable_parallel_tests)
-
-# Did the user specify a location for the HDF5 library?
-AC_MSG_CHECKING([whether a location for the HDF5 library was specified])
-AC_ARG_WITH([hdf5],
-              [AS_HELP_STRING([--with-hdf5=<directory>],
-                              [Specify location of HDF5 library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [HDF5DIR=$with_hdf5])
-AC_MSG_RESULT([$HDF5DIR])
-AC_SUBST(HDF5DIR, [$HDF5DIR])
-
-# Did the user specify a location for the ZLIB library?
-AC_MSG_CHECKING([whether a location for the ZLIB library was specified])
-AC_ARG_WITH([zlib],
-              [AS_HELP_STRING([--with-zlib=<directory>],
-                              [Specify location of ZLIB library. ZLIB is required \
-			      for netCDF-4. Configure will expect to find subdirs \
-			      include and lib.])],
-            [ZLIBDIR=$with_zlib])
-AC_MSG_RESULT([$ZLIBDIR])
-AC_SUBST(ZLIBDIR, [$ZLIBDIR])
-
-# Did the user specify a location for the SZLIB library?
-AC_MSG_CHECKING([whether a location for the SZLIB library was specified])
-AC_ARG_WITH([szlib],
-              [AS_HELP_STRING([--with-szlib=<directory>],
-                              [Specify location of SZLIB library. SZLIB is not \
-			      required for netCDF-4, but you must specify its location \
-			      if HDF5 was built with SZLIB. Configure will expect to \
-			      find subdirs include and lib.])],
-            [SZLIBDIR=$with_szlib])
-AC_MSG_RESULT([$SZLIBDIR])
-AC_SUBST(SZLIBDIR, [$SZLIBDIR])
 
 # Did the user specify a default chunk size?
 AC_MSG_CHECKING([whether a default chunk size in bytes was specified])
