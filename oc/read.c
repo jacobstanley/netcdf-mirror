@@ -14,6 +14,7 @@
 #include "http.h"
 #include "read.h"
 #include "rc.h"
+#include "curlfunctions.h"
 
 extern int oc_curl_file_supported;
 
@@ -27,20 +28,30 @@ static int readfiletofile(char* path, char* suffix, FILE* stream, unsigned long*
 int
 readDDS(OCstate* state, OCtree* tree)
 {
-   int status;
-   long lastmodified = -1;
-   dapurlsetconstraints(&state->url,tree->constraint);
-   status = readpacket(state->curl,&state->url,state->packet,OCDDS,
+    int stat;
+    long lastmodified = -1;
+
+
+    dapurlsetconstraints(state->url,tree->constraint);
+
+ocset_user_password(state);
+
+    stat = readpacket(state->curl,state->url,state->packet,OCDDS,
 			&lastmodified);
-   if(status == OC_NOERR) state->ddslastmodified = lastmodified;
-   return status;
+    if(stat == OC_NOERR) state->ddslastmodified = lastmodified;
+
+    return stat;
 }
 
 int
 readDAS(OCstate* state, OCtree* tree)
 {
-   dapurlsetconstraints(&state->url,tree->constraint);
-   return readpacket(state->curl,&state->url,state->packet,OCDAS,NULL);
+    int stat = OC_NOERR;
+
+    dapurlsetconstraints(state->url,tree->constraint);
+    stat = readpacket(state->curl,state->url,state->packet,OCDAS,NULL);
+
+    return stat;
 }
 
 int
@@ -73,7 +84,7 @@ readpacket(CURL* curl,DAPURL* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 	fetchurl = dapurlgeturl(url,NULL,NULL,0);
 	stat = readfile(fetchurl,suffix,packet);
     } else {
-	int flags = DAPURLUSERPWD;
+	int flags = 0;
 	if(!fileprotocol) flags |= DAPURLCONSTRAINTS;
         fetchurl = dapurlgeturl(url,NULL,suffix,flags);
 	MEMCHECK(fetchurl,OC_ENOMEM);
@@ -90,16 +101,17 @@ readpacket(CURL* curl,DAPURL* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 int
 readDATADDS(OCstate* state, OCtree* tree)
 {
-   int stat;
-   long lastmod = -1;
+    int stat;
+    long lastmod = -1;
+
 #ifndef OC_DISK_STORAGE
-   dapurlsetconstraints(&state->url,tree->constraint);
-   stat = readpacket(state->curl,&state->url,state->packet,OCDATADDS,&lastmod);
-   if(stat == OC_NOERR)
+    dapurlsetconstraints(state->url,tree->constraint);
+    stat = readpacket(state->curl,state->url,state->packet,OCDATADDS,&lastmod);
+    if(stat == OC_NOERR)
         state->datalastmodified = lastmod;
-   tree->data.datasize = ocbyteslength(state->packet);
+    tree->data.datasize = ocbyteslength(state->packet);
 #else /*OC_DISK_STORAGE*/
-    DAPURL* url = &state->url;
+    DAPURL* url = state->url;
     int fileprotocol = 0;
     char* readurl = NULL;
 
@@ -109,7 +121,7 @@ readDATADDS(OCstate* state, OCtree* tree)
 	readurl = dapurlgeturl(url,NULL,NULL,0);
 	stat = readfiletofile(readurl, ".dods", tree->data.file, &tree->data.datasize);
     } else {
-	int flags = DAPURLUSERPWD;
+	int flags = 0;
 	if(!fileprotocol) flags |= DAPURLCONSTRAINTS;
         dapurlsetconstraints(url,tree->constraint);
         readurl = dapurlgeturl(url,NULL,".dods",flags);
@@ -125,6 +137,7 @@ readDATADDS(OCstate* state, OCtree* tree)
     }
     free(readurl);
 #endif /*OC_DISK_STORAGE*/
+
     return THROW(stat);
 }
 

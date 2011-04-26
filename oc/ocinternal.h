@@ -83,8 +83,8 @@ typedef struct OCstate
     unsigned int magic; /* Mark each structure type */
     CURL* curl; /* curl handle*/
     OClist* trees; /* list<OCnode*> ; all root objects */
-    DAPURL url; /* base URL */
-    OClist* clientparams;
+    DAPURL* url; /* base URL */
+    char** clientparams;
     OCbytes* packet; /* shared by all trees during construction */
     /* OCContent information */
     struct OCcontent* contentlist;

@@ -39,10 +39,11 @@ static char* legalprotocols[] = {
 NULL /* NULL terminate*/
 };
 
-/* Do a simple url parse*/
+/* Do a simple url parse: return 0 if fail, 1 otherwise*/
 int
-dapurlparse(const char* url0, DAPURL* dapurl)
+dapurlparse(const char* url0, DAPURL** dapurlp)
 {
+    DAPURL* dapurl = NULL;
     char* url;
     char** pp;
     char* p;
@@ -60,7 +61,8 @@ dapurlparse(const char* url0, DAPURL* dapurl)
     char* file = NULL;
     char* stop;
 
-    memset((void*)dapurl,0,sizeof(DAPURL));
+    dapurl = (DAPURL*)calloc(1,sizeof(DAPURL));
+    if(dapurl == NULL) return 0;    
 
     /* make local copy of url */
     url = strdup(url0);
@@ -176,6 +178,7 @@ dapurlparse(const char* url0, DAPURL* dapurl)
     }
 #endif
     free(url);
+    if(dapurlp != NULL) *dapurlp = dapurl;
     return 1;
 
 fail:
@@ -183,10 +186,10 @@ fail:
     return 0;
 }
 
-/* Call must free the actual url instance.*/
 void
-dapurlclear(DAPURL* dapurl)
+dapurlfree(DAPURL* dapurl)
 {
+    if(dapurl == NULL) return;
     if(dapurl->url != NULL) {free(dapurl->url);}
     if(dapurl->protocol != NULL) {free(dapurl->protocol);}
     if(dapurl->user != NULL) {free(dapurl->user);}
@@ -199,7 +202,7 @@ dapurlclear(DAPURL* dapurl)
     if(dapurl->selection != NULL) {free(dapurl->selection);}
     if(dapurl->params != NULL) {free(dapurl->params);}
     if(dapurl->paramlist != NULL) dapparamfree(dapurl->paramlist);
-    memset((void*)dapurl,0,sizeof(DAPURL));
+    free(dapurl);
 }
 
 /* Replace the constraints */

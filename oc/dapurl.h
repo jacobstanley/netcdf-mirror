@@ -21,10 +21,8 @@ typedef struct DAPURL {
     char** paramlist;    /*!<null terminated list */
 } DAPURL;
 
-extern int dapurlparse(const char* s, DAPURL* dapurl);
-extern void dapurlclear(DAPURL* dapurl);/*!<Release strings associated
-                                           with the DAPURL, but NOT the struct
-                                           itself; that is caller's duty.*/
+extern int dapurlparse(const char* s, DAPURL** dapurl);
+extern void dapurlfree(DAPURL* dapurl);
 
 /* Replace the constraints */
 extern void dapurlsetconstraints(DAPURL*,const char* constraints);

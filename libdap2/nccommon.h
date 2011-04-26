@@ -123,7 +123,7 @@ typedef struct NCcache {
 typedef struct NCOC {
     OCconnection conn;
     char* urltext; /* as given to nc3d_open*/
-    DAPURL url; /* as given to nc3d_open and parsed*/
+    DAPURL* url; /* as given to nc3d_open and parsed*/
     OCobject ocdasroot;
     DCEconstraint* dapconstraint; /* from url */
 } NCOC;

@@ -26,18 +26,18 @@ extern int oc_dumpnode(OClink, OCobject);
 int
 nc__testurl(const char* path, char** basenamep)
 {
-    DAPURL url;
+    DAPURL* url;
     int ok = dapurlparse(path,&url);
     if(ok) {
-	char* slash = strrchr(url.file, '/');
+	char* slash = strrchr(url->file, '/');
 	char* dot;
 	if(slash == NULL) slash = (char*)path; else slash++;
         slash = nulldup(slash);
 	dot = strrchr(slash, '.');
         if(dot != NULL &&  dot != slash) *dot = '\0';
 	if(basenamep) *basenamep=slash ; else free(slash);
+        dapurlfree(url);
     }
-    dapurlclear(&url);
     return ok;
 }
 
@@ -866,9 +866,9 @@ dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
     if(ce != NULL && strlen(ce) == 0) ce = NULL;
     if(FLAGSET(nccomm->controls,NCF_SHOWFETCH)) {
 	if(ce == NULL)
-	    nclog(NCLOGNOTE,"fetch: %s.%s",nccomm->oc.url.url,ext);
+	    nclog(NCLOGNOTE,"fetch: %s.%s",nccomm->oc.url->url,ext);
 	else
-	    nclog(NCLOGNOTE,"fetch: %s.%s?%s",nccomm->oc.url.url,ext,ce);
+	    nclog(NCLOGNOTE,"fetch: %s.%s?%s",nccomm->oc.url->url,ext,ce);
 #ifdef HAVE_GETTIMEOFDAY
 	gettimeofday(&time0,NULL);
 #endif

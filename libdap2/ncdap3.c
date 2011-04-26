@@ -73,7 +73,7 @@ NCD3_open(const char * path, int mode,
     OCerror ocstat = OC_NOERR;
     NCDAP3* drno = NULL;
     char* modifiedpath;
-    DAPURL tmpurl;
+    DAPURL* tmpurl;
     char* ce = NULL;
     int ncid = -1;
     const char* value;
@@ -84,7 +84,7 @@ NCD3_open(const char * path, int mode,
 
 
     if(!dapurlparse(path,&tmpurl)) PANIC("libncdap3: non-url path");
-    dapurlclear(&tmpurl); /* no longer needed */
+    dapurlfree(tmpurl); /* no longer needed */
 
 #ifdef OCCOMPILEBYDEFAULT
     /* set the compile flag by default */
@@ -118,7 +118,7 @@ NCD3_open(const char * path, int mode,
     drno->dap.controller = (NC*)drno;
     drno->dap.oc.urltext = modifiedpath;
     dapurlparse(drno->dap.oc.urltext,&drno->dap.oc.url);
-    if(!constrainable34(&drno->dap.oc.url))
+    if(!constrainable34(drno->dap.oc.url))
 	SETFLAG(drno->dap.controls,NCF_UNCONSTRAINABLE);
     drno->dap.cdf.separator = ".";
     drno->dap.cdf.smallsizelimit = DFALTSMALLLIMIT;
@@ -134,15 +134,15 @@ NCD3_open(const char * path, int mode,
 
     /* Check to see if we are unconstrainable */
     if(FLAGSET(drno->dap.controls,NCF_UNCONSTRAINABLE)) {
-	if(drno->dap.oc.url.constraint != NULL
-	   && strlen(drno->dap.oc.url.constraint) > 0) {
+	if(drno->dap.oc.url->constraint != NULL
+	   && strlen(drno->dap.oc.url->constraint) > 0) {
 	    nclog(NCLOGWARN,"Attempt to constrain an unconstrainable data source: %s",
-		   drno->dap.oc.url.constraint);
+		   drno->dap.oc.url->constraint);
 	}
 	/* ignore all constraints */
     } else {
         /* Parse constraints to make sure that they are syntactically correct */
-        ncstat = parsedapconstraints(&drno->dap,drno->dap.oc.url.constraint,drno->dap.oc.dapconstraint);
+        ncstat = parsedapconstraints(&drno->dap,drno->dap.oc.url->constraint,drno->dap.oc.dapconstraint);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
     }
 #ifdef DEBUG

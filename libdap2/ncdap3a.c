@@ -47,7 +47,7 @@ cleanNCDAPCOMMON(NCDAPCOMMON* nccomm)
         oc_root_free(nccomm->oc.conn,nccomm->oc.ocdasroot);
     nccomm->oc.ocdasroot = NULL;
     oc_close(nccomm->oc.conn); /* also reclaims remaining OC trees */
-    dapurlclear(&nccomm->oc.url);
+    dapurlfree(nccomm->oc.url);
     nullfree(nccomm->oc.urltext);
 
     dcefree((DCEnode*)nccomm->oc.dapconstraint);
@@ -534,8 +534,8 @@ computeminconstraints3(NCDAPCOMMON* nccomm, CDFnode* seq, NCbytes* minconstraint
     }
     nclistfree(path);
     /* Finally, add in any selection from the original URL */
-    if(nccomm->oc.url.selection != NULL)
-        ncbytescat(minconstraints,nccomm->oc.url.selection);
+    if(nccomm->oc.url->selection != NULL)
+        ncbytescat(minconstraints,nccomm->oc.url->selection);
     nullfree(prefix);
     return NC_NOERR;
 }
@@ -609,7 +609,7 @@ fetchtemplatemetadata3(NCDAPCOMMON* nccomm)
     if(FLAGSET(nccomm->controls,NCF_UNCONSTRAINABLE))
 	ce = NULL;
     else
-        ce = nulldup(nccomm->oc.url.selection);
+        ce = nulldup(nccomm->oc.url->selection);
 
     /* Get selection constrained DDS */
     ocstat = dap_oc_fetch(nccomm,nccomm->oc.conn,ce,OCDDS,&ocroot);
@@ -617,7 +617,7 @@ fetchtemplatemetadata3(NCDAPCOMMON* nccomm)
 	/* Special Hack. If the protocol is file, then see if
            we can get the dds from the .dods file
         */
-	if(strcmp(nccomm->oc.url.protocol,"file") != 0) {
+	if(strcmp(nccomm->oc.url->protocol,"file") != 0) {
 	    THROWCHK(ocstat); goto done;
 	}
 	/* Fetch the data dds */
@@ -779,7 +779,7 @@ applyclientparamcontrols3(NCDAPCOMMON* nccomm)
     const char* value;
 
     /* Get client parameters */
-    params = dapparamdecode(nccomm->oc.url.params);
+    params = dapparamdecode(nccomm->oc.url->params);
 
     /* enable/disable caching */
     value = dapparamlookup(params,"cache");    

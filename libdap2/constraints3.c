@@ -48,11 +48,14 @@ parsedapconstraints(NCDAPCOMMON* dapcomm, char* constraints,
 #ifdef DEBUG
 fprintf(stderr,"constraint: %s",dumpconstraint(dceconstraint));
 #endif
+
+#ifdef FIX
         /* Go thru each node and add annotation */
         allnodes = dceallnodes((DCEnode*)dceconstraint,CES_NIL);    
 	for(i=0;i<nclistlength(allnodes);i++) {
 	    DCEnode* node = (DCEnode*)nclistget(allnodes,i);
 	}
+#endif
     }
     return ncstat;
 }
