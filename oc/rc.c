@@ -355,7 +355,7 @@ int
 ocdodsrc_process(OCstate* state)
 {
     char* value;
-    char* url = dapurlgeturl(state->url,NULL,NULL,0);
+    char* url = ocuribuild(state->uri,NULL,NULL,0);
     if(ocdodsrc == NULL) return 0;
     value = ocdodsrc_lookup("CURL.DEFLATE",url);
     if(value != NULL) {

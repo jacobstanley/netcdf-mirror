@@ -26,8 +26,8 @@ extern int oc_dumpnode(OClink, OCobject);
 int
 nc__testurl(const char* path, char** basenamep)
 {
-    DAPURL* url;
-    int ok = dapurlparse(path,&url);
+    OCURI* url;
+    int ok = ocuriparse(path,&url);
     if(ok) {
 	char* slash = strrchr(url->file, '/');
 	char* dot;
@@ -36,7 +36,7 @@ nc__testurl(const char* path, char** basenamep)
 	dot = strrchr(slash, '.');
         if(dot != NULL &&  dot != slash) *dot = '\0';
 	if(basenamep) *basenamep=slash ; else free(slash);
-        dapurlfree(url);
+        ocurifree(url);
     }
     return ok;
 }
@@ -866,9 +866,9 @@ dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
     if(ce != NULL && strlen(ce) == 0) ce = NULL;
     if(FLAGSET(nccomm->controls,NCF_SHOWFETCH)) {
 	if(ce == NULL)
-	    nclog(NCLOGNOTE,"fetch: %s.%s",nccomm->oc.url->url,ext);
+	    nclog(NCLOGNOTE,"fetch: %s.%s",nccomm->oc.url->uri,ext);
 	else
-	    nclog(NCLOGNOTE,"fetch: %s.%s?%s",nccomm->oc.url->url,ext,ce);
+	    nclog(NCLOGNOTE,"fetch: %s.%s?%s",nccomm->oc.url->uri,ext,ce);
 #ifdef HAVE_GETTIMEOFDAY
 	gettimeofday(&time0,NULL);
 #endif
@@ -885,4 +885,18 @@ dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
 #endif
     }
     return ocstat;
+}
+
+/* Mark names that cause problems. e.g. "nm.dot" */
+static char* badchars = "./";
+int
+dap_badname(char* name)
+{
+    char* p;
+    if(name == NULL) return 0;
+    for(p=badchars;*p;p++) {
+	if(strchr(name,*p) != NULL)
+	    return 1;
+    }
+    return 0;
 }

@@ -198,10 +198,10 @@ ocopen(OCstate** statep, const char* url)
 {
     int stat = OC_NOERR;
     OCstate * state = NULL;
-    DAPURL* tmpurl;
+    OCURI* tmpurl;
     CURL* curl = NULL; /* curl handle*/
 
-    if(!dapurlparse(url,&tmpurl)) {THROWCHK(stat=OC_EBADURL); goto fail;}
+    if(!ocuriparse(url,&tmpurl)) {THROWCHK(stat=OC_EBADURL); goto fail;}
     
     stat = occurlopen(&curl);
     if(stat != OC_NOERR) {THROWCHK(stat); goto fail;}
@@ -214,9 +214,8 @@ ocopen(OCstate** statep, const char* url)
     state->curl = curl;
     state->trees = oclistnew();
     state->contentlist = NULL;
-    state->url = tmpurl;
-    state->clientparams = dapparamdecode(state->url->params);
-    if(state->clientparams == NULL) {
+    state->uri = tmpurl;
+    if(!ocuridecodeparams(state->uri)) {
 	oc_log(LOGWARN,"Could not parse client parameters");
     }
     state->packet = ocbytesnew();
@@ -229,7 +228,7 @@ ocopen(OCstate** statep, const char* url)
     return THROW(stat);   
 
 fail:
-    dapurlfree(tmpurl);
+    ocurifree(tmpurl);
     if(state != NULL) ocfree(state);
     if(curl != NULL) occurlclose(curl);
     return THROW(stat);
@@ -396,7 +395,7 @@ occlose(OCstate* state)
 	ocfreeroot(root);
     }
     oclistfree(state->trees);
-    dapurlfree(state->url);
+    ocurifree(state->uri);
     ocbytesfree(state->packet);
     ocfree(state->error.code);
     ocfree(state->error.message);
@@ -421,7 +420,6 @@ occlose(OCstate* state)
     ocfree(state->creds.username);
     ocfree(state->creds.password);
     if(state->curl != NULL) occurlclose(state->curl);
-    if(state->clientparams != NULL) dapparamfree(state->clientparams);
     ocfree(state);
 }
 
@@ -570,7 +568,7 @@ ocupdatelastmodifieddata(OCstate* state)
     OCerror status = OC_NOERR;
     long lastmodified;
     char* base = NULL;
-    base = dapurlgeturl(state->url,NULL,NULL,0);
+    base = ocuribuild(state->uri,NULL,NULL,0);
     status = ocfetchlastmodified(state->curl, base, &lastmodified);
     free(base);
     if(status == OC_NOERR) {
@@ -593,12 +591,12 @@ ocsetcurlproperties(OCstate* state)
 	goto fail;
     }
     if(state->creds.username == NULL && state->creds.password == NULL) {
-        if(state->url->user != NULL && state->url->password != NULL) {
+        if(state->uri->user != NULL && state->uri->password != NULL) {
 	    /* this overrides .dodsrc */
             if(state->creds.password) free(state->creds.password);
-            state->creds.password = strdup(state->url->password);
+            state->creds.password = strdup(state->uri->password);
             if(state->creds.username) free(state->creds.username);
-            state->creds.username = strdup(state->url->user);
+            state->creds.username = strdup(state->uri->user);
 	}
     }
     return;

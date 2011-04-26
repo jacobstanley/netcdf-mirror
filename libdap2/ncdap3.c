@@ -73,7 +73,7 @@ NCD3_open(const char * path, int mode,
     OCerror ocstat = OC_NOERR;
     NCDAP3* drno = NULL;
     char* modifiedpath;
-    DAPURL* tmpurl;
+    OCURI* tmpurl;
     char* ce = NULL;
     int ncid = -1;
     const char* value;
@@ -83,8 +83,8 @@ NCD3_open(const char * path, int mode,
     if(!nc3dinitialized) nc3dinitialize();
 
 
-    if(!dapurlparse(path,&tmpurl)) PANIC("libncdap3: non-url path");
-    dapurlfree(tmpurl); /* no longer needed */
+    if(!ocuriparse(path,&tmpurl)) PANIC("libncdap3: non-url path");
+    ocurifree(tmpurl); /* no longer needed */
 
 #ifdef OCCOMPILEBYDEFAULT
     /* set the compile flag by default */
@@ -117,7 +117,7 @@ NCD3_open(const char * path, int mode,
     /* Setup tentative DRNO state*/
     drno->dap.controller = (NC*)drno;
     drno->dap.oc.urltext = modifiedpath;
-    dapurlparse(drno->dap.oc.urltext,&drno->dap.oc.url);
+    ocuriparse(drno->dap.oc.urltext,&drno->dap.oc.url);
     if(!constrainable34(drno->dap.oc.url))
 	SETFLAG(drno->dap.controls,NCF_UNCONSTRAINABLE);
     drno->dap.cdf.separator = ".";

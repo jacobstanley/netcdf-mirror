@@ -47,7 +47,7 @@ cleanNCDAPCOMMON(NCDAPCOMMON* nccomm)
         oc_root_free(nccomm->oc.conn,nccomm->oc.ocdasroot);
     nccomm->oc.ocdasroot = NULL;
     oc_close(nccomm->oc.conn); /* also reclaims remaining OC trees */
-    dapurlfree(nccomm->oc.url);
+    ocurifree(nccomm->oc.url);
     nullfree(nccomm->oc.urltext);
 
     dcefree((DCEnode*)nccomm->oc.dapconstraint);
@@ -775,14 +775,10 @@ fixzerodims3(NCDAPCOMMON* nccomm)
 void
 applyclientparamcontrols3(NCDAPCOMMON* nccomm)
 {
-    char** params = NULL;
     const char* value;
 
-    /* Get client parameters */
-    params = dapparamdecode(nccomm->oc.url->params);
-
     /* enable/disable caching */
-    value = dapparamlookup(params,"cache");    
+    value = oc_clientparam_get(nccomm->oc.conn,"cache");    
     if(value == NULL)
 	SETFLAG(nccomm->controls,DFALTCACHEFLAG);
     else if(strlen(value) == 0)
@@ -797,8 +793,6 @@ applyclientparamcontrols3(NCDAPCOMMON* nccomm)
 
     SETFLAG(nccomm->controls,(NCF_NC3|NCF_NCDAP));
 
-    /* No longer need params */
-    dapparamfree(params);
 }
 
 /* Accumulate a set of all the known dimensions */

@@ -851,9 +851,10 @@ oc_clientparam_get(OCconnection conn, const char* param)
     OCVERIFYX(OCstate*,state,conn,NULL);
     OCDEREF(OCstate*,state,conn);
 
-    return dapparamlookup(state->clientparams,param);
+    return ocparamlookup(state,param);
 }
 
+#ifdef IGNORE
 /* Delete client parameter
    return value:
 	OC_NOERR => defined; deletion performed
@@ -866,7 +867,7 @@ oc_clientparam_delete(OCconnection conn, const char* param)
     OCVERIFY(OCstate*,state,conn);
     OCDEREF(OCstate*,state,conn);
 
-    return dapparamdelete(state->clientparams,param);
+    return ocparamdelete(state->clientparams,param);
 }
 
 /* Insert client parameter
@@ -899,6 +900,7 @@ oc_clientparam_replace(OCconnection conn, const char* param, const char* value)
 
     return dapparamreplace(state->clientparams,param,value);
 }
+#endif
 
 OCerror
 oc_dd(OCconnection conn, OCobject root0)
