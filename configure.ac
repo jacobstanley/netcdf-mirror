@@ -303,6 +303,13 @@ if test "x$enable_dap" = "xno" ; then
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
 
+# Capture the state of the --enable-dap-special-tests flag
+AC_MSG_CHECKING([whether dap special tests should be run (developers only)])
+AC_ARG_ENABLE([dap_special_tests],
+                 [AS_HELP_STRING([--enable-dap_special_tests],
+                                 [enable special dap tests (developers only).])])
+test "x$enable_dap_special_tests" = xyes || enable_dap_special_tests=no
+
 # Set the config.h flags
 if test "x$enable_dap" = xyes; then
    AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
@@ -311,6 +318,10 @@ fi
 
 if test "x$enable_dap_remote_tests" = xyes; then
    AC_DEFINE([ENABLE_DAP_REMOTE_TESTS], [1], [if true, do remote tests])
+fi
+
+if test "x$enable_dap_special_tests" = xyes; then
+   AC_DEFINE([ENABLE_DAP_special_TESTS], [1], [if true, do special tests])
 fi
 
 if test "x$enable_cdmremote" = xyes; then
@@ -628,7 +639,7 @@ AM_CONDITIONAL(BUILD_CXX, [test "x$nc_build_cxx" = xyes])
 
 # Set up libtool.
 AC_MSG_NOTICE([setting up libtool])
-LT_PREREQ([2.4])
+LT_PREREQ([2.2])
 LT_INIT(win32-dll)
 
 # Valgrind tests don't work with shared builds because of some libtool
