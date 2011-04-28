@@ -249,12 +249,6 @@ AC_ARG_ENABLE([logging],
 test "x$enable_logging" = xyes || enable_logging=no
 AC_MSG_RESULT([$enable_logging])
 
-# Figure out if curl support should be enabled.
-# true if --enable-dap
-# true if --enable-cdmremote
-# false otherwise
-# Note that for now, cdmremote must be explicitly enabled
-
 # Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
 AC_ARG_ENABLE([dap],
@@ -273,24 +267,6 @@ test "x$enable_cdmremote" = xyes || enable_cdmremote=no
 # BTW: CDMREMOTE requires netCDF-4
 if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
 AC_MSG_RESULT($enable_cdmremote)
-
-# Try to locate curl-config in path
-if curl-config --version > /dev/null ; then
-    curl_cflags=`curl-config --cflags`
-    curl_libs=`curl-config --libs`
-    curl_dir=`curl-config --prefix`
-else
-    AC_MSG_NOTICE([Cannot execute curl-config; ignored])
-    curl_cflags=""
-    curl_libs=""
-    curl_dir=""
-fi
-
-AC_SUBST([CURL_CFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_FCFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_FFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_LIBS],[${curl_libs}])
-AC_SUBST([CURLDIR],[${curl_dir}])
 
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
@@ -564,7 +540,6 @@ AC_C_CONST
 
 # Save/restore CFLAGS
 SAVECFLAGS="$CFLAGS"
-CFLAGS="${curl_cflags}"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [#include "curl/curl.h"],
 [[int x = CURLOPT_KEYPASSWD;]])],
@@ -639,7 +614,7 @@ AM_CONDITIONAL(BUILD_CXX, [test "x$nc_build_cxx" = xyes])
 
 # Set up libtool.
 AC_MSG_NOTICE([setting up libtool])
-LT_PREREQ([2.2])
+LT_PREREQ([2.4])
 LT_INIT(win32-dll)
 
 # Valgrind tests don't work with shared builds because of some libtool
