@@ -15,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.1.3], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.1.3-beta1], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -113,13 +113,14 @@ test "x$enable_netcdf_4" = xno || enable_netcdf_4=yes
 AC_MSG_RESULT([$enable_netcdf_4])
 
 # Synonym
-# --disable-netcdf-4 is the controlling switch
-AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--disable-netcdf4],
+# --enable-netcdf-4 is the controlling enable switch
+if test "x$enable_netcdf_4" = "x" ; then
+  AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--enable-netcdf4],
               [build with netcdf-4 (HDF5 and zlib required)])])
-if test "x$enable_netcdf4" = xno ; then
-  enable_netcdf_4=no
+  enable_netcdf_4="$enable_netcdf4"
+else
+  enable_netcdf4="$enable_netcdf_4"
 fi
-AC_MSG_RESULT([$enable_netcdf_4])
 
 # Does the user want to also build the libcf library?
 AC_MSG_CHECKING([whether libcf is to be built])
@@ -249,6 +250,22 @@ AC_ARG_ENABLE([logging],
 test "x$enable_logging" = xyes || enable_logging=no
 AC_MSG_RESULT([$enable_logging])
 
+# Capture the state of the --enable-cdmremote flag
+AC_MSG_CHECKING([whether cdmremote client is to be built])
+AC_ARG_ENABLE([cdmremote],
+                 [AS_HELP_STRING([--enable-cdmremote],
+                                 [build with cdmremote client support.])])
+test "x$enable_cdmremote" = xyes || enable_cdmremote=no
+# CDMREMOTE requires netCDF-4
+if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
+AC_MSG_RESULT($enable_cdmremote)
+
+# Figure out if curl support should be enabled.
+# true if --enable-dap
+# true if --enable-cdmremote
+# false otherwise
+# Note that for now, cdmremote must be explicitly enabled
+
 # Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
 AC_ARG_ENABLE([dap],
@@ -257,16 +274,23 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-# Capture the state of the --enable-cdmremote flag
-AC_MSG_CHECKING([whether cdmremote client is to be built])
-AC_ARG_ENABLE([cdmremote],
-                 [AS_HELP_STRING([--enable-cdmremote],
-                                 [build with cdmremote client support; requires netcdf4.])])
-test "x$enable_cdmremote" = xyes || enable_cdmremote=no
+# Hack to support nc-config: Try to locate curl-config in path
+if curl-config --version > /dev/null ; then
+    curl_cflags=`curl-config --cflags`
+    curl_libs=`curl-config --libs`
+    curl_dir=`curl-config --prefix`
+else
+    AC_MSG_NOTICE([Cannot execute curl-config; ignored])
+    curl_cflags=""
+    curl_libs=""
+    curl_dir=""
+fi
 
-# BTW: CDMREMOTE requires netCDF-4
-if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
-AC_MSG_RESULT($enable_cdmremote)
+AC_SUBST([CURL_CFLAGS],[${curl_cflags}])
+AC_SUBST([CURL_FCFLAGS],[${curl_cflags}])
+AC_SUBST([CURL_FFLAGS],[${curl_cflags}])
+AC_SUBST([CURL_LIBS],[${curl_libs}])
+AC_SUBST([CURLDIR],[${curl_dir}])
 
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
@@ -279,13 +303,6 @@ if test "x$enable_dap" = "xno" ; then
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
 
-# Capture the state of the --enable-dap-special-tests flag
-AC_MSG_CHECKING([whether dap special tests should be run (developers only)])
-AC_ARG_ENABLE([dap_special_tests],
-                 [AS_HELP_STRING([--enable-dap_special_tests],
-                                 [enable special dap tests (developers only).])])
-test "x$enable_dap_special_tests" = xyes || enable_dap_special_tests=no
-
 # Set the config.h flags
 if test "x$enable_dap" = xyes; then
    AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
@@ -294,10 +311,6 @@ fi
 
 if test "x$enable_dap_remote_tests" = xyes; then
    AC_DEFINE([ENABLE_DAP_REMOTE_TESTS], [1], [if true, do remote tests])
-fi
-
-if test "x$enable_dap_special_tests" = xyes; then
-   AC_DEFINE([ENABLE_DAP_special_TESTS], [1], [if true, do special tests])
 fi
 
 if test "x$enable_cdmremote" = xyes; then
@@ -540,6 +553,7 @@ AC_C_CONST
 
 # Save/restore CFLAGS
 SAVECFLAGS="$CFLAGS"
+CFLAGS="${curl_cflags}"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [#include "curl/curl.h"],
 [[int x = CURLOPT_KEYPASSWD;]])],
@@ -757,7 +771,7 @@ if test "x$enable_netcdf_4" = xyes; then
       --disable-netcdf-4, or see config.log for errors.])])
 
    AC_CHECK_HEADERS([hdf5.h], [], [AC_MSG_ERROR([NetCDF-4 requires HDF5, but hdf5.h cannot be found.])])
-   AC_CHECK_FUNCS([H5Pget_fapl_mpiposix H5Pget_fapl_mpio H5Pset_deflate H5Z_can_apply_szip])
+   AC_CHECK_FUNCS([H5Pget_fapl_mpiposix H5Pget_fapl_mpio H5Pset_deflate H5Z_SZIP])
 
    # The user may have parallel HDF5 based on MPI POSIX.
    if test "x$ac_cv_func_H5Pget_fapl_mpiposix" = xyes; then
@@ -791,15 +805,15 @@ dnl 	 fi
    AC_MSG_CHECKING([whether parallel I/O features are to be included])
    AC_MSG_RESULT([$enable_parallel])         
    
-   # The user must have build HDF5 with the ZLIB library.
-   #AC_CHECK_LIB([hdf5], [H5Pset_deflate], [enable_zlib=yes], [])
+   # The user must have built HDF5 with the ZLIB library.
    if test "x$ac_cv_func_H5Pset_deflate" = xyes; then
       AC_DEFINE([USE_ZLIB], [1], [if true, compile in zlib compression in netCDF-4 variables])
+   else		    
+      AC_MSG_ERROR([HDF5 must be built with zlib for netCDF-4])
    fi
 
-   # The user must have build HDF5 with the ZLIB library.
-   #   AC_CHECK_LIB([hdf5], [H5Z_can_apply_szip], [enable_szip=yes], [])
-   if test "x$ac_cv_func_H5Z_can_apply_szip" = xyes; then
+   # The user may have built HDF5 with the SZLIB library.
+   if test "x$ac_cv_func_H5Z_SZIP" = xyes; then
       AC_DEFINE([USE_SZIP], [1], [if true, compile in szip compression in netCDF-4 variables])
    fi
 
@@ -832,11 +846,7 @@ AM_CONDITIONAL(ENABLE_DAP_REMOTE_TESTS, [test "x$enable_dap_remote_tests" = xyes
 AM_CONDITIONAL(ENABLE_DAP_LONG_TESTS, [test "x$enable_dap_long_tests" = xyes])
 AM_CONDITIONAL(BUILD_CXX4, [test x$enable_cxx_4 = xyes])
 AM_CONDITIONAL(EXTRA_EXAMPLE_TESTS, [test "x$enable_extra_example_tests" = xyes])
-AM_CONDITIONAL(USE_HDF5_DIR, [test ! "x$HDF5DIR" = x])
-AM_CONDITIONAL(USE_HDF4_DIR, [test ! "x$HDF4DIR" = x])
-AM_CONDITIONAL(USE_ZLIB_DIR, [test ! "x$ZLIBDIR" = x])
-AM_CONDITIONAL(USE_SZLIB_DIR, [test ! "x$SZLIBDIR" = x])
-AM_CONDITIONAL(USE_SZIP, [test "x$enable_szip" = xyes])
+AM_CONDITIONAL(USE_SZIP, [test "x$ac_cv_func_H5Z_SZIP" = xyes])
 AM_CONDITIONAL(USE_PNETCDF_DIR, [test ! "x$PNETCDFDIR" = x])
 AM_CONDITIONAL(USE_LOGGING, [test "x$enable_logging" = xyes])
 AM_CONDITIONAL(BUILD_UDUNITS, [test "x$with_udunits" = xyes])

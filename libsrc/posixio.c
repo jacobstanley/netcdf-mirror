@@ -504,13 +504,13 @@ px_get(ncio *const nciop, ncio_px *const pxp,
 			pxp->bf_cnt -= pxp->blksz;
 			/* copy upper half into lower half */
 			(void) memcpy(pxp->bf_base, middle, pxp->bf_cnt);
-		} else {	/* added to fix nofill bug */
-			void *const middle =
-				(void *)((char *)pxp->bf_base + pxp->blksz);
+		}
+		else		/* added to fix nofill bug */
+		{
 			assert(pxp->bf_extent == 2 * pxp->blksz);
+			/* still have to page out lower half, if modified */
 			if(fIsSet(pxp->bf_rflags, RGN_MODIFIED))
 			{
-				/* still have to page out lower half, if modifies */
 				assert(pxp->bf_refcount <= 0);
 				status = px_pgout(nciop,
 					pxp->bf_offset,
@@ -520,7 +520,6 @@ px_get(ncio *const nciop, ncio_px *const pxp,
 				if(status != ENOERR)
 					return status;
 			}
-			pxp->bf_cnt -= 0;;
 		}
 		pxp->bf_offset = blkoffset;
 		/* pxp->bf_extent = pxp->blksz; */
