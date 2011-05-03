@@ -347,7 +347,7 @@ extern int NC_testurl(const char* path);
 /* Return model (0 or 3 or 4) as specified by the url */
 extern int NC_urlmodel(const char* path);
 
-/* allow access dapurlparse and params without exposing dapurl.h */
+/* allow access url parse and params without exposing nc_url.h */
 extern int NCDAP_urlparse(const char* s, void** dapurl);
 extern void NCDAP_urlfree(void* dapurl);
 extern const char* NCDAP_urllookup(void* dapurl, const char* param);
