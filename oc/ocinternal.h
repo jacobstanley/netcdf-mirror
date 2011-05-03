@@ -55,9 +55,13 @@ extern void ocxdrstdio_create(XDR*,FILE*,enum xdr_op);
 #include "oclog.h"
 #include "ocdata.h"
 
-#define nulldup(s) (s==NULL?NULL:strdup(s))
-#define nullstring(s) (s==NULL?"(null)":s)
+extern char* strdup(const char*);
 
+#ifndef nulldup
+#define nulldup(s) (s==NULL?NULL:strdup(s))
+#endif
+
+#define nullstring(s) (s==NULL?"(null)":s)
 #define PATHSEPARATOR "."
 
 /* Default initial memory packet size */

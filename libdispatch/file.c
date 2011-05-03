@@ -5,6 +5,7 @@
   This file defines the file create and open functions.
 */
 
+#include "config.h"
 #include "ncdispatch.h"
 
 static int nc_initialized = 0;
@@ -482,3 +483,15 @@ nc_inq_type(int ncid, nc_type xtype, char *name, size_t *size)
 }
 
 
+#ifndef HAVE_STRDUP
+#define HAVE_STRDUP 1
+char*
+strdup(const char* s)
+{
+    char* dup;
+    if(s == NULL) return s;
+    dup = (char*)malloc(strlen(s)+1);
+    strcpy(dup,s);
+    return dup;
+}
+#endif

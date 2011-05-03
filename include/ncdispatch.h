@@ -361,11 +361,12 @@ extern void NCDAP_urlfree(void* dapurl);
 extern const char* NCDAP_urllookup(void* dapurl, const char* param);
 
 /* Misc */
-/* Replacement for strdup (in libsrc) */
-#ifdef HAVE_STRDUP
+
+/* In case strdup does not exist */
+extern char* strdup(const char* s);
+
+#ifdef nulldup
 #define nulldup(s) ((s)==NULL?NULL:strdup(s))
-#else
-extern char* nulldup(const char*);
 #endif
 
 #define nulllen(s) (s==NULL?0:strlen(s))

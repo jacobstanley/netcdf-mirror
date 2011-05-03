@@ -99,7 +99,7 @@ ocparaminsert(OClist* params, const char* clientparam, const char* value)
 	if(strcmp(clientparam,name)==0) return 0;
     }
     /* not found, append */
-    oclistpush(params,(ocelem)strdup(clientparam));
+    oclistpush(params,(ocelem)nulldup(clientparam));
     oclistpush(params,(ocelem)nulldup(value));
     return 1;
 }

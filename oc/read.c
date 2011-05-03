@@ -95,7 +95,7 @@ readpacket(CURL* curl,OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
             {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
     }
     free(fetchurl);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 int
@@ -138,7 +138,7 @@ readDATADDS(OCstate* state, OCtree* tree)
     free(readurl);
 #endif /*OC_DISK_STORAGE*/
 
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 #ifdef OC_DISK_STORAGE
@@ -162,7 +162,7 @@ readfiletofile(char* path, char* suffix, FILE* stream, unsigned long* sizep)
     if(sizep != NULL) *sizep = len;
 unwind:
     ocbytesfree(packet);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 #endif
 
@@ -180,7 +180,7 @@ readfile(char* path, char* suffix, OCbytes* packet)
     fd = open(filename,O_RDONLY);
     if(fd < 0) {
 	oc_log(LOGERR,"open failed:%s",filename);
-	return THROW(OC_EOPEN);
+	return OCTHROW(OC_EOPEN);
     }
     size=0;
     stat = OC_NOERR;
@@ -197,7 +197,7 @@ readfile(char* path, char* suffix, OCbytes* packet)
 	size += count;
     }
     close(fd);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 

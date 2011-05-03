@@ -189,7 +189,7 @@ ocinternalinitialize(void)
         }
         if(path != NULL) {free(path) ; path = NULL;}
     }
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 /**************************************************/
@@ -201,13 +201,13 @@ ocopen(OCstate** statep, const char* url)
     OCURI* tmpurl;
     CURL* curl = NULL; /* curl handle*/
 
-    if(!ocuriparse(url,&tmpurl)) {THROWCHK(stat=OC_EBADURL); goto fail;}
+    if(!ocuriparse(url,&tmpurl)) {OCTHROWCHK(stat=OC_EBADURL); goto fail;}
     
     stat = occurlopen(&curl);
-    if(stat != OC_NOERR) {THROWCHK(stat); goto fail;}
+    if(stat != OC_NOERR) {OCTHROWCHK(stat); goto fail;}
 
     state = (OCstate*)ocmalloc(sizeof(OCstate)); /* ocmalloc zeros memory*/
-    if(state == NULL) {THROWCHK(stat=OC_ENOMEM); goto fail;}
+    if(state == NULL) {OCTHROWCHK(stat=OC_ENOMEM); goto fail;}
 
     /* Setup DAP state*/
     state->magic = OCMAGIC;
@@ -225,13 +225,13 @@ ocopen(OCstate** statep, const char* url)
     ocsetcurlproperties(state);
 
     if(statep) *statep = state;
-    return THROW(stat);   
+    return OCTHROW(stat);   
 
 fail:
     ocurifree(tmpurl);
     if(state != NULL) ocfree(state);
     if(curl != NULL) occurlclose(curl);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 OCerror
@@ -279,7 +279,7 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
            so that DRNO can reference it*/
         /* Make the tmp file*/
         stat = createtempfile(state,tree);
-        if(stat) {THROWCHK(stat); goto unwind;}
+        if(stat) {OCTHROWCHK(stat); goto unwind;}
         stat = readDATADDS(state,tree);
 	if(stat == OC_NOERR) {
             /* Separate the DDS from data and return the dds;
@@ -304,7 +304,7 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
 	} else {
 	    oc_log(LOGWARN,"oc_open: Could not read url");
 	}
-	return THROW(stat);
+	return OCTHROW(stat);
     }
 
     tree->nodes = NULL;
@@ -315,7 +315,7 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
 		  state->error.code,	
 		  (state->error.message?state->error.message:""));
     }
-    if(stat) {THROWCHK(stat); goto unwind;}
+    if(stat) {OCTHROWCHK(stat); goto unwind;}
     root = tree->root;
     /* make sure */
     tree->root = root;
@@ -325,15 +325,15 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
     switch (kind) {
     case OCDAS:
         if(root->octype != OC_Attributeset)
-	    {THROWCHK(stat=OC_EDAS); goto unwind;}
+	    {OCTHROWCHK(stat=OC_EDAS); goto unwind;}
 	break;
     case OCDDS:
         if(root->octype != OC_Dataset)
-	    {THROWCHK(stat=OC_EDDS); goto unwind;}
+	    {OCTHROWCHK(stat=OC_EDDS); goto unwind;}
 	break;
     case OCDATADDS:
         if(root->octype != OC_Dataset)
-	    {THROWCHK(stat=OC_EDATADDS); goto unwind;}
+	    {OCTHROWCHK(stat=OC_EDATADDS); goto unwind;}
 	/* Modify the tree kind */
 	tree->dxdclass = OCDATADDS;
 	break;
@@ -379,7 +379,7 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
 unwind:
     ocfreetree(tree);
 fail:
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 void
@@ -476,7 +476,7 @@ ocextractdds(OCstate* state, OCtree* tree)
     }
 #endif
     if(tree->text == NULL) stat = OC_EDATADDS;
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 #ifdef OC_DISK_STORAGE
@@ -594,9 +594,9 @@ ocsetcurlproperties(OCstate* state)
         if(state->uri->user != NULL && state->uri->password != NULL) {
 	    /* this overrides .dodsrc */
             if(state->creds.password) free(state->creds.password);
-            state->creds.password = strdup(state->uri->password);
+            state->creds.password = nulldup(state->uri->password);
             if(state->creds.username) free(state->creds.username);
-            state->creds.username = strdup(state->uri->user);
+            state->creds.username = nulldup(state->uri->user);
 	}
     }
     return;

@@ -8,6 +8,7 @@
 #include "dapodom.h"
 #include "dapdebug.h"
 #include "dapdump.h"
+#include "dapparselex.h"
 
 static NCerror mergeprojection31(DCEprojection*, DCEprojection*);
 
