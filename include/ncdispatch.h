@@ -99,8 +99,16 @@ extern int nc_put_vara_ulonglong(int ncid, int varid,
 #endif
 
 #ifndef HAVE_LONGLONG
+#ifdef IGNORE
 #define longlong long long
 #define ulonglong unsigned long long
+#endif
+typedef long long longlong;
+typedef unsigned long long ulonglong;
+#endif
+
+#ifndef HAVE_UINT
+typedef unsigned int uint;
 #endif
 
 /* Define the range of Atomic types */
