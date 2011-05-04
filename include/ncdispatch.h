@@ -19,7 +19,7 @@
 #endif
 #include "netcdf.h"
 #include "nc.h"
-#include "nc_url.h"
+#include "nc_uri.h"
 
 
 
@@ -362,10 +362,7 @@ extern const char* NCDAP_urllookup(void* dapurl, const char* param);
 
 /* Misc */
 
-/* In case strdup does not exist */
-extern char* strdup(const char* s);
-
-#ifdef nulldup
+#ifndef nulldup
 #define nulldup(s) ((s)==NULL?NULL:strdup(s))
 #endif
 

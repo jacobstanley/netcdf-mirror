@@ -55,8 +55,6 @@ extern void ocxdrstdio_create(XDR*,FILE*,enum xdr_op);
 #include "oclog.h"
 #include "ocdata.h"
 
-extern char* strdup(const char*);
-
 #ifndef nulldup
 #define nulldup(s) (s==NULL?NULL:strdup(s))
 #endif

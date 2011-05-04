@@ -198,6 +198,7 @@ nc_uriparse(const char* uri0, NC_URI** nc_urip)
     return 1;
 
 fail:
+    if(nc_uri) nc_urifree(nc_uri);
     if(uri != NULL) free(uri);
     return 0;
 }
@@ -400,7 +401,7 @@ nc_uridecodeparams(NC_URI* nc_uri)
     nparams++; /* for last one */
 
     /* plist is an env style list */
-    plist = (char**)callnc_(1,sizeof(char*)*(2*nparams+1)); /* +1 for null termination */
+    plist = (char**)calloc(1,sizeof(char*)*(2*nparams+1)); /* +1 for null termination */
 
     /* Pass 4 to break up each pass into a (name,value) pair*/
     /* and insert into the param list */

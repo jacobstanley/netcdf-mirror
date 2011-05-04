@@ -78,7 +78,7 @@ ocuriparse(const char* uri0, OCURI** ocurip)
     char* stop;
 
     ocuri = (OCURI*)calloc(1,sizeof(OCURI));
-    if(ocuri == NULL) return 0;    
+    if(ocuri == NULL) return 0;
 
     /* make local copy of uri */
     uri = strdup(uri0);
@@ -198,6 +198,7 @@ ocuriparse(const char* uri0, OCURI** ocurip)
     return 1;
 
 fail:
+    if(ocuri) ocurifree(ocuri);
     if(uri != NULL) free(uri);
     return 0;
 }

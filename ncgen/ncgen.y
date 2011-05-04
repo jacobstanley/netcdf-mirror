@@ -1201,8 +1201,10 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     if(vsym != NULL) special = &vsym->var.special;
     if(tag == _FORMAT_FLAG) {
 	struct Kvalues* kvalue;
-	int found = 0;
-        int modifier = 0;
+	int found;
+        int modifier;
+	found = 0;
+        modifier = 0;
 	if(kflag_flag == 0) goto done;
 	/* Only use this tag if kflag is not set */
 	/* Use the table in main.c */

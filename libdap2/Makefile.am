@@ -17,6 +17,9 @@ LDADD=
 AM_LDFLAGS = 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
+# Add a trivial test case to check for undefined references
+EXTRA_DIST += t_dap.c
+
 SRC=\
 constraints3.c \
 common34.c \
@@ -88,11 +91,6 @@ if BUILD_V2
 LDADD += ${top_builddir}/libdispatch/libnetcdf2.la 
 endif # BUILD_V2
 
-LDADD += @EXTERN_LDFLAGS@
-
-# Add a trivial test case to check for undefined references
-EXTRA_DIST += t_dap.c
-
 check_PROGRAMS = t_dap3a t_dap3c
 CLEANFILES += t_dap3a t_dap3c
 TESTS_ENVIRONMENT=TOPSRCDIR=${abs_top_srcdir}
@@ -120,8 +118,8 @@ endif # BUILD_DAP
 
 # This rule are used if someone wants to rebuild t_dap3a.c
 # Otherwise never invoked, but records how to do it.
-t_dap3a.c: ${srcdir}/t_dap.c
-	echo "#define NETCDF3ONLY" > t_dap3a.c
+t_dap3a.c: t_dap.c
+	echo "#define NETCDF3ONLY" > ./t_dap3a.c
 	cat t_dap.c >> t_dap3a.c
 
 t_dap4a.c: t_dap.c

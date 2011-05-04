@@ -27,18 +27,6 @@ ocstrndup(const char* s, size_t len)
     return dup;
 }
 
-#ifndef HAVE_STRDUP
-#define HAVE_STRDUP 1
-char*
-strdup(const char* s)
-{
-    char* dup;
-    if(s == NULL) return s;
-    dup = (char*)malloc(strlen(s)+1);
-    strcpy(dup,s);
-    return dup;
-}
-#endif
 
 void
 makedimlist(OClist* path, OClist* dims)

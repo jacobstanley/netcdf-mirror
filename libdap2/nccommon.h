@@ -16,7 +16,7 @@
 #endif
 
 #ifndef nullfree
-#define nullfree(m) if((m)!=NULL) {free(m);} else {}
+#define nullfree(m) {if((m)!=NULL) {free(m);} else {}}
 #endif
 
 

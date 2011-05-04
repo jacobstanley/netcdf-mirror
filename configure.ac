@@ -114,13 +114,15 @@ AC_MSG_RESULT([$enable_netcdf_4])
 
 # Synonym
 # --enable-netcdf-4 is the controlling enable switch
-if test "x$enable_netcdf_4" = "x" ; then
-  AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--enable-netcdf4],
+AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--disable-netcdf4],
               [build with netcdf-4 (HDF5 and zlib required)])])
-  enable_netcdf_4="$enable_netcdf4"
-else
-  enable_netcdf4="$enable_netcdf_4"
+test "x$enable_netcdf4" = xno || enable_netcdf4=yes
+# Turn off if enable_netcdf4 is no
+if test "x$enable_netcdf_4" = xyes -a "x$enable_netcdf4" = xno; then
+  enable_netcdf_4=no
 fi
+# make consistent
+enable_netcdf4="$enable_netcdf_4"
 
 # Does the user want to also build the libcf library?
 AC_MSG_CHECKING([whether libcf is to be built])
@@ -259,6 +261,9 @@ test "x$enable_cdmremote" = xyes || enable_cdmremote=no
 # CDMREMOTE requires netCDF-4
 if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
 AC_MSG_RESULT($enable_cdmremote)
+if test "x$enable_cdmremote" = xyes; then
+   AC_DEFINE([USE_CDMREMOTE], [1], [if true, build CDMREMOTE Client])
+fi
 
 # Figure out if curl support should be enabled.
 # true if --enable-dap
@@ -273,6 +278,12 @@ AC_ARG_ENABLE([dap],
                                  [build without DAP client support.])])
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
+
+if test "x$enable_dap" = "xyes" ; then
+# See if the curl library is available
+AC_CHECK_LIB([curl], [curl_easy_setopt], [], [AC_MSG_ERROR([Can't find or link to the Curl library. Use \
+      --disable-dap, or see config.log for errors.])])
+fi
 
 # Hack to support nc-config: Try to locate curl-config in path
 if curl-config --version > /dev/null ; then
@@ -292,6 +303,12 @@ AC_SUBST([CURL_FFLAGS],[${curl_cflags}])
 AC_SUBST([CURL_LIBS],[${curl_libs}])
 AC_SUBST([CURLDIR],[${curl_dir}])
 
+# Set the config.h flags
+if test "x$enable_dap" = xyes; then
+   AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
+   AC_DEFINE([ENABLE_DAP], [1], [if true, build DAP Client])
+fi
+
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
 AC_ARG_ENABLE([dap-remote-tests],
@@ -303,18 +320,8 @@ if test "x$enable_dap" = "xno" ; then
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
 
-# Set the config.h flags
-if test "x$enable_dap" = xyes; then
-   AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
-   AC_DEFINE([ENABLE_DAP], [1], [if true, build DAP Client])
-fi
-
 if test "x$enable_dap_remote_tests" = xyes; then
    AC_DEFINE([ENABLE_DAP_REMOTE_TESTS], [1], [if true, do remote tests])
-fi
-
-if test "x$enable_cdmremote" = xyes; then
-   AC_DEFINE([USE_CDMREMOTE], [1], [if true, build CDMREMOTE Client])
 fi
 
 AC_MSG_CHECKING([whether the time-consuming dap tests should be enabled (default off)])
