@@ -271,6 +271,8 @@ fi
 # false otherwise
 # Note that for now, cdmremote must be explicitly enabled
 
+curl_required=no
+
 # Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
 AC_ARG_ENABLE([dap],
@@ -279,10 +281,16 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-if test "x$enable_dap" = "xyes" ; then
-# See if the curl library is available
-AC_CHECK_LIB([curl], [curl_easy_setopt], [], [AC_MSG_ERROR([Can't find or link to the Curl library. Use \
-      --disable-dap, or see config.log for errors.])])
+if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = xyes ; then
+curl_required=yes
+fi
+
+curl_found=yes
+AC_CHECK_LIB([curl], [curl_easy_setopt], [], [curl_found=no])
+
+if test "$curl_required" = yes -a "$curl_found" = no ; then
+  AC_MSG_ERROR([Can't find or link to the Curl library. Use \
+      --disable-dap, or see config.log for errors.])
 fi
 
 # Hack to support nc-config: Try to locate curl-config in path
@@ -901,10 +909,12 @@ UD_FTPBINDIR
 # OC configuration
 
 # Require some version of xdr/rpc
+xdr_required="$curl_required"
+
 # See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
 AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
 		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
-if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
+if test "x$dap_xdrlib" = x -a "$xdr_required" = "yes"; then
   AC_MSG_ERROR(Cannot locate library containing xdr functions.)
 else
   if test "$dap_xdrlib" = "lc" ; then
