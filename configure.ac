@@ -1082,12 +1082,12 @@ if test "x$enable_netcdf_4" = xyes -o "x$enable_dap" = xyes ; then
   fi
 fi
 
-if test "x$enable_dap" = xyes -o "x$enable_cdmremote" = xyes ; then 
-  if test "x$curl_libs" != x ; then
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} $curl_libs"
-    EXTERN_CPPFLAGS="${EXTERN_CPPFLAGS} $curl_cflags"
-  fi
-fi
+#if test "x$enable_dap" = xyes -o "x$enable_cdmremote" = xyes ; then 
+#  if test "x$curl_libs" != x ; then
+#    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} $curl_libs"
+#    EXTERN_CPPFLAGS="${EXTERN_CPPFLAGS} $curl_cflags"
+#  fi
+#fi
 
 # If we are running on Solaris, then we need to add -R flags as well
 
