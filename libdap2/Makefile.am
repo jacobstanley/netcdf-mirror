@@ -17,9 +17,6 @@ LDADD=
 AM_LDFLAGS = 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-# Add a trivial test case to check for undefined references
-EXTRA_DIST += t_dap.c
-
 SRC=\
 constraints3.c \
 common34.c \
