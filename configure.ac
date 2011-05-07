@@ -15,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.1.3-beta1], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.1.3-rc1], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -114,15 +114,13 @@ AC_MSG_RESULT([$enable_netcdf_4])
 
 # Synonym
 # --enable-netcdf-4 is the controlling enable switch
-AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--disable-netcdf4],
+if test "x$enable_netcdf_4" = "x" ; then
+  AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--enable-netcdf4],
               [build with netcdf-4 (HDF5 and zlib required)])])
-test "x$enable_netcdf4" = xno || enable_netcdf4=yes
-# Turn off if enable_netcdf4 is no
-if test "x$enable_netcdf_4" = xyes -a "x$enable_netcdf4" = xno; then
-  enable_netcdf_4=no
+  enable_netcdf_4="$enable_netcdf4"
+else
+  enable_netcdf4="$enable_netcdf_4"
 fi
-# make consistent
-enable_netcdf4="$enable_netcdf_4"
 
 # Does the user want to also build the libcf library?
 AC_MSG_CHECKING([whether libcf is to be built])
@@ -261,17 +259,19 @@ test "x$enable_cdmremote" = xyes || enable_cdmremote=no
 # CDMREMOTE requires netCDF-4
 if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
 AC_MSG_RESULT($enable_cdmremote)
-if test "x$enable_cdmremote" = xyes; then
-   AC_DEFINE([USE_CDMREMOTE], [1], [if true, build CDMREMOTE Client])
-fi
 
 # Figure out if curl support should be enabled.
-# true if --enable-dap
-# true if --enable-cdmremote
-# false otherwise
+# The primary goal is to first locate curl-config
+# or the curl library location
+# The rules we implement are applied in order:
+# 1. no:  if --disable-dap is set
+# 2. no:  if curl library cannot be located
+# 3. yes: if --enable-dap || --enable-cdmremote is set
+# 4. yes: if neither --enable-dap nor --disable-dap is specified
+#         and the curl library can be located
 # Note that for now, cdmremote must be explicitly enabled
 
-curl_required=no
+# First capture all the info unconditionally
 
 # Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
@@ -281,29 +281,113 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = xyes ; then
-curl_required=yes
-fi
-
-curl_found=yes
-AC_CHECK_LIB([curl], [curl_easy_setopt], [], [curl_found=no])
-
-if test "$curl_required" = yes -a "$curl_found" = no ; then
-  AC_MSG_ERROR([Can't find or link to the Curl library. Use \
-      --disable-dap, or see config.log for errors.])
-fi
-
-# Hack to support nc-config: Try to locate curl-config in path
-if curl-config --version > /dev/null ; then
-    curl_cflags=`curl-config --cflags`
-    curl_libs=`curl-config --libs`
-    curl_dir=`curl-config --prefix`
+# If --disable-dap && --disable cdmremote , then libcurl is not required
+if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = "xyes" ; then
+require_curl=yes
 else
-    AC_MSG_NOTICE([Cannot execute curl-config; ignored])
-    curl_cflags=""
-    curl_libs=""
-    curl_dir=""
+require_curl=no
 fi
+
+# Try to locate curl-config
+#
+AC_ARG_WITH([curl-config], [AS_HELP_STRING([--with-curl-config=<path>],
+            [Specify path (or the containing directory) of the curl-config program; libcurl is required for opendap.])],
+            [],[])
+
+AC_MSG_CHECKING([whether a path for curl-config was specified])
+if test "x$with_curl_config" = "x" ; then
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([$with_curl_config])
+fi
+
+# Alternatively, allow specification of the curl installation directory
+AC_MSG_CHECKING([whether a location for curl installation was specified])
+AC_ARG_WITH([curl], [AS_HELP_STRING([--with-curl=<directory>.],
+            [Specify location of CURL library; libcurl is required for opendap. Configure will expect to find subdirs bin, include and lib.])],
+            [],[])
+if test "x$with_curl" = "x" ; then
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([$with_curl])
+fi
+
+# Remaining computations are only invoked if curl is required.
+if test "$require_curl" = yes ; then
+
+  # Tag to indicate where curl info came from
+  curlsrc=
+
+  if test "x$with_curl_config" != "x" ; then
+    curlsrc="withconfig"
+  elif test "x$with_curl" != "x" ; then
+    curlsrc="withcurl"
+  else
+    curlsrc=""
+  fi  
+
+  # if curl source was --with-curl
+  # then try to locate curl-config
+
+  if test "x$curlsrc" = "xwithcurl" ; then
+    # look for curl-config in --with-curl directory
+    if $with_curl/bin/curl-config --version >/dev/null 2>&1 ; then
+      # Pretend that --with-curl-config was specified
+      with_curl_config="$with_curl/bin/curl-config"
+      curlsrc="withconfig"
+    fi
+  elif test "x$curlsrc" = "xwithconfig" ; then  
+    # look for curl-config using --with-curl-config,
+    # allow for some errors in specifying.
+    if $with_curl_config --version >/dev/null 2>&1 ; then
+      # User specified curl-config directly
+      with_curl_config="$with_curl_config"
+    elif $with_curl_config/curl-config --version >/dev/null 2>&1 ; then
+      # User specified curl-config parent directory
+      with_curl_config="$with_curl_config/curl-config"
+    elif $with_curl_config/bin/curl-config --version >/dev/null 2>&1 ; then
+      # User specified same dir as --with-curl
+      with_curl_config="$with_curl_config/bin/curl-config"
+    else
+      AC_MSG_ERROR([Erroneous --with-curl-config value: ${with_curl_config}])
+      with_curl_config="" # not found
+    fi
+  else
+    # look for curl-config in the path
+    if curl-config --version >/dev/null 2>&1 ; then
+      with_curl_config="curl-config"
+      curlsrc="withconfig"
+    fi
+  fi
+
+  # report on finding of curl-config
+  AC_MSG_CHECKING([checking whether a location for curl-config found])
+  if test "x$with_curl_config" = "x" ; then
+    AC_MSG_RESULT([no])
+  else
+    AC_MSG_RESULT([${with_curl_config}])
+  fi
+
+  # Compute the curl flags and libs
+  if test "x$with_curl_config" != "x" ; then
+    curl_cflags=`$with_curl_config --cflags`
+    curl_libs=`$with_curl_config --libs`
+    curl_dir=`$with_curl_config --prefix`
+  elif test "x$with_curl" != "x" ; then
+    curl_libs="-L$with_curl/lib -lcurl"
+    curl_cflags="-I$with_curl/include"
+    curl_dir="$with_curl"
+  else
+    AC_MSG_ERROR([Cannot locate neither curl-config or a curl directory])
+  fi
+
+else #!require_curl
+
+curl_cflags=""
+curl_libs=""
+curl_dir=""
+
+fi #require_curl
 
 AC_SUBST([CURL_CFLAGS],[${curl_cflags}])
 AC_SUBST([CURL_FCFLAGS],[${curl_cflags}])
@@ -311,10 +395,13 @@ AC_SUBST([CURL_FFLAGS],[${curl_cflags}])
 AC_SUBST([CURL_LIBS],[${curl_libs}])
 AC_SUBST([CURLDIR],[${curl_dir}])
 
-# Set the config.h flags
-if test "x$enable_dap" = xyes; then
-   AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
-   AC_DEFINE([ENABLE_DAP], [1], [if true, build DAP Client])
+# If curl is required but there is no curl, then complain
+if test "x$curlsrc" = "x" ; then
+  if test "x$require_curl" = "xyes" ; then
+     AC_MSG_NOTICE([libcurl not found; disabling dap and cdmremote support])
+  fi
+  enable_dap=no
+  enable_cdmremote=no
 fi
 
 # Default is now to always do the short remote tests
@@ -328,8 +415,18 @@ if test "x$enable_dap" = "xno" ; then
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
 
+# Set the config.h flags
+if test "x$enable_dap" = xyes; then
+   AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
+   AC_DEFINE([ENABLE_DAP], [1], [if true, build DAP Client])
+fi
+
 if test "x$enable_dap_remote_tests" = xyes; then
    AC_DEFINE([ENABLE_DAP_REMOTE_TESTS], [1], [if true, do remote tests])
+fi
+
+if test "x$enable_cdmremote" = xyes; then
+   AC_DEFINE([USE_CDMREMOTE], [1], [if true, build CDMREMOTE Client])
 fi
 
 AC_MSG_CHECKING([whether the time-consuming dap tests should be enabled (default off)])
@@ -603,7 +700,27 @@ fi
 # right here.
 AC_MSG_NOTICE([finding Fortran compiler (will not be used if Fortran API is not desired)])
 AC_PROG_FC
+
+# If we couldn't find an F90 compiler, deal with it.
+if test "${FC+set}" = set && test "x$FC" = x; then
+   if test "x$enable_compiler_recover" = xno && test "x$nc_build_f90" = xyes; then
+      AC_MSG_ERROR([Can't find F90 compiler, and compiler recovery disabled.])
+   fi
+   AC_MSG_WARN([No F90 compiler found. F90 API will not be built.])
+   nc_build_f90=no
+fi
+
 AC_PROG_F77($FC)
+
+# Handle missing f77 compiler.
+if test "${F77+set}" = set && test "x$F77" = x; then
+   if test "x$enable_compiler_recover" = xno && test "x$nc_build_f77" = xyes; then
+      AC_MSG_ERROR([Can't find F77 compiler, and compiler recovery disabled.])
+   fi
+   AC_MSG_WARN([No F77 compiler found. F77 API will not be built.])
+   nc_build_f77=no
+   nc_build_f90=no
+fi
 
 # See if the fortran 90 build is desired. If so, set some stuff
 if test "x$nc_build_f90" = xyes; then
@@ -748,7 +865,7 @@ AC_HEADER_STDBOOL
 
 # Check for these functions...
 AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr mktemp strcat strcpy strdup \
-			strcasecmp strtod strtoll strtoull getrlimit gettimeofday fsync MPI_Comm_f2c])
+			strcasecmp strtod strtoll getrlimit gettimeofday fsync MPI_Comm_f2c])
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
 AC_CHECK_LIB([m], [floor], [], [AC_MSG_ERROR([Can't find or link to the math library.])])
@@ -756,7 +873,7 @@ AC_STRUCT_ST_BLKSIZE
 UD_CHECK_IEEE
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
-AC_CHECK_TYPES([ssize_t, ptrdiff_t, uchar, longlong, uint])
+AC_CHECK_TYPES([ssize_t, ptrdiff_t, uchar, longlong])
 AC_C_CHAR_UNSIGNED
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(short)
@@ -909,14 +1026,13 @@ UD_FTPBINDIR
 # OC configuration
 
 # Require some version of xdr/rpc
-xdr_required="$curl_required"
-
 # See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
-AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
-		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
-if test "x$dap_xdrlib" = x -a "$xdr_required" = "yes"; then
-  AC_MSG_ERROR(Cannot locate library containing xdr functions.)
-else
+if test "x$enable_dap" = xyes; then
+   AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
+   		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
+  if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
+    AC_MSG_ERROR(Cannot locate library containing xdr functions.)
+  else
   if test "$dap_xdrlib" = "lc" ; then
     AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
   elif test "$dap_xdrlib" = "none required" ; then
@@ -927,14 +1043,15 @@ else
     # Add to library list
     AC_CHECK_LIB($dap_xdrlib,xdr_void)
   fi
+  # Fix to get working on OS X (thanks to Fedor Baart)
+  AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
+       AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
+       AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
+       ], [], [[#ifdef HAVE_RPC_TYPES_H
+  # include <rpc/types.h>
+  #endif]])
 fi
-# Fix to get working on OS X (thanks to Fedor Baart)
-AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
-     AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
-     AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
-     ], [], [[#ifdef HAVE_RPC_TYPES_H
-# include <rpc/types.h>
-#endif]])
+fi
 
 # Flags for nc-config script; by design $prefix, $includir, $libdir,
 # etc.  are left as shell variables in the script so as to facilitate

@@ -99,10 +99,10 @@ extern int nc_put_vara_ulonglong(int ncid, int varid,
 #endif
 
 #ifndef HAVE_LONGLONG
-#ifdef IGNORE
+/* ignore
 #define longlong long long
 #define ulonglong unsigned long long
-#endif
+*/
 typedef long long longlong;
 typedef unsigned long long ulonglong;
 #endif

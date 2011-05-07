@@ -988,3 +988,18 @@ dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
     }
     return ocstat;
 }
+
+/* Check a name to see if it contains illegal dap characters */
+
+static char* badchars = "./";
+
+int
+dap_badname(char* name)
+{
+    char* p;
+    if(name == NULL) return 0;
+    for(p=badchars;*p;p++) {
+        if(strchr(name,*p) != NULL) return 1;
+    }
+    return 0;
+}
