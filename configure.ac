@@ -280,7 +280,7 @@ fi
 
 # See if libcurl is available; turn dap and cdmremote if not
 have_curl=yes
-AC_check_lib([curl],[curl_easy_setopt],[have_curl=yes],[have_curl=no])
+AC_CHECK_LIB([curl],[curl_easy_setopt],[have_curl=yes],[have_curl=no])
 
 if test "require_curl" = yes -a "have_curl" = no ; then
     AC_MSG_ERROR(Curl library is required, but cannot locate library libcurl.)
