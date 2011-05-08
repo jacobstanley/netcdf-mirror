@@ -52,6 +52,7 @@ if test "x$HDF5" = "x1" ; then
 CPPFLAGS="-I${stddir}/include -I${stddir}/include $CPPFLAGS"
 LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 -L${stddir}/lib -lz $LDFLAGS"
 LD_LIBRARY_PATH="${stddir}/lib:$LD_LIBRARY_PATH"
+FLAGS="$FLAGS --with-hdf5=$HDF5 --with-zlib=$Z"
 fi
 
 if test "x$DAP" = "x1" ; then
