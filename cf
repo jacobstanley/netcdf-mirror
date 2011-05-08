@@ -10,7 +10,7 @@ DAP=1
 #NB=1
 
 #cmds=""
-cmds="all"
+#cmds="all"
 #cmds="all check"
 
 PREFIX="/tmp/install/${HOST}"
@@ -49,19 +49,24 @@ export PATH
 fi
 
 if test "x$HDF5" = "x1" ; then
-CPPFLAGS="-I${stddir}/include -I${stddir}/include $CPPFLAGS"
-LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 -L${stddir}/lib -lz $LDFLAGS"
+#CPPFLAGS="-I${stddir}/include -I${stddir}/include $CPPFLAGS"
+#LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 -L${stddir}/lib -lz $LDFLAGS"
+CPPFLAGS="-I${stddir}/include $CPPFLAGS"
+LDFLAGS="-L${stddir}/lib $LDFLAGS"
 LD_LIBRARY_PATH="${stddir}/lib:$LD_LIBRARY_PATH"
 FLAGS="$FLAGS --with-hdf5=$HDF5 --with-zlib=$Z"
 fi
 
 if test "x$DAP" = "x1" ; then
 if curl-config --version >/dev/null ; then
-TMP=`curl-config --cflags`
+#TMP=`curl-config --cflags`
+TMP="-I${stddirir}/include"
 CPPFLAGS="$TMP $CPPFLAGS"
 TMP=`curl-config --libs`
+TMP="-L${stddir}/lib"
 LDFLAGS="$TMP $LDFLAGS"
-TMP=`curl-config --prefix`
+#TMP=`curl-config --prefix`
+TMP="${stddir}"
 LD_LIBRARY_PATH="$TMP/lib:$LD_LIBRARY_PATH"
 else
   echo "Cannot find curl-config"
