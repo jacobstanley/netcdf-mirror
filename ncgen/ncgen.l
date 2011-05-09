@@ -310,7 +310,7 @@ NaNf|nanf { /* missing value (pre-2.4 backward compatibility) */
 		            return lexdebug(INT64_CONST);
 #else
 			/* Convert to int32, unless overflow then complain  */
-			if(int64_val <= NC_MIN_INT) {
+			if(int64_val >=NC_MIN_INT) {
 			    int32_val = (int)int64_val;
 			} else {
 			   sprintf(errstr,"32 bit integer constant out of range: %s",(char*)yytext);
@@ -333,7 +333,7 @@ NaNf|nanf { /* missing value (pre-2.4 backward compatibility) */
 		            return lexdebug(UINT64_CONST);
 #else
 			/* Convert to int32 but complain if overflow */
-			if(uint64_val >= NC_MAX_INT) {
+			if(uint64_val > NC_MAX_INT) {
 			    sprintf(errstr,"32 bit integer constant out of range: %s",(char*)yytext);
 			    yyerror(errstr);
 			}
@@ -623,7 +623,7 @@ static int
 parseLL(char* text)
 {
     int result = 0;
-#if defined HAVE_STRTOLL && defined HAVE_STRTOULL
+#if defined(HAVE_STRTOLL) && defined(HAVE_STRTOULL)
     extern int errno;
     char* endptr;
     errno = 0; endptr = NULL;
@@ -634,7 +634,10 @@ parseLL(char* text)
         uint64_val = strtoull(text,&endptr,10);
 	result = 1; /* positive uint64_val */	
     }
-    if(errno == ERANGE) {
+    if(result == 0) {
+	sprintf(errstr,"Unparseable 64 bit integer constant: %s",(char*)text);
+	yyerror(errstr);
+    } else if(errno == ERANGE) {
 	sprintf(errstr,"64 bit integer constant out of range: %s",(char*)text);
 	yyerror(errstr);
 	result = 0; /* out of range */

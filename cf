@@ -1,8 +1,8 @@
 #!/bin/bash
 #X="-x"
 
-HDF5=1
-DAP=1
+#HDF5=1
+#DAP=1
 
 #M32=1
 #M64=1
@@ -10,13 +10,13 @@ DAP=1
 #NB=1
 
 #cmds=""
-#cmds="all"
+cmds="all"
 #cmds="all check"
 
 PREFIX="/tmp/install/${HOST}"
 stddir="/share/ed/local/${HOST}"
 
-CPPFLAGS="-g -O0 -Wdeclaration-after-statement"
+CPPFLAGS=""
 LDFLAGS=""
 
 if test x$M32 = x1 ; then
@@ -39,34 +39,19 @@ esac
 MAKE=make
 IGNORE="test 0 = 1"
 
-if $IGNORE ; then
-case $HOST in
-  buddy) PATH="/opt/csw/i386-pc-solaris2.8/bin:$PATH" ;;
-  newbuddy) PATH="/opt/csw/i386-pc-solaris2.8/bin:$PATH";;
-  *) ;;
-esac
-export PATH
-fi
-
 if test "x$HDF5" = "x1" ; then
-#CPPFLAGS="-I${stddir}/include -I${stddir}/include $CPPFLAGS"
-#LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 -L${stddir}/lib -lz $LDFLAGS"
-CPPFLAGS="-I${stddir}/include $CPPFLAGS"
-LDFLAGS="-L${stddir}/lib $LDFLAGS"
+CPPFLAGS="-I${stddir}/include -I${stddir}/include $CPPFLAGS"
+LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 -L${stddir}/lib -lz $LDFLAGS"
 LD_LIBRARY_PATH="${stddir}/lib:$LD_LIBRARY_PATH"
-FLAGS="$FLAGS --with-hdf5=$HDF5 --with-zlib=$Z"
 fi
 
 if test "x$DAP" = "x1" ; then
 if curl-config --version >/dev/null ; then
-#TMP=`curl-config --cflags`
-TMP="-I${stddirir}/include"
+TMP=`curl-config --cflags`
 CPPFLAGS="$TMP $CPPFLAGS"
 TMP=`curl-config --libs`
-TMP="-L${stddir}/lib"
 LDFLAGS="$TMP $LDFLAGS"
-#TMP=`curl-config --prefix`
-TMP="${stddir}"
+TMP=`curl-config --prefix`
 LD_LIBRARY_PATH="$TMP/lib:$LD_LIBRARY_PATH"
 else
   echo "Cannot find curl-config"
@@ -77,6 +62,9 @@ fi
 export CPPFLAGS
 export LDFLAGS
 export LD_LIBRARY_PATH
+
+CFLAGS="-g -O0 -Wdeclaration-after-statement -Wall $CFLAGS"
+export CFLAGS
 
 CXXFLAGS="$CPPFLAGS $CXXFLAGS" ; export CXXFLAGS
 
@@ -97,9 +85,9 @@ FLAGS="$FLAGS --disable-pnetcdf"
 #FLAGS="$FLAGS --enable-cxx-4"
 #FLAGS="$FLAGS --enable-dap-long-tests"
 #FLAGS="$FLAGS --with-udunits"
-FLAGS="$FLAGS --with-libcf"
+#FLAGS="$FLAGS --with-libcf"
 
-#FLAGS="$FLAGS --disable-shared"
+FLAGS="$FLAGS --disable-shared"
 #FLAGS="$FLAGS --enable-shared"
 
 if test "x$HDF5" = "x" ; then
