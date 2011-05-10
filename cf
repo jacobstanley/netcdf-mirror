@@ -4,15 +4,15 @@
 HDF5=1
 DAP=1
 
-#M32=1
+M32=1
 #M64=1
 
-#NB=1
+NB=1
 
 #cmds=""
 #cmds="all"
 #cmds="all check"
-cmds="all dist"
+#cmds="all dist"
 
 PREFIX="/tmp/install/${HOST}"
 stddir="/share/ed/local/${HOST}"
@@ -30,11 +30,20 @@ elif test x$M64 = x1 ; then
   CPPFLAGS="-m64 $CPPFLAGS"
 fi
 
+CFLAGS="-g -O0 $CFLAGS"
+
 case "$HOST" in
-  mort)  CPPFLAGS="-std=c99 $CPPFLAGS" ;;
-  spock) CPPFLAGS="-Wall $CPPFLAGS" ;;
-  spike) CPPFLAGS="-Wall $CPPFLAGS" ;;
-  *) ;;
+  mort)
+	CFLAGS="-std=c99 $CFLAGS"
+	;;
+  spock)
+	CFLAGS="-Wdeclaration-after-statement -Wall $CFLAGS"
+	;;
+  spike)
+	CFLAGS="-Wall $CFLAGS"
+	;;
+  *)
+	;;
 esac
 
 MAKE=make
@@ -42,7 +51,7 @@ IGNORE="test 0 = 1"
 
 if test "x$HDF5" = "x1" ; then
 CPPFLAGS="-I${stddir}/include -I${stddir}/include $CPPFLAGS"
-LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 -L${stddir}/lib -lz $LDFLAGS"
+LDFLAGS="-L${stddir}/lib -lhdf5_hl -lhdf5 $LDFLAGS"
 LD_LIBRARY_PATH="${stddir}/lib:$LD_LIBRARY_PATH"
 fi
 
@@ -60,12 +69,12 @@ else
 fi
 fi
 
+LDFLAGS="$LDFLAGS -L${stddir}/lib -lz"
+
 export CPPFLAGS
+export CFLAGS
 export LDFLAGS
 export LD_LIBRARY_PATH
-
-CFLAGS="-g -O0 -Wdeclaration-after-statement -Wall $CFLAGS"
-export CFLAGS
 
 CXXFLAGS="$CPPFLAGS $CXXFLAGS" ; export CXXFLAGS
 
