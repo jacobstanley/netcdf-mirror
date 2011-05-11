@@ -4,10 +4,10 @@
 HDF5=1
 DAP=1
 
-M32=1
+#M32=1
 #M64=1
 
-NB=1
+#NB=1
 
 #cmds=""
 #cmds="all"
