@@ -7,9 +7,7 @@
 # Put together AM_CPPFLAGS and AM_LDFLAGS.
 include $(top_srcdir)/lib_flags.am
 
-# One of the tests needs the math library for some reason. 
-AM_CPPFLAGS = -I$(top_srcdir)/include 
-AM_LDFLAGS = ${top_builddir}/liblib/libnetcdf.la 
+AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la 
 
 # Running nctest results in a file testfile.nc, which is then checked
 # to make sure it matches testfile_nc.sav, which was generated under
