@@ -6,7 +6,6 @@
 # Put together AM_CPPFLAGS and AM_LDFLAGS.
 include $(top_srcdir)/lib_flags.am
 
-LDADD = 
 AM_CFLAGS =
 AM_FFLAGS =
 AM_FCFLAGS =
@@ -27,13 +26,11 @@ AM_FCFLAGS += @MOD_FLAG@../f90
 
 endif #BUILD_F90
 
-AM_CPPFLAGS += -I$(top_builddir)/liblib @EXTERN_CPPFLAGS@
 AM_FFLAGS +=  ${AM_CPPFLAGS}
 AM_FCFLAGS +=  ${AM_CPPFLAGS}
 
-LDADD += ${top_builddir}/fortran/libnetcdff.la -lm
-LDADD += ${top_builddir}/liblib/libnetcdf.la 
-LDADD += @EXTERN_LDFLAGS@
+LDADD = ${top_builddir}/fortran/libnetcdff.la	\
+${top_builddir}/liblib/libnetcdf.la
 
 if BUILD_UTILITIES
 # The create_fills shell creates the file fills.nc, needed by later
@@ -148,8 +145,9 @@ endif #BUILD_F90
 # Test parallel I/O for F77.
 if TEST_F77
 if TEST_PARALLEL
-check_PROGRAMS += ftst_parallel
+check_PROGRAMS += ftst_parallel ftst_parallel_nasa
 ftst_parallel_SOURCES = ftst_parallel.F
+ftst_parallel_nasa_SOURCES = ftst_parallel_nasa.F
 TESTS += run_f77_par_test.sh
 CLEANFILES += ftst_parallel.nc
 endif # TEST_PARALLEL
