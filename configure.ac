@@ -294,9 +294,8 @@ found_curl=no
 AC_CHECK_LIB([curl], [curl_easy_setopt], [found_curl=yes],[found_curl=no])
 
 # If curl is required but there is no curl, then complain
-if test $require_curl = yes -a $found_curl=no ; then
-     AC_MSG_NOTICE([libcurl not found; disabling dap and cdmremote support])
-  fi
+if test $require_curl = yes -a $found_curl = no ; then
+  AC_MSG_NOTICE([libcurl not found; disabling dap and cdmremote support])
   enable_dap=no
   enable_cdmremote=no
 fi
