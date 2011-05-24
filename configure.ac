@@ -279,19 +279,12 @@ else
 require_curl=no
 fi
 
-curl_cflags=""
-curl_libs=""
-curl_dir=""
-
-AC_SUBST([CURL_CFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_FCFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_FFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_LIBS],[${curl_libs}])
-AC_SUBST([CURLDIR],[${curl_dir}])
-
 # Do a lib test for curl
+AC_CHECK_LIB([curl], [curl_easy_setopt])
 found_curl=no
-AC_CHECK_LIB([curl], [curl_easy_setopt], [found_curl=yes],[found_curl=no])
+if test "x$ac_cv_lib_curl_curl_easy_setopt" = xyes ; then
+found_curl=yes
+fi
 
 # If curl is required but there is no curl, then complain
 if test $require_curl = yes -a $found_curl = no ; then
@@ -922,9 +915,7 @@ AC_MSG_RESULT([$BINFILE_NAME $FC $CXX])
 UD_FTPBINDIR
 
 ##################################################
-# OC configuration
-
-# Require some version of xdr/rpc
+# Require some version of xdr/rpc if --enable-dap is set.
 # See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
 if test "x$enable_dap" = xyes; then
    AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
