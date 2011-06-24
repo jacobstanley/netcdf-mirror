@@ -15,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.1.3-rc1], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.1.3], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -407,7 +407,7 @@ AC_MSG_RESULT([$nc_build_f77])
 # Do we want to build the fortran 77 API? Check for --disable-fortran
 # for Russ, who can never remember --disable-f77..
 AC_MSG_CHECKING([whether any Fortran API is desired])
-AC_ARG_ENABLE([f77],
+AC_ARG_ENABLE([fortran],
               [AS_HELP_STRING([--disable-fortran],
                               [don't try to build the netCDF Fortran 77 or \   
                               Fortran 90 APIs (same effect as --disable-f77)])])
@@ -415,7 +415,6 @@ test "x$enable_fortran" = "xno" && nc_build_f77=no
 AC_MSG_RESULT([$nc_build_f77])
 
 # Do we want to build the fortran 90 API?
-nc_build_f90=yes
 AC_MSG_CHECKING([whether F90 API is desired])
 AC_ARG_ENABLE([f90],
               [AS_HELP_STRING([--disable-f90],
@@ -955,7 +954,7 @@ else
    NC_LIBS="$with_netcdf_c_lib"
 fi
 if test "x$enable_shared" != xyes; then
-   NC_LIBS="$NC_LIBS $LIBS"
+   NC_LIBS="$LDFLAGS $NC_LIBS $LIBS"
 fi	 
 
 case "x$target_os" in
