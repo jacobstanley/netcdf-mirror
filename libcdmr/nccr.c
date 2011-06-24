@@ -93,16 +93,15 @@ NCCR_open(const char * path, int mode,
     /* Despite the above check, we want the file to be initially writable */
     mode |= (NC_WRITE|NC_CLOBBER);
 
-    /* Use NCCR code to establish a pseudo file */
-    tmpname = nulldup(PSEUDOFILE);
-    fd = mkstemp(tmpname);
+    /* Use NCCR code to establish a pseudo (tmp) file */
+    fd = nccr_createtempfile(PSEUDOFILE,tmpname);
     if(fd < 0) {THROWCHK(errno); goto done;}
     /* Now, use the file to create the hdf5 file */
     ncstat = NC4_create(tmpname,NC_NETCDF4|NC_CLOBBER,
 			0,0,NULL,0,NULL,dispatch,(NC**)&nccr);
     ncid = nccr->info.ext_ncid;
     /* unlink the temp file so it will automatically be reclaimed */
-    unlink(tmpname);
+    nccr_unlinktempname(-1,tmpname);
     free(tmpname);
     /* Avoid fill */
     dispatch->set_fill(ncid,NC_NOFILL,NULL);

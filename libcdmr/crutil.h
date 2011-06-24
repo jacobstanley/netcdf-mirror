@@ -10,4 +10,7 @@
 
 extern int crstrindex(char* s, char* match);
 
+extern int nccr_createtempfile(char* tmppath, char** tmpnamep);
+extern void nccr_unlinktempfile(int fd, char* tmpname);
+
 #endif /*CRUTIL_H*/

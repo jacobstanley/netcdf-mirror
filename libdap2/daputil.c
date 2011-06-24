@@ -8,6 +8,10 @@
 
 #include <sys/time.h>
 
+#ifdef WIN32
+#define strcasecmp stricmp
+#endif
+
 #include "oc.h"
 extern int oc_dumpnode(OClink, OCobject);
 

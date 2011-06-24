@@ -1018,3 +1018,49 @@ done:
     return THROW(ncstat);
 }
 
+int
+createtempfile34(char* tmppath, char** tmpnamep)
+{
+    int fd;
+    char* tmpname = NULL;
+#ifdef HAVE_MKSTEMP
+    {
+	char* p;
+	char c;
+	tmpname = (char*)malloc(strlen(tmppath)+strlen("dataddsXXXXXX")+1);
+	if(tmpname == NULL) return -1;
+	strcpy(tmpname,tmppath);
+	strcat(tmpname,"dataddsXXXXXX");
+	p = tmpname + strlen("datadds");
+	/* \', and '/' to '_' and '.' to '-'*/
+	for(;(c=*p);p++) {
+	    if(c == '\\' || c == '/') {*p = '_';}
+	    else if(c == '.') {*p = '-';}
+	}
+        /* Note Potential problem: old versions of this function
+           leave the file in mode 0666 instead of 0600 */
+        fd = mkstemp(tmpname);
+    }
+#else
+    /* Ignore tmppath */
+    tmpname = tempnam(NULL,NULL); /* Not a good idea */
+    if(tmpname == NULL) return -1;
+#ifdef WIN32
+    fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
+#else
+    fd=open(tmpname,O_RDWR|O_CREAT|O_EXCL, S_IRWXU);
+#endif
+#endif
+    if(tmpnamep) *tmpnamep = tmpname;
+    return fd;
+}
+
+void
+unlinktempfile34(int fd, char* tmpname)
+{
+    if(fd >= 0) /* free the original fd */
+        close(fd);
+    /* unlink the temp file so it will automatically be reclaimed */
+    if(tmpname != NULL)
+        unlink(tmpname);
+}

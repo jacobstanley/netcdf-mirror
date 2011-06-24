@@ -96,8 +96,7 @@ NCD3_open(const char * path, int mode,
 #endif
 
     /* Use libsrc code to establish initial NC(alias NCDRNO) structure */
-    tmpname = nulldup(PSEUDOFILE);
-    fd = mkstemp(tmpname);
+    fd = createtempfile34(PSEUDOFILE,&tmpname);
     if(fd < 0) {THROWCHK(errno); goto done;}
     /* Now, use the file to create the netcdf file */
     if(sizeof(size_t) == sizeof(unsigned int))
@@ -106,10 +105,8 @@ NCD3_open(const char * path, int mode,
     else
         ncstat = NC3_create(tmpname,NC_CLOBBER|NC_64BIT_OFFSET,0,0,NULL,0,NULL,
                             dispatch,(NC**)&drno);
-    /* free the original fd */
-    close(fd);
     /* unlink the temp file so it will automatically be reclaimed */
-    unlink(tmpname);
+    unlinktempfile34(-1,tmpname);
     nullfree(tmpname);
     /* Avoid fill */
     NC3_set_fill(ncid,NC_NOFILL,NULL);

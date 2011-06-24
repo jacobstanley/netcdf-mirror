@@ -270,7 +270,7 @@ typedef struct CDFnode {
 } CDFnode;
 
 /**************************************************/
-/* Give PSEUDOFILE a value */
+/* Give PSEUDOFILE a value; only used if HAVE_MKSTEMP defined */
 #define PSEUDOFILE "/tmp/pseudofileXXXXXX"
 
 /**************************************************/
@@ -310,6 +310,8 @@ extern int constrainable34(OCURI*);
 extern char* makeconstraintstring34(DCEconstraint*);
 extern size_t estimatedataddssize34(CDFnode* datadds);
 extern void restrictprojection34(NClist*, NClist*);
+extern int createtempfile34(char* tmppath, char** tmpnamep);
+extern void unlinktempfile34(int fd, char* tmpname);
 
 /* From cache.c */
 extern int iscached(NCDAPCOMMON*, CDFnode* target, NCcachenode** cachenodep);

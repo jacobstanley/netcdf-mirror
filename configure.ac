@@ -754,7 +754,8 @@ AC_HEADER_STDBOOL
 
 # Check for these functions...
 AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr mktemp strcat strcpy strdup \
-			strcasecmp strtod strtoll strtoull getrlimit gettimeofday fsync MPI_Comm_f2c])
+			strcasecmp strtod strtoll strtoull getrlimit gettimeofday fsync MPI_Comm_f2c tempnam mkstemp])
+
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
 AC_STRUCT_ST_BLKSIZE

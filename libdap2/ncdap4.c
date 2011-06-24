@@ -111,15 +111,14 @@ ocdebug = 1;
 #endif
 
     /* Use NC4 code to establish a pseudo file */
-    tmpname = nulldup(PSEUDOFILE);
-    fd = mkstemp(tmpname);
+    fd = createtempfile34(PSEUDOFILE,&tmpname);
     if(fd < 0) {THROWCHK(errno); goto done;}
     /* Now, use the file to create the hdf5 file */
     ncstat = NC4_create(tmpname,NC_NETCDF4|NC_CLOBBER,
 			0,0,NULL,0,NULL,dispatch,(NC**)&drno);
     ncid = drno->info.ext_ncid;
     /* unlink the temp file so it will automatically be reclaimed */
-    unlink(tmpname);
+    unlinktempfile34(-1,tmpname);
     nullfree(tmpname);
     /* Avoid fill */
     dispatch->set_fill(ncid,NC_NOFILL,NULL);

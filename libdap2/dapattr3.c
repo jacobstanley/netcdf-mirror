@@ -6,6 +6,11 @@
 
 #include "ncdap3.h"
 
+/* Windows Equivalent Functions */
+#ifdef WIN32
+#define strcasecmp stricmp
+#endif
+
 #define OCHECK(exp) if((ocstat = (exp))) goto done;
 
 /* Forward */

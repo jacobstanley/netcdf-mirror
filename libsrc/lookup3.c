@@ -54,9 +54,10 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #else
 #  include <stdint.h>
 #endif /* HAVE_STDINT_H */
-#include <sys/param.h>  /* attempt to define endianness */
+
 #ifdef linux
-# include <endian.h>    /* attempt to define endianness */
+#include <sys/param.h>  /* attempt to define endianness */
+#include <endian.h>    /* attempt to define endianness */
 #endif
 
 #define VALGRIND   /* added by Russ Rew, for portability over speed */

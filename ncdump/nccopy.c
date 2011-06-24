@@ -21,6 +21,16 @@
 #include "utils.h"
 #include "dimmap.h"
 
+#ifdef WIN32
+#define strtoll (long long)_strtoi64
+#define strtoull (unsigned long long)_strtou64
+/* Override config.h */
+#undef HAVE_STRTOLL
+#define HAVE_STRTOLL
+#undef HAVE_STRTOULL
+#define HAVE_STRTOULL
+#endif
+
 /* default bytes of memory we are willing to allocate for variable
  * values during copy */
 #define COPY_BUFFER_SIZE (5000000)

@@ -2,8 +2,8 @@
    See the COPYRIGHT file for more information. */
 
 #include "config.h"
-#include "dapparselex.h"
 #include <strings.h>
+#include "dapparselex.h"
 
 #define URLCVT
 #define NONSTDCVT

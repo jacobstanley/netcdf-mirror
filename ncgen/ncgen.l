@@ -25,6 +25,14 @@
    We include lexical definitions for all three, but use the second version.
 */
 
+/* Windows equivalent functions */
+#ifdef WIN32
+#define strtoll (long long)_strtoi64
+#define strtoull (unsigned long long)_strtou64
+#define HAVE_STRTOLL
+#define HAVE_STRTOULL
+#endif
+
 /* lex specification for tokens for ncgen */
 
 /* Fill value used by ncdump from version 2.4 and later.  Should match
