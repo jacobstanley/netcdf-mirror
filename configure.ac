@@ -268,24 +268,12 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-# Capture the state of the --enable-rpc flag
-AC_MSG_CHECKING([whether rpc client and server are to be built])
-AC_ARG_ENABLE([rpc],
-                 [AS_HELP_STRING([--enable-rpc],
-                                 [build with rpc client and server support.])])
-test "x$enable_rpc" = xyes || enable_rpc=no
-# RPC requires netCDF-4
-if test "x$enable_netcdf_4" = "xno" ; then enable_rpc=no ; fi
-AC_MSG_RESULT($enable_rpc)
-
 # Curl support is required if these flags are set:
 # 1. --enable-dap
 # 2. --enable-cdmremote
-# 2. --enable-rpc
 
-# If --disable-dap && --disable cdmremote && --disable-rpc,
-# then libcurl is not required
-if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = "xyes" -o "x$enable_rpc" = "xyes" ; then
+# If --disable-dap && --disable cdmremote , then libcurl is not required
+if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = "xyes" ; then
 require_curl=yes
 else
 require_curl=no
@@ -300,10 +288,9 @@ fi
 
 # If curl is required but there is no curl, then complain
 if test $require_curl = yes -a $found_curl = no ; then
-  AC_MSG_NOTICE([libcurl not found; disabling remote protocol(s) support])
+  AC_MSG_NOTICE([libcurl not found; disabling dap and cdmremote support])
   enable_dap=no
   enable_cdmremote=no
-  enable_rpc=no
 fi
 
 # Default is now to always do the short remote tests
@@ -329,10 +316,6 @@ fi
 
 if test "x$enable_cdmremote" = xyes; then
    AC_DEFINE([USE_CDMREMOTE], [1], [if true, build CDMREMOTE Client])
-fi
-
-if test "x$enable_rpc" = xyes; then
-   AC_DEFINE([BUILD_RPC], [1], [if true, build RPC Client and Server])
 fi
 
 AC_MSG_CHECKING([whether the time-consuming dap tests should be enabled (default off)])
@@ -901,7 +884,6 @@ AM_CONDITIONAL(USE_RENAMEV3, [test x$enable_netcdf_4 = xyes -o x$enable_dap = xy
 AM_CONDITIONAL(USE_PNETCDF, [test x$enable_pnetcdf = xyes])
 AM_CONDITIONAL(USE_DISPATCH, [test x$enable_dispatch = xyes])
 AM_CONDITIONAL(BUILD_CDMREMOTE, [test "x$enable_cdmremote" = xyes]) # Alias
-AM_CONDITIONAL(BUILD_RPC, [test "x$enable_rpc" = xyes])
 
 # If the machine doesn't have a long long, and we want netCDF-4, then
 # we've got problems!
@@ -1043,7 +1025,6 @@ AC_CONFIG_FILES([Makefile
                   oc/Makefile
                   libdap2/Makefile
                   libcdmr/Makefile
-                  librpc/Makefile
                   libdispatch/Makefile
                   liblib/Makefile
                   ncdap_test/Makefile
