@@ -417,7 +417,7 @@ nc_uridecodeparams(NC_URI* nc_uri)
 	plist[2*i+1] = strdup(vp);
 	cp = next;
     }
-    plist[nparams] = NULL;
+    plist[2*nparams] = NULL;
     free(params);
     if(nc_uri->paramlist != NULL)
 	nc_paramfree(nc_uri->paramlist);
@@ -425,19 +425,21 @@ nc_uridecodeparams(NC_URI* nc_uri)
     return 1;
 }
 
-const char*
-nc_urilookup(NC_URI* uri, const char* key)
+int
+nc_urilookup(NC_URI* uri, const char* key, const char** resultp)
 {
     int i;
-    if(uri == NULL || key == NULL || uri->params == NULL) return NULL;
+    char* value = NULL;
+    if(uri == NULL || key == NULL || uri->params == NULL) return 0;
     if(uri->paramlist == NULL) {
 	i = nc_uridecodeparams(uri);
 	if(!i) return 0;
     }
     i = nc_find(uri->paramlist,key);
-    if(i >= 0)
-	return uri->paramlist[(2*i)+1];
-    return NULL;
+    if(i < 0) return 0;
+    value = uri->paramlist[(2*i)+1];
+    if(resultp) *resultp = value;
+    return 1;
 }
 
 int

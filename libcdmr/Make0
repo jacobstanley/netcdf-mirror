@@ -45,15 +45,6 @@ clean::
 	rm -f *.stackdump
 
 ##################################################
-
-ASTSRC=ast_byteio.c ast_byteio.h ast_curl.c ast_curl.h \
-ast_debug.c ast_debug.h ast_internal.c ast_internal.h \
-ast_runtime.c ast_runtime.h ast_util.c ast_util.h
-
-sync synch::
-	'cp' -f ${ASTSRC} .
-
-##################################################
 # ncd
 S=chunkspec.c dimmap.c dumplib.c indent.c ncdump.c nciter.c nctime.c utils.c vardata.c
 
@@ -69,15 +60,21 @@ ncdonly::
 	${CC} ${CFLAGS} ${GFLAGS} -c ${INCL} ${SRC}
 	${CC} -o ncd ${GFLAGS} ${OBJ} ${LIBS} ${RPATH}
 
-URL=[cdmremote]http://motherlode.ucar.edu:8080/thredds/cdmremote/nws/upperair/ncdecoded/files/Upperair_20110223_0000.nc
+URL=[cdmremote]http://motherlode.ucar.edu/thredds/cdmremote/nws/upperair/ncdecoded/files/Upperair_20110517_0000.nc
+#?wmoStaNum
 
 q0::
-	./ncd -h "${URL}"
+	./ncd "${URL}"
 qq::
-	gdb --args ./ncd -h "${URL}"
+	gdb --args ./ncd "${URL}"
 qv::
+	${VALGRIND} ./ncd "${URL}"
+
+qh::
+	./ncd -h "${URL}"
+qqh::
+	gdb --args ./ncd -h "${URL}"
+qvh::
 	${VALGRIND} ./ncd -h "${URL}"
-
-
 
 
