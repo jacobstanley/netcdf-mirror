@@ -10,7 +10,6 @@
 #include <string.h>
 #include "netcdf.h"
 
-
 size_t NC_coord_zero[NC_MAX_VAR_DIMS];
 
 /* initialized int put/get_var1 below */
