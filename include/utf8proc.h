@@ -76,7 +76,13 @@ typedef unsigned char _Bool;
 # define __bool_true_false_are_defined 1
 #endif
 #include <sys/types.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#else /* HAVE_INTTYPES_H */
+#ifdef HAVE_PSTDINT_H
+#include <pstdint.h>
+#endif /* HAVE_PSTDINT_H */
+#endif /* HAVE_INTTYPES_H */
 #include <limits.h>
 
 #ifndef HAVE_SSIZE_T
