@@ -13,6 +13,8 @@ MAINTAINERCLEANFILES =
 CLEANFILES =
 EXTRA_DIST =
 
+AM_CPPFLAGS += -I$(top_srcdir)/include 
+
 LDADD=
 
 SRC= constraints3.c common34.c dapcvt.c dapalign.c dapodom.c daputil.c	\
@@ -37,8 +39,6 @@ noinst_LTLIBRARIES = libdap2.la
 libdap2_la_SOURCES = $(SRC) $(HDRS)
 libdap2_la_CPPFLAGS = $(AM_CPPFLAGS)
 libdap2_la_LIBADD =
-
-AM_CPPFLAGS += -I${top_srcdir}/libdispatch
 
 if USE_NETCDF4
 AM_CPPFLAGS += -I$(top_srcdir)/libsrc4
