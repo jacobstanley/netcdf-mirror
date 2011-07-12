@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "nc.h"
+#include "rnd.h"
 #include "utf8proc.h"
 
 

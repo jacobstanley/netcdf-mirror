@@ -20,8 +20,8 @@ NC_initialize(void)
 {
     int i;
     for(i=0;i<NC_MAX_VAR_DIMS;i++) {
-	coord_one[i] = 1;
-	coord_zero[i] = 0;
+	NC_coord_one[i] = 1;
+	NC_coord_zero[i] = 0;
     }
     return NC_NOERR;
 }
