@@ -1,4 +1,3 @@
-#http://esrl.noaa.gov/psd/thredds/dodsC/Datasets/noaa.oisst.v2/sst.wkmean.1990-present.nc"
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON=""
 PARMS="[log]"
 

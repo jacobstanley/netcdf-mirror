@@ -41,7 +41,7 @@ NC_put_var(int ncid, int varid, const void *value, nc_type memtype)
    if(stat) return stat;
    stat = NC_getshape(ncid,varid, ndims, shape);
    if(stat) return stat;
-   return NC_put_vara(ncid, varid, NC_coord_zero, shape, value, memtype);
+   return NC_put_vara(ncid, varid, coord_zero, shape, value, memtype);
 }
 
 /** \internal
@@ -51,7 +51,8 @@ static int
 NC_put_var1(int ncid, int varid, const size_t *coord, const void* value, 
 	    nc_type memtype)
 {
-   return NC_put_vara(ncid, varid, coord, NC_coord_one, value, memtype);
+   INITCOORD1;
+   return NC_put_vara(ncid, varid, coord, coord_one, value, memtype);
 }
 
 /** \internal
@@ -588,6 +589,7 @@ nc_put_var1_text(int ncid, int varid, const size_t *indexp, const char *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_CHAR);
 }
 
@@ -597,6 +599,7 @@ nc_put_var1_schar(int ncid, int varid, const size_t *indexp, const signed char *
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_BYTE);
 }
 
@@ -606,6 +609,7 @@ nc_put_var1_uchar(int ncid, int varid, const size_t *indexp, const unsigned char
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_UBYTE);
 }
 
@@ -615,6 +619,7 @@ nc_put_var1_short(int ncid, int varid, const size_t *indexp, const short *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_SHORT);
 }
 
@@ -624,6 +629,7 @@ nc_put_var1_int(int ncid, int varid, const size_t *indexp, const int *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_INT);
 }
 
@@ -633,6 +639,7 @@ nc_put_var1_long(int ncid, int varid, const size_t *indexp, const long *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void*)op, longtype);
 }
 
@@ -642,6 +649,7 @@ nc_put_var1_float(int ncid, int varid, const size_t *indexp, const float *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void*)op, NC_FLOAT);
 }
 
@@ -651,6 +659,7 @@ nc_put_var1_double(int ncid, int varid, const size_t *indexp, const double *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_DOUBLE);
 }
 
@@ -660,6 +669,7 @@ nc_put_var1_ubyte(int ncid, int varid, const size_t *indexp, const unsigned char
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_UBYTE);
 }
 
@@ -669,6 +679,7 @@ nc_put_var1_ushort(int ncid, int varid, const size_t *indexp, const unsigned sho
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_USHORT);
 }
 
@@ -678,6 +689,7 @@ nc_put_var1_uint(int ncid, int varid, const size_t *indexp, const unsigned int *
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_UINT);
 }
 
@@ -687,6 +699,7 @@ nc_put_var1_longlong(int ncid, int varid, const size_t *indexp, const long long 
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_INT64);
 }
 
@@ -696,6 +709,7 @@ nc_put_var1_ulonglong(int ncid, int varid, const size_t *indexp, const unsigned 
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void *)op, NC_UINT64);
 }
 
@@ -706,6 +720,7 @@ nc_put_var1_string(int ncid, int varid, const size_t *indexp, const char* *op)
    NC* ncp;
    int stat = NC_check_id(ncid, &ncp);
    if(stat != NC_NOERR) return stat;
+   INITCOORD1;
    return NC_put_var1(ncid, varid, indexp, (void*)op, NC_STRING);
 }
 #endif /*USE_NETCDF4*/
