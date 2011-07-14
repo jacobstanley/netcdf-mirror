@@ -9,6 +9,9 @@
 #define MAX(x,y) ((x)>(y)?(x):(y))
 
 
+/* Unix replacements */
+extern char* nulldup(const char* s);
+
 extern void expe2d(char*);
 extern int pow2(int);
 extern void tztrim(char*);

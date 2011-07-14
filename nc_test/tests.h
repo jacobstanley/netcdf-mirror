@@ -142,6 +142,10 @@ extern "C" {
 
 typedef char text;
 typedef signed char schar;
+#if !defined(uchar) && !defined(__osf__) && !defined(_AIX)
+typedef unsigned char uchar;
+#endif
+
 
 
     /* Global variables - filenames */
