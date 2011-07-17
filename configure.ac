@@ -665,7 +665,7 @@ AM_CONDITIONAL(BUILD_CXX, [test "x$nc_build_cxx" = xyes])
 
 # Set up libtool.
 AC_MSG_NOTICE([setting up libtool])
-LT_PREREQ([2.4])
+LT_PREREQ([2.2])
 LT_INIT(win32-dll)
 
 # Valgrind tests don't work with shared builds because of some libtool
@@ -756,6 +756,7 @@ AC_MSG_NOTICE([checking types, headers, and functions])
 
 AC_CHECK_HEADER(stdlib.h, ,AC_DEFINE([NO_STDLIB_H], [], [no stdlib.h]))
 AC_CHECK_HEADER(sys/types.h, ,AC_DEFINE([NO_SYS_TYPES_H], [], [no sys_types.h]))
+AC_CHECK_HEADERS([sys/param.h])
 #AC_CHECK_HEADERS([locale.h])
 AC_HEADER_DIRENT
 AC_HEADER_STDC
@@ -801,6 +802,8 @@ AC_CHECK_LIB([m], [floor], [],
 if test "x$enable_netcdf_4" = xyes; then
    AC_DEFINE([USE_NETCDF4], [1], [if true, build netCDF-4])
    AC_DEFINE([H5_USE_16_API], [1], [use HDF5 1.6 API])
+
+   AC_SEARCH_LIBS([SZ_Compress], [szip sz], [], [])
 
    # Check for the main hdf5 and hdf5_hl library.
    AC_SEARCH_LIBS([H5Fflush], [hdf5dll hdf5], [], 
@@ -852,9 +855,7 @@ dnl 	 fi
 
    # The user may have built HDF5 with the SZLIB library.
    if test "x$ac_cv_func_H5Z_SZIP" = xyes; then
-      AC_DEFINE([USE_SZIP], [1], [if true, compile in szip compression in netCDF-4 variables])
-      AC_SEARCH_LIBS([SZ_Compress], [szip], [], 
-      [AC_MSG_ERROR([Can't find or link to the szlib library. Use --disable-netcdf-4, or see config.log for errors.])])
+     AC_DEFINE([USE_SZIP], [1], [if true, compile in szip compression in netCDF-4 variables])
    fi
 
    # If the user wants hdf4 built in, check it out.
@@ -1007,6 +1008,9 @@ AC_SUBST(HAS_CXX,[$nc_build_cxx])
 AC_SUBST(HAS_SZLIB,[$nc_has_szlib])
 
 AC_CONFIG_SUBDIRS([udunits libcf])
+
+# Access netcdf specific version of config.h
+AH_BOTTOM([#include "ncconfigure.h"])
 
 ##################################################
 # Uncomment this to keep a copy of autoconf defines at this point, for
