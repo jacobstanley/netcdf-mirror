@@ -20,7 +20,7 @@ ASTJAR=${ASTDIR}/ast.jar
 SRC=nccrcvt.c nccr.c nccrdispatch.c nccrmeta.c nccrproto.c nccrgetvarx.c \
 crdebug.c crutil.c \
 nccrdump.c \
-ncStreamx.c curlwrap.c ncaux.c \
+ncStreamx.c curlwrap.c \
 ast_byteio.c ast_curl.c ast_internal.c \
 ast_runtime.c ast_util.c ast_debug.c \
 cceparse.c cceconstraints.c
@@ -31,7 +31,7 @@ HDRS=includes.h \
 nccrdispatch.h nccr.h nccrmeta.h nccrproto.h nccrgetvarx.h \
 crpath.h crdebug.h crutil.h \
 nccrdump.h \
-ncStreamx.h curlwrap.h ncaux.h \
+ncStreamx.h curlwrap.h \
 ast.h ast_byteio.h ast_curl.h ast_internal.h \
 ast_runtime.h ast_util.h ast_debug.h \
 nccrnode.h \

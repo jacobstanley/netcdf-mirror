@@ -1,0 +1,833 @@
+
+message Create {
+required string path = 1;
+required int32 cmode = 2;
+required uint64 initialsz = 3;
+required int32 basepe = 4;
+repeated int64 chunksizehint = 5;
+required int32 use_parallel = 6;
+required bytes parameters = 7;
+}
+
+message Create_Return {
+required int32 ncid = 1;
+}
+
+message Open {
+required string path = 1;
+required int32 mode = 2;
+required int32 basepe = 3;
+repeated uint64 chunksizehint = 4;
+required int32 use_parallel = 5;
+required bytes parameters = 6;
+}
+
+message Open_Return {
+required int32 ncstatus = 1;
+required int32 ncid = 2;
+}
+
+message Redef {
+required int32 ncid = 1;
+}
+
+message Redef_Return {
+required int32 ncstatus = 1;
+}
+
+message _Enddef {
+required int32 ncid = 1;
+required uint64 minfree = 2;
+required uint64 v_align = 3;
+required uint64 v_minfree = 4;
+required uint64 r_align = 5;
+}
+
+message _Enddef_Return {
+required int32 ncstatus = 1;
+}
+
+message Sync {
+required int32 ncid = 1;
+}
+
+message Sync_Return {
+required int32 ncstatus = 1;
+}
+
+message Abort {
+required int32 ncid = 1;
+}
+
+message Abort_Return {
+required int32 ncstatus = 1;
+}
+
+message Close {
+required int32 ncid = 1;
+}
+
+message Close_Return {
+required int32 ncstatus = 1;
+}
+
+message Set_fill {
+required int32 ncid = 1;
+required int32 fillmode = 2;
+}
+
+message Set_fill_Return {
+required int32 ncstatus = 1;
+required int32 oldmode = 2;
+}
+
+message Inq_base_pe {
+required int32 ncid = 1;
+}
+
+message Inq_base_pe_Return {
+required int32 ncstatus = 1;
+required int32 pe = 2;
+}
+
+message Set_base_pe {
+required int32 ncid = 1;
+required int32 pe = 2;
+}
+
+message Set_base_pe_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_format {
+required int32 ncid = 1;
+}
+
+message Inq_format_Return {
+required int32 ncstatus = 1;
+required int32 format = 2;
+}
+
+message Inq {
+required int32 ncid = 1;
+}
+
+message Inq_Return {
+required int32 ncstatus = 1;
+required int32 ndims = 2;
+required int32 nvars = 3;
+required int32 natts = 4;
+required int32 unlimdimid = 5;
+}
+
+message Inq_type {
+required int32 ncid = 1;
+required int32 xtype = 2;
+}
+
+message Inq_type_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+required uint64 size = 3;
+}
+
+message Def_dim {
+required int32 ncid = 1;
+required string name = 2;
+required uint64 len = 3;
+}
+
+message Def_dim_Return {
+required int32 ncstatus = 1;
+required int32 dimid = 2;
+}
+
+message Inq_dimid {
+required int32 ncid = 1;
+required string name = 2;
+}
+
+message Inq_dimid_Return {
+required int32 ncstatus = 1;
+required int32 dimid = 2;
+}
+
+message Inq_dim {
+required int32 ncid = 1;
+required int32 dimid = 2;
+}
+
+message Inq_dim_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+required uint64 len = 3;
+}
+
+message Inq_unlimdim {
+required int32 ncid = 1;
+}
+
+message Inq_unlimdim_Return {
+required int32 ncstatus = 1;
+required int32 unlimdimid = 2;
+}
+
+message Rename_dim {
+required int32 ncid = 1;
+required int32 dimid = 2;
+required string name = 3;
+}
+
+message Rename_dim_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_att {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+}
+
+message Inq_att_Return {
+required int32 ncstatus = 1;
+required int32 xtype = 2;
+required uint64 len = 3;
+}
+
+message Inq_attid {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+}
+
+message Inq_attid_Return {
+required int32 ncstatus = 1;
+required int32 attid = 2;
+}
+
+message Inq_attname {
+required int32 ncid = 1;
+required int32 varid = 2;
+required int32 attnum = 3;
+}
+
+message Inq_attname_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+}
+
+message Rename_att {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+required string newname = 4;
+}
+
+message Rename_att_Return {
+required int32 ncstatus = 1;
+}
+
+message Del_att {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+}
+
+message Del_att_Return {
+required int32 ncstatus = 1;
+}
+
+message Get_att {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+required int32 xtype = 4;
+}
+
+message Get_att_Return {
+required int32 ncstatus = 1;
+required bytes values = 2;
+}
+
+message Put_att {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+required int32 vtype = 4; // external value type
+required uint64 nelems = 5;
+required bytes value = 6;
+required int32 atype = 7; // attribute type
+}
+
+message Put_att_Return {
+required int32 ncstatus = 1;
+}
+
+message Def_var {
+required int32 ncid = 1;
+required string name = 2;
+required int32 xtype = 3;
+required int32 ndims = 4;
+repeated int32 dimids = 5;
+}
+
+message Def_var_Return {
+required int32 ncstatus = 1;
+required int32 varid = 2;
+}
+
+message Inq_varid {
+required int32 ncid = 1;
+required string name = 2;
+}
+
+message Inq_varid_Return {
+required int32 ncstatus = 1;
+required int32 varid = 2;
+}
+
+message Rename_var {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+}
+
+message Rename_var_Return {
+required int32 ncstatus = 1;
+}
+
+message Get_vara {
+required int32 ncid = 1;
+required int32 varid = 2;
+repeated uint64 start = 3;
+repeated uint64 edges = 4;
+required int32 memtype = 5;
+}
+
+message Get_vara_Return {
+required int32 ncstatus = 1;
+required bytes value = 2;
+}
+
+message Put_vara {
+required int32 ncid = 1;
+required int32 varid = 2;
+repeated uint64 start = 3;
+repeated uint64 edges = 4;
+required bytes value = 5;
+required int32 memtype = 6;
+}
+
+message Put_vara_Return {
+required int32 ncstatus = 1;
+}
+
+message Get_vars {
+required int32 ncid = 1;
+required int32 varid = 2;
+repeated uint64 start = 3;
+repeated uint64 edges = 4;
+repeated uint64 stride = 5;
+required int32 memtype = 6;
+}
+
+message Get_vars_Return {
+required int32 ncstatus = 1;
+required bytes value = 2;
+}
+
+message Put_vars {
+required int32 ncid = 1;
+required int32 varid = 2;
+repeated uint64 start = 3;
+repeated uint64 edges = 4;
+repeated uint64 stride = 5;
+required bytes value = 6;
+required int32 memtype = 7;
+}
+
+message Put_vars_Return {
+required int32 ncstatus = 1;
+}
+
+message Get_varm {
+required int32 ncid = 1;
+required int32 varid = 2;
+repeated uint64 start = 3;
+repeated uint64 edges = 4;
+repeated uint64 stride = 5;
+repeated uint64 imap = 6;
+required int32 memtype = 7;
+}
+
+message Get_varm_Return {
+required int32 ncstatus = 1;
+required bytes value = 2;
+}
+
+message Put_varm {
+required int32 ncid = 1;
+required int32 varid = 2;
+repeated uint64 start = 3;
+repeated uint64 edges = 4;
+repeated uint64 stride = 5;
+repeated uint64 imap = 6;
+required bytes value = 7;
+required int32 memtype = 8;
+}
+
+message Put_varm_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_var_all {
+required int32 ncid = 1;
+required int32 varid = 2;
+required string name = 3;
+}
+
+message Inq_var_all_Return {
+required int32 ncstatus = 1;
+required int32 xtype = 2;
+required int32 ndims = 3;
+repeated int32 dimids = 4;
+required int32 natts = 5;
+required bool shuffle = 6;
+required bool deflate = 7;
+required int32 deflate_level = 8;
+required bool fletcher32 = 9;
+required bool contiguous = 10;
+repeated uint64 chunksizes = 11;
+required bool no_fill = 12;
+required bytes fill_value = 13;
+required bool endianness = 14;
+required int32 options_mask = 15;
+required int32 pixels_per_block = 16;
+}
+
+// #ifdef USE_NETCDF4
+
+message Show_metadata {
+required int32 ncid = 1;
+}
+
+message Show_metadata_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_unlimdims {
+required int32 ncid = 1;
+}
+
+message Inq_unlimdims_Return {
+required int32 ncstatus = 1;
+required int32 nunlimdims = 2;
+repeated int32 unlimdimids = 3;
+}
+
+message Var_par_access {
+required int32 ncid = 1;
+required int32 varid = 2;
+required bool par_access = 3;
+}
+
+message Var_par_access_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_ncid {
+required int32 ncid = 1;
+required string group = 2;
+}
+
+message Inq_ncid_Return {
+required int32 ncstatus = 1;
+required int32 grp_ncid = 2;
+}
+
+message Inq_grps {
+required int32 ncid = 1;
+}
+
+message Inq_grps_Return {
+required int32 ncstatus = 1;
+required int32 ngroups = 2;
+repeated int32 ncids = 3;
+}
+
+message Inq_grpname {
+required int32 ncid = 1;
+}
+
+message Inq_grpname_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+}
+
+message Inq_grpname_full {
+required int32 ncid = 1;
+}
+
+message Inq_grpname_full_Return {
+required int32 ncstatus = 1;
+repeated uint64 len = 2;
+required string fullname = 3;
+}
+
+message Inq_grp_parent {
+required int32 ncid = 1;
+}
+
+message Inq_grp_parent_Return {
+required int32 ncstatus = 1;
+required int32 parentncid = 2;
+}
+
+message Inq_grp_full_ncid {
+required int32 ncid = 1;
+required string fullname = 2;
+}
+
+message Inq_grp_full_ncid_Return {
+required int32 ncstatus = 1;
+required int32 groupncid = 2;
+}
+
+message Inq_varids {
+required int32 ncid = 1;
+}
+
+message Inq_varids_Return {
+required int32 ncstatus = 1;
+required int32 nvars = 2;
+repeated int32 varids = 3;
+}
+
+message Inq_dimids {
+required int32 ncid = 1;
+required bool includeparents = 2;
+}
+
+message Inq_dimids_Return {
+required int32 ncstatus = 1;
+required int32 ndims = 2;
+repeated int32 dimids = 3;
+}
+
+message Inq_typeids {
+required int32 ncid = 1;
+}
+
+message Inq_typeids_Return {
+required int32 ncstatus = 1;
+required int32 ntypes = 2;
+repeated int32 typeids = 3;
+}
+
+message Inq_type_equal {
+required int32 ncid1 = 1;
+required int32 typeid1 = 2;
+required int32 ncid2 = 3;
+required int32 typeid2 = 4;
+}
+
+message Inq_type_equal_Return {
+required int32 ncstatus = 1;
+required bool equal = 2;
+}
+
+message Def_grp {
+required int32 ncid = 1;
+required string name = 2;
+}
+
+message Def_grp_Return {
+required int32 ncstatus = 1;
+required int32 grpncid = 2;
+}
+
+message Inq_user_type {
+required int32 ncid = 1;
+required int32 typeid = 2;
+}
+
+message Inq_user_type_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+required uint64 size = 3;
+required int32 basetype = 4;
+required uint64 nfields = 5;
+required int32 typeclass = 6;
+}
+
+message Inq_typeid {
+required int32 ncid = 1;
+required string name = 2;
+}
+
+message Inq_typeid_Return {
+required int32 ncstatus = 1;
+required int32 typeid = 2;
+}
+
+message Def_compound {
+required int32 ncid = 1;
+required uint64 size = 2;
+required string name = 3;
+}
+
+message Def_compound_Return {
+required int32 ncstatus = 1;
+required int32 typeid = 2;
+}
+
+message Insert_compound {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required string name = 3;
+required uint64 offset = 4;
+required int32 fieldtypeid = 5;
+}
+
+message Insert_compound_Return {
+required int32 ncstatus = 1;
+}
+
+message Insert_array_compound {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required string name = 3;
+required uint64 offset = 4;
+required int32 fieldtypeid = 5;
+required int32 ndims = 6;
+repeated int32 dimsizes = 7;
+}
+
+message Insert_array_compound_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_compound_field {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required int32 fieldid = 3;
+}
+
+message Inq_compound_field_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+required uint64 offset = 3;
+required int32 fieldtypeid = 4;
+required int32 ndims = 5;
+repeated int32 dimsizes = 6;
+}
+
+message Inq_compound_fieldindex {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required string name = 3;
+}
+
+message Inq_compound_fieldindex_Return {
+required int32 ncstatus = 1;
+required int32 fieldid = 2;
+}
+
+message Def_vlen {
+required int32 ncid = 1;
+required string name = 2;
+required int32 base_typeid = 3;
+}
+
+message Def_vlen_Return {
+required int32 ncstatus = 1;
+required int32 typeid = 2;
+}
+
+message Put_vlen_element {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required bytes element = 3;
+required uint64 len = 4;
+required bytes data = 5;
+}
+
+message Put_vlen_element_Return {
+required int32 ncstatus = 1;
+}
+
+message Get_vlen_element {
+required int32 ncid = 1;
+required int32 typeid = 2;
+}
+
+message Get_vlen_element_Return {
+required int32 ncstatus = 1;
+required bytes element = 2;
+required uint64 len = 3;
+required bytes data = 4;
+}
+
+message Def_enum {
+required int32 ncid = 1;
+required int32 basetypeid = 2;
+required string name = 3;
+}
+
+message Def_enum_Return {
+required int32 ncstatus = 1;
+required int32 typeid = 2;
+}
+
+message Insert_enum {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required string name = 3;
+required bytes value = 4;
+}
+
+message Insert_enum_Return {
+required int32 ncstatus = 1;
+}
+
+message Inq_enum_member {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required int32 index = 3;
+}
+
+message Inq_enum_member_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+required bytes value = 3;
+}
+
+message Inq_enum_ident {
+required int32 ncid = 1;
+required int32 typeid = 2;
+required uint64 value = 3;
+}
+
+message Inq_enum_ident_Return {
+required int32 ncstatus = 1;
+required string name = 2;
+}
+
+message Def_opaque {
+required int32 ncid = 1;
+required uint64 size = 2;
+required string name = 3;
+}
+
+message Def_opaque_Return {
+required int32 ncstatus = 1;
+required int32 typeid = 2;
+}
+
+message Def_var_deflate {
+required int32 ncid = 1;
+required int32 varid = 2;
+required bool shuffle = 3;
+required bool deflate = 4;
+required int32 deflatelevel = 5;
+}
+
+message Def_var_deflate_Return {
+required int32 ncstatus = 1;
+}
+
+message Def_var_fletcher32 {
+required int32 ncid = 1;
+required int32 varid = 2;
+required bool fletcher32 = 3;
+}
+
+message Def_var_fletcher32_Return {
+required int32 ncstatus = 1;
+}
+
+message Def_var_chunking {
+required int32 ncid = 1;
+required int32 varid = 2;
+required bool contiguous = 3;
+repeated uint64 chunksizes = 4;
+}
+
+message Def_var_chunking_Return {
+required int32 ncstatus = 1;
+}
+
+message Def_var_fill {
+required int32 ncid = 1;
+required int32 varid = 2;
+required bool nofill = 3;
+required bytes fill_value = 4;
+}
+
+message Def_var_fill_Return {
+required int32 ncstatus = 1;
+}
+
+message Def_var_endian {
+required int32 ncid = 1;
+required int32 varid = 2;
+required bool bigendian = 3;
+}
+
+message Def_var_endian_Return {
+required int32 ncstatus = 1;
+}
+
+message Set_var_chunk_cache {
+required int32 ncid = 1;
+required int32 varid = 2;
+required uint64 size = 3;
+required uint64 nelems = 4;
+required float preemption = 5;
+}
+
+message Set_var_chunk_cache_Return {
+required int32 ncstatus = 1;
+}
+
+message Get_var_chunk_cache {
+required int32 ncid = 1;
+required int32 varid = 2;
+}
+
+message Get_var_chunk_cache_Return {
+required int32 ncstatus = 1;
+required uint64 size = 2;
+required uint64 nelems = 3;
+required float preemption = 4;
+}
+
+// #endif /*USE_NETCDF4*/
+
+// #ifdef NONDISPATCH
+
+message NC_set_log_level {
+required int32 newlevel = 1;
+}
+
+message NC_set_log_level_Return {
+required int32 ncstatus = 1;
+}
+
+message NC_inq_libvers {
+}
+
+message NC_inq_libvers_Return {
+required string version = 1;
+}
+
+message NC_delete_mp {
+required string path = 1;
+required int32 basepe = 2;
+}
+
+message NC_delete_mp_Return {
+required int32 ncstatus = 1;
+}
+
+// #endif /*NONDISPATCH*/

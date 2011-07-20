@@ -16,9 +16,30 @@ LDADD=
 ASTJAR=ast.jar
 
 # RPC Sources
-SRC=
 
-HDRS=
+HDRS=\
+protorpc.h \
+rpcdebug.h \
+rpcpath.h \
+rpcutil.h \
+ncrpc.h \
+ncrpccvt.h \
+ncrpcdispatch.h \
+ncrpcdump.h \
+ncrpcmeta.h \
+ncrpcnode.h \
+ncrpcproto.h
+
+SRC=\
+protorpc.c \
+rpcdebug.c \
+rpcutil.c \
+ncrpc.c \
+ncrpccvt.c \
+ncrpcdispatch.c \
+ncrpcdump.c \
+ncrpcmeta.c \
+ncrpcproto.c
 
 if BUILD_RPC
 
@@ -26,21 +47,24 @@ noinst_LTLIBRARIES = librpcclient.la librcpserver.la
 
 # Build convenience library
 librpcclient_la_SOURCES = $(SRC) $(HDRS)
-librpcserver_la_SOURCES = $(SRC) $(HDRS)
+#librpcserver_la_SOURCES = $(SRC) $(HDRS)
 
-AM_CPPFLAGS += -I$(top_srcdir)/libsrc4 \
-	      -I$(top_srcdir)/libsrc \
-	      -I$(top_srcdir)/libdispatch
-
-AM_CPPFLAGS += -I${top_srcdir}/libdispatch
+AM_CPPFLAGS += -I$(top_srcdir)/include \
+               -I$(top_srcdir)/libdispatch 
+               -I$(top_srcdir)/libsrc 
 
 # Define the load libraries 
 LDADD += \
-         ${top_builddir}/libcdmr/libnccr.la \
-         ${top_builddir}/libcdmr/libdap2.la \
-	 ${top_builddir}/libsrc4/libnetcdf4.la \
          ${top_builddir}/libsrc/libnetcdf3.la \
          ${top_builddir}/libdispatch/libdispatch.la
+
+if USE_NETCDF4
+AM_CPPFLAGS += -I$(top_srcdir)/libsrc4
+
+# Define the load libraries 
+LDADD += ${top_builddir}/libsrc4/libnetcdf4.la
+
+endif #USE_NETCDF4
 
 if BUILD_V2
 LDADD += ${top_builddir}/libdispatch/libnetcdf2.la 
@@ -48,16 +72,12 @@ endif # BUILD_V2
 
 ##################################################
 # Generate the augmented ncstream structures
-#
-#EXTRA_DIST += ast.jar ncStream.proto ncStream.h ncStream.c extends.sed
-#
-#ncStreamx.c ncStreamx.h: ncStreamx.proto ast.jar
-#	java -jar ast.jar -WdT -I. ncStreamx.proto
-#
-#ncStreamx.proto: ncStream.proto extends.sed
-#	sed -f extends.sed <ncStream.proto |tr -d '\r' >ncStreamx.proto
-#
+
+EXTRA_DIST += ast.jar protorpc.proto
+
+protorpc.c protorpc.h: protorpc.proto ast.jar
+	java -jar ast.jar -WdT -I. protorpc.proto
+
 ##################################################
 
 endif # BUILD_RPC
-

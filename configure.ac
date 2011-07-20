@@ -1024,6 +1024,7 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  h5_test/Makefile
                  man4/Makefile
+                 man4/images/Makefile
                  fortran/Makefile
                  libsrc/Makefile
                  libsrc4/Makefile
