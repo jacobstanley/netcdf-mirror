@@ -9,11 +9,9 @@
 # The "install" target installs the documentation in a directory
 # called $(prefix)/doc/$(PACKAGE)-$(VERSION).
 
-# $Id: Makefile.am,v 1.35 2010/04/20 17:08:34 ed Exp $
-
 # These are the source files for all the netcdf manuals.
 info_TEXINFOS = netcdf.texi netcdf-install.texi netcdf-c.texi		\
-netcdf-f77.texi netcdf-f90.texi netcdf-cxx.texi netcdf-tutorial.texi	
+netcdf-f77.texi netcdf-f90.texi netcdf-cxx.texi netcdf-tutorial.texi
 #netcdf-cxx4.texi
 
 # Get lists of the coresponding ps, info, and pdf files.
@@ -31,8 +29,9 @@ netcdf-man-3.html netcdf_f90-man.html ncgen3-man-1.html \
 nccopy-man-1.html
 
 # These files will be included with the dist.
-EXTRA_DIST = netcdf.m4 $(pdf_docs) $(html_mans) $(txt_docs) $(dvi_docs)	\
-$(ps_docs) $(info_docs) $(html_docs) netcdf_f77.3
+EXTRA_DIST = netcdf.m4 $(pdf_docs) $(html_mans) $(txt_docs)	\
+$(dvi_docs) $(ps_docs) $(info_docs) $(html_docs) netcdf_f77.3	\
+DoxygenLayout.xml Doxyfile.in
 
 #doc_DATA = $(pdf_docs) $(html_mans) $(txt_docs) $(ps_docs)	\
 #$(info_docs) $(html_docs)
@@ -201,3 +200,22 @@ ${cxx_examples} ${cdl_examples} *.1 *.3 ncdump-man-1.html		\
 ncgen-man-1.html ncgen3-man-1.html netcdf_f77-man.html netcdf-man-3.html \
 netcdf_f90-man.html stamp-* version* netcdf_f77.3 nccopy-man-1.html
 
+SUBDIRS = images
+
+if HAVE_DOXYGEN
+# directory = $(top_srcdir)/docs/man/man3/
+
+# dist_man_MANS = $(directory)/man_page_1.3 $(directory)/man_page_2.3
+# $(directory)/man_page_1.3: doxyfile.stamp
+# $(directory)/man_page_2.3: doxyfile.stamp
+
+# doxyfile.stamp: @NETCDF_DOC_CODE_FILES@
+# 	$(DOXYGEN) Doxyfile
+# 	echo Timestamp > doxyfile.stamp
+
+# CLEANFILES = doxyfile.stamp
+
+# all-local: doxyfile.stamp
+# clean-local:
+# 	rm -rf $(top_srcdir)/man4/man
+endif 
