@@ -32,10 +32,16 @@
  */
 /* "$Id$" */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
 
 #include <curl/curl.h>

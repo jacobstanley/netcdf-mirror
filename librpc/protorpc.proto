@@ -4,18 +4,17 @@ required string path = 1;
 required int32 cmode = 2;
 required uint64 initialsz = 3;
 required int32 basepe = 4;
-repeated int64 chunksizehint = 5;
 required int32 use_parallel = 6;
-required bytes parameters = 7;
 }
 
 message Create_Return {
+required int32 ncstatus = 1;
 required int32 ncid = 1;
 }
 
 message Open {
 required string path = 1;
-required int32 mode = 2;
+required int32 cmode = 2;
 required int32 basepe = 3;
 repeated uint64 chunksizehint = 4;
 required int32 use_parallel = 5;
@@ -71,21 +70,21 @@ message Close_Return {
 required int32 ncstatus = 1;
 }
 
-message Set_fill {
+message Set_Fill {
 required int32 ncid = 1;
 required int32 fillmode = 2;
 }
 
-message Set_fill_Return {
+message Set_Fill_Return {
 required int32 ncstatus = 1;
 required int32 oldmode = 2;
 }
 
-message Inq_base_pe {
+message Inq_Base_PE {
 required int32 ncid = 1;
 }
 
-message Inq_base_pe_Return {
+message Inq_Base_PE_Return {
 required int32 ncstatus = 1;
 required int32 pe = 2;
 }
@@ -120,24 +119,24 @@ required int32 natts = 4;
 required int32 unlimdimid = 5;
 }
 
-message Inq_type {
+message Inq_Type {
 required int32 ncid = 1;
 required int32 xtype = 2;
 }
 
-message Inq_type_Return {
+message Inq_Type_Return {
 required int32 ncstatus = 1;
 required string name = 2;
 required uint64 size = 3;
 }
 
-message Def_dim {
+message Def_Dim {
 required int32 ncid = 1;
 required string name = 2;
 required uint64 len = 3;
 }
 
-message Def_dim_Return {
+message Def_Dim_Return {
 required int32 ncstatus = 1;
 required int32 dimid = 2;
 }
@@ -263,7 +262,7 @@ message Put_att_Return {
 required int32 ncstatus = 1;
 }
 
-message Def_var {
+message Def_Var {
 required int32 ncid = 1;
 required string name = 2;
 required int32 xtype = 3;
@@ -271,7 +270,7 @@ required int32 ndims = 4;
 repeated int32 dimids = 5;
 }
 
-message Def_var_Return {
+message Def_Var_Return {
 required int32 ncstatus = 1;
 required int32 varid = 2;
 }
@@ -536,12 +535,12 @@ required int32 ncstatus = 1;
 required bool equal = 2;
 }
 
-message Def_grp {
+message Def_Grp {
 required int32 ncid = 1;
 required string name = 2;
 }
 
-message Def_grp_Return {
+message Def_Grp_Return {
 required int32 ncstatus = 1;
 required int32 grpncid = 2;
 }
@@ -570,13 +569,13 @@ required int32 ncstatus = 1;
 required int32 typeid = 2;
 }
 
-message Def_compound {
+message Def_Compound {
 required int32 ncid = 1;
 required uint64 size = 2;
 required string name = 3;
 }
 
-message Def_compound_Return {
+message Def_Compound_Return {
 required int32 ncstatus = 1;
 required int32 typeid = 2;
 }
@@ -633,13 +632,13 @@ required int32 ncstatus = 1;
 required int32 fieldid = 2;
 }
 
-message Def_vlen {
+message Def_Vlen {
 required int32 ncid = 1;
 required string name = 2;
 required int32 base_typeid = 3;
 }
 
-message Def_vlen_Return {
+message Def_Vlen_Return {
 required int32 ncstatus = 1;
 required int32 typeid = 2;
 }
@@ -668,13 +667,13 @@ required uint64 len = 3;
 required bytes data = 4;
 }
 
-message Def_enum {
+message Def_Enum {
 required int32 ncid = 1;
 required int32 basetypeid = 2;
 required string name = 3;
 }
 
-message Def_enum_Return {
+message Def_Enum_Return {
 required int32 ncstatus = 1;
 required int32 typeid = 2;
 }
@@ -713,13 +712,13 @@ required int32 ncstatus = 1;
 required string name = 2;
 }
 
-message Def_opaque {
+message Def_Opaque {
 required int32 ncid = 1;
 required uint64 size = 2;
 required string name = 3;
 }
 
-message Def_opaque_Return {
+message Def_Opaque_Return {
 required int32 ncstatus = 1;
 required int32 typeid = 2;
 }
@@ -736,45 +735,45 @@ message Def_var_deflate_Return {
 required int32 ncstatus = 1;
 }
 
-message Def_var_fletcher32 {
+message Def_Var_Fletcher32 {
 required int32 ncid = 1;
 required int32 varid = 2;
 required bool fletcher32 = 3;
 }
 
-message Def_var_fletcher32_Return {
+message Def_Var_Fletcher32_Return {
 required int32 ncstatus = 1;
 }
 
-message Def_var_chunking {
+message Def_Var_Chunking {
 required int32 ncid = 1;
 required int32 varid = 2;
 required bool contiguous = 3;
 repeated uint64 chunksizes = 4;
 }
 
-message Def_var_chunking_Return {
+message Def_Var_Chunking_Return {
 required int32 ncstatus = 1;
 }
 
-message Def_var_fill {
+message Def_Var_Fill {
 required int32 ncid = 1;
 required int32 varid = 2;
 required bool nofill = 3;
 required bytes fill_value = 4;
 }
 
-message Def_var_fill_Return {
+message Def_Var_Fill_Return {
 required int32 ncstatus = 1;
 }
 
-message Def_var_endian {
+message Def_Var_endian {
 required int32 ncid = 1;
 required int32 varid = 2;
 required bool bigendian = 3;
 }
 
-message Def_var_endian_Return {
+message Def_Var_endian_Return {
 required int32 ncstatus = 1;
 }
 

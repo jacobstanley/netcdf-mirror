@@ -13,6 +13,80 @@
 #include <errno.h>  /* netcdf functions sometimes return system errors */
 #include "ncdispatch.h"
 
+/* Define enum covering all RPC calls */
+enum RPC_Call {
+NCRPC_CREATE,
+NCRPC_OPEN,
+NCRPC_NEW_NC,
+NCRPC_FREE_NC,
+NCRPC_REDEF,
+NCRPC__ENDDEF,
+NCRPC_SYNC,
+NCRPC_ABORT,
+NCRPC_CLOSE,
+NCRPC_SET_FILL,
+NCRPC_SET_BASE_PE,
+NCRPC_INQ_BASE_PE,
+NCRPC_INQ_FORMAT,
+NCRPC_INQ,
+NCRPC_INQ_TYPE,
+NCRPC_DEF_DIM,
+NCRPC_INQ_DIMID,
+NCRPC_INQ_DIM,
+NCRPC_INQ_UNLIMDIM,
+NCRPC_RENAME_DIM,
+NCRPC_INQ_ATT,
+NCRPC_INQ_ATTID,
+NCRPC_INQ_ATTNAME,
+NCRPC_RENAME_ATT,
+NCRPC_DEL_ATT,
+NCRPC_GET_ATT,
+NCRPC_PUT_ATT,
+NCRPC_DEF_VAR,
+NCRPC_INQ_VAR_ALL,
+NCRPC_INQ_VARID,
+NCRPC_RENAME_VAR,
+NCRPC_PUT_VARA,
+NCRPC_GET_VARA,
+NCRPC_VAR_PAR_ACCESS,
+NCRPC_INQ_NCID,
+NCRPC_INQ_GRPS,
+NCRPC_INQ_GRPNAME,
+NCRPC_INQ_GRPNAME_FULL,
+NCRPC_INQ_GRP_PARENT,
+NCRPC_INQ_GRP_FULL_NCID,
+NCRPC_INQ_VARIDS,
+NCRPC_INQ_DIMIDS,
+NCRPC_INQ_TYPEIDS,
+NCRPC_INQ_TYPE_EQUAL,
+NCRPC_DEF_GRP,
+NCRPC_INQ_USER_TYPE,
+NCRPC_DEF_COMPOUND,
+NCRPC_INSERT_COMPOUND,
+NCRPC_INSERT_ARRAY_COMPOUND,
+NCRPC_INQ_TYPEID,
+NCRPC_INQ_COMPOUND_FIELD,
+NCRPC_INQ_COMPOUND_FIELDINDEX,
+NCRPC_DEF_VLEN,
+NCRPC_PUT_VLEN_ELEMENT,
+NCRPC_GET_VLEN_ELEMENT,
+NCRPC_DEF_ENUM,
+NCRPC_INSERT_ENUM,
+NCRPC_INQ_ENUM_MEMBER,
+NCRPC_INQ_ENUM_IDENT,
+NCRPC_DEF_OPAQUE,
+NCRPC_DEF_VAR_DEFLATE,
+NCRPC_DEF_VAR_FLETCHER32,
+NCRPC_DEF_VAR_CHUNKING,
+NCRPC_DEF_VAR_FILL,
+NCRPC_DEF_VAR_ENDIAN,
+NCRPC_SET_VAR_CHUNK_CACHE,
+NCRPC_GET_VAR_CHUNK_CACHE,
+NCRPC_INQ_UNLIMDIMS,
+NCRPC_SHOW_METADATA,
+NCRPC_INITIALIZE
+};
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -28,12 +102,6 @@ NCRPC_open(const char *path, int mode,
          int basepe, size_t *chunksizehintp, 
 	 int use_parallel, void* parameters,
 	 NC_Dispatch*, NC**);
-
-extern int
-NCRPC_new_nc(NC**);
-
-extern int
-NCRPC_free_nc(NC*);
 
 extern int
 NCRPC_redef(int ncid);
@@ -55,10 +123,10 @@ extern int
 NCRPC_set_fill(int ncid, int fillmode, int *old_modep);
 
 extern int
-NCRPC_set_base_pe(int ncid, int pe);
+NCRPC_inq_base_pe(int ncid, int *pe);
 
 extern int
-NCRPC_inq_base_pe(int ncid, int *pe);
+NCRPC_set_base_pe(int ncid, int pe);
 
 extern int
 NCRPC_inq_format(int ncid, int *formatp);
@@ -123,18 +191,16 @@ NCRPC_def_var(int ncid, const char *name,
 	 nc_type xtype, int ndims, const int *dimidsp, int *varidp);
 
 extern int
-NCRPC_inq_var_all(int ncid, int varid, char *name, nc_type *xtypep, 
-               int *ndimsp, int *dimidsp, int *nattsp, 
-               int *shufflep, int *deflatep, int *deflate_levelp,
-               int *fletcher32p, int *contiguousp, size_t *chunksizesp, 
-               int *no_fill, void *fill_valuep, int *endiannessp, 
-	       int *options_maskp, int *pixels_per_blockp);
-
-extern int
 NCRPC_inq_varid(int ncid, const char *name, int *varidp);
 
 extern int
 NCRPC_rename_var(int ncid, int varid, const char *name);
+
+
+extern int
+NCRPC_get_vara(int ncid, int varid,
+	     const size_t *start, const size_t *count,
+             void *value, nc_type);
 
 extern int
 NCRPC_put_vara(int ncid, int varid,
@@ -142,13 +208,38 @@ NCRPC_put_vara(int ncid, int varid,
              const void *value, nc_type);
 
 extern int
-NCRPC_get_vara(int ncid, int varid,
-	     const size_t *start, const size_t *count,
+NCRPC_get_vars(int ncid, int varid,
+	     const size_t *start, const size_t *count, const ptrdiff_t*,
              void *value, nc_type);
 
+extern int
+NCRPC_put_vara(int ncid, int varid,
+   	     const size_t *start, const size_t *count, const ptrdiff_t*,
+             const void *value, nc_type);
+
+extern int
+NCRPC_get_varm(int, int, const size_t*, const size_t*, const ptrdiff_t*, const ptrdiff_t*, void*, nc_type);
+
+extern int
+NCRPC_put_varm(int, int, const size_t*, const size_t*, const ptrdiff_t*, const ptrdiff_t*, const void*, nc_type);
+
+extern int
+NCRPC_inq_var_all(int ncid, int varid, char *name, nc_type *xtypep, 
+               int *ndimsp, int *dimidsp, int *nattsp, 
+               int *shufflep, int *deflatep, int *deflate_levelp,
+               int *fletcher32p, int *contiguousp, size_t *chunksizesp, 
+               int *no_fill, void *fill_valuep, int *endiannessp, 
+	       int *options_maskp, int *pixels_per_blockp);
 /* End _var */
 
-/* netCDF4 API only */
+/*#ifdef USE_NETCDF4*/
+
+extern int
+NCRPC_show_metadata(int);
+
+extern int
+NCRPC_inq_unlimdims(int, int *, int *);
+
 extern int
 NCRPC_var_par_access(int, int, int);
 
@@ -190,6 +281,9 @@ NCRPC_inq_user_type(int, nc_type, char *, size_t *, nc_type *,
 		  size_t *, int *);
 
 extern int
+NCRPC_inq_typeid(int, const char *, nc_type *);
+
+extern int
 NCRPC_def_compound(int, size_t, const char *, nc_type *);
 
 extern int
@@ -198,9 +292,6 @@ NCRPC_insert_compound(int, nc_type, const char *, size_t, nc_type);
 extern int
 NCRPC_insert_array_compound(int, nc_type, const char *, size_t, 
 			  nc_type, int, const int *);
-
-extern int
-NCRPC_inq_typeid(int, const char *, nc_type *);
 
 extern int
 NCRPC_inq_compound_field(int, nc_type, int, char *, size_t *, 
@@ -254,14 +345,26 @@ NCRPC_set_var_chunk_cache(int, int, size_t, size_t, float);
 extern int
 NCRPC_get_var_chunk_cache(int, int, size_t *, size_t *, float *);
 
-extern int
-NCRPC_inq_unlimdims(int, int *, int *);
+/*#endif USE_NETCDF4*/
+
+/* Non-dispatch operations *.
+extern void
+NCRPC_nc_advise(const char*cdf_routine_name,interr,const char*fmt,...);
+
+extern void
+NCRPC_nc_set_log_level(int);
+
+extern const char* 
+NCRPC_nc_inq_libvers(void);
+
+extern const char* 
+NCRPC_nc_strerror(int);
 
 extern int
-NCRPC_show_metadata(int);
+NCRPC_nc_delete(const char*path);
 
-extern int 
-NCRPC_initialize(void);
+extern int
+NCRPC_nc_delete_mp(const char*path,intbasepe);
 
 #if defined(__cplusplus)
 }
