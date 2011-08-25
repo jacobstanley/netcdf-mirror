@@ -112,11 +112,12 @@ extern "C" {
 #define NC_NOWRITE	0	/**< Set read-only access for nc_open(). */
 #define NC_WRITE    	0x0001	/**< Set read-write access for nc_open(). */
 
-#define NC_CLOBBER	0       /**< Destroy existing file. Mode flag for nc_create(). */
-#define NC_NOCLOBBER	0x0004	/**< Don't destroy existing file. Mode flag for nc_create(). */
-#define NC_64BIT_OFFSET 0x0200  /**< Use large (64-bit) file offsets. Mode flag for nc_create(). */
-#define NC_NETCDF4      0x1000  /**< Use netCDF-4/HDF5 format. Mode flag for nc_create(). */
+#define NC_CLOBBER	 0       /**< Destroy existing file. Mode flag for nc_create(). */
+#define NC_NOCLOBBER	 0x0004	/**< Don't destroy existing file. Mode flag for nc_create(). */
+#define NC_64BIT_OFFSET  0x0200  /**< Use large (64-bit) file offsets. Mode flag for nc_create(). */
+#define NC_NETCDF4       0x1000  /**< Use netCDF-4/HDF5 format. Mode flag for nc_create(). */
 #define NC_CLASSIC_MODEL 0x0100 /**< Enforce classic model. Mode flag for nc_create(). */
+#define NC_DISKLESS      0x0002  /**< Create a diskless file. Mode flag for nc_create(). */
 
 /** Share updates, limit cacheing.
 Use this in mode flags for both nc_create() and nc_open(). */
@@ -325,7 +326,9 @@ by the desired type. */
    error codes < -100 so that errors can be added to netcdf-3 if
    needed. */
 #define NC4_FIRST_ERROR  (-100)
-#define NC_EHDFERR       (-101)    /**< Error at HDF5 layer. */
+
+/** Error at HDF5 layer. */
+#define NC_EHDFERR       (-101)    
 #define NC_ECANTREAD     (-102)    /**< Can't read. */
 #define NC_ECANTWRITE    (-103)    /**< Can't write. */
 #define NC_ECANTCREATE   (-104)    /**< Can't create. */
