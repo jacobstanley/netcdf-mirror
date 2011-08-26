@@ -344,12 +344,12 @@ NCD_sync(int ncid)
    the HDF5 file. The group that is passed in must be the root group
    of the file. */
 static int
-close_netcdf4_file(NC_HDF5_FILE_INFO_T *h5, int abort)
+close_diskless_file(NC_HDF5_FILE_INFO_T *h5, int abort)
 {
    int retval;
 
    assert(h5 && h5->root_grp);
-   LOG((3, "close_netcdf4_file: h5->path %s abort %d", 
+   LOG((3, "close_diskless_file: h5->path %s abort %d", 
 	h5->path, abort));
 
    /* According to the docs, always end define mode on close. */
@@ -403,7 +403,7 @@ NCD_abort(int ncid)
 
    /* Free any resources the netcdf-4 library has for this file's
     * metadata. */
-   if ((retval = close_netcdf4_file(nc->nc4_info, 1)))
+   if ((retval = close_diskless_file(nc->nc4_info, 1)))
       return retval;
    
    /* Delete the file, if we should. */
@@ -438,7 +438,7 @@ NCD_close(int ncid)
       return NC_EBADGRPID;
 
    /* Call the nc4 close. */
-   if ((retval = close_netcdf4_file(grp->file->nc4_info, 0)))
+   if ((retval = close_diskless_file(grp->file->nc4_info, 0)))
       return retval;
 
    /* Delete this entry from our list of open files. */

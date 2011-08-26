@@ -27,8 +27,6 @@ main(int argc, char **argv)
       int ndims_in, nvars_in, natts_in, unlimdimid_in;
       char name_in[NC_MAX_NAME + 1];
       nc_type type_in;
-      size_t len_in;
-      int i;
       float float_data = 3.14, float_data_in;
       int int_data = 42, int_data_in;
       short short_data = 2, short_data_in;
@@ -156,6 +154,81 @@ main(int argc, char **argv)
 
       /* Close the file, losing all information. Hey! What kind of
        * storage format is this, anyway? */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing diskless file with scalar vars and type conversion...");
+   {
+#define STAR_WARS_1 "star_wars_1"
+#define STAR_WARS_2 "star_wars_2"
+#define STAR_WARS_3 "star_wars_3"
+#define STAR_WARS_4 "star_wars_4"
+#define STAR_WARS_5 "star_wars_5"
+#define STAR_WARS_6 "star_wars_6"
+
+      int ncid, varid0, varid1, varid2, varid3, varid4, varid5;
+      int ndims_in, nvars_in, natts_in, unlimdimid_in;
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      float float_data = 3.14, float_data_in;
+      int int_data_in;
+      short short_data_in;
+      double double_data_in;
+      unsigned char uchar_data_in;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL, 
+		    &ncid)) ERR;
+
+      /* Create some variables. */
+      if (nc_def_var(ncid, STAR_WARS_1, NC_BYTE, 0, NULL, &varid0)) ERR;
+      if (nc_def_var(ncid, STAR_WARS_2, NC_BYTE, 0, NULL, &varid1)) ERR;
+      if (nc_def_var(ncid, STAR_WARS_3, NC_SHORT, 0, NULL, &varid2)) ERR;
+      if (nc_def_var(ncid, STAR_WARS_4, NC_INT, 0, NULL, &varid3)) ERR;
+      if (nc_def_var(ncid, STAR_WARS_5, NC_FLOAT, 0, NULL, &varid4)) ERR;
+      if (nc_def_var(ncid, STAR_WARS_6, NC_DOUBLE, 0, NULL, &varid5)) ERR;
+
+      /* Write some data to this file. */
+      if (nc_put_vara_float(ncid, varid0, NULL, NULL, &float_data)) ERR;
+      if (nc_put_vara_float(ncid, varid1, NULL, NULL, &float_data)) ERR;
+      if (nc_put_vara_float(ncid, varid2, NULL, NULL, &float_data)) ERR;
+      if (nc_put_vara_float(ncid, varid3, NULL, NULL, &float_data)) ERR;
+      if (nc_put_vara_float(ncid, varid4, NULL, NULL, &float_data)) ERR;
+      if (nc_put_vara_float(ncid, varid5, NULL, NULL, &float_data)) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != 0 || nvars_in != 6 || natts_in != 0 || unlimdimid_in != -1) ERR;
+
+      /* Check variables. */
+      if (nc_inq_var(ncid, varid0, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
+      if (strcmp(name_in, STAR_WARS_1) || type_in != NC_BYTE || ndims_in || natts_in) ERR;
+      if (nc_inq_var(ncid, varid1, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
+      if (strcmp(name_in, STAR_WARS_2) || type_in != NC_BYTE || ndims_in || natts_in) ERR;
+      if (nc_inq_var(ncid, varid2, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
+      if (strcmp(name_in, STAR_WARS_3) || type_in != NC_SHORT || ndims_in || natts_in) ERR;
+      if (nc_inq_var(ncid, varid3, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
+      if (strcmp(name_in, STAR_WARS_4) || type_in != NC_INT || ndims_in || natts_in) ERR;
+      if (nc_inq_var(ncid, varid4, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
+      if (strcmp(name_in, STAR_WARS_5) || type_in != NC_FLOAT || ndims_in || natts_in) ERR;
+      if (nc_inq_var(ncid, varid5, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
+      if (strcmp(name_in, STAR_WARS_6) || type_in != NC_DOUBLE || ndims_in || natts_in) ERR;
+
+      /* Read my absolutely crucial data. */
+      if (nc_get_vara_uchar(ncid, varid0, NULL, NULL, &uchar_data_in)) ERR;
+      if (uchar_data_in != (unsigned char)float_data) ERR;
+      if (nc_get_vara_text(ncid, varid1, NULL, NULL, &uchar_data_in)) ERR;
+      if (uchar_data_in != (unsigned char)float_data) ERR;
+      if (nc_get_vara_short(ncid, varid2, NULL, NULL, &short_data_in)) ERR;
+      if (short_data_in != (short)float_data) ERR;
+      if (nc_get_vara_int(ncid, varid3, NULL, NULL, &int_data_in)) ERR;
+      if (int_data_in != (int)float_data) ERR;
+      if (nc_get_vara_float(ncid, varid4, NULL, NULL, &float_data_in)) ERR;
+      if (float_data_in != float_data) ERR;
+      if (nc_get_vara_double(ncid, varid5, NULL, NULL, &double_data_in)) ERR;
+      if (double_data_in != (double)float_data) ERR;
+
+      /* Close the file. */
       if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;

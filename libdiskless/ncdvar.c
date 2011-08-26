@@ -738,18 +738,26 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    NC_GRP_INFO_T *grp;
    NC_VAR_INFO_T *var;
    void *copy_point = NULL;
+   void *bufr = NULL;
    size_t num_values = 1, num_values_to_start = 0;
+   size_t file_type_size;
+   int need_to_convert = 0;
+   int is_long = 0;
+   int range_error = 0;
    int d, retval;
 
    if (!(nc = nc4_find_nc_file(ncid)))
       return NC_EBADID;
-   assert(nc->nc4_info);
+   assert(nc && nc->nc4_info);
 
    /* Find our metadata for this file, group, and var. */
-   assert(nc);
    if ((retval = nc4_find_g_var_nc(nc, ncid, varid, &grp, &var)))
       return retval;
-   assert(grp && nc->nc4_info && var && var->name);
+   assert(grp && var && var->name);
+
+   /* Need to know the size of the type to be written. */
+   if ((retval = nc4_get_typelen_mem(nc->nc4_info, var->xtype, 0, &file_type_size)))
+      return retval;
    
    /* Where do I start? */
    if (var->ndims)
@@ -759,15 +767,37 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 	 num_values_to_start *= (startp[d] * var->dim[d]->len);
    }
    copy_point = (void *)((char *)var->diskless_data + 
-			 num_values_to_start * var->type_info->size);
+			 num_values_to_start * file_type_size);
 
    /* How many values do I copy? */
    if (var->ndims)
       for (d = 0; d < var->ndims; d++)
 	 num_values *= countp[d];
 
+   /* Are we going to convert any data? (No converting of compound or
+    * opaque types.) */
+   if ((memtype != var->xtype || (var->xtype == NC_INT && is_long)) && 
+       memtype != NC_COMPOUND && memtype != NC_OPAQUE)
+   {
+      /* We must convert - allocate a buffer. */
+      need_to_convert++;
+
+      if (!(bufr = malloc(num_values * file_type_size)))
+	 return NC_ENOMEM;
+   }
+   else
+      bufr = (void *)op;
+
+   /* Do we need to convert the data? */
+   if (need_to_convert)
+   {
+      if ((retval = nc4_convert_type(op, bufr, memtype, var->xtype, 
+                                     num_values, &range_error, var->fill_value,
+                                     (nc->nc4_info->cmode & NC_CLASSIC_MODEL), is_long, 0)))
+         return retval;
+   }
    /* Copy the data to memory. */
-   memcpy(copy_point, op, 
+   memcpy(copy_point, bufr, 
 	  num_values * var->type_info->size);
    
    return NC_NOERR;
