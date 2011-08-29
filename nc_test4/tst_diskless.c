@@ -157,16 +157,11 @@ main(int argc, char **argv)
       if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;
-   printf("*** testing diskless file with scalar vars and type conversion...");
+   printf("*** testing diskless file with scalar vars and type conversion while writing...");
    {
-#define STAR_WARS_1 "star_wars_1"
-#define STAR_WARS_2 "star_wars_2"
-#define STAR_WARS_3 "star_wars_3"
-#define STAR_WARS_4 "star_wars_4"
-#define STAR_WARS_5 "star_wars_5"
-#define STAR_WARS_6 "star_wars_6"
+#define NVARS 5
 
-      int ncid, varid0, varid1, varid2, varid3, varid4, varid5;
+      int ncid, varid[NVARS];
       int ndims_in, nvars_in, natts_in, unlimdimid_in;
       char name_in[NC_MAX_NAME + 1];
       nc_type type_in;
@@ -175,58 +170,115 @@ main(int argc, char **argv)
       short short_data_in;
       double double_data_in;
       unsigned char uchar_data_in;
+      char var_name[NVARS][NC_MAX_NAME + 1];
+      nc_type var_type[NVARS] = {NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE};
+      int i;
 
       /* Create a netCDF file (which exists only in memory). */
       if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL, 
 		    &ncid)) ERR;
 
-      /* Create some variables. */
-      if (nc_def_var(ncid, STAR_WARS_1, NC_BYTE, 0, NULL, &varid0)) ERR;
-      if (nc_def_var(ncid, STAR_WARS_2, NC_BYTE, 0, NULL, &varid1)) ERR;
-      if (nc_def_var(ncid, STAR_WARS_3, NC_SHORT, 0, NULL, &varid2)) ERR;
-      if (nc_def_var(ncid, STAR_WARS_4, NC_INT, 0, NULL, &varid3)) ERR;
-      if (nc_def_var(ncid, STAR_WARS_5, NC_FLOAT, 0, NULL, &varid4)) ERR;
-      if (nc_def_var(ncid, STAR_WARS_6, NC_DOUBLE, 0, NULL, &varid5)) ERR;
+      for (i = 0; i < NVARS; i++)
+      {
+	 sprintf(var_name[i], "name_%d", i);
+	 if (nc_def_var(ncid, var_name[i], var_type[i], 0, NULL, 
+			&varid[i])) ERR;
+      }
 
       /* Write some data to this file. */
-      if (nc_put_vara_float(ncid, varid0, NULL, NULL, &float_data)) ERR;
-      if (nc_put_vara_float(ncid, varid1, NULL, NULL, &float_data)) ERR;
-      if (nc_put_vara_float(ncid, varid2, NULL, NULL, &float_data)) ERR;
-      if (nc_put_vara_float(ncid, varid3, NULL, NULL, &float_data)) ERR;
-      if (nc_put_vara_float(ncid, varid4, NULL, NULL, &float_data)) ERR;
-      if (nc_put_vara_float(ncid, varid5, NULL, NULL, &float_data)) ERR;
+      for(i = 0; i < NVARS; i++)
+	 if (nc_put_vara_float(ncid, varid[i], NULL, NULL, &float_data)) ERR;
 
       /* Now check the phony file. */
       if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
-      if (ndims_in != 0 || nvars_in != 6 || natts_in != 0 || unlimdimid_in != -1) ERR;
+      if (ndims_in != 0 || nvars_in != NVARS || natts_in != 0 || 
+	  unlimdimid_in != -1) ERR;
 
       /* Check variables. */
-      if (nc_inq_var(ncid, varid0, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
-      if (strcmp(name_in, STAR_WARS_1) || type_in != NC_BYTE || ndims_in || natts_in) ERR;
-      if (nc_inq_var(ncid, varid1, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
-      if (strcmp(name_in, STAR_WARS_2) || type_in != NC_BYTE || ndims_in || natts_in) ERR;
-      if (nc_inq_var(ncid, varid2, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
-      if (strcmp(name_in, STAR_WARS_3) || type_in != NC_SHORT || ndims_in || natts_in) ERR;
-      if (nc_inq_var(ncid, varid3, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
-      if (strcmp(name_in, STAR_WARS_4) || type_in != NC_INT || ndims_in || natts_in) ERR;
-      if (nc_inq_var(ncid, varid4, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
-      if (strcmp(name_in, STAR_WARS_5) || type_in != NC_FLOAT || ndims_in || natts_in) ERR;
-      if (nc_inq_var(ncid, varid5, name_in, &type_in, &ndims_in, NULL, &natts_in)) ERR;
-      if (strcmp(name_in, STAR_WARS_6) || type_in != NC_DOUBLE || ndims_in || natts_in) ERR;
+      for(i = 0; i < NVARS; i++)
+      {
+	 if (nc_inq_var(ncid, varid[i], name_in, &type_in, &ndims_in, 
+			NULL, &natts_in)) ERR;
+	 if (strcmp(name_in, var_name[i]) || type_in != var_type[i] || 
+	     ndims_in || natts_in) ERR;
+      }
 
       /* Read my absolutely crucial data. */
-      if (nc_get_vara_uchar(ncid, varid0, NULL, NULL, &uchar_data_in)) ERR;
+      if (nc_get_vara_uchar(ncid, varid[0], NULL, NULL, &uchar_data_in)) ERR;
       if (uchar_data_in != (unsigned char)float_data) ERR;
-      if (nc_get_vara_text(ncid, varid1, NULL, NULL, &uchar_data_in)) ERR;
-      if (uchar_data_in != (unsigned char)float_data) ERR;
-      if (nc_get_vara_short(ncid, varid2, NULL, NULL, &short_data_in)) ERR;
+      if (nc_get_vara_short(ncid, varid[1], NULL, NULL, &short_data_in)) ERR;
       if (short_data_in != (short)float_data) ERR;
-      if (nc_get_vara_int(ncid, varid3, NULL, NULL, &int_data_in)) ERR;
+      if (nc_get_vara_int(ncid, varid[2], NULL, NULL, &int_data_in)) ERR;
       if (int_data_in != (int)float_data) ERR;
-      if (nc_get_vara_float(ncid, varid4, NULL, NULL, &float_data_in)) ERR;
+      if (nc_get_vara_float(ncid, varid[3], NULL, NULL, &float_data_in)) ERR;
       if (float_data_in != float_data) ERR;
-      if (nc_get_vara_double(ncid, varid5, NULL, NULL, &double_data_in)) ERR;
+      if (nc_get_vara_double(ncid, varid[4], NULL, NULL, &double_data_in)) ERR;
       if (double_data_in != (double)float_data) ERR;
+
+      /* Close the file. */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing diskless file with scalar vars and type conversion while reading...");
+   {
+#define NVARS 5
+
+      int ncid, varid[NVARS];
+      int ndims_in, nvars_in, natts_in, unlimdimid_in;
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      float float_data = 3.14, float_data_in;
+      int int_data = 3333;
+      short short_data =  233;
+      double double_data = 3.0;
+      signed char schar_data = 3;
+      char var_name[NVARS][NC_MAX_NAME + 1];
+      nc_type var_type[NVARS] = {NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE};
+      int i;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL, 
+		    &ncid)) ERR;
+
+      for (i = 0; i < NVARS; i++)
+      {
+	 sprintf(var_name[i], "name_%d", i);
+	 if (nc_def_var(ncid, var_name[i], var_type[i], 0, NULL, 
+			&varid[i])) ERR;
+      }
+
+      /* Write some data to this file. */
+      if (nc_put_vara_schar(ncid, varid[0], NULL, NULL, &schar_data)) ERR;
+      if (nc_put_vara_short(ncid, varid[1], NULL, NULL, &short_data)) ERR;
+      if (nc_put_vara_int(ncid, varid[2], NULL, NULL, &int_data)) ERR;
+      if (nc_put_vara_float(ncid, varid[3], NULL, NULL, &float_data)) ERR;
+      if (nc_put_vara_double(ncid, varid[4], NULL, NULL, &double_data)) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != 0 || nvars_in != NVARS || natts_in != 0 || 
+	  unlimdimid_in != -1) ERR;
+
+      /* Check variables. */
+      for(i = 0; i < NVARS; i++)
+      {
+	 if (nc_inq_var(ncid, varid[i], name_in, &type_in, &ndims_in, 
+			NULL, &natts_in)) ERR;
+	 if (strcmp(name_in, var_name[i]) || type_in != var_type[i] || 
+	     ndims_in || natts_in) ERR;
+      }
+
+      /* Read my absolutely crucial data. */
+      if (nc_get_vara_float(ncid, varid[0], NULL, NULL, &float_data_in)) ERR;
+      if (float_data_in != (float)schar_data) ERR;
+      if (nc_get_vara_float(ncid, varid[1], NULL, NULL, &float_data_in)) ERR;
+      if (float_data_in != (float)short_data) ERR;
+      if (nc_get_vara_float(ncid, varid[2], NULL, NULL, &float_data_in)) ERR;
+      if (float_data_in != (float)int_data) ERR;
+      if (nc_get_vara_float(ncid, varid[3], NULL, NULL, &float_data_in)) ERR;
+      if (float_data_in != float_data) ERR;
+      if (nc_get_vara_float(ncid, varid[4], NULL, NULL, &float_data_in)) ERR;
+      if (float_data_in != (float)double_data) ERR;
 
       /* Close the file. */
       if (nc_close(ncid)) ERR;

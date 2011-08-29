@@ -735,8 +735,9 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
             const size_t *countp, const void *op, int memtype)
 {
    NC_FILE_INFO_T *nc;
-   NC_GRP_INFO_T *grp;
+   NC_GRP_INFO_T *grp, *g;
    NC_VAR_INFO_T *var;
+   NC_DIM_INFO_T *dim;
    void *copy_point = NULL;
    void *bufr = NULL;
    size_t num_values = 1, num_values_to_start = 0;
@@ -745,6 +746,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    int is_long = 0;
    int range_error = 0;
    int d, retval;
+   int break_it, d2;
 
    if (!(nc = nc4_find_nc_file(ncid)))
       return NC_EBADID;
@@ -758,6 +760,47 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    /* Need to know the size of the type to be written. */
    if ((retval = nc4_get_typelen_mem(nc->nc4_info, var->xtype, 0, &file_type_size)))
       return retval;
+   
+   /* Check dimension bounds. Remember that unlimited dimnsions can
+    * put data beyond their current length. */
+   for (d2 = 0, break_it = 0; d2 < var->ndims; d2++)
+   {
+      for (g = grp; g && !break_it; g = g->parent)
+         for (dim = g->dim; dim; dim = dim->next)
+         {
+            if (dim->dimid == var->dimids[d2])
+            {
+               if (!dim->unlimited)
+               {
+                  if (startp[d2] >= dim->len)
+                     return NC_EINVALCOORDS;
+                  if (startp[d2] + countp[d2] > dim->len)
+                     return NC_EEDGE;
+               }
+               if (dim->unlimited)
+               {
+                  size_t ulen;
+                  
+                  /* We can't go beyond the latgest current extent of
+                     the unlimited dim. */
+                  if ((retval = nc_inq_dimlen(ncid, dim->dimid, &ulen)))
+                     return retval;
+                  
+                  /* Check for out of bound requests. */
+                  if (startp[d2] >= ulen && countp[d2])
+                     return NC_EINVALCOORDS;
+                  if (startp[d2] + countp[d2] > ulen)
+                     return NC_EEDGE;
+	       }
+            }
+         }
+   }
+   
+   /* A little quirk: if any of the count values are zero, don't
+    * read. */
+   for (d2 = 0; d2 < var->ndims; d2++)
+      if (countp[d2] == 0)
+         return NC_NOERR;
    
    /* Where do I start? */
    if (var->ndims)
@@ -773,7 +816,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    if (var->ndims)
       for (d = 0; d < var->ndims; d++)
 	 num_values *= countp[d];
-
+   
    /* Are we going to convert any data? (No converting of compound or
     * opaque types.) */
    if ((memtype != var->xtype || (var->xtype == NC_INT && is_long)) && 
@@ -781,13 +824,13 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    {
       /* We must convert - allocate a buffer. */
       need_to_convert++;
-
+      
       if (!(bufr = malloc(num_values * file_type_size)))
 	 return NC_ENOMEM;
    }
    else
       bufr = (void *)op;
-
+   
    /* Do we need to convert the data? */
    if (need_to_convert)
    {
@@ -805,43 +848,206 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 
 /** \internal Read an array of values from a diskless file. */
 int
-NCD_get_vara(int ncid, int varid, const size_t *startp, 
-            const size_t *countp, void *ip, int memtype)
+NCD_get_vara(int ncid, int varid, const size_t *start, 
+	     const size_t *countp, void *ip, int memtype)
 {
    NC_FILE_INFO_T *nc;
    NC_GRP_INFO_T *grp;
    NC_VAR_INFO_T *var;
    void *copy_point = NULL;
    size_t num_values = 1, num_values_to_start = 0;
+   void *bufr = NULL;
+   int need_to_convert = 0;
    int d, retval;
-
-   if (!(nc = nc4_find_nc_file(ncid)))
-      return NC_EBADID;
+   int fill_value_size[NC_MAX_VAR_DIMS], count[NC_MAX_VAR_DIMS];
+   void *fillvalue = NULL;
+   int no_read = 0, provide_fill = 0;
+   size_t file_type_size;
+   int is_long = 0, scalar = 0;
+   int range_error = 0;
+   int i;
 
    /* Find our metadata for this file, group, and var. */
+   if (!(nc = nc4_find_nc_file(ncid)))
+      return NC_EBADID;
    assert(nc);
    if ((retval = nc4_find_g_var_nc(nc, ncid, varid, &grp, &var)))
       return retval;
    assert(grp && nc->nc4_info && var && var->name);
+
+   for (i = 0; i < var->ndims; i++)
+      count[i] = countp[i];
+
+   if (var->ndims)
+   {
+      int d2, break_it = 0;
+      NC_GRP_INFO_T *g;
+      NC_DIM_INFO_T *dim;
+
+      /* Check dimension bounds. Remember that unlimited dimnsions can
+       * put data beyond their current length. */
+      for (d2 = 0, break_it = 0; d2 < var->ndims; d2++)
+      {
+	 for (g = grp; g && !break_it; g = g->parent)
+	    for (dim = g->dim; dim; dim = dim->next)
+	    {
+	       if (dim->dimid == var->dimids[d2])
+	       {
+		  if (!dim->unlimited)
+		  {
+		     if (start[d2] >= dim->len)
+			return NC_EINVALCOORDS;
+		     if (start[d2] + count[d2] > dim->len)
+			return NC_EEDGE;
+		  }
+		  if (dim->unlimited)
+		  {
+		     size_t ulen;
+		     
+		     /* We can't go beyond the latgest current extent of
+			the unlimited dim. */
+		     if ((retval = nc_inq_dimlen(ncid, dim->dimid, &ulen)))
+			return retval;
+		     
+		     /* Check for out of bound requests. */
+		     if (start[d2] >= (hssize_t)ulen && count[d2])
+			return NC_EINVALCOORDS;
+		     if (start[d2] + count[d2] > ulen)
+			return NC_EEDGE;
+		     
+		     /* THings get a little tricky here. If we're getting
+			a GET request beyond the end of this var's
+			current length in an unlimited dimension, we'll
+			later need to return the fill value for the
+			variable. */
+		     if (start[d2] >= dim->len)
+			fill_value_size[d2] = count[d2];
+		     else if (start[d2] + count[d2] > dim->len)
+			fill_value_size[d2] = count[d2] - (dim->len - start[d2]);
+		     else
+			fill_value_size[d2] = 0;
+		     count[d2] -= fill_value_size[d2];
+		     if (fill_value_size[d2])
+			provide_fill++;
+		  }
+		  else
+		     fill_value_size[d2] = count[d2];
+	       }
+	    }
+      }
+   }
    
+   /* A little quirk: if any of the count values are zero, don't
+    * read. */
+   if (var->ndims)
+      for (d = 0; d < var->ndims; d++)
+	 if (count[d] == 0)
+	    return NC_NOERR;
+
+   /* Later on, we will need to know the size of this type in the
+    * file. */
+   if ((retval = nc4_get_typelen_mem(nc->nc4_info, var->xtype, 0, &file_type_size)))
+      return retval;
+
    /* Where do I start reading this data? */
    if (var->ndims)
    {
       num_values_to_start = 1;
       for (d = 0; d < var->ndims; d++)
-	 num_values_to_start *= (startp[d] * var->dim[d]->len);
+	 num_values_to_start *= (start[d] * var->dim[d]->len);
    }
    copy_point = (void *)((char *)var->diskless_data + 
 			 num_values_to_start * var->type_info->size);
-
+   
    /* How many values do I copy? */
    if (var->ndims)
       for (d = 0; d < var->ndims; d++)
-	 num_values *= countp[d];
+	 num_values *= count[d];
 
-   /* Copy the data to memory. */
-   memcpy(ip, copy_point, 
-	  num_values * var->type_info->size);
+   /* Are we going to convert any data? (No converting of compound or
+    * opaque types.) */
+   if ((memtype != var->xtype || (var->xtype == NC_INT && is_long)) && 
+       memtype != NC_COMPOUND && memtype != NC_OPAQUE)
+   {
+      int d2;
+      
+      /* We must convert - allocate a buffer. */
+      need_to_convert++;
+      if (var->ndims)
+	 for (d2 = 0; d2 < var->ndims; d2++)
+	    num_values *= count[d2];
+      LOG((4, "converting data for var %s type=%d len=%d", var->name, 
+	   var->xtype, num_values));
+      
+      /* If we're reading, we need bufr to have enough memory to store
+       * the data in the file. If we're writing, we need bufr to be
+       * big enough to hold all the data in the file's type. */
+      if (!(bufr = malloc(num_values * file_type_size)))
+	 return NC_ENOMEM;
+   }
+   else
+      bufr = ip;
    
+   
+   /* Copy the data to memory. */
+   memcpy(bufr, copy_point, num_values * var->type_info->size);
+   
+   if (need_to_convert)
+   {
+      if ((retval = nc4_convert_type(bufr, ip, var->xtype, memtype, 
+				     num_values, &range_error, var->fill_value, 
+				     (nc->nc4_info->cmode & NC_CLASSIC_MODEL), 0, is_long)))
+	 return retval;
+      
+      /* For strict netcdf-3 rules, ignore erange errors between UBYTE
+       * and BYTE types. */
+      if ((nc->nc4_info->cmode & NC_CLASSIC_MODEL) &&
+	  (var->xtype == NC_UBYTE || var->xtype == NC_BYTE) &&
+	  (memtype == NC_UBYTE || memtype == NC_BYTE) &&
+	  range_error)
+	 range_error = 0;
+   }
+   
+   /* Now we need to fake up any further data that was asked for,
+      using the fill values instead. First skip past the data we
+      just read, if any. */
+   if (!scalar && provide_fill)
+   {
+      void *filldata;
+      int real_data_size = 0;
+      int fill_len;
+      int d2, i;
+
+      /* Skip past the real data we've already read. */
+      if (!no_read)
+         for (real_data_size = 1, d2 = 0; d2 < var->ndims; d2++)
+            real_data_size *= (count[d2] - start[d2]) * file_type_size;
+
+      /* Get the fill value from the HDF5 variable. Memory will be
+       * allocated. */
+      if (nc4_get_fill_value(nc->nc4_info, var, &fillvalue) < 0)
+         return NC_EHDFERR;
+
+      /* How many fill values do we need? */
+      for (fill_len = 1, d2 = 0; d2 < var->ndims; d2++)      
+         fill_len *= (fill_value_size[d2] ? fill_value_size[d2] : 1);
+
+      /* Copy the fill value into the rest of the data buffer. */
+      filldata = (char *)ip + real_data_size;
+      for (i = 0; i < fill_len; i++)
+      {
+         if (var->xtype == NC_STRING)
+         {
+            if (!(*(char **)filldata = malloc(sizeof(*(char **)fillvalue))))
+               return NC_ENOMEM;
+            strcpy(*(char **)filldata, *(char **)fillvalue);
+         }
+         else
+         {
+            memcpy(filldata, fillvalue, file_type_size);
+            filldata = (char *)filldata + file_type_size;
+         }
+      }
+   }
    return NC_NOERR;
 }

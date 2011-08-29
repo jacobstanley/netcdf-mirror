@@ -410,6 +410,8 @@ int nc4_normalize_name(const char *name, char *norm_name);
 /* Check for name collisions. */
 int nc4_check_dup_name(NC_GRP_INFO_T *grp, char *norm_name);
 
+int nc4_get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp);
+
 /* Insert and read one element into an already allocated vlen array
  * element (this is for F77). */
 /*int nc_put_vlen_element(int ncid, int typeid, void *vlen_element, size_t len, const void *data);

@@ -241,8 +241,8 @@ nc4_get_default_fill_value(NC_TYPE_INFO_T *type_info, void *fill_value)
 }
 
 /* What fill value should be used for a variable? */
-static int
-get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp)
+int
+nc4_get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp)
 {   
    size_t size;
    int retval;
@@ -1085,7 +1085,7 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
 
       /* Get the fill value from the HDF5 variable. Memory will be
        * allocated. */
-      if (get_fill_value(h5, var, &fillvalue) < 0)
+      if (nc4_get_fill_value(h5, var, &fillvalue) < 0)
          BAIL(NC_EHDFERR);
 
       /* How many fill values do we need? */
@@ -1278,7 +1278,7 @@ var_create_dataset(NC_GRP_INFO_T *grp, NC_VAR_INFO_T *var, int write_dimid)
    /* Figure out what fill value to set, if any. */
    if (!var->no_fill)
    {
-      if ((retval = get_fill_value(grp->file->nc4_info, var, &fillp)))
+      if ((retval = nc4_get_fill_value(grp->file->nc4_info, var, &fillp)))
          BAIL(retval);
 
       /* If there is a fill value, set it. */
