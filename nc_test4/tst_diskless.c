@@ -284,5 +284,74 @@ main(int argc, char **argv)
       if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;
+   printf("*** testing diskless file with unlimited dimension...");
+   {
+#define NVARS 5
+#define DIM_NAME "a_really_fun_dimension"
+
+      int ncid, varid[NVARS], dimid;
+      int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[1];
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      float float_data = 3.14, float_data_in;
+      int int_data = 3333;
+      short short_data =  233;
+      double double_data = 3.0;
+      signed char schar_data = 3;
+      char var_name[NVARS][NC_MAX_NAME + 1];
+      nc_type var_type[NVARS] = {NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT, NC_DOUBLE};
+      size_t start[1] = {0}, count[1] = {1};
+      int i;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL, 
+		    &ncid)) ERR;
+
+      if (nc_def_dim(ncid, DIM_NAME, NC_UNLIMITED, &dimid)) ERR;
+
+      for (i = 0; i < NVARS; i++)
+      {
+	 sprintf(var_name[i], "name_%d", i);
+	 if (nc_def_var(ncid, var_name[i], var_type[i], 1, &dimid, 
+			&varid[i])) ERR;
+      }
+
+      /* Write some data to this file. */
+      if (nc_put_vara_schar(ncid, varid[0], start, count, &schar_data)) ERR;
+      if (nc_put_vara_short(ncid, varid[1], start, count, &short_data)) ERR;
+      if (nc_put_vara_int(ncid, varid[2], start, count, &int_data)) ERR;
+      if (nc_put_vara_float(ncid, varid[3], start, count, &float_data)) ERR;
+      if (nc_put_vara_double(ncid, varid[4], start, count, &double_data)) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != 1 || nvars_in != NVARS || natts_in != 0 || 
+	  unlimdimid_in != 0) ERR;
+
+      /* Check variables. */
+      for(i = 0; i < NVARS; i++)
+      {
+	 if (nc_inq_var(ncid, varid[i], name_in, &type_in, &ndims_in, 
+			dimids_in, &natts_in)) ERR;
+	 if (strcmp(name_in, var_name[i]) || type_in != var_type[i] || 
+	     ndims_in != 1 || dimids_in[0] != 0 || natts_in) ERR;
+      }
+
+      /* Read my absolutely crucial data. */
+      if (nc_get_vara_float(ncid, varid[0], start, count, &float_data_in)) ERR;
+      if (float_data_in != (float)schar_data) ERR;
+      if (nc_get_vara_float(ncid, varid[1], start, count, &float_data_in)) ERR;
+      if (float_data_in != (float)short_data) ERR;
+      if (nc_get_vara_float(ncid, varid[2], start, count, &float_data_in)) ERR;
+      if (float_data_in != (float)int_data) ERR;
+      if (nc_get_vara_float(ncid, varid[3], start, count, &float_data_in)) ERR;
+      if (float_data_in != float_data) ERR;
+      if (nc_get_vara_float(ncid, varid[4], start, count, &float_data_in)) ERR;
+      if (float_data_in != (float)double_data) ERR;
+
+      /* Close the file. */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
    FINAL_RESULTS;
 }

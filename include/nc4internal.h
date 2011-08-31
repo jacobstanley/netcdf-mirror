@@ -172,6 +172,7 @@ typedef struct NC_VAR_INFO
    int hdf4_data_type;
    /* Stuff below for diskless data files. */
    void *diskless_data;
+   size_t *diskless_dimlens;
 } NC_VAR_INFO_T;
 
 typedef struct NC_FIELD_INFO

@@ -951,6 +951,8 @@ var_list_del(NC_VAR_INFO_T **list, NC_VAR_INFO_T *var)
       free(var->dim);
    if (var->diskless_data)
       free(var->diskless_data);
+   if (var->diskless_dimlens)
+      free(var->diskless_dimlens);
 
    /* Remove the var from the linked list. */
    if(*list == var)

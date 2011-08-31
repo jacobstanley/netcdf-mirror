@@ -170,6 +170,47 @@ NCD_inq_dimid(int ncid, const char *name, int *idp)
    return NC_EBADDIM;
 }
 
+/* Find the actual length of a dim by checking the length of that dim
+ * in all variables that use it, in grp or children. *len must be
+ * initialized to zero before this function is called. */
+static int
+ncd_find_dim_len(NC_GRP_INFO_T *grp, int dimid, size_t **len)
+{
+   NC_GRP_INFO_T *g;
+   NC_DIM_INFO_T *dim;
+   NC_VAR_INFO_T *var;
+   int d, ndims, dimids[NC_MAX_DIMS];
+   size_t dimlen[NC_MAX_DIMS];
+   int retval; 
+   
+   assert(grp && len);
+
+   /* If there are any groups, call this function recursively on
+    * them. */
+   for (g = grp->children; g; g = g->next)
+      if ((retval = ncd_find_dim_len(g, dimid, len)))
+	 return retval;
+
+   /* For all variables in this group, find the ones that use this
+    * dimension, and remember the max length. */
+   for (var = grp->var; var; var = var->next)
+   {
+      /* Check for any dimension that matches dimid. If found, check
+       * if its length is longer than *lenp. */
+      for (d = 0; d < var->ndims; d++)
+      {
+	 if (var->dim[d]->dimid == dimid)
+	 {
+	    /* Remember the max length in *lenp. */
+	    **len = var->diskless_dimlens[d] > **len ? var->diskless_dimlens[d] : **len;
+	    break;
+	 }
+      }
+   }
+
+   return NC_NOERR;
+}
+
 /* Find out name and len of a dim. For an unlimited dimension, the
    length is the largest lenght so far written. If the name of lenp
    pointers are NULL, they will be ignored. */
@@ -182,16 +223,10 @@ NCD_inq_dim(int ncid, int dimid, char *name, size_t *lenp)
    NC_DIM_INFO_T *dim;
    int ret = NC_NOERR;
 
-   LOG((2, "nc_inq_dim: ncid 0x%x dimid %d", ncid, dimid));
-
    /* Find our global metadata structure. */
    if ((ret = nc4_find_nc_grp_h5(ncid, &nc, &grp, &h5)))
       return ret;
-   
-   /* Take care of netcdf-3 files. */
-   assert(h5);
-   
-   assert(nc && grp);
+   assert(h5 && nc && grp);
 
    /* Find the dimension and its home group. */
    if ((ret = nc4_find_dim(grp, dimid, &dim, &dim_grp)))
@@ -212,7 +247,7 @@ NCD_inq_dim(int ncid, int dimid, char *name, size_t *lenp)
 	    of records from all the vars that share this
 	    dimension. */
 	 *lenp = 0;
-	 if ((ret = nc4_find_dim_len(dim_grp, dimid, &lenp)))
+	 if ((ret = ncd_find_dim_len(dim_grp, dimid, &lenp)))
 	    return ret;
       }
       else

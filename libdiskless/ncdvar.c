@@ -218,6 +218,14 @@ NCD_def_var(int ncid, const char *name, nc_type xtype, int ndims,
 	 var->dim[d] = dim;
       }
 
+      /* Need to keep track of the length of each dimension of data,
+       * which may be different from the "real" length of dimensions,
+       * in the case of unlimited dimensions. */
+      if (!(var->diskless_dimlens = malloc(sizeof(size_t) * var->ndims)))
+	 return NC_ENOMEM;
+      for (d = 0; d < ndims; d++)
+	 var->diskless_dimlens[d] = var->dim[d]->unlimited ? 0 : var->dim[d]->len;
+
       /* If the user names this variable the same as a dimension, but
        * doesn't use that dimension first in its list of dimension ids,
        * is not a coordinate variable. I need to change its HDF5 name,
@@ -747,6 +755,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    int range_error = 0;
    int d, retval;
    int break_it, d2;
+   void *fillvalue;
 
    if (!(nc = nc4_find_nc_file(ncid)))
       return NC_EBADID;
@@ -761,6 +770,9 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    if ((retval = nc4_get_typelen_mem(nc->nc4_info, var->xtype, 0, &file_type_size)))
       return retval;
    
+   if (nc4_get_fill_value(nc->nc4_info, var, &fillvalue) < 0)
+      return NC_EHDFERR;
+
    /* Check dimension bounds. Remember that unlimited dimnsions can
     * put data beyond their current length. */
    for (d2 = 0, break_it = 0; d2 < var->ndims; d2++)
@@ -779,18 +791,28 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
                }
                if (dim->unlimited)
                {
-                  size_t ulen;
-                  
-                  /* We can't go beyond the latgest current extent of
-                     the unlimited dim. */
-                  if ((retval = nc_inq_dimlen(ncid, dim->dimid, &ulen)))
-                     return retval;
-                  
-                  /* Check for out of bound requests. */
-                  if (startp[d2] >= ulen && countp[d2])
-                     return NC_EINVALCOORDS;
-                  if (startp[d2] + countp[d2] > ulen)
-                     return NC_EEDGE;
+                  /* Check for out of bound requests. If we have one,
+		   * then the buffer needs to be increased. */
+                  if (startp[d2] + countp[d2] > var->diskless_dimlens[d2])
+		  {
+		     void *newbuf;
+		     int i;
+
+		     /* Allocate a new buffer. */
+		     if (!(newbuf = malloc(file_type_size * (startp[d2] + countp[d2]))))
+			return NC_ENOMEM;
+
+		     /* Copy the old buffer, then free it.. */
+		     memcpy(newbuf, var->diskless_data, var->diskless_dimlens[d2] * file_type_size);
+		     free(var->diskless_data);
+		     var->diskless_data = newbuf;
+
+		     /* Copy fill values to new extent. */
+		     newbuf = (char *)newbuf + (var->diskless_dimlens[d2] * file_type_size);
+		     for (i = 0; i < (startp[d2] + countp[d2]) - var->diskless_dimlens[d2]; i++)
+			memcpy(newbuf, fillvalue, file_type_size);
+		     var->diskless_dimlens[d2] = startp[d2] + countp[d2];
+		  }
 	       }
             }
          }
@@ -798,9 +820,10 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    
    /* A little quirk: if any of the count values are zero, don't
     * read. */
-   for (d2 = 0; d2 < var->ndims; d2++)
-      if (countp[d2] == 0)
-         return NC_NOERR;
+   if (var->ndims)
+      for (d2 = 0; d2 < var->ndims; d2++)
+	 if (countp[d2] == 0)
+	    return NC_NOERR;
    
    /* Where do I start? */
    if (var->ndims)
@@ -908,22 +931,22 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
 			the unlimited dim. */
 		     if ((retval = nc_inq_dimlen(ncid, dim->dimid, &ulen)))
 			return retval;
-		     
+
 		     /* Check for out of bound requests. */
-		     if (start[d2] >= (hssize_t)ulen && count[d2])
+		     if (start[d2] >= ulen && count[d2])
 			return NC_EINVALCOORDS;
 		     if (start[d2] + count[d2] > ulen)
 			return NC_EEDGE;
 		     
-		     /* THings get a little tricky here. If we're getting
-			a GET request beyond the end of this var's
-			current length in an unlimited dimension, we'll
-			later need to return the fill value for the
-			variable. */
-		     if (start[d2] >= dim->len)
+		     /* THings get a little tricky here. If we're
+			getting a GET request beyond the end of this
+			var's current length in an unlimited
+			dimension, we'll later need to return the fill
+			value for the variable. */
+		     if (start[d2] >= var->diskless_dimlens[d2])
 			fill_value_size[d2] = count[d2];
-		     else if (start[d2] + count[d2] > dim->len)
-			fill_value_size[d2] = count[d2] - (dim->len - start[d2]);
+		     else if (start[d2] + count[d2] > var->diskless_dimlens[d2])
+			fill_value_size[d2] = count[d2] - (var->diskless_dimlens[d2] - start[d2]);
 		     else
 			fill_value_size[d2] = 0;
 		     count[d2] -= fill_value_size[d2];
