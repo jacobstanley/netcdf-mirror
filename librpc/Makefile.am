@@ -1,3 +1,4 @@
+
 ## This is a automake file, part of Unidata's netCDF package.
 # Copyright 2010, see the COPYRIGHT file for more information.
 
@@ -19,27 +20,22 @@ ASTJAR=ast.jar
 
 HDRS=\
 protorpc.h \
+nc_path.h \
+rpc_includes.h \
+rpc.h \
+rpccurl.h \
 rpcdebug.h \
-rpcpath.h \
-rpcutil.h \
-ncrpc.h \
-ncrpccvt.h \
-ncrpcdispatch.h \
-ncrpcdump.h \
-ncrpcmeta.h \
-ncrpcnode.h \
-ncrpcproto.h
+rpcdispatch.h \
+rpcutil.h
 
 SRC=\
 protorpc.c \
+nc_path.c \
+rpccurl.c \
 rpcdebug.c \
-rpcutil.c \
-ncrpc.c \
-ncrpccvt.c \
-ncrpcdispatch.c \
-ncrpcdump.c \
-ncrpcmeta.c \
-ncrpcproto.c
+rpcdispatch.c \
+rpcserialize.c \
+rpcutil.c
 
 if BUILD_RPC
 
@@ -50,7 +46,7 @@ librpcclient_la_SOURCES = $(SRC) $(HDRS)
 #librpcserver_la_SOURCES = $(SRC) $(HDRS)
 
 AM_CPPFLAGS += -I$(top_srcdir)/include \
-               -I$(top_srcdir)/libdispatch 
+               -I$(top_srcdir)/libdispatch \
                -I$(top_srcdir)/libsrc 
 
 # Define the load libraries 

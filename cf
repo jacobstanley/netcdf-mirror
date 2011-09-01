@@ -1,10 +1,10 @@
 #!/bin/bash
 #X="-x"
 
-#HDF5=1
-#DAP=1
+HDF5=1
+DAP=1
 #CDMR=1
-RPC=1
+#RPC=1
 
 #M32=1
 #M64=1
@@ -85,8 +85,8 @@ if autoreconf -i --force ; then ok=1; else exit ; fi
 fi
 
 FLAGS="--prefix ${PREFIX}"
-FLAGS="$FLAGS --disable-f77 --disable-f90"
-FLAGS="$FLAGS --disable-cxx"
+#FLAGS="$FLAGS --disable-f77 --disable-f90"
+#FLAGS="$FLAGS --disable-cxx"
 FLAGS="$FLAGS --disable-examples"
 FLAGS="$FLAGS --disable-pnetcdf"
 #FLAGS="$FLAGS --disable-utilities"

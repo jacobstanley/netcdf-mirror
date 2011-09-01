@@ -143,7 +143,7 @@ nc_create().
 
 \param xtype \ref data_type of the variable.
 
-\param ndims1 Number of dimensions for the variable. For example, 2
+\param ndims Number of dimensions for the variable. For example, 2
 specifies a matrix, 1 specifies a vector, and 0 means the variable is
 a scalar with no dimensions. Must not be negative or greater than the
 predefined constant ::NC_MAX_VAR_DIMS.
@@ -550,12 +550,14 @@ nc_def_var_fletcher32(int ncid, int varid, int fletcher32)
 }
 
 int
-nc_def_var_chunking(int ncid, int varid, int storage, const size_t *chunksizesp)
+nc_def_var_chunking(int ncid, int varid, int storage, 
+		    const size_t *chunksizesp)
 {
     NC* ncp;
-    int stat = NC_check_id(ncid,&ncp);
+    int stat = NC_check_id(ncid, &ncp);
     if(stat != NC_NOERR) return stat;
-    return ncp->dispatch->def_var_chunking(ncid,varid,storage,chunksizesp);
+    return ncp->dispatch->def_var_chunking(ncid, varid, storage, 
+					   chunksizesp);
 }
 
 int

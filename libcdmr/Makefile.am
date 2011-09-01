@@ -17,7 +17,7 @@ ASTDIR=./ast/src/compiler
 ASTJAR=${ASTDIR}/ast.jar
 
 # CDMREMORE Sources
-SRC=nccrcvt.c nccr.c nccrdispatch.c nccrmeta.c nccrproto.c nccrgetvarx.c \
+SRC=nccrcvt.c nccr.c nccrdispatch.c crmeta.c nccrproto.c nccrgetvarx.c \
 crdebug.c crutil.c \
 nccrdump.c \
 ncStreamx.c curlwrap.c \
@@ -28,7 +28,7 @@ cceparse.c cceconstraints.c
 EXTRA_DIST += ccetab.c ccelex.c
 
 HDRS=includes.h \
-nccrdispatch.h nccr.h nccrmeta.h nccrproto.h nccrgetvarx.h \
+nccrdispatch.h nccr.h crmeta.h nccrproto.h nccrgetvarx.h \
 crpath.h crdebug.h crutil.h \
 nccrdump.h \
 ncStreamx.h curlwrap.h \

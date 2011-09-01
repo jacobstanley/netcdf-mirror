@@ -1,63 +1,55 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <ast_runtime.h>
-#include <ast_debug.h>
+#include <ast.h>
 
 #include "protorpc.h"
 
 ast_err
-Create_write(ast_runtime* rt, Create* create_v)
+NCCreate_write(ast_runtime* rt, NCCreate* nccreate_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_string,1,&create_v->path);
+        status = ast_write_primitive(rt,ast_string,1,&nccreate_v->path);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&create_v->cmode);
+        status = ast_write_primitive(rt,ast_int32,2,&nccreate_v->cmode);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&create_v->initialsz);
+        status = ast_write_primitive(rt,ast_uint64,3,&nccreate_v->initialsz);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&create_v->basepe);
+        status = ast_write_primitive(rt,ast_int32,4,&nccreate_v->basepe);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        int i = 0;
-        for(i=0;i<create_v->chunksizehint.count;i++) {
-            status = ast_write_primitive(rt,ast_int64,5,&create_v->chunksizehint.values[i]);
-            if(status != AST_NOERR) {ACATCH(status); goto done;}
-        }
-    }
-    {
-        status = ast_write_primitive(rt,ast_int32,6,&create_v->use_parallel);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        status = ast_write_primitive(rt,ast_bytes,7,&create_v->parameters);
+        status = ast_write_primitive(rt,ast_int32,6,&nccreate_v->use_parallel);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Create_write*/
+} /*NCCreate_write*/
 
 ast_err
-Create_read(ast_runtime* rt, Create** create_vp)
+NCCreate_read(ast_runtime* rt, NCCreate** nccreate_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Create* create_v;
+    NCCreate* nccreate_v;
     unsigned long pos;
 
-    create_v = (Create*)ast_alloc(rt,sizeof(Create));
-    if(create_v == NULL) return AST_ENOMEM;
+    nccreate_v = (NCCreate*)ast_alloc(rt,sizeof(NCCreate));
+    if(nccreate_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -65,33 +57,23 @@ Create_read(ast_runtime* rt, Create** create_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Create|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCCreate|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_string,1,&create_v->path);
+            status = ast_read_primitive(rt,ast_string,1,&nccreate_v->path);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&create_v->cmode);
+            status = ast_read_primitive(rt,ast_int32,2,&nccreate_v->cmode);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&create_v->initialsz);
+            status = ast_read_primitive(rt,ast_uint64,3,&nccreate_v->initialsz);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&create_v->basepe);
-            } break;
-        case 5: {
-            int64_t tmp;
-            status = ast_read_primitive(rt,ast_int64,5,&tmp);
-            if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int64,&create_v->chunksizehint,&tmp);
-            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_read_primitive(rt,ast_int32,4,&nccreate_v->basepe);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_int32,6,&create_v->use_parallel);
-            } break;
-        case 7: {
-            status = ast_read_primitive(rt,ast_bytes,7,&create_v->parameters);
+            status = ast_read_primitive(rt,ast_int32,6,&nccreate_v->use_parallel);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -99,105 +81,92 @@ Create_read(ast_runtime* rt, Create** create_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(create_vp) *create_vp = create_v;
+    if(nccreate_vp) *nccreate_vp = nccreate_v;
 done:
     return ACATCH(status);
-} /*Create_read*/
+} /*NCCreate_read*/
 
 ast_err
-Create_reclaim(ast_runtime* rt, Create* create_v)
+NCCreate_reclaim(ast_runtime* rt, NCCreate* nccreate_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,create_v->path);
+        status = ast_reclaim_string(rt,nccreate_v->path);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    {
-        status = ast_reclaim_bytes(rt,&create_v->parameters);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    ast_free(rt,(void*)create_v);
+    ast_free(rt,(void*)nccreate_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Create_reclaim*/
+} /*NCCreate_reclaim*/
 
 size_t
-Create_get_size(ast_runtime* rt, Create* create_v)
+NCCreate_get_size(ast_runtime* rt, NCCreate* nccreate_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_string,&create_v->path);
+        fieldsize += ast_get_size(rt,ast_string,&nccreate_v->path);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&create_v->cmode);
+        fieldsize += ast_get_size(rt,ast_int32,&nccreate_v->cmode);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&create_v->initialsz);
+        fieldsize += ast_get_size(rt,ast_uint64,&nccreate_v->initialsz);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&create_v->basepe);
-        totalsize += fieldsize;
-    }
-    {
-        int i;
-        for(i=0;i<create_v->chunksizehint.count;i++) {
-            fieldsize += ast_get_tagsize(rt,ast_counted,5);
-            fieldsize += ast_get_size(rt,ast_int64,&create_v->chunksizehint.values[i]);
-        }
+        fieldsize += ast_get_size(rt,ast_int32,&nccreate_v->basepe);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_int32,&create_v->use_parallel);
-        totalsize += fieldsize;
-    }
-    {
-        fieldsize += ast_get_tagsize(rt,ast_counted,7);
-        fieldsize += ast_get_size(rt,ast_bytes,&create_v->parameters);
+        fieldsize += ast_get_size(rt,ast_int32,&nccreate_v->use_parallel);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Create_get_size*/
+} /*NCCreate_get_size*/
 
 ast_err
-Create_Return_write(ast_runtime* rt, Create_Return* create_return_v)
+NCCreate_Return_write(ast_runtime* rt, NCCreate_Return* nccreate_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&create_return_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&nccreate_return_v->ncstatus);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_int32,2,&nccreate_return_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Create_Return_write*/
+} /*NCCreate_Return_write*/
 
 ast_err
-Create_Return_read(ast_runtime* rt, Create_Return** create_return_vp)
+NCCreate_Return_read(ast_runtime* rt, NCCreate_Return** nccreate_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Create_Return* create_return_v;
+    NCCreate_Return* nccreate_return_v;
     unsigned long pos;
 
-    create_return_v = (Create_Return*)ast_alloc(rt,sizeof(Create_Return));
-    if(create_return_v == NULL) return AST_ENOMEM;
+    nccreate_return_v = (NCCreate_Return*)ast_alloc(rt,sizeof(NCCreate_Return));
+    if(nccreate_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -205,11 +174,14 @@ Create_Return_read(ast_runtime* rt, Create_Return** create_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Create_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCCreate_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&create_return_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&nccreate_return_v->ncstatus);
+            } break;
+        case 2: {
+            status = ast_read_primitive(rt,ast_int32,2,&nccreate_return_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -217,87 +189,92 @@ Create_Return_read(ast_runtime* rt, Create_Return** create_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(create_return_vp) *create_return_vp = create_return_v;
+    if(nccreate_return_vp) *nccreate_return_vp = nccreate_return_v;
 done:
     return ACATCH(status);
-} /*Create_Return_read*/
+} /*NCCreate_Return_read*/
 
 ast_err
-Create_Return_reclaim(ast_runtime* rt, Create_Return* create_return_v)
+NCCreate_Return_reclaim(ast_runtime* rt, NCCreate_Return* nccreate_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)create_return_v);
+    ast_free(rt,(void*)nccreate_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Create_Return_reclaim*/
+} /*NCCreate_Return_reclaim*/
 
 size_t
-Create_Return_get_size(ast_runtime* rt, Create_Return* create_return_v)
+NCCreate_Return_get_size(ast_runtime* rt, NCCreate_Return* nccreate_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&create_return_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&nccreate_return_v->ncstatus);
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,2);
+        fieldsize += ast_get_size(rt,ast_int32,&nccreate_return_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Create_Return_get_size*/
+} /*NCCreate_Return_get_size*/
 
 ast_err
-Open_write(ast_runtime* rt, Open* open_v)
+NCOpen_write(ast_runtime* rt, NCOpen* ncopen_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_string,1,&open_v->path);
+        status = ast_write_primitive(rt,ast_string,1,&ncopen_v->path);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&open_v->mode);
+        status = ast_write_primitive(rt,ast_int32,2,&ncopen_v->cmode);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&open_v->basepe);
+        status = ast_write_primitive(rt,ast_int32,3,&ncopen_v->basepe);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<open_v->chunksizehint.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&open_v->chunksizehint.values[i]);
+        for(i=0;i<ncopen_v->chunksizehint.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncopen_v->chunksizehint.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&open_v->use_parallel);
+        status = ast_write_primitive(rt,ast_int32,5,&ncopen_v->use_parallel);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,6,&open_v->parameters);
+        status = ast_write_primitive(rt,ast_bytes,6,&ncopen_v->parameters);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Open_write*/
+} /*NCOpen_write*/
 
 ast_err
-Open_read(ast_runtime* rt, Open** open_vp)
+NCOpen_read(ast_runtime* rt, NCOpen** ncopen_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Open* open_v;
+    NCOpen* ncopen_v;
     unsigned long pos;
 
-    open_v = (Open*)ast_alloc(rt,sizeof(Open));
-    if(open_v == NULL) return AST_ENOMEM;
+    ncopen_v = (NCOpen*)ast_alloc(rt,sizeof(NCOpen));
+    if(ncopen_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -305,30 +282,30 @@ Open_read(ast_runtime* rt, Open** open_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Open|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCOpen|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_string,1,&open_v->path);
+            status = ast_read_primitive(rt,ast_string,1,&ncopen_v->path);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&open_v->mode);
+            status = ast_read_primitive(rt,ast_int32,2,&ncopen_v->cmode);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&open_v->basepe);
+            status = ast_read_primitive(rt,ast_int32,3,&ncopen_v->basepe);
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&open_v->chunksizehint,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncopen_v->chunksizehint,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&open_v->use_parallel);
+            status = ast_read_primitive(rt,ast_int32,5,&ncopen_v->use_parallel);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_bytes,6,&open_v->parameters);
+            status = ast_read_primitive(rt,ast_bytes,6,&ncopen_v->parameters);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -336,104 +313,104 @@ Open_read(ast_runtime* rt, Open** open_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(open_vp) *open_vp = open_v;
+    if(ncopen_vp) *ncopen_vp = ncopen_v;
 done:
     return ACATCH(status);
-} /*Open_read*/
+} /*NCOpen_read*/
 
 ast_err
-Open_reclaim(ast_runtime* rt, Open* open_v)
+NCOpen_reclaim(ast_runtime* rt, NCOpen* ncopen_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,open_v->path);
+        status = ast_reclaim_string(rt,ncopen_v->path);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_bytes(rt,&open_v->parameters);
+        status = ast_reclaim_bytes(rt,&ncopen_v->parameters);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)open_v);
+    ast_free(rt,(void*)ncopen_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Open_reclaim*/
+} /*NCOpen_reclaim*/
 
 size_t
-Open_get_size(ast_runtime* rt, Open* open_v)
+NCOpen_get_size(ast_runtime* rt, NCOpen* ncopen_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_string,&open_v->path);
+        fieldsize += ast_get_size(rt,ast_string,&ncopen_v->path);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&open_v->mode);
+        fieldsize += ast_get_size(rt,ast_int32,&ncopen_v->cmode);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&open_v->basepe);
+        fieldsize += ast_get_size(rt,ast_int32,&ncopen_v->basepe);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<open_v->chunksizehint.count;i++) {
+        for(i=0;i<ncopen_v->chunksizehint.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&open_v->chunksizehint.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncopen_v->chunksizehint.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&open_v->use_parallel);
+        fieldsize += ast_get_size(rt,ast_int32,&ncopen_v->use_parallel);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_bytes,&open_v->parameters);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncopen_v->parameters);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Open_get_size*/
+} /*NCOpen_get_size*/
 
 ast_err
-Open_Return_write(ast_runtime* rt, Open_Return* open_return_v)
+NCOpen_Return_write(ast_runtime* rt, NCOpen_Return* ncopen_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&open_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncopen_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&open_return_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncopen_return_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Open_Return_write*/
+} /*NCOpen_Return_write*/
 
 ast_err
-Open_Return_read(ast_runtime* rt, Open_Return** open_return_vp)
+NCOpen_Return_read(ast_runtime* rt, NCOpen_Return** ncopen_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Open_Return* open_return_v;
+    NCOpen_Return* ncopen_return_v;
     unsigned long pos;
 
-    open_return_v = (Open_Return*)ast_alloc(rt,sizeof(Open_Return));
-    if(open_return_v == NULL) return AST_ENOMEM;
+    ncopen_return_v = (NCOpen_Return*)ast_alloc(rt,sizeof(NCOpen_Return));
+    if(ncopen_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -441,14 +418,14 @@ Open_Return_read(ast_runtime* rt, Open_Return** open_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Open_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCOpen_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&open_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncopen_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&open_return_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncopen_return_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -456,69 +433,69 @@ Open_Return_read(ast_runtime* rt, Open_Return** open_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(open_return_vp) *open_return_vp = open_return_v;
+    if(ncopen_return_vp) *ncopen_return_vp = ncopen_return_v;
 done:
     return ACATCH(status);
-} /*Open_Return_read*/
+} /*NCOpen_Return_read*/
 
 ast_err
-Open_Return_reclaim(ast_runtime* rt, Open_Return* open_return_v)
+NCOpen_Return_reclaim(ast_runtime* rt, NCOpen_Return* ncopen_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)open_return_v);
+    ast_free(rt,(void*)ncopen_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Open_Return_reclaim*/
+} /*NCOpen_Return_reclaim*/
 
 size_t
-Open_Return_get_size(ast_runtime* rt, Open_Return* open_return_v)
+NCOpen_Return_get_size(ast_runtime* rt, NCOpen_Return* ncopen_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&open_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncopen_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&open_return_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncopen_return_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Open_Return_get_size*/
+} /*NCOpen_Return_get_size*/
 
 ast_err
-Redef_write(ast_runtime* rt, Redef* redef_v)
+NCRedef_write(ast_runtime* rt, NCRedef* ncredef_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&redef_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncredef_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Redef_write*/
+} /*NCRedef_write*/
 
 ast_err
-Redef_read(ast_runtime* rt, Redef** redef_vp)
+NCRedef_read(ast_runtime* rt, NCRedef** ncredef_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Redef* redef_v;
+    NCRedef* ncredef_v;
     unsigned long pos;
 
-    redef_v = (Redef*)ast_alloc(rt,sizeof(Redef));
-    if(redef_v == NULL) return AST_ENOMEM;
+    ncredef_v = (NCRedef*)ast_alloc(rt,sizeof(NCRedef));
+    if(ncredef_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -526,11 +503,11 @@ Redef_read(ast_runtime* rt, Redef** redef_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Redef|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRedef|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&redef_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncredef_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -538,64 +515,64 @@ Redef_read(ast_runtime* rt, Redef** redef_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(redef_vp) *redef_vp = redef_v;
+    if(ncredef_vp) *ncredef_vp = ncredef_v;
 done:
     return ACATCH(status);
-} /*Redef_read*/
+} /*NCRedef_read*/
 
 ast_err
-Redef_reclaim(ast_runtime* rt, Redef* redef_v)
+NCRedef_reclaim(ast_runtime* rt, NCRedef* ncredef_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)redef_v);
+    ast_free(rt,(void*)ncredef_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Redef_reclaim*/
+} /*NCRedef_reclaim*/
 
 size_t
-Redef_get_size(ast_runtime* rt, Redef* redef_v)
+NCRedef_get_size(ast_runtime* rt, NCRedef* ncredef_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&redef_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncredef_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Redef_get_size*/
+} /*NCRedef_get_size*/
 
 ast_err
-Redef_Return_write(ast_runtime* rt, Redef_Return* redef_return_v)
+NCRedef_Return_write(ast_runtime* rt, NCRedef_Return* ncredef_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&redef_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncredef_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Redef_Return_write*/
+} /*NCRedef_Return_write*/
 
 ast_err
-Redef_Return_read(ast_runtime* rt, Redef_Return** redef_return_vp)
+NCRedef_Return_read(ast_runtime* rt, NCRedef_Return** ncredef_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Redef_Return* redef_return_v;
+    NCRedef_Return* ncredef_return_v;
     unsigned long pos;
 
-    redef_return_v = (Redef_Return*)ast_alloc(rt,sizeof(Redef_Return));
-    if(redef_return_v == NULL) return AST_ENOMEM;
+    ncredef_return_v = (NCRedef_Return*)ast_alloc(rt,sizeof(NCRedef_Return));
+    if(ncredef_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -603,11 +580,11 @@ Redef_Return_read(ast_runtime* rt, Redef_Return** redef_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Redef_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRedef_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&redef_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncredef_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -615,80 +592,80 @@ Redef_Return_read(ast_runtime* rt, Redef_Return** redef_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(redef_return_vp) *redef_return_vp = redef_return_v;
+    if(ncredef_return_vp) *ncredef_return_vp = ncredef_return_v;
 done:
     return ACATCH(status);
-} /*Redef_Return_read*/
+} /*NCRedef_Return_read*/
 
 ast_err
-Redef_Return_reclaim(ast_runtime* rt, Redef_Return* redef_return_v)
+NCRedef_Return_reclaim(ast_runtime* rt, NCRedef_Return* ncredef_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)redef_return_v);
+    ast_free(rt,(void*)ncredef_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Redef_Return_reclaim*/
+} /*NCRedef_Return_reclaim*/
 
 size_t
-Redef_Return_get_size(ast_runtime* rt, Redef_Return* redef_return_v)
+NCRedef_Return_get_size(ast_runtime* rt, NCRedef_Return* ncredef_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&redef_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncredef_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Redef_Return_get_size*/
+} /*NCRedef_Return_get_size*/
 
 ast_err
-_Enddef_write(ast_runtime* rt, _Enddef* _enddef_v)
+NC_Enddef_write(ast_runtime* rt, NC_Enddef* nc_enddef_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&_enddef_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&nc_enddef_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,2,&_enddef_v->minfree);
+        status = ast_write_primitive(rt,ast_uint64,2,&nc_enddef_v->minfree);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&_enddef_v->v_align);
+        status = ast_write_primitive(rt,ast_uint64,3,&nc_enddef_v->v_align);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,4,&_enddef_v->v_minfree);
+        status = ast_write_primitive(rt,ast_uint64,4,&nc_enddef_v->v_minfree);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,5,&_enddef_v->r_align);
+        status = ast_write_primitive(rt,ast_uint64,5,&nc_enddef_v->r_align);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*_Enddef_write*/
+} /*NC_Enddef_write*/
 
 ast_err
-_Enddef_read(ast_runtime* rt, _Enddef** _enddef_vp)
+NC_Enddef_read(ast_runtime* rt, NC_Enddef** nc_enddef_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    _Enddef* _enddef_v;
+    NC_Enddef* nc_enddef_v;
     unsigned long pos;
 
-    _enddef_v = (_Enddef*)ast_alloc(rt,sizeof(_Enddef));
-    if(_enddef_v == NULL) return AST_ENOMEM;
+    nc_enddef_v = (NC_Enddef*)ast_alloc(rt,sizeof(NC_Enddef));
+    if(nc_enddef_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -696,23 +673,23 @@ _Enddef_read(ast_runtime* rt, _Enddef** _enddef_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|_Enddef|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NC_Enddef|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&_enddef_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&nc_enddef_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_uint64,2,&_enddef_v->minfree);
+            status = ast_read_primitive(rt,ast_uint64,2,&nc_enddef_v->minfree);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&_enddef_v->v_align);
+            status = ast_read_primitive(rt,ast_uint64,3,&nc_enddef_v->v_align);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_uint64,4,&_enddef_v->v_minfree);
+            status = ast_read_primitive(rt,ast_uint64,4,&nc_enddef_v->v_minfree);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_uint64,5,&_enddef_v->r_align);
+            status = ast_read_primitive(rt,ast_uint64,5,&nc_enddef_v->r_align);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -720,84 +697,84 @@ _Enddef_read(ast_runtime* rt, _Enddef** _enddef_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(_enddef_vp) *_enddef_vp = _enddef_v;
+    if(nc_enddef_vp) *nc_enddef_vp = nc_enddef_v;
 done:
     return ACATCH(status);
-} /*_Enddef_read*/
+} /*NC_Enddef_read*/
 
 ast_err
-_Enddef_reclaim(ast_runtime* rt, _Enddef* _enddef_v)
+NC_Enddef_reclaim(ast_runtime* rt, NC_Enddef* nc_enddef_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)_enddef_v);
+    ast_free(rt,(void*)nc_enddef_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*_Enddef_reclaim*/
+} /*NC_Enddef_reclaim*/
 
 size_t
-_Enddef_get_size(ast_runtime* rt, _Enddef* _enddef_v)
+NC_Enddef_get_size(ast_runtime* rt, NC_Enddef* nc_enddef_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&_enddef_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&nc_enddef_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_uint64,&_enddef_v->minfree);
+        fieldsize += ast_get_size(rt,ast_uint64,&nc_enddef_v->minfree);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&_enddef_v->v_align);
+        fieldsize += ast_get_size(rt,ast_uint64,&nc_enddef_v->v_align);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_uint64,&_enddef_v->v_minfree);
+        fieldsize += ast_get_size(rt,ast_uint64,&nc_enddef_v->v_minfree);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_uint64,&_enddef_v->r_align);
+        fieldsize += ast_get_size(rt,ast_uint64,&nc_enddef_v->r_align);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*_Enddef_get_size*/
+} /*NC_Enddef_get_size*/
 
 ast_err
-_Enddef_Return_write(ast_runtime* rt, _Enddef_Return* _enddef_return_v)
+NC_Enddef_Return_write(ast_runtime* rt, NC_Enddef_Return* nc_enddef_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&_enddef_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&nc_enddef_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*_Enddef_Return_write*/
+} /*NC_Enddef_Return_write*/
 
 ast_err
-_Enddef_Return_read(ast_runtime* rt, _Enddef_Return** _enddef_return_vp)
+NC_Enddef_Return_read(ast_runtime* rt, NC_Enddef_Return** nc_enddef_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    _Enddef_Return* _enddef_return_v;
+    NC_Enddef_Return* nc_enddef_return_v;
     unsigned long pos;
 
-    _enddef_return_v = (_Enddef_Return*)ast_alloc(rt,sizeof(_Enddef_Return));
-    if(_enddef_return_v == NULL) return AST_ENOMEM;
+    nc_enddef_return_v = (NC_Enddef_Return*)ast_alloc(rt,sizeof(NC_Enddef_Return));
+    if(nc_enddef_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -805,11 +782,11 @@ _Enddef_Return_read(ast_runtime* rt, _Enddef_Return** _enddef_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|_Enddef_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NC_Enddef_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&_enddef_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&nc_enddef_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -817,64 +794,64 @@ _Enddef_Return_read(ast_runtime* rt, _Enddef_Return** _enddef_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(_enddef_return_vp) *_enddef_return_vp = _enddef_return_v;
+    if(nc_enddef_return_vp) *nc_enddef_return_vp = nc_enddef_return_v;
 done:
     return ACATCH(status);
-} /*_Enddef_Return_read*/
+} /*NC_Enddef_Return_read*/
 
 ast_err
-_Enddef_Return_reclaim(ast_runtime* rt, _Enddef_Return* _enddef_return_v)
+NC_Enddef_Return_reclaim(ast_runtime* rt, NC_Enddef_Return* nc_enddef_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)_enddef_return_v);
+    ast_free(rt,(void*)nc_enddef_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*_Enddef_Return_reclaim*/
+} /*NC_Enddef_Return_reclaim*/
 
 size_t
-_Enddef_Return_get_size(ast_runtime* rt, _Enddef_Return* _enddef_return_v)
+NC_Enddef_Return_get_size(ast_runtime* rt, NC_Enddef_Return* nc_enddef_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&_enddef_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&nc_enddef_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*_Enddef_Return_get_size*/
+} /*NC_Enddef_Return_get_size*/
 
 ast_err
-Sync_write(ast_runtime* rt, Sync* sync_v)
+NCSync_write(ast_runtime* rt, NCSync* ncsync_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&sync_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncsync_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Sync_write*/
+} /*NCSync_write*/
 
 ast_err
-Sync_read(ast_runtime* rt, Sync** sync_vp)
+NCSync_read(ast_runtime* rt, NCSync** ncsync_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Sync* sync_v;
+    NCSync* ncsync_v;
     unsigned long pos;
 
-    sync_v = (Sync*)ast_alloc(rt,sizeof(Sync));
-    if(sync_v == NULL) return AST_ENOMEM;
+    ncsync_v = (NCSync*)ast_alloc(rt,sizeof(NCSync));
+    if(ncsync_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -882,11 +859,11 @@ Sync_read(ast_runtime* rt, Sync** sync_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Sync|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSync|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&sync_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncsync_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -894,64 +871,64 @@ Sync_read(ast_runtime* rt, Sync** sync_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(sync_vp) *sync_vp = sync_v;
+    if(ncsync_vp) *ncsync_vp = ncsync_v;
 done:
     return ACATCH(status);
-} /*Sync_read*/
+} /*NCSync_read*/
 
 ast_err
-Sync_reclaim(ast_runtime* rt, Sync* sync_v)
+NCSync_reclaim(ast_runtime* rt, NCSync* ncsync_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)sync_v);
+    ast_free(rt,(void*)ncsync_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Sync_reclaim*/
+} /*NCSync_reclaim*/
 
 size_t
-Sync_get_size(ast_runtime* rt, Sync* sync_v)
+NCSync_get_size(ast_runtime* rt, NCSync* ncsync_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&sync_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncsync_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Sync_get_size*/
+} /*NCSync_get_size*/
 
 ast_err
-Sync_Return_write(ast_runtime* rt, Sync_Return* sync_return_v)
+NCSync_Return_write(ast_runtime* rt, NCSync_Return* ncsync_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&sync_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncsync_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Sync_Return_write*/
+} /*NCSync_Return_write*/
 
 ast_err
-Sync_Return_read(ast_runtime* rt, Sync_Return** sync_return_vp)
+NCSync_Return_read(ast_runtime* rt, NCSync_Return** ncsync_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Sync_Return* sync_return_v;
+    NCSync_Return* ncsync_return_v;
     unsigned long pos;
 
-    sync_return_v = (Sync_Return*)ast_alloc(rt,sizeof(Sync_Return));
-    if(sync_return_v == NULL) return AST_ENOMEM;
+    ncsync_return_v = (NCSync_Return*)ast_alloc(rt,sizeof(NCSync_Return));
+    if(ncsync_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -959,11 +936,11 @@ Sync_Return_read(ast_runtime* rt, Sync_Return** sync_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Sync_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSync_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&sync_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncsync_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -971,64 +948,64 @@ Sync_Return_read(ast_runtime* rt, Sync_Return** sync_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(sync_return_vp) *sync_return_vp = sync_return_v;
+    if(ncsync_return_vp) *ncsync_return_vp = ncsync_return_v;
 done:
     return ACATCH(status);
-} /*Sync_Return_read*/
+} /*NCSync_Return_read*/
 
 ast_err
-Sync_Return_reclaim(ast_runtime* rt, Sync_Return* sync_return_v)
+NCSync_Return_reclaim(ast_runtime* rt, NCSync_Return* ncsync_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)sync_return_v);
+    ast_free(rt,(void*)ncsync_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Sync_Return_reclaim*/
+} /*NCSync_Return_reclaim*/
 
 size_t
-Sync_Return_get_size(ast_runtime* rt, Sync_Return* sync_return_v)
+NCSync_Return_get_size(ast_runtime* rt, NCSync_Return* ncsync_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&sync_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncsync_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Sync_Return_get_size*/
+} /*NCSync_Return_get_size*/
 
 ast_err
-Abort_write(ast_runtime* rt, Abort* abort_v)
+NCAbort_write(ast_runtime* rt, NCAbort* ncabort_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&abort_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncabort_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Abort_write*/
+} /*NCAbort_write*/
 
 ast_err
-Abort_read(ast_runtime* rt, Abort** abort_vp)
+NCAbort_read(ast_runtime* rt, NCAbort** ncabort_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Abort* abort_v;
+    NCAbort* ncabort_v;
     unsigned long pos;
 
-    abort_v = (Abort*)ast_alloc(rt,sizeof(Abort));
-    if(abort_v == NULL) return AST_ENOMEM;
+    ncabort_v = (NCAbort*)ast_alloc(rt,sizeof(NCAbort));
+    if(ncabort_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1036,11 +1013,11 @@ Abort_read(ast_runtime* rt, Abort** abort_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Abort|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCAbort|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&abort_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncabort_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1048,64 +1025,64 @@ Abort_read(ast_runtime* rt, Abort** abort_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(abort_vp) *abort_vp = abort_v;
+    if(ncabort_vp) *ncabort_vp = ncabort_v;
 done:
     return ACATCH(status);
-} /*Abort_read*/
+} /*NCAbort_read*/
 
 ast_err
-Abort_reclaim(ast_runtime* rt, Abort* abort_v)
+NCAbort_reclaim(ast_runtime* rt, NCAbort* ncabort_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)abort_v);
+    ast_free(rt,(void*)ncabort_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Abort_reclaim*/
+} /*NCAbort_reclaim*/
 
 size_t
-Abort_get_size(ast_runtime* rt, Abort* abort_v)
+NCAbort_get_size(ast_runtime* rt, NCAbort* ncabort_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&abort_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncabort_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Abort_get_size*/
+} /*NCAbort_get_size*/
 
 ast_err
-Abort_Return_write(ast_runtime* rt, Abort_Return* abort_return_v)
+NCAbort_Return_write(ast_runtime* rt, NCAbort_Return* ncabort_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&abort_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncabort_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Abort_Return_write*/
+} /*NCAbort_Return_write*/
 
 ast_err
-Abort_Return_read(ast_runtime* rt, Abort_Return** abort_return_vp)
+NCAbort_Return_read(ast_runtime* rt, NCAbort_Return** ncabort_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Abort_Return* abort_return_v;
+    NCAbort_Return* ncabort_return_v;
     unsigned long pos;
 
-    abort_return_v = (Abort_Return*)ast_alloc(rt,sizeof(Abort_Return));
-    if(abort_return_v == NULL) return AST_ENOMEM;
+    ncabort_return_v = (NCAbort_Return*)ast_alloc(rt,sizeof(NCAbort_Return));
+    if(ncabort_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1113,11 +1090,11 @@ Abort_Return_read(ast_runtime* rt, Abort_Return** abort_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Abort_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCAbort_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&abort_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncabort_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1125,64 +1102,64 @@ Abort_Return_read(ast_runtime* rt, Abort_Return** abort_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(abort_return_vp) *abort_return_vp = abort_return_v;
+    if(ncabort_return_vp) *ncabort_return_vp = ncabort_return_v;
 done:
     return ACATCH(status);
-} /*Abort_Return_read*/
+} /*NCAbort_Return_read*/
 
 ast_err
-Abort_Return_reclaim(ast_runtime* rt, Abort_Return* abort_return_v)
+NCAbort_Return_reclaim(ast_runtime* rt, NCAbort_Return* ncabort_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)abort_return_v);
+    ast_free(rt,(void*)ncabort_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Abort_Return_reclaim*/
+} /*NCAbort_Return_reclaim*/
 
 size_t
-Abort_Return_get_size(ast_runtime* rt, Abort_Return* abort_return_v)
+NCAbort_Return_get_size(ast_runtime* rt, NCAbort_Return* ncabort_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&abort_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncabort_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Abort_Return_get_size*/
+} /*NCAbort_Return_get_size*/
 
 ast_err
-Close_write(ast_runtime* rt, Close* close_v)
+NCClose_write(ast_runtime* rt, NCClose* ncclose_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&close_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncclose_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Close_write*/
+} /*NCClose_write*/
 
 ast_err
-Close_read(ast_runtime* rt, Close** close_vp)
+NCClose_read(ast_runtime* rt, NCClose** ncclose_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Close* close_v;
+    NCClose* ncclose_v;
     unsigned long pos;
 
-    close_v = (Close*)ast_alloc(rt,sizeof(Close));
-    if(close_v == NULL) return AST_ENOMEM;
+    ncclose_v = (NCClose*)ast_alloc(rt,sizeof(NCClose));
+    if(ncclose_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1190,11 +1167,11 @@ Close_read(ast_runtime* rt, Close** close_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Close|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCClose|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&close_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncclose_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1202,64 +1179,64 @@ Close_read(ast_runtime* rt, Close** close_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(close_vp) *close_vp = close_v;
+    if(ncclose_vp) *ncclose_vp = ncclose_v;
 done:
     return ACATCH(status);
-} /*Close_read*/
+} /*NCClose_read*/
 
 ast_err
-Close_reclaim(ast_runtime* rt, Close* close_v)
+NCClose_reclaim(ast_runtime* rt, NCClose* ncclose_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)close_v);
+    ast_free(rt,(void*)ncclose_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Close_reclaim*/
+} /*NCClose_reclaim*/
 
 size_t
-Close_get_size(ast_runtime* rt, Close* close_v)
+NCClose_get_size(ast_runtime* rt, NCClose* ncclose_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&close_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncclose_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Close_get_size*/
+} /*NCClose_get_size*/
 
 ast_err
-Close_Return_write(ast_runtime* rt, Close_Return* close_return_v)
+NCClose_Return_write(ast_runtime* rt, NCClose_Return* ncclose_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&close_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncclose_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Close_Return_write*/
+} /*NCClose_Return_write*/
 
 ast_err
-Close_Return_read(ast_runtime* rt, Close_Return** close_return_vp)
+NCClose_Return_read(ast_runtime* rt, NCClose_Return** ncclose_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Close_Return* close_return_v;
+    NCClose_Return* ncclose_return_v;
     unsigned long pos;
 
-    close_return_v = (Close_Return*)ast_alloc(rt,sizeof(Close_Return));
-    if(close_return_v == NULL) return AST_ENOMEM;
+    ncclose_return_v = (NCClose_Return*)ast_alloc(rt,sizeof(NCClose_Return));
+    if(ncclose_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1267,11 +1244,11 @@ Close_Return_read(ast_runtime* rt, Close_Return** close_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Close_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCClose_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&close_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncclose_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1279,68 +1256,68 @@ Close_Return_read(ast_runtime* rt, Close_Return** close_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(close_return_vp) *close_return_vp = close_return_v;
+    if(ncclose_return_vp) *ncclose_return_vp = ncclose_return_v;
 done:
     return ACATCH(status);
-} /*Close_Return_read*/
+} /*NCClose_Return_read*/
 
 ast_err
-Close_Return_reclaim(ast_runtime* rt, Close_Return* close_return_v)
+NCClose_Return_reclaim(ast_runtime* rt, NCClose_Return* ncclose_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)close_return_v);
+    ast_free(rt,(void*)ncclose_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Close_Return_reclaim*/
+} /*NCClose_Return_reclaim*/
 
 size_t
-Close_Return_get_size(ast_runtime* rt, Close_Return* close_return_v)
+NCClose_Return_get_size(ast_runtime* rt, NCClose_Return* ncclose_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&close_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncclose_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Close_Return_get_size*/
+} /*NCClose_Return_get_size*/
 
 ast_err
-Set_fill_write(ast_runtime* rt, Set_fill* set_fill_v)
+NCSet_Fill_write(ast_runtime* rt, NCSet_Fill* ncset_fill_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&set_fill_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncset_fill_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&set_fill_v->fillmode);
+        status = ast_write_primitive(rt,ast_int32,2,&ncset_fill_v->fillmode);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Set_fill_write*/
+} /*NCSet_Fill_write*/
 
 ast_err
-Set_fill_read(ast_runtime* rt, Set_fill** set_fill_vp)
+NCSet_Fill_read(ast_runtime* rt, NCSet_Fill** ncset_fill_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Set_fill* set_fill_v;
+    NCSet_Fill* ncset_fill_v;
     unsigned long pos;
 
-    set_fill_v = (Set_fill*)ast_alloc(rt,sizeof(Set_fill));
-    if(set_fill_v == NULL) return AST_ENOMEM;
+    ncset_fill_v = (NCSet_Fill*)ast_alloc(rt,sizeof(NCSet_Fill));
+    if(ncset_fill_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1348,14 +1325,14 @@ Set_fill_read(ast_runtime* rt, Set_fill** set_fill_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Set_fill|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSet_Fill|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&set_fill_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncset_fill_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&set_fill_v->fillmode);
+            status = ast_read_primitive(rt,ast_int32,2,&ncset_fill_v->fillmode);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1363,73 +1340,73 @@ Set_fill_read(ast_runtime* rt, Set_fill** set_fill_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(set_fill_vp) *set_fill_vp = set_fill_v;
+    if(ncset_fill_vp) *ncset_fill_vp = ncset_fill_v;
 done:
     return ACATCH(status);
-} /*Set_fill_read*/
+} /*NCSet_Fill_read*/
 
 ast_err
-Set_fill_reclaim(ast_runtime* rt, Set_fill* set_fill_v)
+NCSet_Fill_reclaim(ast_runtime* rt, NCSet_Fill* ncset_fill_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)set_fill_v);
+    ast_free(rt,(void*)ncset_fill_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Set_fill_reclaim*/
+} /*NCSet_Fill_reclaim*/
 
 size_t
-Set_fill_get_size(ast_runtime* rt, Set_fill* set_fill_v)
+NCSet_Fill_get_size(ast_runtime* rt, NCSet_Fill* ncset_fill_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&set_fill_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_fill_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&set_fill_v->fillmode);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_fill_v->fillmode);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Set_fill_get_size*/
+} /*NCSet_Fill_get_size*/
 
 ast_err
-Set_fill_Return_write(ast_runtime* rt, Set_fill_Return* set_fill_return_v)
+NCSet_Fill_Return_write(ast_runtime* rt, NCSet_Fill_Return* ncset_fill_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&set_fill_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncset_fill_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&set_fill_return_v->oldmode);
+        status = ast_write_primitive(rt,ast_int32,2,&ncset_fill_return_v->oldmode);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Set_fill_Return_write*/
+} /*NCSet_Fill_Return_write*/
 
 ast_err
-Set_fill_Return_read(ast_runtime* rt, Set_fill_Return** set_fill_return_vp)
+NCSet_Fill_Return_read(ast_runtime* rt, NCSet_Fill_Return** ncset_fill_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Set_fill_Return* set_fill_return_v;
+    NCSet_Fill_Return* ncset_fill_return_v;
     unsigned long pos;
 
-    set_fill_return_v = (Set_fill_Return*)ast_alloc(rt,sizeof(Set_fill_Return));
-    if(set_fill_return_v == NULL) return AST_ENOMEM;
+    ncset_fill_return_v = (NCSet_Fill_Return*)ast_alloc(rt,sizeof(NCSet_Fill_Return));
+    if(ncset_fill_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1437,14 +1414,14 @@ Set_fill_Return_read(ast_runtime* rt, Set_fill_Return** set_fill_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Set_fill_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSet_Fill_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&set_fill_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncset_fill_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&set_fill_return_v->oldmode);
+            status = ast_read_primitive(rt,ast_int32,2,&ncset_fill_return_v->oldmode);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1452,69 +1429,69 @@ Set_fill_Return_read(ast_runtime* rt, Set_fill_Return** set_fill_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(set_fill_return_vp) *set_fill_return_vp = set_fill_return_v;
+    if(ncset_fill_return_vp) *ncset_fill_return_vp = ncset_fill_return_v;
 done:
     return ACATCH(status);
-} /*Set_fill_Return_read*/
+} /*NCSet_Fill_Return_read*/
 
 ast_err
-Set_fill_Return_reclaim(ast_runtime* rt, Set_fill_Return* set_fill_return_v)
+NCSet_Fill_Return_reclaim(ast_runtime* rt, NCSet_Fill_Return* ncset_fill_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)set_fill_return_v);
+    ast_free(rt,(void*)ncset_fill_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Set_fill_Return_reclaim*/
+} /*NCSet_Fill_Return_reclaim*/
 
 size_t
-Set_fill_Return_get_size(ast_runtime* rt, Set_fill_Return* set_fill_return_v)
+NCSet_Fill_Return_get_size(ast_runtime* rt, NCSet_Fill_Return* ncset_fill_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&set_fill_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_fill_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&set_fill_return_v->oldmode);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_fill_return_v->oldmode);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Set_fill_Return_get_size*/
+} /*NCSet_Fill_Return_get_size*/
 
 ast_err
-Inq_base_pe_write(ast_runtime* rt, Inq_base_pe* inq_base_pe_v)
+NCInq_Base_PE_write(ast_runtime* rt, NCInq_Base_PE* ncinq_base_pe_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_base_pe_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_base_pe_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_base_pe_write*/
+} /*NCInq_Base_PE_write*/
 
 ast_err
-Inq_base_pe_read(ast_runtime* rt, Inq_base_pe** inq_base_pe_vp)
+NCInq_Base_PE_read(ast_runtime* rt, NCInq_Base_PE** ncinq_base_pe_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_base_pe* inq_base_pe_v;
+    NCInq_Base_PE* ncinq_base_pe_v;
     unsigned long pos;
 
-    inq_base_pe_v = (Inq_base_pe*)ast_alloc(rt,sizeof(Inq_base_pe));
-    if(inq_base_pe_v == NULL) return AST_ENOMEM;
+    ncinq_base_pe_v = (NCInq_Base_PE*)ast_alloc(rt,sizeof(NCInq_Base_PE));
+    if(ncinq_base_pe_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1522,11 +1499,11 @@ Inq_base_pe_read(ast_runtime* rt, Inq_base_pe** inq_base_pe_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_base_pe|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_Base_PE|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_base_pe_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_base_pe_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1534,68 +1511,68 @@ Inq_base_pe_read(ast_runtime* rt, Inq_base_pe** inq_base_pe_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_base_pe_vp) *inq_base_pe_vp = inq_base_pe_v;
+    if(ncinq_base_pe_vp) *ncinq_base_pe_vp = ncinq_base_pe_v;
 done:
     return ACATCH(status);
-} /*Inq_base_pe_read*/
+} /*NCInq_Base_PE_read*/
 
 ast_err
-Inq_base_pe_reclaim(ast_runtime* rt, Inq_base_pe* inq_base_pe_v)
+NCInq_Base_PE_reclaim(ast_runtime* rt, NCInq_Base_PE* ncinq_base_pe_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_base_pe_v);
+    ast_free(rt,(void*)ncinq_base_pe_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_base_pe_reclaim*/
+} /*NCInq_Base_PE_reclaim*/
 
 size_t
-Inq_base_pe_get_size(ast_runtime* rt, Inq_base_pe* inq_base_pe_v)
+NCInq_Base_PE_get_size(ast_runtime* rt, NCInq_Base_PE* ncinq_base_pe_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_base_pe_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_base_pe_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_base_pe_get_size*/
+} /*NCInq_Base_PE_get_size*/
 
 ast_err
-Inq_base_pe_Return_write(ast_runtime* rt, Inq_base_pe_Return* inq_base_pe_return_v)
+NCInq_Base_PE_Return_write(ast_runtime* rt, NCInq_Base_PE_Return* ncinq_base_pe_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_base_pe_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_base_pe_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_base_pe_return_v->pe);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_base_pe_return_v->pe);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_base_pe_Return_write*/
+} /*NCInq_Base_PE_Return_write*/
 
 ast_err
-Inq_base_pe_Return_read(ast_runtime* rt, Inq_base_pe_Return** inq_base_pe_return_vp)
+NCInq_Base_PE_Return_read(ast_runtime* rt, NCInq_Base_PE_Return** ncinq_base_pe_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_base_pe_Return* inq_base_pe_return_v;
+    NCInq_Base_PE_Return* ncinq_base_pe_return_v;
     unsigned long pos;
 
-    inq_base_pe_return_v = (Inq_base_pe_Return*)ast_alloc(rt,sizeof(Inq_base_pe_Return));
-    if(inq_base_pe_return_v == NULL) return AST_ENOMEM;
+    ncinq_base_pe_return_v = (NCInq_Base_PE_Return*)ast_alloc(rt,sizeof(NCInq_Base_PE_Return));
+    if(ncinq_base_pe_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1603,14 +1580,14 @@ Inq_base_pe_Return_read(ast_runtime* rt, Inq_base_pe_Return** inq_base_pe_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_base_pe_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_Base_PE_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_base_pe_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_base_pe_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_base_pe_return_v->pe);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_base_pe_return_v->pe);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1618,73 +1595,73 @@ Inq_base_pe_Return_read(ast_runtime* rt, Inq_base_pe_Return** inq_base_pe_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_base_pe_return_vp) *inq_base_pe_return_vp = inq_base_pe_return_v;
+    if(ncinq_base_pe_return_vp) *ncinq_base_pe_return_vp = ncinq_base_pe_return_v;
 done:
     return ACATCH(status);
-} /*Inq_base_pe_Return_read*/
+} /*NCInq_Base_PE_Return_read*/
 
 ast_err
-Inq_base_pe_Return_reclaim(ast_runtime* rt, Inq_base_pe_Return* inq_base_pe_return_v)
+NCInq_Base_PE_Return_reclaim(ast_runtime* rt, NCInq_Base_PE_Return* ncinq_base_pe_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_base_pe_return_v);
+    ast_free(rt,(void*)ncinq_base_pe_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_base_pe_Return_reclaim*/
+} /*NCInq_Base_PE_Return_reclaim*/
 
 size_t
-Inq_base_pe_Return_get_size(ast_runtime* rt, Inq_base_pe_Return* inq_base_pe_return_v)
+NCInq_Base_PE_Return_get_size(ast_runtime* rt, NCInq_Base_PE_Return* ncinq_base_pe_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_base_pe_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_base_pe_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_base_pe_return_v->pe);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_base_pe_return_v->pe);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_base_pe_Return_get_size*/
+} /*NCInq_Base_PE_Return_get_size*/
 
 ast_err
-Set_base_pe_write(ast_runtime* rt, Set_base_pe* set_base_pe_v)
+NCSet_base_pe_write(ast_runtime* rt, NCSet_base_pe* ncset_base_pe_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&set_base_pe_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncset_base_pe_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&set_base_pe_v->pe);
+        status = ast_write_primitive(rt,ast_int32,2,&ncset_base_pe_v->pe);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Set_base_pe_write*/
+} /*NCSet_base_pe_write*/
 
 ast_err
-Set_base_pe_read(ast_runtime* rt, Set_base_pe** set_base_pe_vp)
+NCSet_base_pe_read(ast_runtime* rt, NCSet_base_pe** ncset_base_pe_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Set_base_pe* set_base_pe_v;
+    NCSet_base_pe* ncset_base_pe_v;
     unsigned long pos;
 
-    set_base_pe_v = (Set_base_pe*)ast_alloc(rt,sizeof(Set_base_pe));
-    if(set_base_pe_v == NULL) return AST_ENOMEM;
+    ncset_base_pe_v = (NCSet_base_pe*)ast_alloc(rt,sizeof(NCSet_base_pe));
+    if(ncset_base_pe_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1692,14 +1669,14 @@ Set_base_pe_read(ast_runtime* rt, Set_base_pe** set_base_pe_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Set_base_pe|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSet_base_pe|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&set_base_pe_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncset_base_pe_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&set_base_pe_v->pe);
+            status = ast_read_primitive(rt,ast_int32,2,&ncset_base_pe_v->pe);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1707,69 +1684,69 @@ Set_base_pe_read(ast_runtime* rt, Set_base_pe** set_base_pe_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(set_base_pe_vp) *set_base_pe_vp = set_base_pe_v;
+    if(ncset_base_pe_vp) *ncset_base_pe_vp = ncset_base_pe_v;
 done:
     return ACATCH(status);
-} /*Set_base_pe_read*/
+} /*NCSet_base_pe_read*/
 
 ast_err
-Set_base_pe_reclaim(ast_runtime* rt, Set_base_pe* set_base_pe_v)
+NCSet_base_pe_reclaim(ast_runtime* rt, NCSet_base_pe* ncset_base_pe_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)set_base_pe_v);
+    ast_free(rt,(void*)ncset_base_pe_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Set_base_pe_reclaim*/
+} /*NCSet_base_pe_reclaim*/
 
 size_t
-Set_base_pe_get_size(ast_runtime* rt, Set_base_pe* set_base_pe_v)
+NCSet_base_pe_get_size(ast_runtime* rt, NCSet_base_pe* ncset_base_pe_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&set_base_pe_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_base_pe_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&set_base_pe_v->pe);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_base_pe_v->pe);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Set_base_pe_get_size*/
+} /*NCSet_base_pe_get_size*/
 
 ast_err
-Set_base_pe_Return_write(ast_runtime* rt, Set_base_pe_Return* set_base_pe_return_v)
+NCSet_base_pe_Return_write(ast_runtime* rt, NCSet_base_pe_Return* ncset_base_pe_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&set_base_pe_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncset_base_pe_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Set_base_pe_Return_write*/
+} /*NCSet_base_pe_Return_write*/
 
 ast_err
-Set_base_pe_Return_read(ast_runtime* rt, Set_base_pe_Return** set_base_pe_return_vp)
+NCSet_base_pe_Return_read(ast_runtime* rt, NCSet_base_pe_Return** ncset_base_pe_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Set_base_pe_Return* set_base_pe_return_v;
+    NCSet_base_pe_Return* ncset_base_pe_return_v;
     unsigned long pos;
 
-    set_base_pe_return_v = (Set_base_pe_Return*)ast_alloc(rt,sizeof(Set_base_pe_Return));
-    if(set_base_pe_return_v == NULL) return AST_ENOMEM;
+    ncset_base_pe_return_v = (NCSet_base_pe_Return*)ast_alloc(rt,sizeof(NCSet_base_pe_Return));
+    if(ncset_base_pe_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1777,11 +1754,11 @@ Set_base_pe_Return_read(ast_runtime* rt, Set_base_pe_Return** set_base_pe_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Set_base_pe_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSet_base_pe_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&set_base_pe_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncset_base_pe_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1789,64 +1766,64 @@ Set_base_pe_Return_read(ast_runtime* rt, Set_base_pe_Return** set_base_pe_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(set_base_pe_return_vp) *set_base_pe_return_vp = set_base_pe_return_v;
+    if(ncset_base_pe_return_vp) *ncset_base_pe_return_vp = ncset_base_pe_return_v;
 done:
     return ACATCH(status);
-} /*Set_base_pe_Return_read*/
+} /*NCSet_base_pe_Return_read*/
 
 ast_err
-Set_base_pe_Return_reclaim(ast_runtime* rt, Set_base_pe_Return* set_base_pe_return_v)
+NCSet_base_pe_Return_reclaim(ast_runtime* rt, NCSet_base_pe_Return* ncset_base_pe_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)set_base_pe_return_v);
+    ast_free(rt,(void*)ncset_base_pe_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Set_base_pe_Return_reclaim*/
+} /*NCSet_base_pe_Return_reclaim*/
 
 size_t
-Set_base_pe_Return_get_size(ast_runtime* rt, Set_base_pe_Return* set_base_pe_return_v)
+NCSet_base_pe_Return_get_size(ast_runtime* rt, NCSet_base_pe_Return* ncset_base_pe_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&set_base_pe_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_base_pe_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Set_base_pe_Return_get_size*/
+} /*NCSet_base_pe_Return_get_size*/
 
 ast_err
-Inq_format_write(ast_runtime* rt, Inq_format* inq_format_v)
+NCInq_format_write(ast_runtime* rt, NCInq_format* ncinq_format_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_format_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_format_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_format_write*/
+} /*NCInq_format_write*/
 
 ast_err
-Inq_format_read(ast_runtime* rt, Inq_format** inq_format_vp)
+NCInq_format_read(ast_runtime* rt, NCInq_format** ncinq_format_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_format* inq_format_v;
+    NCInq_format* ncinq_format_v;
     unsigned long pos;
 
-    inq_format_v = (Inq_format*)ast_alloc(rt,sizeof(Inq_format));
-    if(inq_format_v == NULL) return AST_ENOMEM;
+    ncinq_format_v = (NCInq_format*)ast_alloc(rt,sizeof(NCInq_format));
+    if(ncinq_format_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1854,11 +1831,11 @@ Inq_format_read(ast_runtime* rt, Inq_format** inq_format_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_format|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_format|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_format_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_format_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1866,68 +1843,68 @@ Inq_format_read(ast_runtime* rt, Inq_format** inq_format_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_format_vp) *inq_format_vp = inq_format_v;
+    if(ncinq_format_vp) *ncinq_format_vp = ncinq_format_v;
 done:
     return ACATCH(status);
-} /*Inq_format_read*/
+} /*NCInq_format_read*/
 
 ast_err
-Inq_format_reclaim(ast_runtime* rt, Inq_format* inq_format_v)
+NCInq_format_reclaim(ast_runtime* rt, NCInq_format* ncinq_format_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_format_v);
+    ast_free(rt,(void*)ncinq_format_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_format_reclaim*/
+} /*NCInq_format_reclaim*/
 
 size_t
-Inq_format_get_size(ast_runtime* rt, Inq_format* inq_format_v)
+NCInq_format_get_size(ast_runtime* rt, NCInq_format* ncinq_format_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_format_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_format_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_format_get_size*/
+} /*NCInq_format_get_size*/
 
 ast_err
-Inq_format_Return_write(ast_runtime* rt, Inq_format_Return* inq_format_return_v)
+NCInq_format_Return_write(ast_runtime* rt, NCInq_format_Return* ncinq_format_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_format_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_format_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_format_return_v->format);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_format_return_v->format);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_format_Return_write*/
+} /*NCInq_format_Return_write*/
 
 ast_err
-Inq_format_Return_read(ast_runtime* rt, Inq_format_Return** inq_format_return_vp)
+NCInq_format_Return_read(ast_runtime* rt, NCInq_format_Return** ncinq_format_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_format_Return* inq_format_return_v;
+    NCInq_format_Return* ncinq_format_return_v;
     unsigned long pos;
 
-    inq_format_return_v = (Inq_format_Return*)ast_alloc(rt,sizeof(Inq_format_Return));
-    if(inq_format_return_v == NULL) return AST_ENOMEM;
+    ncinq_format_return_v = (NCInq_format_Return*)ast_alloc(rt,sizeof(NCInq_format_Return));
+    if(ncinq_format_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -1935,14 +1912,14 @@ Inq_format_Return_read(ast_runtime* rt, Inq_format_Return** inq_format_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_format_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_format_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_format_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_format_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_format_return_v->format);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_format_return_v->format);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -1950,69 +1927,69 @@ Inq_format_Return_read(ast_runtime* rt, Inq_format_Return** inq_format_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_format_return_vp) *inq_format_return_vp = inq_format_return_v;
+    if(ncinq_format_return_vp) *ncinq_format_return_vp = ncinq_format_return_v;
 done:
     return ACATCH(status);
-} /*Inq_format_Return_read*/
+} /*NCInq_format_Return_read*/
 
 ast_err
-Inq_format_Return_reclaim(ast_runtime* rt, Inq_format_Return* inq_format_return_v)
+NCInq_format_Return_reclaim(ast_runtime* rt, NCInq_format_Return* ncinq_format_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_format_return_v);
+    ast_free(rt,(void*)ncinq_format_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_format_Return_reclaim*/
+} /*NCInq_format_Return_reclaim*/
 
 size_t
-Inq_format_Return_get_size(ast_runtime* rt, Inq_format_Return* inq_format_return_v)
+NCInq_format_Return_get_size(ast_runtime* rt, NCInq_format_Return* ncinq_format_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_format_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_format_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_format_return_v->format);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_format_return_v->format);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_format_Return_get_size*/
+} /*NCInq_format_Return_get_size*/
 
 ast_err
-Inq_write(ast_runtime* rt, Inq* inq_v)
+NCInq_write(ast_runtime* rt, NCInq* ncinq_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_write*/
+} /*NCInq_write*/
 
 ast_err
-Inq_read(ast_runtime* rt, Inq** inq_vp)
+NCInq_read(ast_runtime* rt, NCInq** ncinq_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq* inq_v;
+    NCInq* ncinq_v;
     unsigned long pos;
 
-    inq_v = (Inq*)ast_alloc(rt,sizeof(Inq));
-    if(inq_v == NULL) return AST_ENOMEM;
+    ncinq_v = (NCInq*)ast_alloc(rt,sizeof(NCInq));
+    if(ncinq_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2020,11 +1997,11 @@ Inq_read(ast_runtime* rt, Inq** inq_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2032,80 +2009,80 @@ Inq_read(ast_runtime* rt, Inq** inq_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_vp) *inq_vp = inq_v;
+    if(ncinq_vp) *ncinq_vp = ncinq_v;
 done:
     return ACATCH(status);
-} /*Inq_read*/
+} /*NCInq_read*/
 
 ast_err
-Inq_reclaim(ast_runtime* rt, Inq* inq_v)
+NCInq_reclaim(ast_runtime* rt, NCInq* ncinq_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_v);
+    ast_free(rt,(void*)ncinq_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_reclaim*/
+} /*NCInq_reclaim*/
 
 size_t
-Inq_get_size(ast_runtime* rt, Inq* inq_v)
+NCInq_get_size(ast_runtime* rt, NCInq* ncinq_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_get_size*/
+} /*NCInq_get_size*/
 
 ast_err
-Inq_Return_write(ast_runtime* rt, Inq_Return* inq_return_v)
+NCInq_Return_write(ast_runtime* rt, NCInq_Return* ncinq_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_return_v->ndims);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_return_v->ndims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&inq_return_v->nvars);
+        status = ast_write_primitive(rt,ast_int32,3,&ncinq_return_v->nvars);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&inq_return_v->natts);
+        status = ast_write_primitive(rt,ast_int32,4,&ncinq_return_v->natts);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&inq_return_v->unlimdimid);
+        status = ast_write_primitive(rt,ast_int32,5,&ncinq_return_v->unlimdimid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_Return_write*/
+} /*NCInq_Return_write*/
 
 ast_err
-Inq_Return_read(ast_runtime* rt, Inq_Return** inq_return_vp)
+NCInq_Return_read(ast_runtime* rt, NCInq_Return** ncinq_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_Return* inq_return_v;
+    NCInq_Return* ncinq_return_v;
     unsigned long pos;
 
-    inq_return_v = (Inq_Return*)ast_alloc(rt,sizeof(Inq_Return));
-    if(inq_return_v == NULL) return AST_ENOMEM;
+    ncinq_return_v = (NCInq_Return*)ast_alloc(rt,sizeof(NCInq_Return));
+    if(ncinq_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2113,23 +2090,23 @@ Inq_Return_read(ast_runtime* rt, Inq_Return** inq_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_return_v->ndims);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_return_v->ndims);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&inq_return_v->nvars);
+            status = ast_read_primitive(rt,ast_int32,3,&ncinq_return_v->nvars);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&inq_return_v->natts);
+            status = ast_read_primitive(rt,ast_int32,4,&ncinq_return_v->natts);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&inq_return_v->unlimdimid);
+            status = ast_read_primitive(rt,ast_int32,5,&ncinq_return_v->unlimdimid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2137,88 +2114,88 @@ Inq_Return_read(ast_runtime* rt, Inq_Return** inq_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_return_vp) *inq_return_vp = inq_return_v;
+    if(ncinq_return_vp) *ncinq_return_vp = ncinq_return_v;
 done:
     return ACATCH(status);
-} /*Inq_Return_read*/
+} /*NCInq_Return_read*/
 
 ast_err
-Inq_Return_reclaim(ast_runtime* rt, Inq_Return* inq_return_v)
+NCInq_Return_reclaim(ast_runtime* rt, NCInq_Return* ncinq_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_return_v);
+    ast_free(rt,(void*)ncinq_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_Return_reclaim*/
+} /*NCInq_Return_reclaim*/
 
 size_t
-Inq_Return_get_size(ast_runtime* rt, Inq_Return* inq_return_v)
+NCInq_Return_get_size(ast_runtime* rt, NCInq_Return* ncinq_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_return_v->ndims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_return_v->ndims);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_return_v->nvars);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_return_v->nvars);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_return_v->natts);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_return_v->natts);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_return_v->unlimdimid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_return_v->unlimdimid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_Return_get_size*/
+} /*NCInq_Return_get_size*/
 
 ast_err
-Inq_type_write(ast_runtime* rt, Inq_type* inq_type_v)
+NCInq_Type_write(ast_runtime* rt, NCInq_Type* ncinq_type_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_type_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_type_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_type_v->xtype);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_type_v->xtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_write*/
+} /*NCInq_Type_write*/
 
 ast_err
-Inq_type_read(ast_runtime* rt, Inq_type** inq_type_vp)
+NCInq_Type_read(ast_runtime* rt, NCInq_Type** ncinq_type_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_type* inq_type_v;
+    NCInq_Type* ncinq_type_v;
     unsigned long pos;
 
-    inq_type_v = (Inq_type*)ast_alloc(rt,sizeof(Inq_type));
-    if(inq_type_v == NULL) return AST_ENOMEM;
+    ncinq_type_v = (NCInq_Type*)ast_alloc(rt,sizeof(NCInq_Type));
+    if(ncinq_type_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2226,14 +2203,14 @@ Inq_type_read(ast_runtime* rt, Inq_type** inq_type_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_type|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_Type|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_type_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_type_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_type_v->xtype);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_type_v->xtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2241,77 +2218,77 @@ Inq_type_read(ast_runtime* rt, Inq_type** inq_type_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_type_vp) *inq_type_vp = inq_type_v;
+    if(ncinq_type_vp) *ncinq_type_vp = ncinq_type_v;
 done:
     return ACATCH(status);
-} /*Inq_type_read*/
+} /*NCInq_Type_read*/
 
 ast_err
-Inq_type_reclaim(ast_runtime* rt, Inq_type* inq_type_v)
+NCInq_Type_reclaim(ast_runtime* rt, NCInq_Type* ncinq_type_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_type_v);
+    ast_free(rt,(void*)ncinq_type_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_reclaim*/
+} /*NCInq_Type_reclaim*/
 
 size_t
-Inq_type_get_size(ast_runtime* rt, Inq_type* inq_type_v)
+NCInq_Type_get_size(ast_runtime* rt, NCInq_Type* ncinq_type_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_v->xtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_v->xtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_type_get_size*/
+} /*NCInq_Type_get_size*/
 
 ast_err
-Inq_type_Return_write(ast_runtime* rt, Inq_type_Return* inq_type_return_v)
+NCInq_Type_Return_write(ast_runtime* rt, NCInq_Type_Return* ncinq_type_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_type_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_type_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_type_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_type_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&inq_type_return_v->size);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncinq_type_return_v->size);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_Return_write*/
+} /*NCInq_Type_Return_write*/
 
 ast_err
-Inq_type_Return_read(ast_runtime* rt, Inq_type_Return** inq_type_return_vp)
+NCInq_Type_Return_read(ast_runtime* rt, NCInq_Type_Return** ncinq_type_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_type_Return* inq_type_return_v;
+    NCInq_Type_Return* ncinq_type_return_v;
     unsigned long pos;
 
-    inq_type_return_v = (Inq_type_Return*)ast_alloc(rt,sizeof(Inq_type_Return));
-    if(inq_type_return_v == NULL) return AST_ENOMEM;
+    ncinq_type_return_v = (NCInq_Type_Return*)ast_alloc(rt,sizeof(NCInq_Type_Return));
+    if(ncinq_type_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2319,17 +2296,17 @@ Inq_type_Return_read(ast_runtime* rt, Inq_type_Return** inq_type_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_type_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_Type_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_type_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_type_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_type_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_type_return_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&inq_type_return_v->size);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncinq_type_return_v->size);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2337,86 +2314,86 @@ Inq_type_Return_read(ast_runtime* rt, Inq_type_Return** inq_type_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_type_return_vp) *inq_type_return_vp = inq_type_return_v;
+    if(ncinq_type_return_vp) *ncinq_type_return_vp = ncinq_type_return_v;
 done:
     return ACATCH(status);
-} /*Inq_type_Return_read*/
+} /*NCInq_Type_Return_read*/
 
 ast_err
-Inq_type_Return_reclaim(ast_runtime* rt, Inq_type_Return* inq_type_return_v)
+NCInq_Type_Return_reclaim(ast_runtime* rt, NCInq_Type_Return* ncinq_type_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_type_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_type_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_type_return_v);
+    ast_free(rt,(void*)ncinq_type_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_Return_reclaim*/
+} /*NCInq_Type_Return_reclaim*/
 
 size_t
-Inq_type_Return_get_size(ast_runtime* rt, Inq_type_Return* inq_type_return_v)
+NCInq_Type_Return_get_size(ast_runtime* rt, NCInq_Type_Return* ncinq_type_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_type_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_type_return_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_type_return_v->size);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_type_return_v->size);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_type_Return_get_size*/
+} /*NCInq_Type_Return_get_size*/
 
 ast_err
-Def_dim_write(ast_runtime* rt, Def_dim* def_dim_v)
+NCDef_Dim_write(ast_runtime* rt, NCDef_Dim* ncdef_dim_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_dim_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_dim_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&def_dim_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncdef_dim_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&def_dim_v->len);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncdef_dim_v->len);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_dim_write*/
+} /*NCDef_Dim_write*/
 
 ast_err
-Def_dim_read(ast_runtime* rt, Def_dim** def_dim_vp)
+NCDef_Dim_read(ast_runtime* rt, NCDef_Dim** ncdef_dim_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_dim* def_dim_v;
+    NCDef_Dim* ncdef_dim_v;
     unsigned long pos;
 
-    def_dim_v = (Def_dim*)ast_alloc(rt,sizeof(Def_dim));
-    if(def_dim_v == NULL) return AST_ENOMEM;
+    ncdef_dim_v = (NCDef_Dim*)ast_alloc(rt,sizeof(NCDef_Dim));
+    if(ncdef_dim_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2424,17 +2401,17 @@ Def_dim_read(ast_runtime* rt, Def_dim** def_dim_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_dim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Dim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_dim_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_dim_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&def_dim_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncdef_dim_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&def_dim_v->len);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncdef_dim_v->len);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2442,82 +2419,82 @@ Def_dim_read(ast_runtime* rt, Def_dim** def_dim_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_dim_vp) *def_dim_vp = def_dim_v;
+    if(ncdef_dim_vp) *ncdef_dim_vp = ncdef_dim_v;
 done:
     return ACATCH(status);
-} /*Def_dim_read*/
+} /*NCDef_Dim_read*/
 
 ast_err
-Def_dim_reclaim(ast_runtime* rt, Def_dim* def_dim_v)
+NCDef_Dim_reclaim(ast_runtime* rt, NCDef_Dim* ncdef_dim_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_dim_v->name);
+        status = ast_reclaim_string(rt,ncdef_dim_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_dim_v);
+    ast_free(rt,(void*)ncdef_dim_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_dim_reclaim*/
+} /*NCDef_Dim_reclaim*/
 
 size_t
-Def_dim_get_size(ast_runtime* rt, Def_dim* def_dim_v)
+NCDef_Dim_get_size(ast_runtime* rt, NCDef_Dim* ncdef_dim_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_dim_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_dim_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&def_dim_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_dim_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&def_dim_v->len);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncdef_dim_v->len);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_dim_get_size*/
+} /*NCDef_Dim_get_size*/
 
 ast_err
-Def_dim_Return_write(ast_runtime* rt, Def_dim_Return* def_dim_return_v)
+NCDef_Dim_Return_write(ast_runtime* rt, NCDef_Dim_Return* ncdef_dim_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_dim_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_dim_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_dim_return_v->dimid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_dim_return_v->dimid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_dim_Return_write*/
+} /*NCDef_Dim_Return_write*/
 
 ast_err
-Def_dim_Return_read(ast_runtime* rt, Def_dim_Return** def_dim_return_vp)
+NCDef_Dim_Return_read(ast_runtime* rt, NCDef_Dim_Return** ncdef_dim_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_dim_Return* def_dim_return_v;
+    NCDef_Dim_Return* ncdef_dim_return_v;
     unsigned long pos;
 
-    def_dim_return_v = (Def_dim_Return*)ast_alloc(rt,sizeof(Def_dim_Return));
-    if(def_dim_return_v == NULL) return AST_ENOMEM;
+    ncdef_dim_return_v = (NCDef_Dim_Return*)ast_alloc(rt,sizeof(NCDef_Dim_Return));
+    if(ncdef_dim_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2525,14 +2502,14 @@ Def_dim_Return_read(ast_runtime* rt, Def_dim_Return** def_dim_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_dim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Dim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_dim_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_dim_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_dim_return_v->dimid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_dim_return_v->dimid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2540,73 +2517,73 @@ Def_dim_Return_read(ast_runtime* rt, Def_dim_Return** def_dim_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_dim_return_vp) *def_dim_return_vp = def_dim_return_v;
+    if(ncdef_dim_return_vp) *ncdef_dim_return_vp = ncdef_dim_return_v;
 done:
     return ACATCH(status);
-} /*Def_dim_Return_read*/
+} /*NCDef_Dim_Return_read*/
 
 ast_err
-Def_dim_Return_reclaim(ast_runtime* rt, Def_dim_Return* def_dim_return_v)
+NCDef_Dim_Return_reclaim(ast_runtime* rt, NCDef_Dim_Return* ncdef_dim_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_dim_return_v);
+    ast_free(rt,(void*)ncdef_dim_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_dim_Return_reclaim*/
+} /*NCDef_Dim_Return_reclaim*/
 
 size_t
-Def_dim_Return_get_size(ast_runtime* rt, Def_dim_Return* def_dim_return_v)
+NCDef_Dim_Return_get_size(ast_runtime* rt, NCDef_Dim_Return* ncdef_dim_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_dim_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_dim_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_dim_return_v->dimid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_dim_return_v->dimid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_dim_Return_get_size*/
+} /*NCDef_Dim_Return_get_size*/
 
 ast_err
-Inq_dimid_write(ast_runtime* rt, Inq_dimid* inq_dimid_v)
+NCInq_dimid_write(ast_runtime* rt, NCInq_dimid* ncinq_dimid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_dimid_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_dimid_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_dimid_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_dimid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimid_write*/
+} /*NCInq_dimid_write*/
 
 ast_err
-Inq_dimid_read(ast_runtime* rt, Inq_dimid** inq_dimid_vp)
+NCInq_dimid_read(ast_runtime* rt, NCInq_dimid** ncinq_dimid_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_dimid* inq_dimid_v;
+    NCInq_dimid* ncinq_dimid_v;
     unsigned long pos;
 
-    inq_dimid_v = (Inq_dimid*)ast_alloc(rt,sizeof(Inq_dimid));
-    if(inq_dimid_v == NULL) return AST_ENOMEM;
+    ncinq_dimid_v = (NCInq_dimid*)ast_alloc(rt,sizeof(NCInq_dimid));
+    if(ncinq_dimid_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2614,14 +2591,14 @@ Inq_dimid_read(ast_runtime* rt, Inq_dimid** inq_dimid_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_dimid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_dimid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_dimid_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_dimid_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_dimid_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_dimid_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2629,77 +2606,77 @@ Inq_dimid_read(ast_runtime* rt, Inq_dimid** inq_dimid_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_dimid_vp) *inq_dimid_vp = inq_dimid_v;
+    if(ncinq_dimid_vp) *ncinq_dimid_vp = ncinq_dimid_v;
 done:
     return ACATCH(status);
-} /*Inq_dimid_read*/
+} /*NCInq_dimid_read*/
 
 ast_err
-Inq_dimid_reclaim(ast_runtime* rt, Inq_dimid* inq_dimid_v)
+NCInq_dimid_reclaim(ast_runtime* rt, NCInq_dimid* ncinq_dimid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_dimid_v->name);
+        status = ast_reclaim_string(rt,ncinq_dimid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_dimid_v);
+    ast_free(rt,(void*)ncinq_dimid_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimid_reclaim*/
+} /*NCInq_dimid_reclaim*/
 
 size_t
-Inq_dimid_get_size(ast_runtime* rt, Inq_dimid* inq_dimid_v)
+NCInq_dimid_get_size(ast_runtime* rt, NCInq_dimid* ncinq_dimid_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dimid_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimid_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_dimid_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_dimid_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_dimid_get_size*/
+} /*NCInq_dimid_get_size*/
 
 ast_err
-Inq_dimid_Return_write(ast_runtime* rt, Inq_dimid_Return* inq_dimid_return_v)
+NCInq_dimid_Return_write(ast_runtime* rt, NCInq_dimid_Return* ncinq_dimid_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_dimid_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_dimid_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_dimid_return_v->dimid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_dimid_return_v->dimid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimid_Return_write*/
+} /*NCInq_dimid_Return_write*/
 
 ast_err
-Inq_dimid_Return_read(ast_runtime* rt, Inq_dimid_Return** inq_dimid_return_vp)
+NCInq_dimid_Return_read(ast_runtime* rt, NCInq_dimid_Return** ncinq_dimid_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_dimid_Return* inq_dimid_return_v;
+    NCInq_dimid_Return* ncinq_dimid_return_v;
     unsigned long pos;
 
-    inq_dimid_return_v = (Inq_dimid_Return*)ast_alloc(rt,sizeof(Inq_dimid_Return));
-    if(inq_dimid_return_v == NULL) return AST_ENOMEM;
+    ncinq_dimid_return_v = (NCInq_dimid_Return*)ast_alloc(rt,sizeof(NCInq_dimid_Return));
+    if(ncinq_dimid_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2707,14 +2684,14 @@ Inq_dimid_Return_read(ast_runtime* rt, Inq_dimid_Return** inq_dimid_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_dimid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_dimid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_dimid_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_dimid_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_dimid_return_v->dimid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_dimid_return_v->dimid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2722,73 +2699,73 @@ Inq_dimid_Return_read(ast_runtime* rt, Inq_dimid_Return** inq_dimid_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_dimid_return_vp) *inq_dimid_return_vp = inq_dimid_return_v;
+    if(ncinq_dimid_return_vp) *ncinq_dimid_return_vp = ncinq_dimid_return_v;
 done:
     return ACATCH(status);
-} /*Inq_dimid_Return_read*/
+} /*NCInq_dimid_Return_read*/
 
 ast_err
-Inq_dimid_Return_reclaim(ast_runtime* rt, Inq_dimid_Return* inq_dimid_return_v)
+NCInq_dimid_Return_reclaim(ast_runtime* rt, NCInq_dimid_Return* ncinq_dimid_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_dimid_return_v);
+    ast_free(rt,(void*)ncinq_dimid_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimid_Return_reclaim*/
+} /*NCInq_dimid_Return_reclaim*/
 
 size_t
-Inq_dimid_Return_get_size(ast_runtime* rt, Inq_dimid_Return* inq_dimid_return_v)
+NCInq_dimid_Return_get_size(ast_runtime* rt, NCInq_dimid_Return* ncinq_dimid_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dimid_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimid_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dimid_return_v->dimid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimid_return_v->dimid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_dimid_Return_get_size*/
+} /*NCInq_dimid_Return_get_size*/
 
 ast_err
-Inq_dim_write(ast_runtime* rt, Inq_dim* inq_dim_v)
+NCInq_dim_write(ast_runtime* rt, NCInq_dim* ncinq_dim_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_dim_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_dim_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_dim_v->dimid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_dim_v->dimid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_dim_write*/
+} /*NCInq_dim_write*/
 
 ast_err
-Inq_dim_read(ast_runtime* rt, Inq_dim** inq_dim_vp)
+NCInq_dim_read(ast_runtime* rt, NCInq_dim** ncinq_dim_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_dim* inq_dim_v;
+    NCInq_dim* ncinq_dim_v;
     unsigned long pos;
 
-    inq_dim_v = (Inq_dim*)ast_alloc(rt,sizeof(Inq_dim));
-    if(inq_dim_v == NULL) return AST_ENOMEM;
+    ncinq_dim_v = (NCInq_dim*)ast_alloc(rt,sizeof(NCInq_dim));
+    if(ncinq_dim_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2796,14 +2773,14 @@ Inq_dim_read(ast_runtime* rt, Inq_dim** inq_dim_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_dim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_dim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_dim_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_dim_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_dim_v->dimid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_dim_v->dimid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2811,77 +2788,77 @@ Inq_dim_read(ast_runtime* rt, Inq_dim** inq_dim_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_dim_vp) *inq_dim_vp = inq_dim_v;
+    if(ncinq_dim_vp) *ncinq_dim_vp = ncinq_dim_v;
 done:
     return ACATCH(status);
-} /*Inq_dim_read*/
+} /*NCInq_dim_read*/
 
 ast_err
-Inq_dim_reclaim(ast_runtime* rt, Inq_dim* inq_dim_v)
+NCInq_dim_reclaim(ast_runtime* rt, NCInq_dim* ncinq_dim_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_dim_v);
+    ast_free(rt,(void*)ncinq_dim_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_dim_reclaim*/
+} /*NCInq_dim_reclaim*/
 
 size_t
-Inq_dim_get_size(ast_runtime* rt, Inq_dim* inq_dim_v)
+NCInq_dim_get_size(ast_runtime* rt, NCInq_dim* ncinq_dim_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dim_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dim_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dim_v->dimid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dim_v->dimid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_dim_get_size*/
+} /*NCInq_dim_get_size*/
 
 ast_err
-Inq_dim_Return_write(ast_runtime* rt, Inq_dim_Return* inq_dim_return_v)
+NCInq_dim_Return_write(ast_runtime* rt, NCInq_dim_Return* ncinq_dim_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_dim_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_dim_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_dim_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_dim_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&inq_dim_return_v->len);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncinq_dim_return_v->len);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_dim_Return_write*/
+} /*NCInq_dim_Return_write*/
 
 ast_err
-Inq_dim_Return_read(ast_runtime* rt, Inq_dim_Return** inq_dim_return_vp)
+NCInq_dim_Return_read(ast_runtime* rt, NCInq_dim_Return** ncinq_dim_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_dim_Return* inq_dim_return_v;
+    NCInq_dim_Return* ncinq_dim_return_v;
     unsigned long pos;
 
-    inq_dim_return_v = (Inq_dim_Return*)ast_alloc(rt,sizeof(Inq_dim_Return));
-    if(inq_dim_return_v == NULL) return AST_ENOMEM;
+    ncinq_dim_return_v = (NCInq_dim_Return*)ast_alloc(rt,sizeof(NCInq_dim_Return));
+    if(ncinq_dim_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2889,17 +2866,17 @@ Inq_dim_Return_read(ast_runtime* rt, Inq_dim_Return** inq_dim_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_dim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_dim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_dim_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_dim_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_dim_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_dim_return_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&inq_dim_return_v->len);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncinq_dim_return_v->len);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2907,78 +2884,78 @@ Inq_dim_Return_read(ast_runtime* rt, Inq_dim_Return** inq_dim_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_dim_return_vp) *inq_dim_return_vp = inq_dim_return_v;
+    if(ncinq_dim_return_vp) *ncinq_dim_return_vp = ncinq_dim_return_v;
 done:
     return ACATCH(status);
-} /*Inq_dim_Return_read*/
+} /*NCInq_dim_Return_read*/
 
 ast_err
-Inq_dim_Return_reclaim(ast_runtime* rt, Inq_dim_Return* inq_dim_return_v)
+NCInq_dim_Return_reclaim(ast_runtime* rt, NCInq_dim_Return* ncinq_dim_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_dim_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_dim_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_dim_return_v);
+    ast_free(rt,(void*)ncinq_dim_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_dim_Return_reclaim*/
+} /*NCInq_dim_Return_reclaim*/
 
 size_t
-Inq_dim_Return_get_size(ast_runtime* rt, Inq_dim_Return* inq_dim_return_v)
+NCInq_dim_Return_get_size(ast_runtime* rt, NCInq_dim_Return* ncinq_dim_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dim_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dim_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_dim_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_dim_return_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_dim_return_v->len);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_dim_return_v->len);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_dim_Return_get_size*/
+} /*NCInq_dim_Return_get_size*/
 
 ast_err
-Inq_unlimdim_write(ast_runtime* rt, Inq_unlimdim* inq_unlimdim_v)
+NCInq_unlimdim_write(ast_runtime* rt, NCInq_unlimdim* ncinq_unlimdim_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_unlimdim_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_unlimdim_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdim_write*/
+} /*NCInq_unlimdim_write*/
 
 ast_err
-Inq_unlimdim_read(ast_runtime* rt, Inq_unlimdim** inq_unlimdim_vp)
+NCInq_unlimdim_read(ast_runtime* rt, NCInq_unlimdim** ncinq_unlimdim_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_unlimdim* inq_unlimdim_v;
+    NCInq_unlimdim* ncinq_unlimdim_v;
     unsigned long pos;
 
-    inq_unlimdim_v = (Inq_unlimdim*)ast_alloc(rt,sizeof(Inq_unlimdim));
-    if(inq_unlimdim_v == NULL) return AST_ENOMEM;
+    ncinq_unlimdim_v = (NCInq_unlimdim*)ast_alloc(rt,sizeof(NCInq_unlimdim));
+    if(ncinq_unlimdim_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -2986,11 +2963,11 @@ Inq_unlimdim_read(ast_runtime* rt, Inq_unlimdim** inq_unlimdim_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_unlimdim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_unlimdim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_unlimdim_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_unlimdim_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -2998,68 +2975,68 @@ Inq_unlimdim_read(ast_runtime* rt, Inq_unlimdim** inq_unlimdim_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_unlimdim_vp) *inq_unlimdim_vp = inq_unlimdim_v;
+    if(ncinq_unlimdim_vp) *ncinq_unlimdim_vp = ncinq_unlimdim_v;
 done:
     return ACATCH(status);
-} /*Inq_unlimdim_read*/
+} /*NCInq_unlimdim_read*/
 
 ast_err
-Inq_unlimdim_reclaim(ast_runtime* rt, Inq_unlimdim* inq_unlimdim_v)
+NCInq_unlimdim_reclaim(ast_runtime* rt, NCInq_unlimdim* ncinq_unlimdim_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_unlimdim_v);
+    ast_free(rt,(void*)ncinq_unlimdim_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdim_reclaim*/
+} /*NCInq_unlimdim_reclaim*/
 
 size_t
-Inq_unlimdim_get_size(ast_runtime* rt, Inq_unlimdim* inq_unlimdim_v)
+NCInq_unlimdim_get_size(ast_runtime* rt, NCInq_unlimdim* ncinq_unlimdim_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdim_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdim_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_unlimdim_get_size*/
+} /*NCInq_unlimdim_get_size*/
 
 ast_err
-Inq_unlimdim_Return_write(ast_runtime* rt, Inq_unlimdim_Return* inq_unlimdim_return_v)
+NCInq_unlimdim_Return_write(ast_runtime* rt, NCInq_unlimdim_Return* ncinq_unlimdim_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_unlimdim_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_unlimdim_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_unlimdim_return_v->unlimdimid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_unlimdim_return_v->unlimdimid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdim_Return_write*/
+} /*NCInq_unlimdim_Return_write*/
 
 ast_err
-Inq_unlimdim_Return_read(ast_runtime* rt, Inq_unlimdim_Return** inq_unlimdim_return_vp)
+NCInq_unlimdim_Return_read(ast_runtime* rt, NCInq_unlimdim_Return** ncinq_unlimdim_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_unlimdim_Return* inq_unlimdim_return_v;
+    NCInq_unlimdim_Return* ncinq_unlimdim_return_v;
     unsigned long pos;
 
-    inq_unlimdim_return_v = (Inq_unlimdim_Return*)ast_alloc(rt,sizeof(Inq_unlimdim_Return));
-    if(inq_unlimdim_return_v == NULL) return AST_ENOMEM;
+    ncinq_unlimdim_return_v = (NCInq_unlimdim_Return*)ast_alloc(rt,sizeof(NCInq_unlimdim_Return));
+    if(ncinq_unlimdim_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3067,14 +3044,14 @@ Inq_unlimdim_Return_read(ast_runtime* rt, Inq_unlimdim_Return** inq_unlimdim_ret
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_unlimdim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_unlimdim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_unlimdim_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_unlimdim_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_unlimdim_return_v->unlimdimid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_unlimdim_return_v->unlimdimid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3082,77 +3059,77 @@ Inq_unlimdim_Return_read(ast_runtime* rt, Inq_unlimdim_Return** inq_unlimdim_ret
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_unlimdim_return_vp) *inq_unlimdim_return_vp = inq_unlimdim_return_v;
+    if(ncinq_unlimdim_return_vp) *ncinq_unlimdim_return_vp = ncinq_unlimdim_return_v;
 done:
     return ACATCH(status);
-} /*Inq_unlimdim_Return_read*/
+} /*NCInq_unlimdim_Return_read*/
 
 ast_err
-Inq_unlimdim_Return_reclaim(ast_runtime* rt, Inq_unlimdim_Return* inq_unlimdim_return_v)
+NCInq_unlimdim_Return_reclaim(ast_runtime* rt, NCInq_unlimdim_Return* ncinq_unlimdim_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_unlimdim_return_v);
+    ast_free(rt,(void*)ncinq_unlimdim_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdim_Return_reclaim*/
+} /*NCInq_unlimdim_Return_reclaim*/
 
 size_t
-Inq_unlimdim_Return_get_size(ast_runtime* rt, Inq_unlimdim_Return* inq_unlimdim_return_v)
+NCInq_unlimdim_Return_get_size(ast_runtime* rt, NCInq_unlimdim_Return* ncinq_unlimdim_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdim_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdim_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdim_return_v->unlimdimid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdim_return_v->unlimdimid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_unlimdim_Return_get_size*/
+} /*NCInq_unlimdim_Return_get_size*/
 
 ast_err
-Rename_dim_write(ast_runtime* rt, Rename_dim* rename_dim_v)
+NCRename_dim_write(ast_runtime* rt, NCRename_dim* ncrename_dim_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&rename_dim_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncrename_dim_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&rename_dim_v->dimid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncrename_dim_v->dimid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&rename_dim_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncrename_dim_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Rename_dim_write*/
+} /*NCRename_dim_write*/
 
 ast_err
-Rename_dim_read(ast_runtime* rt, Rename_dim** rename_dim_vp)
+NCRename_dim_read(ast_runtime* rt, NCRename_dim** ncrename_dim_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Rename_dim* rename_dim_v;
+    NCRename_dim* ncrename_dim_v;
     unsigned long pos;
 
-    rename_dim_v = (Rename_dim*)ast_alloc(rt,sizeof(Rename_dim));
-    if(rename_dim_v == NULL) return AST_ENOMEM;
+    ncrename_dim_v = (NCRename_dim*)ast_alloc(rt,sizeof(NCRename_dim));
+    if(ncrename_dim_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3160,17 +3137,17 @@ Rename_dim_read(ast_runtime* rt, Rename_dim** rename_dim_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Rename_dim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRename_dim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&rename_dim_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncrename_dim_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&rename_dim_v->dimid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncrename_dim_v->dimid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&rename_dim_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncrename_dim_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3178,78 +3155,78 @@ Rename_dim_read(ast_runtime* rt, Rename_dim** rename_dim_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(rename_dim_vp) *rename_dim_vp = rename_dim_v;
+    if(ncrename_dim_vp) *ncrename_dim_vp = ncrename_dim_v;
 done:
     return ACATCH(status);
-} /*Rename_dim_read*/
+} /*NCRename_dim_read*/
 
 ast_err
-Rename_dim_reclaim(ast_runtime* rt, Rename_dim* rename_dim_v)
+NCRename_dim_reclaim(ast_runtime* rt, NCRename_dim* ncrename_dim_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,rename_dim_v->name);
+        status = ast_reclaim_string(rt,ncrename_dim_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)rename_dim_v);
+    ast_free(rt,(void*)ncrename_dim_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Rename_dim_reclaim*/
+} /*NCRename_dim_reclaim*/
 
 size_t
-Rename_dim_get_size(ast_runtime* rt, Rename_dim* rename_dim_v)
+NCRename_dim_get_size(ast_runtime* rt, NCRename_dim* ncrename_dim_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_dim_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_dim_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_dim_v->dimid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_dim_v->dimid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&rename_dim_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncrename_dim_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Rename_dim_get_size*/
+} /*NCRename_dim_get_size*/
 
 ast_err
-Rename_dim_Return_write(ast_runtime* rt, Rename_dim_Return* rename_dim_return_v)
+NCRename_dim_Return_write(ast_runtime* rt, NCRename_dim_Return* ncrename_dim_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&rename_dim_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncrename_dim_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Rename_dim_Return_write*/
+} /*NCRename_dim_Return_write*/
 
 ast_err
-Rename_dim_Return_read(ast_runtime* rt, Rename_dim_Return** rename_dim_return_vp)
+NCRename_dim_Return_read(ast_runtime* rt, NCRename_dim_Return** ncrename_dim_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Rename_dim_Return* rename_dim_return_v;
+    NCRename_dim_Return* ncrename_dim_return_v;
     unsigned long pos;
 
-    rename_dim_return_v = (Rename_dim_Return*)ast_alloc(rt,sizeof(Rename_dim_Return));
-    if(rename_dim_return_v == NULL) return AST_ENOMEM;
+    ncrename_dim_return_v = (NCRename_dim_Return*)ast_alloc(rt,sizeof(NCRename_dim_Return));
+    if(ncrename_dim_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3257,11 +3234,11 @@ Rename_dim_Return_read(ast_runtime* rt, Rename_dim_Return** rename_dim_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Rename_dim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRename_dim_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&rename_dim_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncrename_dim_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3269,72 +3246,72 @@ Rename_dim_Return_read(ast_runtime* rt, Rename_dim_Return** rename_dim_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(rename_dim_return_vp) *rename_dim_return_vp = rename_dim_return_v;
+    if(ncrename_dim_return_vp) *ncrename_dim_return_vp = ncrename_dim_return_v;
 done:
     return ACATCH(status);
-} /*Rename_dim_Return_read*/
+} /*NCRename_dim_Return_read*/
 
 ast_err
-Rename_dim_Return_reclaim(ast_runtime* rt, Rename_dim_Return* rename_dim_return_v)
+NCRename_dim_Return_reclaim(ast_runtime* rt, NCRename_dim_Return* ncrename_dim_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)rename_dim_return_v);
+    ast_free(rt,(void*)ncrename_dim_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Rename_dim_Return_reclaim*/
+} /*NCRename_dim_Return_reclaim*/
 
 size_t
-Rename_dim_Return_get_size(ast_runtime* rt, Rename_dim_Return* rename_dim_return_v)
+NCRename_dim_Return_get_size(ast_runtime* rt, NCRename_dim_Return* ncrename_dim_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_dim_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_dim_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Rename_dim_Return_get_size*/
+} /*NCRename_dim_Return_get_size*/
 
 ast_err
-Inq_att_write(ast_runtime* rt, Inq_att* inq_att_v)
+NCInq_att_write(ast_runtime* rt, NCInq_att* ncinq_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_att_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_att_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_att_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_att_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&inq_att_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinq_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_att_write*/
+} /*NCInq_att_write*/
 
 ast_err
-Inq_att_read(ast_runtime* rt, Inq_att** inq_att_vp)
+NCInq_att_read(ast_runtime* rt, NCInq_att** ncinq_att_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_att* inq_att_v;
+    NCInq_att* ncinq_att_v;
     unsigned long pos;
 
-    inq_att_v = (Inq_att*)ast_alloc(rt,sizeof(Inq_att));
-    if(inq_att_v == NULL) return AST_ENOMEM;
+    ncinq_att_v = (NCInq_att*)ast_alloc(rt,sizeof(NCInq_att));
+    if(ncinq_att_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3342,17 +3319,17 @@ Inq_att_read(ast_runtime* rt, Inq_att** inq_att_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_att_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_att_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_att_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_att_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&inq_att_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinq_att_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3360,86 +3337,86 @@ Inq_att_read(ast_runtime* rt, Inq_att** inq_att_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_att_vp) *inq_att_vp = inq_att_v;
+    if(ncinq_att_vp) *ncinq_att_vp = ncinq_att_v;
 done:
     return ACATCH(status);
-} /*Inq_att_read*/
+} /*NCInq_att_read*/
 
 ast_err
-Inq_att_reclaim(ast_runtime* rt, Inq_att* inq_att_v)
+NCInq_att_reclaim(ast_runtime* rt, NCInq_att* ncinq_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_att_v->name);
+        status = ast_reclaim_string(rt,ncinq_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_att_v);
+    ast_free(rt,(void*)ncinq_att_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_att_reclaim*/
+} /*NCInq_att_reclaim*/
 
 size_t
-Inq_att_get_size(ast_runtime* rt, Inq_att* inq_att_v)
+NCInq_att_get_size(ast_runtime* rt, NCInq_att* ncinq_att_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_att_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_att_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_att_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_att_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&inq_att_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_att_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_att_get_size*/
+} /*NCInq_att_get_size*/
 
 ast_err
-Inq_att_Return_write(ast_runtime* rt, Inq_att_Return* inq_att_return_v)
+NCInq_att_Return_write(ast_runtime* rt, NCInq_att_Return* ncinq_att_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_att_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_att_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_att_return_v->xtype);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_att_return_v->xtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&inq_att_return_v->len);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncinq_att_return_v->len);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_att_Return_write*/
+} /*NCInq_att_Return_write*/
 
 ast_err
-Inq_att_Return_read(ast_runtime* rt, Inq_att_Return** inq_att_return_vp)
+NCInq_att_Return_read(ast_runtime* rt, NCInq_att_Return** ncinq_att_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_att_Return* inq_att_return_v;
+    NCInq_att_Return* ncinq_att_return_v;
     unsigned long pos;
 
-    inq_att_return_v = (Inq_att_Return*)ast_alloc(rt,sizeof(Inq_att_Return));
-    if(inq_att_return_v == NULL) return AST_ENOMEM;
+    ncinq_att_return_v = (NCInq_att_Return*)ast_alloc(rt,sizeof(NCInq_att_Return));
+    if(ncinq_att_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3447,17 +3424,17 @@ Inq_att_Return_read(ast_runtime* rt, Inq_att_Return** inq_att_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_att_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_att_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_att_return_v->xtype);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_att_return_v->xtype);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&inq_att_return_v->len);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncinq_att_return_v->len);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3465,82 +3442,82 @@ Inq_att_Return_read(ast_runtime* rt, Inq_att_Return** inq_att_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_att_return_vp) *inq_att_return_vp = inq_att_return_v;
+    if(ncinq_att_return_vp) *ncinq_att_return_vp = ncinq_att_return_v;
 done:
     return ACATCH(status);
-} /*Inq_att_Return_read*/
+} /*NCInq_att_Return_read*/
 
 ast_err
-Inq_att_Return_reclaim(ast_runtime* rt, Inq_att_Return* inq_att_return_v)
+NCInq_att_Return_reclaim(ast_runtime* rt, NCInq_att_Return* ncinq_att_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_att_return_v);
+    ast_free(rt,(void*)ncinq_att_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_att_Return_reclaim*/
+} /*NCInq_att_Return_reclaim*/
 
 size_t
-Inq_att_Return_get_size(ast_runtime* rt, Inq_att_Return* inq_att_return_v)
+NCInq_att_Return_get_size(ast_runtime* rt, NCInq_att_Return* ncinq_att_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_att_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_att_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_att_return_v->xtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_att_return_v->xtype);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_att_return_v->len);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_att_return_v->len);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_att_Return_get_size*/
+} /*NCInq_att_Return_get_size*/
 
 ast_err
-Inq_attid_write(ast_runtime* rt, Inq_attid* inq_attid_v)
+NCInq_attid_write(ast_runtime* rt, NCInq_attid* ncinq_attid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_attid_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_attid_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_attid_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_attid_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&inq_attid_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinq_attid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_attid_write*/
+} /*NCInq_attid_write*/
 
 ast_err
-Inq_attid_read(ast_runtime* rt, Inq_attid** inq_attid_vp)
+NCInq_attid_read(ast_runtime* rt, NCInq_attid** ncinq_attid_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_attid* inq_attid_v;
+    NCInq_attid* ncinq_attid_v;
     unsigned long pos;
 
-    inq_attid_v = (Inq_attid*)ast_alloc(rt,sizeof(Inq_attid));
-    if(inq_attid_v == NULL) return AST_ENOMEM;
+    ncinq_attid_v = (NCInq_attid*)ast_alloc(rt,sizeof(NCInq_attid));
+    if(ncinq_attid_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3548,17 +3525,17 @@ Inq_attid_read(ast_runtime* rt, Inq_attid** inq_attid_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_attid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_attid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_attid_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_attid_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_attid_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_attid_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&inq_attid_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinq_attid_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3566,82 +3543,82 @@ Inq_attid_read(ast_runtime* rt, Inq_attid** inq_attid_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_attid_vp) *inq_attid_vp = inq_attid_v;
+    if(ncinq_attid_vp) *ncinq_attid_vp = ncinq_attid_v;
 done:
     return ACATCH(status);
-} /*Inq_attid_read*/
+} /*NCInq_attid_read*/
 
 ast_err
-Inq_attid_reclaim(ast_runtime* rt, Inq_attid* inq_attid_v)
+NCInq_attid_reclaim(ast_runtime* rt, NCInq_attid* ncinq_attid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_attid_v->name);
+        status = ast_reclaim_string(rt,ncinq_attid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_attid_v);
+    ast_free(rt,(void*)ncinq_attid_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_attid_reclaim*/
+} /*NCInq_attid_reclaim*/
 
 size_t
-Inq_attid_get_size(ast_runtime* rt, Inq_attid* inq_attid_v)
+NCInq_attid_get_size(ast_runtime* rt, NCInq_attid* ncinq_attid_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attid_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attid_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attid_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attid_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&inq_attid_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_attid_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_attid_get_size*/
+} /*NCInq_attid_get_size*/
 
 ast_err
-Inq_attid_Return_write(ast_runtime* rt, Inq_attid_Return* inq_attid_return_v)
+NCInq_attid_Return_write(ast_runtime* rt, NCInq_attid_Return* ncinq_attid_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_attid_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_attid_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_attid_return_v->attid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_attid_return_v->attid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_attid_Return_write*/
+} /*NCInq_attid_Return_write*/
 
 ast_err
-Inq_attid_Return_read(ast_runtime* rt, Inq_attid_Return** inq_attid_return_vp)
+NCInq_attid_Return_read(ast_runtime* rt, NCInq_attid_Return** ncinq_attid_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_attid_Return* inq_attid_return_v;
+    NCInq_attid_Return* ncinq_attid_return_v;
     unsigned long pos;
 
-    inq_attid_return_v = (Inq_attid_Return*)ast_alloc(rt,sizeof(Inq_attid_Return));
-    if(inq_attid_return_v == NULL) return AST_ENOMEM;
+    ncinq_attid_return_v = (NCInq_attid_Return*)ast_alloc(rt,sizeof(NCInq_attid_Return));
+    if(ncinq_attid_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3649,14 +3626,14 @@ Inq_attid_Return_read(ast_runtime* rt, Inq_attid_Return** inq_attid_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_attid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_attid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_attid_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_attid_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_attid_return_v->attid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_attid_return_v->attid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3664,77 +3641,77 @@ Inq_attid_Return_read(ast_runtime* rt, Inq_attid_Return** inq_attid_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_attid_return_vp) *inq_attid_return_vp = inq_attid_return_v;
+    if(ncinq_attid_return_vp) *ncinq_attid_return_vp = ncinq_attid_return_v;
 done:
     return ACATCH(status);
-} /*Inq_attid_Return_read*/
+} /*NCInq_attid_Return_read*/
 
 ast_err
-Inq_attid_Return_reclaim(ast_runtime* rt, Inq_attid_Return* inq_attid_return_v)
+NCInq_attid_Return_reclaim(ast_runtime* rt, NCInq_attid_Return* ncinq_attid_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_attid_return_v);
+    ast_free(rt,(void*)ncinq_attid_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_attid_Return_reclaim*/
+} /*NCInq_attid_Return_reclaim*/
 
 size_t
-Inq_attid_Return_get_size(ast_runtime* rt, Inq_attid_Return* inq_attid_return_v)
+NCInq_attid_Return_get_size(ast_runtime* rt, NCInq_attid_Return* ncinq_attid_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attid_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attid_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attid_return_v->attid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attid_return_v->attid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_attid_Return_get_size*/
+} /*NCInq_attid_Return_get_size*/
 
 ast_err
-Inq_attname_write(ast_runtime* rt, Inq_attname* inq_attname_v)
+NCInq_attname_write(ast_runtime* rt, NCInq_attname* ncinq_attname_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_attname_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_attname_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_attname_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_attname_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&inq_attname_v->attnum);
+        status = ast_write_primitive(rt,ast_int32,3,&ncinq_attname_v->attnum);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_attname_write*/
+} /*NCInq_attname_write*/
 
 ast_err
-Inq_attname_read(ast_runtime* rt, Inq_attname** inq_attname_vp)
+NCInq_attname_read(ast_runtime* rt, NCInq_attname** ncinq_attname_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_attname* inq_attname_v;
+    NCInq_attname* ncinq_attname_v;
     unsigned long pos;
 
-    inq_attname_v = (Inq_attname*)ast_alloc(rt,sizeof(Inq_attname));
-    if(inq_attname_v == NULL) return AST_ENOMEM;
+    ncinq_attname_v = (NCInq_attname*)ast_alloc(rt,sizeof(NCInq_attname));
+    if(ncinq_attname_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3742,17 +3719,17 @@ Inq_attname_read(ast_runtime* rt, Inq_attname** inq_attname_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_attname|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_attname|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_attname_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_attname_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_attname_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_attname_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&inq_attname_v->attnum);
+            status = ast_read_primitive(rt,ast_int32,3,&ncinq_attname_v->attnum);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3760,78 +3737,78 @@ Inq_attname_read(ast_runtime* rt, Inq_attname** inq_attname_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_attname_vp) *inq_attname_vp = inq_attname_v;
+    if(ncinq_attname_vp) *ncinq_attname_vp = ncinq_attname_v;
 done:
     return ACATCH(status);
-} /*Inq_attname_read*/
+} /*NCInq_attname_read*/
 
 ast_err
-Inq_attname_reclaim(ast_runtime* rt, Inq_attname* inq_attname_v)
+NCInq_attname_reclaim(ast_runtime* rt, NCInq_attname* ncinq_attname_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_attname_v);
+    ast_free(rt,(void*)ncinq_attname_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_attname_reclaim*/
+} /*NCInq_attname_reclaim*/
 
 size_t
-Inq_attname_get_size(ast_runtime* rt, Inq_attname* inq_attname_v)
+NCInq_attname_get_size(ast_runtime* rt, NCInq_attname* ncinq_attname_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attname_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attname_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attname_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attname_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attname_v->attnum);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attname_v->attnum);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_attname_get_size*/
+} /*NCInq_attname_get_size*/
 
 ast_err
-Inq_attname_Return_write(ast_runtime* rt, Inq_attname_Return* inq_attname_return_v)
+NCInq_attname_Return_write(ast_runtime* rt, NCInq_attname_Return* ncinq_attname_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_attname_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_attname_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_attname_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_attname_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_attname_Return_write*/
+} /*NCInq_attname_Return_write*/
 
 ast_err
-Inq_attname_Return_read(ast_runtime* rt, Inq_attname_Return** inq_attname_return_vp)
+NCInq_attname_Return_read(ast_runtime* rt, NCInq_attname_Return** ncinq_attname_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_attname_Return* inq_attname_return_v;
+    NCInq_attname_Return* ncinq_attname_return_v;
     unsigned long pos;
 
-    inq_attname_return_v = (Inq_attname_Return*)ast_alloc(rt,sizeof(Inq_attname_Return));
-    if(inq_attname_return_v == NULL) return AST_ENOMEM;
+    ncinq_attname_return_v = (NCInq_attname_Return*)ast_alloc(rt,sizeof(NCInq_attname_Return));
+    if(ncinq_attname_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3839,14 +3816,14 @@ Inq_attname_Return_read(ast_runtime* rt, Inq_attname_Return** inq_attname_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_attname_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_attname_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_attname_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_attname_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_attname_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_attname_return_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3854,85 +3831,85 @@ Inq_attname_Return_read(ast_runtime* rt, Inq_attname_Return** inq_attname_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_attname_return_vp) *inq_attname_return_vp = inq_attname_return_v;
+    if(ncinq_attname_return_vp) *ncinq_attname_return_vp = ncinq_attname_return_v;
 done:
     return ACATCH(status);
-} /*Inq_attname_Return_read*/
+} /*NCInq_attname_Return_read*/
 
 ast_err
-Inq_attname_Return_reclaim(ast_runtime* rt, Inq_attname_Return* inq_attname_return_v)
+NCInq_attname_Return_reclaim(ast_runtime* rt, NCInq_attname_Return* ncinq_attname_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_attname_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_attname_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_attname_return_v);
+    ast_free(rt,(void*)ncinq_attname_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_attname_Return_reclaim*/
+} /*NCInq_attname_Return_reclaim*/
 
 size_t
-Inq_attname_Return_get_size(ast_runtime* rt, Inq_attname_Return* inq_attname_return_v)
+NCInq_attname_Return_get_size(ast_runtime* rt, NCInq_attname_Return* ncinq_attname_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_attname_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_attname_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_attname_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_attname_return_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_attname_Return_get_size*/
+} /*NCInq_attname_Return_get_size*/
 
 ast_err
-Rename_att_write(ast_runtime* rt, Rename_att* rename_att_v)
+NCRename_att_write(ast_runtime* rt, NCRename_att* ncrename_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&rename_att_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncrename_att_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&rename_att_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncrename_att_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&rename_att_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncrename_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,4,&rename_att_v->newname);
+        status = ast_write_primitive(rt,ast_string,4,&ncrename_att_v->newname);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Rename_att_write*/
+} /*NCRename_att_write*/
 
 ast_err
-Rename_att_read(ast_runtime* rt, Rename_att** rename_att_vp)
+NCRename_att_read(ast_runtime* rt, NCRename_att** ncrename_att_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Rename_att* rename_att_v;
+    NCRename_att* ncrename_att_v;
     unsigned long pos;
 
-    rename_att_v = (Rename_att*)ast_alloc(rt,sizeof(Rename_att));
-    if(rename_att_v == NULL) return AST_ENOMEM;
+    ncrename_att_v = (NCRename_att*)ast_alloc(rt,sizeof(NCRename_att));
+    if(ncrename_att_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -3940,20 +3917,20 @@ Rename_att_read(ast_runtime* rt, Rename_att** rename_att_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Rename_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRename_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&rename_att_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncrename_att_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&rename_att_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncrename_att_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&rename_att_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncrename_att_v->name);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_string,4,&rename_att_v->newname);
+            status = ast_read_primitive(rt,ast_string,4,&ncrename_att_v->newname);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -3961,87 +3938,87 @@ Rename_att_read(ast_runtime* rt, Rename_att** rename_att_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(rename_att_vp) *rename_att_vp = rename_att_v;
+    if(ncrename_att_vp) *ncrename_att_vp = ncrename_att_v;
 done:
     return ACATCH(status);
-} /*Rename_att_read*/
+} /*NCRename_att_read*/
 
 ast_err
-Rename_att_reclaim(ast_runtime* rt, Rename_att* rename_att_v)
+NCRename_att_reclaim(ast_runtime* rt, NCRename_att* ncrename_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,rename_att_v->name);
+        status = ast_reclaim_string(rt,ncrename_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_string(rt,rename_att_v->newname);
+        status = ast_reclaim_string(rt,ncrename_att_v->newname);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)rename_att_v);
+    ast_free(rt,(void*)ncrename_att_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Rename_att_reclaim*/
+} /*NCRename_att_reclaim*/
 
 size_t
-Rename_att_get_size(ast_runtime* rt, Rename_att* rename_att_v)
+NCRename_att_get_size(ast_runtime* rt, NCRename_att* ncrename_att_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_att_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_att_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_att_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_att_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&rename_att_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncrename_att_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_string,&rename_att_v->newname);
+        fieldsize += ast_get_size(rt,ast_string,&ncrename_att_v->newname);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Rename_att_get_size*/
+} /*NCRename_att_get_size*/
 
 ast_err
-Rename_att_Return_write(ast_runtime* rt, Rename_att_Return* rename_att_return_v)
+NCRename_att_Return_write(ast_runtime* rt, NCRename_att_Return* ncrename_att_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&rename_att_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncrename_att_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Rename_att_Return_write*/
+} /*NCRename_att_Return_write*/
 
 ast_err
-Rename_att_Return_read(ast_runtime* rt, Rename_att_Return** rename_att_return_vp)
+NCRename_att_Return_read(ast_runtime* rt, NCRename_att_Return** ncrename_att_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Rename_att_Return* rename_att_return_v;
+    NCRename_att_Return* ncrename_att_return_v;
     unsigned long pos;
 
-    rename_att_return_v = (Rename_att_Return*)ast_alloc(rt,sizeof(Rename_att_Return));
-    if(rename_att_return_v == NULL) return AST_ENOMEM;
+    ncrename_att_return_v = (NCRename_att_Return*)ast_alloc(rt,sizeof(NCRename_att_Return));
+    if(ncrename_att_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4049,11 +4026,11 @@ Rename_att_Return_read(ast_runtime* rt, Rename_att_Return** rename_att_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Rename_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRename_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&rename_att_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncrename_att_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4061,72 +4038,72 @@ Rename_att_Return_read(ast_runtime* rt, Rename_att_Return** rename_att_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(rename_att_return_vp) *rename_att_return_vp = rename_att_return_v;
+    if(ncrename_att_return_vp) *ncrename_att_return_vp = ncrename_att_return_v;
 done:
     return ACATCH(status);
-} /*Rename_att_Return_read*/
+} /*NCRename_att_Return_read*/
 
 ast_err
-Rename_att_Return_reclaim(ast_runtime* rt, Rename_att_Return* rename_att_return_v)
+NCRename_att_Return_reclaim(ast_runtime* rt, NCRename_att_Return* ncrename_att_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)rename_att_return_v);
+    ast_free(rt,(void*)ncrename_att_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Rename_att_Return_reclaim*/
+} /*NCRename_att_Return_reclaim*/
 
 size_t
-Rename_att_Return_get_size(ast_runtime* rt, Rename_att_Return* rename_att_return_v)
+NCRename_att_Return_get_size(ast_runtime* rt, NCRename_att_Return* ncrename_att_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_att_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_att_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Rename_att_Return_get_size*/
+} /*NCRename_att_Return_get_size*/
 
 ast_err
-Del_att_write(ast_runtime* rt, Del_att* del_att_v)
+NCDel_att_write(ast_runtime* rt, NCDel_att* ncdel_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&del_att_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdel_att_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&del_att_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdel_att_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&del_att_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncdel_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Del_att_write*/
+} /*NCDel_att_write*/
 
 ast_err
-Del_att_read(ast_runtime* rt, Del_att** del_att_vp)
+NCDel_att_read(ast_runtime* rt, NCDel_att** ncdel_att_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Del_att* del_att_v;
+    NCDel_att* ncdel_att_v;
     unsigned long pos;
 
-    del_att_v = (Del_att*)ast_alloc(rt,sizeof(Del_att));
-    if(del_att_v == NULL) return AST_ENOMEM;
+    ncdel_att_v = (NCDel_att*)ast_alloc(rt,sizeof(NCDel_att));
+    if(ncdel_att_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4134,17 +4111,17 @@ Del_att_read(ast_runtime* rt, Del_att** del_att_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Del_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDel_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&del_att_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdel_att_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&del_att_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdel_att_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&del_att_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncdel_att_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4152,78 +4129,78 @@ Del_att_read(ast_runtime* rt, Del_att** del_att_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(del_att_vp) *del_att_vp = del_att_v;
+    if(ncdel_att_vp) *ncdel_att_vp = ncdel_att_v;
 done:
     return ACATCH(status);
-} /*Del_att_read*/
+} /*NCDel_att_read*/
 
 ast_err
-Del_att_reclaim(ast_runtime* rt, Del_att* del_att_v)
+NCDel_att_reclaim(ast_runtime* rt, NCDel_att* ncdel_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,del_att_v->name);
+        status = ast_reclaim_string(rt,ncdel_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)del_att_v);
+    ast_free(rt,(void*)ncdel_att_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Del_att_reclaim*/
+} /*NCDel_att_reclaim*/
 
 size_t
-Del_att_get_size(ast_runtime* rt, Del_att* del_att_v)
+NCDel_att_get_size(ast_runtime* rt, NCDel_att* ncdel_att_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&del_att_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdel_att_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&del_att_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdel_att_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&del_att_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdel_att_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Del_att_get_size*/
+} /*NCDel_att_get_size*/
 
 ast_err
-Del_att_Return_write(ast_runtime* rt, Del_att_Return* del_att_return_v)
+NCDel_att_Return_write(ast_runtime* rt, NCDel_att_Return* ncdel_att_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&del_att_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdel_att_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Del_att_Return_write*/
+} /*NCDel_att_Return_write*/
 
 ast_err
-Del_att_Return_read(ast_runtime* rt, Del_att_Return** del_att_return_vp)
+NCDel_att_Return_read(ast_runtime* rt, NCDel_att_Return** ncdel_att_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Del_att_Return* del_att_return_v;
+    NCDel_att_Return* ncdel_att_return_v;
     unsigned long pos;
 
-    del_att_return_v = (Del_att_Return*)ast_alloc(rt,sizeof(Del_att_Return));
-    if(del_att_return_v == NULL) return AST_ENOMEM;
+    ncdel_att_return_v = (NCDel_att_Return*)ast_alloc(rt,sizeof(NCDel_att_Return));
+    if(ncdel_att_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4231,11 +4208,11 @@ Del_att_Return_read(ast_runtime* rt, Del_att_Return** del_att_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Del_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDel_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&del_att_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdel_att_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4243,76 +4220,76 @@ Del_att_Return_read(ast_runtime* rt, Del_att_Return** del_att_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(del_att_return_vp) *del_att_return_vp = del_att_return_v;
+    if(ncdel_att_return_vp) *ncdel_att_return_vp = ncdel_att_return_v;
 done:
     return ACATCH(status);
-} /*Del_att_Return_read*/
+} /*NCDel_att_Return_read*/
 
 ast_err
-Del_att_Return_reclaim(ast_runtime* rt, Del_att_Return* del_att_return_v)
+NCDel_att_Return_reclaim(ast_runtime* rt, NCDel_att_Return* ncdel_att_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)del_att_return_v);
+    ast_free(rt,(void*)ncdel_att_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Del_att_Return_reclaim*/
+} /*NCDel_att_Return_reclaim*/
 
 size_t
-Del_att_Return_get_size(ast_runtime* rt, Del_att_Return* del_att_return_v)
+NCDel_att_Return_get_size(ast_runtime* rt, NCDel_att_Return* ncdel_att_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&del_att_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdel_att_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Del_att_Return_get_size*/
+} /*NCDel_att_Return_get_size*/
 
 ast_err
-Get_att_write(ast_runtime* rt, Get_att* get_att_v)
+NCGet_att_write(ast_runtime* rt, NCGet_att* ncget_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_att_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_att_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&get_att_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncget_att_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&get_att_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncget_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&get_att_v->xtype);
+        status = ast_write_primitive(rt,ast_int32,4,&ncget_att_v->xtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_att_write*/
+} /*NCGet_att_write*/
 
 ast_err
-Get_att_read(ast_runtime* rt, Get_att** get_att_vp)
+NCGet_att_read(ast_runtime* rt, NCGet_att** ncget_att_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_att* get_att_v;
+    NCGet_att* ncget_att_v;
     unsigned long pos;
 
-    get_att_v = (Get_att*)ast_alloc(rt,sizeof(Get_att));
-    if(get_att_v == NULL) return AST_ENOMEM;
+    ncget_att_v = (NCGet_att*)ast_alloc(rt,sizeof(NCGet_att));
+    if(ncget_att_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4320,20 +4297,20 @@ Get_att_read(ast_runtime* rt, Get_att** get_att_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_att_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_att_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&get_att_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncget_att_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&get_att_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncget_att_v->name);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&get_att_v->xtype);
+            status = ast_read_primitive(rt,ast_int32,4,&ncget_att_v->xtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4341,87 +4318,87 @@ Get_att_read(ast_runtime* rt, Get_att** get_att_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_att_vp) *get_att_vp = get_att_v;
+    if(ncget_att_vp) *ncget_att_vp = ncget_att_v;
 done:
     return ACATCH(status);
-} /*Get_att_read*/
+} /*NCGet_att_read*/
 
 ast_err
-Get_att_reclaim(ast_runtime* rt, Get_att* get_att_v)
+NCGet_att_reclaim(ast_runtime* rt, NCGet_att* ncget_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,get_att_v->name);
+        status = ast_reclaim_string(rt,ncget_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)get_att_v);
+    ast_free(rt,(void*)ncget_att_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_att_reclaim*/
+} /*NCGet_att_reclaim*/
 
 size_t
-Get_att_get_size(ast_runtime* rt, Get_att* get_att_v)
+NCGet_att_get_size(ast_runtime* rt, NCGet_att* ncget_att_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_att_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_att_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&get_att_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_att_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&get_att_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncget_att_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&get_att_v->xtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_att_v->xtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_att_get_size*/
+} /*NCGet_att_get_size*/
 
 ast_err
-Get_att_Return_write(ast_runtime* rt, Get_att_Return* get_att_return_v)
+NCGet_att_Return_write(ast_runtime* rt, NCGet_att_Return* ncget_att_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_att_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_att_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,2,&get_att_return_v->values);
+        status = ast_write_primitive(rt,ast_bytes,2,&ncget_att_return_v->values);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_att_Return_write*/
+} /*NCGet_att_Return_write*/
 
 ast_err
-Get_att_Return_read(ast_runtime* rt, Get_att_Return** get_att_return_vp)
+NCGet_att_Return_read(ast_runtime* rt, NCGet_att_Return** ncget_att_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_att_Return* get_att_return_v;
+    NCGet_att_Return* ncget_att_return_v;
     unsigned long pos;
 
-    get_att_return_v = (Get_att_Return*)ast_alloc(rt,sizeof(Get_att_Return));
-    if(get_att_return_v == NULL) return AST_ENOMEM;
+    ncget_att_return_v = (NCGet_att_Return*)ast_alloc(rt,sizeof(NCGet_att_Return));
+    if(ncget_att_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4429,14 +4406,14 @@ Get_att_Return_read(ast_runtime* rt, Get_att_Return** get_att_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_att_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_att_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bytes,2,&get_att_return_v->values);
+            status = ast_read_primitive(rt,ast_bytes,2,&ncget_att_return_v->values);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4444,97 +4421,97 @@ Get_att_Return_read(ast_runtime* rt, Get_att_Return** get_att_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_att_return_vp) *get_att_return_vp = get_att_return_v;
+    if(ncget_att_return_vp) *ncget_att_return_vp = ncget_att_return_v;
 done:
     return ACATCH(status);
-} /*Get_att_Return_read*/
+} /*NCGet_att_Return_read*/
 
 ast_err
-Get_att_Return_reclaim(ast_runtime* rt, Get_att_Return* get_att_return_v)
+NCGet_att_Return_reclaim(ast_runtime* rt, NCGet_att_Return* ncget_att_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&get_att_return_v->values);
+        status = ast_reclaim_bytes(rt,&ncget_att_return_v->values);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)get_att_return_v);
+    ast_free(rt,(void*)ncget_att_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_att_Return_reclaim*/
+} /*NCGet_att_Return_reclaim*/
 
 size_t
-Get_att_Return_get_size(ast_runtime* rt, Get_att_Return* get_att_return_v)
+NCGet_att_Return_get_size(ast_runtime* rt, NCGet_att_Return* ncget_att_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_att_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_att_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bytes,&get_att_return_v->values);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncget_att_return_v->values);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_att_Return_get_size*/
+} /*NCGet_att_Return_get_size*/
 
 ast_err
-Put_att_write(ast_runtime* rt, Put_att* put_att_v)
+NCPut_att_write(ast_runtime* rt, NCPut_att* ncput_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_att_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_att_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&put_att_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncput_att_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&put_att_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncput_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&put_att_v->vtype);
+        status = ast_write_primitive(rt,ast_int32,4,&ncput_att_v->vtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,5,&put_att_v->nelems);
+        status = ast_write_primitive(rt,ast_uint64,5,&ncput_att_v->nelems);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,6,&put_att_v->value);
+        status = ast_write_primitive(rt,ast_bytes,6,&ncput_att_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,7,&put_att_v->atype);
+        status = ast_write_primitive(rt,ast_int32,7,&ncput_att_v->atype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_att_write*/
+} /*NCPut_att_write*/
 
 ast_err
-Put_att_read(ast_runtime* rt, Put_att** put_att_vp)
+NCPut_att_read(ast_runtime* rt, NCPut_att** ncput_att_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_att* put_att_v;
+    NCPut_att* ncput_att_v;
     unsigned long pos;
 
-    put_att_v = (Put_att*)ast_alloc(rt,sizeof(Put_att));
-    if(put_att_v == NULL) return AST_ENOMEM;
+    ncput_att_v = (NCPut_att*)ast_alloc(rt,sizeof(NCPut_att));
+    if(ncput_att_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4542,29 +4519,29 @@ Put_att_read(ast_runtime* rt, Put_att** put_att_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_att|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_att_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_att_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&put_att_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncput_att_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&put_att_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncput_att_v->name);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&put_att_v->vtype);
+            status = ast_read_primitive(rt,ast_int32,4,&ncput_att_v->vtype);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_uint64,5,&put_att_v->nelems);
+            status = ast_read_primitive(rt,ast_uint64,5,&ncput_att_v->nelems);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_bytes,6,&put_att_v->value);
+            status = ast_read_primitive(rt,ast_bytes,6,&ncput_att_v->value);
             } break;
         case 7: {
-            status = ast_read_primitive(rt,ast_int32,7,&put_att_v->atype);
+            status = ast_read_primitive(rt,ast_int32,7,&ncput_att_v->atype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4572,102 +4549,102 @@ Put_att_read(ast_runtime* rt, Put_att** put_att_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_att_vp) *put_att_vp = put_att_v;
+    if(ncput_att_vp) *ncput_att_vp = ncput_att_v;
 done:
     return ACATCH(status);
-} /*Put_att_read*/
+} /*NCPut_att_read*/
 
 ast_err
-Put_att_reclaim(ast_runtime* rt, Put_att* put_att_v)
+NCPut_att_reclaim(ast_runtime* rt, NCPut_att* ncput_att_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,put_att_v->name);
+        status = ast_reclaim_string(rt,ncput_att_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_bytes(rt,&put_att_v->value);
+        status = ast_reclaim_bytes(rt,&ncput_att_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)put_att_v);
+    ast_free(rt,(void*)ncput_att_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_att_reclaim*/
+} /*NCPut_att_reclaim*/
 
 size_t
-Put_att_get_size(ast_runtime* rt, Put_att* put_att_v)
+NCPut_att_get_size(ast_runtime* rt, NCPut_att* ncput_att_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_att_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_att_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&put_att_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_att_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&put_att_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncput_att_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&put_att_v->vtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_att_v->vtype);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_uint64,&put_att_v->nelems);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncput_att_v->nelems);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_bytes,&put_att_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncput_att_v->value);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,7);
-        fieldsize += ast_get_size(rt,ast_int32,&put_att_v->atype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_att_v->atype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_att_get_size*/
+} /*NCPut_att_get_size*/
 
 ast_err
-Put_att_Return_write(ast_runtime* rt, Put_att_Return* put_att_return_v)
+NCPut_att_Return_write(ast_runtime* rt, NCPut_att_Return* ncput_att_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_att_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_att_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_att_Return_write*/
+} /*NCPut_att_Return_write*/
 
 ast_err
-Put_att_Return_read(ast_runtime* rt, Put_att_Return** put_att_return_vp)
+NCPut_att_Return_read(ast_runtime* rt, NCPut_att_Return** ncput_att_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_att_Return* put_att_return_v;
+    NCPut_att_Return* ncput_att_return_v;
     unsigned long pos;
 
-    put_att_return_v = (Put_att_Return*)ast_alloc(rt,sizeof(Put_att_Return));
-    if(put_att_return_v == NULL) return AST_ENOMEM;
+    ncput_att_return_v = (NCPut_att_Return*)ast_alloc(rt,sizeof(NCPut_att_Return));
+    if(ncput_att_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4675,11 +4652,11 @@ Put_att_Return_read(ast_runtime* rt, Put_att_Return** put_att_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_att_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_att_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_att_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4687,64 +4664,64 @@ Put_att_Return_read(ast_runtime* rt, Put_att_Return** put_att_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_att_return_vp) *put_att_return_vp = put_att_return_v;
+    if(ncput_att_return_vp) *ncput_att_return_vp = ncput_att_return_v;
 done:
     return ACATCH(status);
-} /*Put_att_Return_read*/
+} /*NCPut_att_Return_read*/
 
 ast_err
-Put_att_Return_reclaim(ast_runtime* rt, Put_att_Return* put_att_return_v)
+NCPut_att_Return_reclaim(ast_runtime* rt, NCPut_att_Return* ncput_att_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)put_att_return_v);
+    ast_free(rt,(void*)ncput_att_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_att_Return_reclaim*/
+} /*NCPut_att_Return_reclaim*/
 
 size_t
-Put_att_Return_get_size(ast_runtime* rt, Put_att_Return* put_att_return_v)
+NCPut_att_Return_get_size(ast_runtime* rt, NCPut_att_Return* ncput_att_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_att_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_att_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_att_Return_get_size*/
+} /*NCPut_att_Return_get_size*/
 
 ast_err
-Def_var_write(ast_runtime* rt, Def_var* def_var_v)
+NCDef_Var_write(ast_runtime* rt, NCDef_Var* ncdef_var_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&def_var_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncdef_var_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&def_var_v->xtype);
+        status = ast_write_primitive(rt,ast_int32,3,&ncdef_var_v->xtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&def_var_v->ndims);
+        status = ast_write_primitive(rt,ast_int32,4,&ncdef_var_v->ndims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<def_var_v->dimids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,5,&def_var_v->dimids.values[i]);
+        for(i=0;i<ncdef_var_v->dimids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,5,&ncdef_var_v->dimids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -4752,18 +4729,18 @@ Def_var_write(ast_runtime* rt, Def_var* def_var_v)
 done:
     return ACATCH(status);
 
-} /*Def_var_write*/
+} /*NCDef_Var_write*/
 
 ast_err
-Def_var_read(ast_runtime* rt, Def_var** def_var_vp)
+NCDef_Var_read(ast_runtime* rt, NCDef_Var** ncdef_var_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var* def_var_v;
+    NCDef_Var* ncdef_var_v;
     unsigned long pos;
 
-    def_var_v = (Def_var*)ast_alloc(rt,sizeof(Def_var));
-    if(def_var_v == NULL) return AST_ENOMEM;
+    ncdef_var_v = (NCDef_Var*)ast_alloc(rt,sizeof(NCDef_Var));
+    if(ncdef_var_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4771,26 +4748,26 @@ Def_var_read(ast_runtime* rt, Def_var** def_var_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&def_var_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncdef_var_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&def_var_v->xtype);
+            status = ast_read_primitive(rt,ast_int32,3,&ncdef_var_v->xtype);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&def_var_v->ndims);
+            status = ast_read_primitive(rt,ast_int32,4,&ncdef_var_v->ndims);
             } break;
         case 5: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,5,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&def_var_v->dimids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncdef_var_v->dimids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -4799,95 +4776,95 @@ Def_var_read(ast_runtime* rt, Def_var** def_var_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_vp) *def_var_vp = def_var_v;
+    if(ncdef_var_vp) *ncdef_var_vp = ncdef_var_v;
 done:
     return ACATCH(status);
-} /*Def_var_read*/
+} /*NCDef_Var_read*/
 
 ast_err
-Def_var_reclaim(ast_runtime* rt, Def_var* def_var_v)
+NCDef_Var_reclaim(ast_runtime* rt, NCDef_Var* ncdef_var_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_var_v->name);
+        status = ast_reclaim_string(rt,ncdef_var_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_var_v);
+    ast_free(rt,(void*)ncdef_var_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_reclaim*/
+} /*NCDef_Var_reclaim*/
 
 size_t
-Def_var_get_size(ast_runtime* rt, Def_var* def_var_v)
+NCDef_Var_get_size(ast_runtime* rt, NCDef_Var* ncdef_var_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&def_var_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_var_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_v->xtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_v->xtype);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_v->ndims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_v->ndims);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<def_var_v->dimids.count;i++) {
+        for(i=0;i<ncdef_var_v->dimids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,5);
-            fieldsize += ast_get_size(rt,ast_int32,&def_var_v->dimids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_v->dimids.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_get_size*/
+} /*NCDef_Var_get_size*/
 
 ast_err
-Def_var_Return_write(ast_runtime* rt, Def_var_Return* def_var_return_v)
+NCDef_Var_Return_write(ast_runtime* rt, NCDef_Var_Return* ncdef_var_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_var_return_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_var_return_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_Return_write*/
+} /*NCDef_Var_Return_write*/
 
 ast_err
-Def_var_Return_read(ast_runtime* rt, Def_var_Return** def_var_return_vp)
+NCDef_Var_Return_read(ast_runtime* rt, NCDef_Var_Return** ncdef_var_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_Return* def_var_return_v;
+    NCDef_Var_Return* ncdef_var_return_v;
     unsigned long pos;
 
-    def_var_return_v = (Def_var_Return*)ast_alloc(rt,sizeof(Def_var_Return));
-    if(def_var_return_v == NULL) return AST_ENOMEM;
+    ncdef_var_return_v = (NCDef_Var_Return*)ast_alloc(rt,sizeof(NCDef_Var_Return));
+    if(ncdef_var_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4895,14 +4872,14 @@ Def_var_Return_read(ast_runtime* rt, Def_var_Return** def_var_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_var_return_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_var_return_v->varid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4910,73 +4887,73 @@ Def_var_Return_read(ast_runtime* rt, Def_var_Return** def_var_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_return_vp) *def_var_return_vp = def_var_return_v;
+    if(ncdef_var_return_vp) *ncdef_var_return_vp = ncdef_var_return_v;
 done:
     return ACATCH(status);
-} /*Def_var_Return_read*/
+} /*NCDef_Var_Return_read*/
 
 ast_err
-Def_var_Return_reclaim(ast_runtime* rt, Def_var_Return* def_var_return_v)
+NCDef_Var_Return_reclaim(ast_runtime* rt, NCDef_Var_Return* ncdef_var_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_return_v);
+    ast_free(rt,(void*)ncdef_var_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_Return_reclaim*/
+} /*NCDef_Var_Return_reclaim*/
 
 size_t
-Def_var_Return_get_size(ast_runtime* rt, Def_var_Return* def_var_return_v)
+NCDef_Var_Return_get_size(ast_runtime* rt, NCDef_Var_Return* ncdef_var_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_return_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_return_v->varid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_Return_get_size*/
+} /*NCDef_Var_Return_get_size*/
 
 ast_err
-Inq_varid_write(ast_runtime* rt, Inq_varid* inq_varid_v)
+NCInq_varid_write(ast_runtime* rt, NCInq_varid* ncinq_varid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_varid_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_varid_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_varid_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_varid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_varid_write*/
+} /*NCInq_varid_write*/
 
 ast_err
-Inq_varid_read(ast_runtime* rt, Inq_varid** inq_varid_vp)
+NCInq_varid_read(ast_runtime* rt, NCInq_varid** ncinq_varid_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_varid* inq_varid_v;
+    NCInq_varid* ncinq_varid_v;
     unsigned long pos;
 
-    inq_varid_v = (Inq_varid*)ast_alloc(rt,sizeof(Inq_varid));
-    if(inq_varid_v == NULL) return AST_ENOMEM;
+    ncinq_varid_v = (NCInq_varid*)ast_alloc(rt,sizeof(NCInq_varid));
+    if(ncinq_varid_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -4984,14 +4961,14 @@ Inq_varid_read(ast_runtime* rt, Inq_varid** inq_varid_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_varid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_varid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_varid_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_varid_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_varid_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_varid_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -4999,77 +4976,77 @@ Inq_varid_read(ast_runtime* rt, Inq_varid** inq_varid_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_varid_vp) *inq_varid_vp = inq_varid_v;
+    if(ncinq_varid_vp) *ncinq_varid_vp = ncinq_varid_v;
 done:
     return ACATCH(status);
-} /*Inq_varid_read*/
+} /*NCInq_varid_read*/
 
 ast_err
-Inq_varid_reclaim(ast_runtime* rt, Inq_varid* inq_varid_v)
+NCInq_varid_reclaim(ast_runtime* rt, NCInq_varid* ncinq_varid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_varid_v->name);
+        status = ast_reclaim_string(rt,ncinq_varid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_varid_v);
+    ast_free(rt,(void*)ncinq_varid_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_varid_reclaim*/
+} /*NCInq_varid_reclaim*/
 
 size_t
-Inq_varid_get_size(ast_runtime* rt, Inq_varid* inq_varid_v)
+NCInq_varid_get_size(ast_runtime* rt, NCInq_varid* ncinq_varid_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_varid_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_varid_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_varid_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_varid_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_varid_get_size*/
+} /*NCInq_varid_get_size*/
 
 ast_err
-Inq_varid_Return_write(ast_runtime* rt, Inq_varid_Return* inq_varid_return_v)
+NCInq_varid_Return_write(ast_runtime* rt, NCInq_varid_Return* ncinq_varid_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_varid_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_varid_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_varid_return_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_varid_return_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_varid_Return_write*/
+} /*NCInq_varid_Return_write*/
 
 ast_err
-Inq_varid_Return_read(ast_runtime* rt, Inq_varid_Return** inq_varid_return_vp)
+NCInq_varid_Return_read(ast_runtime* rt, NCInq_varid_Return** ncinq_varid_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_varid_Return* inq_varid_return_v;
+    NCInq_varid_Return* ncinq_varid_return_v;
     unsigned long pos;
 
-    inq_varid_return_v = (Inq_varid_Return*)ast_alloc(rt,sizeof(Inq_varid_Return));
-    if(inq_varid_return_v == NULL) return AST_ENOMEM;
+    ncinq_varid_return_v = (NCInq_varid_Return*)ast_alloc(rt,sizeof(NCInq_varid_Return));
+    if(ncinq_varid_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5077,14 +5054,14 @@ Inq_varid_Return_read(ast_runtime* rt, Inq_varid_Return** inq_varid_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_varid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_varid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_varid_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_varid_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_varid_return_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_varid_return_v->varid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5092,77 +5069,77 @@ Inq_varid_Return_read(ast_runtime* rt, Inq_varid_Return** inq_varid_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_varid_return_vp) *inq_varid_return_vp = inq_varid_return_v;
+    if(ncinq_varid_return_vp) *ncinq_varid_return_vp = ncinq_varid_return_v;
 done:
     return ACATCH(status);
-} /*Inq_varid_Return_read*/
+} /*NCInq_varid_Return_read*/
 
 ast_err
-Inq_varid_Return_reclaim(ast_runtime* rt, Inq_varid_Return* inq_varid_return_v)
+NCInq_varid_Return_reclaim(ast_runtime* rt, NCInq_varid_Return* ncinq_varid_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_varid_return_v);
+    ast_free(rt,(void*)ncinq_varid_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_varid_Return_reclaim*/
+} /*NCInq_varid_Return_reclaim*/
 
 size_t
-Inq_varid_Return_get_size(ast_runtime* rt, Inq_varid_Return* inq_varid_return_v)
+NCInq_varid_Return_get_size(ast_runtime* rt, NCInq_varid_Return* ncinq_varid_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_varid_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_varid_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_varid_return_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_varid_return_v->varid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_varid_Return_get_size*/
+} /*NCInq_varid_Return_get_size*/
 
 ast_err
-Rename_var_write(ast_runtime* rt, Rename_var* rename_var_v)
+NCRename_var_write(ast_runtime* rt, NCRename_var* ncrename_var_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&rename_var_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncrename_var_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&rename_var_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncrename_var_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&rename_var_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncrename_var_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Rename_var_write*/
+} /*NCRename_var_write*/
 
 ast_err
-Rename_var_read(ast_runtime* rt, Rename_var** rename_var_vp)
+NCRename_var_read(ast_runtime* rt, NCRename_var** ncrename_var_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Rename_var* rename_var_v;
+    NCRename_var* ncrename_var_v;
     unsigned long pos;
 
-    rename_var_v = (Rename_var*)ast_alloc(rt,sizeof(Rename_var));
-    if(rename_var_v == NULL) return AST_ENOMEM;
+    ncrename_var_v = (NCRename_var*)ast_alloc(rt,sizeof(NCRename_var));
+    if(ncrename_var_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5170,17 +5147,17 @@ Rename_var_read(ast_runtime* rt, Rename_var** rename_var_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Rename_var|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRename_var|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&rename_var_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncrename_var_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&rename_var_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncrename_var_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&rename_var_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncrename_var_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5188,78 +5165,78 @@ Rename_var_read(ast_runtime* rt, Rename_var** rename_var_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(rename_var_vp) *rename_var_vp = rename_var_v;
+    if(ncrename_var_vp) *ncrename_var_vp = ncrename_var_v;
 done:
     return ACATCH(status);
-} /*Rename_var_read*/
+} /*NCRename_var_read*/
 
 ast_err
-Rename_var_reclaim(ast_runtime* rt, Rename_var* rename_var_v)
+NCRename_var_reclaim(ast_runtime* rt, NCRename_var* ncrename_var_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,rename_var_v->name);
+        status = ast_reclaim_string(rt,ncrename_var_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)rename_var_v);
+    ast_free(rt,(void*)ncrename_var_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Rename_var_reclaim*/
+} /*NCRename_var_reclaim*/
 
 size_t
-Rename_var_get_size(ast_runtime* rt, Rename_var* rename_var_v)
+NCRename_var_get_size(ast_runtime* rt, NCRename_var* ncrename_var_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_var_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_var_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_var_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_var_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&rename_var_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncrename_var_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Rename_var_get_size*/
+} /*NCRename_var_get_size*/
 
 ast_err
-Rename_var_Return_write(ast_runtime* rt, Rename_var_Return* rename_var_return_v)
+NCRename_var_Return_write(ast_runtime* rt, NCRename_var_Return* ncrename_var_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&rename_var_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncrename_var_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Rename_var_Return_write*/
+} /*NCRename_var_Return_write*/
 
 ast_err
-Rename_var_Return_read(ast_runtime* rt, Rename_var_Return** rename_var_return_vp)
+NCRename_var_Return_read(ast_runtime* rt, NCRename_var_Return** ncrename_var_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Rename_var_Return* rename_var_return_v;
+    NCRename_var_Return* ncrename_var_return_v;
     unsigned long pos;
 
-    rename_var_return_v = (Rename_var_Return*)ast_alloc(rt,sizeof(Rename_var_Return));
-    if(rename_var_return_v == NULL) return AST_ENOMEM;
+    ncrename_var_return_v = (NCRename_var_Return*)ast_alloc(rt,sizeof(NCRename_var_Return));
+    if(ncrename_var_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5267,11 +5244,11 @@ Rename_var_Return_read(ast_runtime* rt, Rename_var_Return** rename_var_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Rename_var_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCRename_var_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&rename_var_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncrename_var_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5279,86 +5256,86 @@ Rename_var_Return_read(ast_runtime* rt, Rename_var_Return** rename_var_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(rename_var_return_vp) *rename_var_return_vp = rename_var_return_v;
+    if(ncrename_var_return_vp) *ncrename_var_return_vp = ncrename_var_return_v;
 done:
     return ACATCH(status);
-} /*Rename_var_Return_read*/
+} /*NCRename_var_Return_read*/
 
 ast_err
-Rename_var_Return_reclaim(ast_runtime* rt, Rename_var_Return* rename_var_return_v)
+NCRename_var_Return_reclaim(ast_runtime* rt, NCRename_var_Return* ncrename_var_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)rename_var_return_v);
+    ast_free(rt,(void*)ncrename_var_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Rename_var_Return_reclaim*/
+} /*NCRename_var_Return_reclaim*/
 
 size_t
-Rename_var_Return_get_size(ast_runtime* rt, Rename_var_Return* rename_var_return_v)
+NCRename_var_Return_get_size(ast_runtime* rt, NCRename_var_Return* ncrename_var_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&rename_var_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncrename_var_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Rename_var_Return_get_size*/
+} /*NCRename_var_Return_get_size*/
 
 ast_err
-Get_vara_write(ast_runtime* rt, Get_vara* get_vara_v)
+NCGet_vara_write(ast_runtime* rt, NCGet_vara* ncget_vara_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_vara_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_vara_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&get_vara_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncget_vara_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<get_vara_v->start.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,3,&get_vara_v->start.values[i]);
+        for(i=0;i<ncget_vara_v->start.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,3,&ncget_vara_v->start.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<get_vara_v->edges.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&get_vara_v->edges.values[i]);
+        for(i=0;i<ncget_vara_v->edges.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncget_vara_v->edges.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&get_vara_v->memtype);
+        status = ast_write_primitive(rt,ast_int32,5,&ncget_vara_v->memtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_vara_write*/
+} /*NCGet_vara_write*/
 
 ast_err
-Get_vara_read(ast_runtime* rt, Get_vara** get_vara_vp)
+NCGet_vara_read(ast_runtime* rt, NCGet_vara** ncget_vara_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_vara* get_vara_v;
+    NCGet_vara* ncget_vara_v;
     unsigned long pos;
 
-    get_vara_v = (Get_vara*)ast_alloc(rt,sizeof(Get_vara));
-    if(get_vara_v == NULL) return AST_ENOMEM;
+    ncget_vara_v = (NCGet_vara*)ast_alloc(rt,sizeof(NCGet_vara));
+    if(ncget_vara_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5366,31 +5343,31 @@ Get_vara_read(ast_runtime* rt, Get_vara** get_vara_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_vara|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_vara|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_vara_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_vara_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&get_vara_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncget_vara_v->varid);
             } break;
         case 3: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_vara_v->start,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_vara_v->start,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_vara_v->edges,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_vara_v->edges,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&get_vara_v->memtype);
+            status = ast_read_primitive(rt,ast_int32,5,&ncget_vara_v->memtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5398,94 +5375,94 @@ Get_vara_read(ast_runtime* rt, Get_vara** get_vara_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_vara_vp) *get_vara_vp = get_vara_v;
+    if(ncget_vara_vp) *ncget_vara_vp = ncget_vara_v;
 done:
     return ACATCH(status);
-} /*Get_vara_read*/
+} /*NCGet_vara_read*/
 
 ast_err
-Get_vara_reclaim(ast_runtime* rt, Get_vara* get_vara_v)
+NCGet_vara_reclaim(ast_runtime* rt, NCGet_vara* ncget_vara_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)get_vara_v);
+    ast_free(rt,(void*)ncget_vara_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_vara_reclaim*/
+} /*NCGet_vara_reclaim*/
 
 size_t
-Get_vara_get_size(ast_runtime* rt, Get_vara* get_vara_v)
+NCGet_vara_get_size(ast_runtime* rt, NCGet_vara* ncget_vara_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vara_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vara_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vara_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vara_v->varid);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_vara_v->start.count;i++) {
+        for(i=0;i<ncget_vara_v->start.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_vara_v->start.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_vara_v->start.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_vara_v->edges.count;i++) {
+        for(i=0;i<ncget_vara_v->edges.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_vara_v->edges.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_vara_v->edges.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vara_v->memtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vara_v->memtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_vara_get_size*/
+} /*NCGet_vara_get_size*/
 
 ast_err
-Get_vara_Return_write(ast_runtime* rt, Get_vara_Return* get_vara_return_v)
+NCGet_vara_Return_write(ast_runtime* rt, NCGet_vara_Return* ncget_vara_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_vara_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_vara_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,2,&get_vara_return_v->value);
+        status = ast_write_primitive(rt,ast_bytes,2,&ncget_vara_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_vara_Return_write*/
+} /*NCGet_vara_Return_write*/
 
 ast_err
-Get_vara_Return_read(ast_runtime* rt, Get_vara_Return** get_vara_return_vp)
+NCGet_vara_Return_read(ast_runtime* rt, NCGet_vara_Return** ncget_vara_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_vara_Return* get_vara_return_v;
+    NCGet_vara_Return* ncget_vara_return_v;
     unsigned long pos;
 
-    get_vara_return_v = (Get_vara_Return*)ast_alloc(rt,sizeof(Get_vara_Return));
-    if(get_vara_return_v == NULL) return AST_ENOMEM;
+    ncget_vara_return_v = (NCGet_vara_Return*)ast_alloc(rt,sizeof(NCGet_vara_Return));
+    if(ncget_vara_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5493,14 +5470,14 @@ Get_vara_Return_read(ast_runtime* rt, Get_vara_Return** get_vara_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_vara_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_vara_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_vara_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_vara_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bytes,2,&get_vara_return_v->value);
+            status = ast_read_primitive(rt,ast_bytes,2,&ncget_vara_return_v->value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5508,99 +5485,99 @@ Get_vara_Return_read(ast_runtime* rt, Get_vara_Return** get_vara_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_vara_return_vp) *get_vara_return_vp = get_vara_return_v;
+    if(ncget_vara_return_vp) *ncget_vara_return_vp = ncget_vara_return_v;
 done:
     return ACATCH(status);
-} /*Get_vara_Return_read*/
+} /*NCGet_vara_Return_read*/
 
 ast_err
-Get_vara_Return_reclaim(ast_runtime* rt, Get_vara_Return* get_vara_return_v)
+NCGet_vara_Return_reclaim(ast_runtime* rt, NCGet_vara_Return* ncget_vara_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&get_vara_return_v->value);
+        status = ast_reclaim_bytes(rt,&ncget_vara_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)get_vara_return_v);
+    ast_free(rt,(void*)ncget_vara_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_vara_Return_reclaim*/
+} /*NCGet_vara_Return_reclaim*/
 
 size_t
-Get_vara_Return_get_size(ast_runtime* rt, Get_vara_Return* get_vara_return_v)
+NCGet_vara_Return_get_size(ast_runtime* rt, NCGet_vara_Return* ncget_vara_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vara_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vara_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bytes,&get_vara_return_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncget_vara_return_v->value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_vara_Return_get_size*/
+} /*NCGet_vara_Return_get_size*/
 
 ast_err
-Put_vara_write(ast_runtime* rt, Put_vara* put_vara_v)
+NCPut_vara_write(ast_runtime* rt, NCPut_vara* ncput_vara_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_vara_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_vara_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&put_vara_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncput_vara_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<put_vara_v->start.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,3,&put_vara_v->start.values[i]);
+        for(i=0;i<ncput_vara_v->start.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,3,&ncput_vara_v->start.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<put_vara_v->edges.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&put_vara_v->edges.values[i]);
+        for(i=0;i<ncput_vara_v->edges.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncput_vara_v->edges.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,5,&put_vara_v->value);
+        status = ast_write_primitive(rt,ast_bytes,5,&ncput_vara_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,6,&put_vara_v->memtype);
+        status = ast_write_primitive(rt,ast_int32,6,&ncput_vara_v->memtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_vara_write*/
+} /*NCPut_vara_write*/
 
 ast_err
-Put_vara_read(ast_runtime* rt, Put_vara** put_vara_vp)
+NCPut_vara_read(ast_runtime* rt, NCPut_vara** ncput_vara_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_vara* put_vara_v;
+    NCPut_vara* ncput_vara_v;
     unsigned long pos;
 
-    put_vara_v = (Put_vara*)ast_alloc(rt,sizeof(Put_vara));
-    if(put_vara_v == NULL) return AST_ENOMEM;
+    ncput_vara_v = (NCPut_vara*)ast_alloc(rt,sizeof(NCPut_vara));
+    if(ncput_vara_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5608,34 +5585,34 @@ Put_vara_read(ast_runtime* rt, Put_vara** put_vara_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_vara|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_vara|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_vara_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_vara_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&put_vara_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncput_vara_v->varid);
             } break;
         case 3: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_vara_v->start,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_vara_v->start,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_vara_v->edges,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_vara_v->edges,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_bytes,5,&put_vara_v->value);
+            status = ast_read_primitive(rt,ast_bytes,5,&ncput_vara_v->value);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_int32,6,&put_vara_v->memtype);
+            status = ast_read_primitive(rt,ast_int32,6,&ncput_vara_v->memtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5643,99 +5620,99 @@ Put_vara_read(ast_runtime* rt, Put_vara** put_vara_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_vara_vp) *put_vara_vp = put_vara_v;
+    if(ncput_vara_vp) *ncput_vara_vp = ncput_vara_v;
 done:
     return ACATCH(status);
-} /*Put_vara_read*/
+} /*NCPut_vara_read*/
 
 ast_err
-Put_vara_reclaim(ast_runtime* rt, Put_vara* put_vara_v)
+NCPut_vara_reclaim(ast_runtime* rt, NCPut_vara* ncput_vara_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&put_vara_v->value);
+        status = ast_reclaim_bytes(rt,&ncput_vara_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)put_vara_v);
+    ast_free(rt,(void*)ncput_vara_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_vara_reclaim*/
+} /*NCPut_vara_reclaim*/
 
 size_t
-Put_vara_get_size(ast_runtime* rt, Put_vara* put_vara_v)
+NCPut_vara_get_size(ast_runtime* rt, NCPut_vara* ncput_vara_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vara_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vara_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vara_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vara_v->varid);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_vara_v->start.count;i++) {
+        for(i=0;i<ncput_vara_v->start.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_vara_v->start.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_vara_v->start.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_vara_v->edges.count;i++) {
+        for(i=0;i<ncput_vara_v->edges.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_vara_v->edges.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_vara_v->edges.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_bytes,&put_vara_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncput_vara_v->value);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vara_v->memtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vara_v->memtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_vara_get_size*/
+} /*NCPut_vara_get_size*/
 
 ast_err
-Put_vara_Return_write(ast_runtime* rt, Put_vara_Return* put_vara_return_v)
+NCPut_vara_Return_write(ast_runtime* rt, NCPut_vara_Return* ncput_vara_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_vara_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_vara_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_vara_Return_write*/
+} /*NCPut_vara_Return_write*/
 
 ast_err
-Put_vara_Return_read(ast_runtime* rt, Put_vara_Return** put_vara_return_vp)
+NCPut_vara_Return_read(ast_runtime* rt, NCPut_vara_Return** ncput_vara_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_vara_Return* put_vara_return_v;
+    NCPut_vara_Return* ncput_vara_return_v;
     unsigned long pos;
 
-    put_vara_return_v = (Put_vara_Return*)ast_alloc(rt,sizeof(Put_vara_Return));
-    if(put_vara_return_v == NULL) return AST_ENOMEM;
+    ncput_vara_return_v = (NCPut_vara_Return*)ast_alloc(rt,sizeof(NCPut_vara_Return));
+    if(ncput_vara_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5743,11 +5720,11 @@ Put_vara_Return_read(ast_runtime* rt, Put_vara_Return** put_vara_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_vara_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_vara_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_vara_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_vara_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5755,93 +5732,93 @@ Put_vara_Return_read(ast_runtime* rt, Put_vara_Return** put_vara_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_vara_return_vp) *put_vara_return_vp = put_vara_return_v;
+    if(ncput_vara_return_vp) *ncput_vara_return_vp = ncput_vara_return_v;
 done:
     return ACATCH(status);
-} /*Put_vara_Return_read*/
+} /*NCPut_vara_Return_read*/
 
 ast_err
-Put_vara_Return_reclaim(ast_runtime* rt, Put_vara_Return* put_vara_return_v)
+NCPut_vara_Return_reclaim(ast_runtime* rt, NCPut_vara_Return* ncput_vara_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)put_vara_return_v);
+    ast_free(rt,(void*)ncput_vara_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_vara_Return_reclaim*/
+} /*NCPut_vara_Return_reclaim*/
 
 size_t
-Put_vara_Return_get_size(ast_runtime* rt, Put_vara_Return* put_vara_return_v)
+NCPut_vara_Return_get_size(ast_runtime* rt, NCPut_vara_Return* ncput_vara_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vara_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vara_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_vara_Return_get_size*/
+} /*NCPut_vara_Return_get_size*/
 
 ast_err
-Get_vars_write(ast_runtime* rt, Get_vars* get_vars_v)
+NCGet_vars_write(ast_runtime* rt, NCGet_vars* ncget_vars_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_vars_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_vars_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&get_vars_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncget_vars_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<get_vars_v->start.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,3,&get_vars_v->start.values[i]);
+        for(i=0;i<ncget_vars_v->start.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,3,&ncget_vars_v->start.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<get_vars_v->edges.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&get_vars_v->edges.values[i]);
+        for(i=0;i<ncget_vars_v->edges.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncget_vars_v->edges.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<get_vars_v->stride.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,5,&get_vars_v->stride.values[i]);
+        for(i=0;i<ncget_vars_v->stride.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,5,&ncget_vars_v->stride.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_int32,6,&get_vars_v->memtype);
+        status = ast_write_primitive(rt,ast_int32,6,&ncget_vars_v->memtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_vars_write*/
+} /*NCGet_vars_write*/
 
 ast_err
-Get_vars_read(ast_runtime* rt, Get_vars** get_vars_vp)
+NCGet_vars_read(ast_runtime* rt, NCGet_vars** ncget_vars_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_vars* get_vars_v;
+    NCGet_vars* ncget_vars_v;
     unsigned long pos;
 
-    get_vars_v = (Get_vars*)ast_alloc(rt,sizeof(Get_vars));
-    if(get_vars_v == NULL) return AST_ENOMEM;
+    ncget_vars_v = (NCGet_vars*)ast_alloc(rt,sizeof(NCGet_vars));
+    if(ncget_vars_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5849,38 +5826,38 @@ Get_vars_read(ast_runtime* rt, Get_vars** get_vars_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_vars|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_vars|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_vars_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_vars_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&get_vars_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncget_vars_v->varid);
             } break;
         case 3: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_vars_v->start,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_vars_v->start,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_vars_v->edges,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_vars_v->edges,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,5,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_vars_v->stride,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_vars_v->stride,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_int32,6,&get_vars_v->memtype);
+            status = ast_read_primitive(rt,ast_int32,6,&ncget_vars_v->memtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -5888,102 +5865,102 @@ Get_vars_read(ast_runtime* rt, Get_vars** get_vars_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_vars_vp) *get_vars_vp = get_vars_v;
+    if(ncget_vars_vp) *ncget_vars_vp = ncget_vars_v;
 done:
     return ACATCH(status);
-} /*Get_vars_read*/
+} /*NCGet_vars_read*/
 
 ast_err
-Get_vars_reclaim(ast_runtime* rt, Get_vars* get_vars_v)
+NCGet_vars_reclaim(ast_runtime* rt, NCGet_vars* ncget_vars_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)get_vars_v);
+    ast_free(rt,(void*)ncget_vars_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_vars_reclaim*/
+} /*NCGet_vars_reclaim*/
 
 size_t
-Get_vars_get_size(ast_runtime* rt, Get_vars* get_vars_v)
+NCGet_vars_get_size(ast_runtime* rt, NCGet_vars* ncget_vars_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vars_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vars_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vars_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vars_v->varid);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_vars_v->start.count;i++) {
+        for(i=0;i<ncget_vars_v->start.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_vars_v->start.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_vars_v->start.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_vars_v->edges.count;i++) {
+        for(i=0;i<ncget_vars_v->edges.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_vars_v->edges.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_vars_v->edges.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_vars_v->stride.count;i++) {
+        for(i=0;i<ncget_vars_v->stride.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,5);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_vars_v->stride.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_vars_v->stride.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vars_v->memtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vars_v->memtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_vars_get_size*/
+} /*NCGet_vars_get_size*/
 
 ast_err
-Get_vars_Return_write(ast_runtime* rt, Get_vars_Return* get_vars_return_v)
+NCGet_vars_Return_write(ast_runtime* rt, NCGet_vars_Return* ncget_vars_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_vars_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_vars_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,2,&get_vars_return_v->value);
+        status = ast_write_primitive(rt,ast_bytes,2,&ncget_vars_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_vars_Return_write*/
+} /*NCGet_vars_Return_write*/
 
 ast_err
-Get_vars_Return_read(ast_runtime* rt, Get_vars_Return** get_vars_return_vp)
+NCGet_vars_Return_read(ast_runtime* rt, NCGet_vars_Return** ncget_vars_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_vars_Return* get_vars_return_v;
+    NCGet_vars_Return* ncget_vars_return_v;
     unsigned long pos;
 
-    get_vars_return_v = (Get_vars_Return*)ast_alloc(rt,sizeof(Get_vars_Return));
-    if(get_vars_return_v == NULL) return AST_ENOMEM;
+    ncget_vars_return_v = (NCGet_vars_Return*)ast_alloc(rt,sizeof(NCGet_vars_Return));
+    if(ncget_vars_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -5991,14 +5968,14 @@ Get_vars_Return_read(ast_runtime* rt, Get_vars_Return** get_vars_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_vars_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_vars_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_vars_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_vars_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bytes,2,&get_vars_return_v->value);
+            status = ast_read_primitive(rt,ast_bytes,2,&ncget_vars_return_v->value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6006,106 +5983,106 @@ Get_vars_Return_read(ast_runtime* rt, Get_vars_Return** get_vars_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_vars_return_vp) *get_vars_return_vp = get_vars_return_v;
+    if(ncget_vars_return_vp) *ncget_vars_return_vp = ncget_vars_return_v;
 done:
     return ACATCH(status);
-} /*Get_vars_Return_read*/
+} /*NCGet_vars_Return_read*/
 
 ast_err
-Get_vars_Return_reclaim(ast_runtime* rt, Get_vars_Return* get_vars_return_v)
+NCGet_vars_Return_reclaim(ast_runtime* rt, NCGet_vars_Return* ncget_vars_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&get_vars_return_v->value);
+        status = ast_reclaim_bytes(rt,&ncget_vars_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)get_vars_return_v);
+    ast_free(rt,(void*)ncget_vars_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_vars_Return_reclaim*/
+} /*NCGet_vars_Return_reclaim*/
 
 size_t
-Get_vars_Return_get_size(ast_runtime* rt, Get_vars_Return* get_vars_return_v)
+NCGet_vars_Return_get_size(ast_runtime* rt, NCGet_vars_Return* ncget_vars_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vars_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vars_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bytes,&get_vars_return_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncget_vars_return_v->value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_vars_Return_get_size*/
+} /*NCGet_vars_Return_get_size*/
 
 ast_err
-Put_vars_write(ast_runtime* rt, Put_vars* put_vars_v)
+NCPut_vars_write(ast_runtime* rt, NCPut_vars* ncput_vars_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_vars_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_vars_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&put_vars_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncput_vars_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<put_vars_v->start.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,3,&put_vars_v->start.values[i]);
+        for(i=0;i<ncput_vars_v->start.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,3,&ncput_vars_v->start.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<put_vars_v->edges.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&put_vars_v->edges.values[i]);
+        for(i=0;i<ncput_vars_v->edges.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncput_vars_v->edges.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<put_vars_v->stride.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,5,&put_vars_v->stride.values[i]);
+        for(i=0;i<ncput_vars_v->stride.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,5,&ncput_vars_v->stride.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,6,&put_vars_v->value);
+        status = ast_write_primitive(rt,ast_bytes,6,&ncput_vars_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,7,&put_vars_v->memtype);
+        status = ast_write_primitive(rt,ast_int32,7,&ncput_vars_v->memtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_vars_write*/
+} /*NCPut_vars_write*/
 
 ast_err
-Put_vars_read(ast_runtime* rt, Put_vars** put_vars_vp)
+NCPut_vars_read(ast_runtime* rt, NCPut_vars** ncput_vars_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_vars* put_vars_v;
+    NCPut_vars* ncput_vars_v;
     unsigned long pos;
 
-    put_vars_v = (Put_vars*)ast_alloc(rt,sizeof(Put_vars));
-    if(put_vars_v == NULL) return AST_ENOMEM;
+    ncput_vars_v = (NCPut_vars*)ast_alloc(rt,sizeof(NCPut_vars));
+    if(ncput_vars_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6113,41 +6090,41 @@ Put_vars_read(ast_runtime* rt, Put_vars** put_vars_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_vars|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_vars|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_vars_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_vars_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&put_vars_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncput_vars_v->varid);
             } break;
         case 3: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_vars_v->start,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_vars_v->start,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_vars_v->edges,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_vars_v->edges,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,5,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_vars_v->stride,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_vars_v->stride,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_bytes,6,&put_vars_v->value);
+            status = ast_read_primitive(rt,ast_bytes,6,&ncput_vars_v->value);
             } break;
         case 7: {
-            status = ast_read_primitive(rt,ast_int32,7,&put_vars_v->memtype);
+            status = ast_read_primitive(rt,ast_int32,7,&ncput_vars_v->memtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6155,107 +6132,107 @@ Put_vars_read(ast_runtime* rt, Put_vars** put_vars_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_vars_vp) *put_vars_vp = put_vars_v;
+    if(ncput_vars_vp) *ncput_vars_vp = ncput_vars_v;
 done:
     return ACATCH(status);
-} /*Put_vars_read*/
+} /*NCPut_vars_read*/
 
 ast_err
-Put_vars_reclaim(ast_runtime* rt, Put_vars* put_vars_v)
+NCPut_vars_reclaim(ast_runtime* rt, NCPut_vars* ncput_vars_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&put_vars_v->value);
+        status = ast_reclaim_bytes(rt,&ncput_vars_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)put_vars_v);
+    ast_free(rt,(void*)ncput_vars_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_vars_reclaim*/
+} /*NCPut_vars_reclaim*/
 
 size_t
-Put_vars_get_size(ast_runtime* rt, Put_vars* put_vars_v)
+NCPut_vars_get_size(ast_runtime* rt, NCPut_vars* ncput_vars_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vars_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vars_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vars_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vars_v->varid);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_vars_v->start.count;i++) {
+        for(i=0;i<ncput_vars_v->start.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_vars_v->start.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_vars_v->start.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_vars_v->edges.count;i++) {
+        for(i=0;i<ncput_vars_v->edges.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_vars_v->edges.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_vars_v->edges.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_vars_v->stride.count;i++) {
+        for(i=0;i<ncput_vars_v->stride.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,5);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_vars_v->stride.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_vars_v->stride.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_bytes,&put_vars_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncput_vars_v->value);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,7);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vars_v->memtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vars_v->memtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_vars_get_size*/
+} /*NCPut_vars_get_size*/
 
 ast_err
-Put_vars_Return_write(ast_runtime* rt, Put_vars_Return* put_vars_return_v)
+NCPut_vars_Return_write(ast_runtime* rt, NCPut_vars_Return* ncput_vars_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_vars_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_vars_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_vars_Return_write*/
+} /*NCPut_vars_Return_write*/
 
 ast_err
-Put_vars_Return_read(ast_runtime* rt, Put_vars_Return** put_vars_return_vp)
+NCPut_vars_Return_read(ast_runtime* rt, NCPut_vars_Return** ncput_vars_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_vars_Return* put_vars_return_v;
+    NCPut_vars_Return* ncput_vars_return_v;
     unsigned long pos;
 
-    put_vars_return_v = (Put_vars_Return*)ast_alloc(rt,sizeof(Put_vars_Return));
-    if(put_vars_return_v == NULL) return AST_ENOMEM;
+    ncput_vars_return_v = (NCPut_vars_Return*)ast_alloc(rt,sizeof(NCPut_vars_Return));
+    if(ncput_vars_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6263,11 +6240,11 @@ Put_vars_Return_read(ast_runtime* rt, Put_vars_Return** put_vars_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_vars_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_vars_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_vars_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_vars_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6275,100 +6252,100 @@ Put_vars_Return_read(ast_runtime* rt, Put_vars_Return** put_vars_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_vars_return_vp) *put_vars_return_vp = put_vars_return_v;
+    if(ncput_vars_return_vp) *ncput_vars_return_vp = ncput_vars_return_v;
 done:
     return ACATCH(status);
-} /*Put_vars_Return_read*/
+} /*NCPut_vars_Return_read*/
 
 ast_err
-Put_vars_Return_reclaim(ast_runtime* rt, Put_vars_Return* put_vars_return_v)
+NCPut_vars_Return_reclaim(ast_runtime* rt, NCPut_vars_Return* ncput_vars_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)put_vars_return_v);
+    ast_free(rt,(void*)ncput_vars_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_vars_Return_reclaim*/
+} /*NCPut_vars_Return_reclaim*/
 
 size_t
-Put_vars_Return_get_size(ast_runtime* rt, Put_vars_Return* put_vars_return_v)
+NCPut_vars_Return_get_size(ast_runtime* rt, NCPut_vars_Return* ncput_vars_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vars_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vars_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_vars_Return_get_size*/
+} /*NCPut_vars_Return_get_size*/
 
 ast_err
-Get_varm_write(ast_runtime* rt, Get_varm* get_varm_v)
+NCGet_varm_write(ast_runtime* rt, NCGet_varm* ncget_varm_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_varm_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_varm_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&get_varm_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncget_varm_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<get_varm_v->start.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,3,&get_varm_v->start.values[i]);
+        for(i=0;i<ncget_varm_v->start.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,3,&ncget_varm_v->start.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<get_varm_v->edges.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&get_varm_v->edges.values[i]);
+        for(i=0;i<ncget_varm_v->edges.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncget_varm_v->edges.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<get_varm_v->stride.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,5,&get_varm_v->stride.values[i]);
+        for(i=0;i<ncget_varm_v->stride.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,5,&ncget_varm_v->stride.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<get_varm_v->imap.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,6,&get_varm_v->imap.values[i]);
+        for(i=0;i<ncget_varm_v->imap.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,6,&ncget_varm_v->imap.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_int32,7,&get_varm_v->memtype);
+        status = ast_write_primitive(rt,ast_int32,7,&ncget_varm_v->memtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_varm_write*/
+} /*NCGet_varm_write*/
 
 ast_err
-Get_varm_read(ast_runtime* rt, Get_varm** get_varm_vp)
+NCGet_varm_read(ast_runtime* rt, NCGet_varm** ncget_varm_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_varm* get_varm_v;
+    NCGet_varm* ncget_varm_v;
     unsigned long pos;
 
-    get_varm_v = (Get_varm*)ast_alloc(rt,sizeof(Get_varm));
-    if(get_varm_v == NULL) return AST_ENOMEM;
+    ncget_varm_v = (NCGet_varm*)ast_alloc(rt,sizeof(NCGet_varm));
+    if(ncget_varm_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6376,45 +6353,45 @@ Get_varm_read(ast_runtime* rt, Get_varm** get_varm_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_varm|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_varm|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_varm_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_varm_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&get_varm_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncget_varm_v->varid);
             } break;
         case 3: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_varm_v->start,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_varm_v->start,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_varm_v->edges,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_varm_v->edges,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,5,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_varm_v->stride,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_varm_v->stride,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 6: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,6,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&get_varm_v->imap,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncget_varm_v->imap,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 7: {
-            status = ast_read_primitive(rt,ast_int32,7,&get_varm_v->memtype);
+            status = ast_read_primitive(rt,ast_int32,7,&ncget_varm_v->memtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6422,110 +6399,110 @@ Get_varm_read(ast_runtime* rt, Get_varm** get_varm_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_varm_vp) *get_varm_vp = get_varm_v;
+    if(ncget_varm_vp) *ncget_varm_vp = ncget_varm_v;
 done:
     return ACATCH(status);
-} /*Get_varm_read*/
+} /*NCGet_varm_read*/
 
 ast_err
-Get_varm_reclaim(ast_runtime* rt, Get_varm* get_varm_v)
+NCGet_varm_reclaim(ast_runtime* rt, NCGet_varm* ncget_varm_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)get_varm_v);
+    ast_free(rt,(void*)ncget_varm_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_varm_reclaim*/
+} /*NCGet_varm_reclaim*/
 
 size_t
-Get_varm_get_size(ast_runtime* rt, Get_varm* get_varm_v)
+NCGet_varm_get_size(ast_runtime* rt, NCGet_varm* ncget_varm_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_varm_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_varm_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&get_varm_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_varm_v->varid);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_varm_v->start.count;i++) {
+        for(i=0;i<ncget_varm_v->start.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_varm_v->start.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_varm_v->start.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_varm_v->edges.count;i++) {
+        for(i=0;i<ncget_varm_v->edges.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_varm_v->edges.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_varm_v->edges.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_varm_v->stride.count;i++) {
+        for(i=0;i<ncget_varm_v->stride.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,5);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_varm_v->stride.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_varm_v->stride.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<get_varm_v->imap.count;i++) {
+        for(i=0;i<ncget_varm_v->imap.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,6);
-            fieldsize += ast_get_size(rt,ast_uint64,&get_varm_v->imap.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncget_varm_v->imap.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,7);
-        fieldsize += ast_get_size(rt,ast_int32,&get_varm_v->memtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_varm_v->memtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_varm_get_size*/
+} /*NCGet_varm_get_size*/
 
 ast_err
-Get_varm_Return_write(ast_runtime* rt, Get_varm_Return* get_varm_return_v)
+NCGet_varm_Return_write(ast_runtime* rt, NCGet_varm_Return* ncget_varm_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_varm_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_varm_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,2,&get_varm_return_v->value);
+        status = ast_write_primitive(rt,ast_bytes,2,&ncget_varm_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_varm_Return_write*/
+} /*NCGet_varm_Return_write*/
 
 ast_err
-Get_varm_Return_read(ast_runtime* rt, Get_varm_Return** get_varm_return_vp)
+NCGet_varm_Return_read(ast_runtime* rt, NCGet_varm_Return** ncget_varm_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_varm_Return* get_varm_return_v;
+    NCGet_varm_Return* ncget_varm_return_v;
     unsigned long pos;
 
-    get_varm_return_v = (Get_varm_Return*)ast_alloc(rt,sizeof(Get_varm_Return));
-    if(get_varm_return_v == NULL) return AST_ENOMEM;
+    ncget_varm_return_v = (NCGet_varm_Return*)ast_alloc(rt,sizeof(NCGet_varm_Return));
+    if(ncget_varm_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6533,14 +6510,14 @@ Get_varm_Return_read(ast_runtime* rt, Get_varm_Return** get_varm_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_varm_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_varm_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_varm_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_varm_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bytes,2,&get_varm_return_v->value);
+            status = ast_read_primitive(rt,ast_bytes,2,&ncget_varm_return_v->value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6548,113 +6525,113 @@ Get_varm_Return_read(ast_runtime* rt, Get_varm_Return** get_varm_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_varm_return_vp) *get_varm_return_vp = get_varm_return_v;
+    if(ncget_varm_return_vp) *ncget_varm_return_vp = ncget_varm_return_v;
 done:
     return ACATCH(status);
-} /*Get_varm_Return_read*/
+} /*NCGet_varm_Return_read*/
 
 ast_err
-Get_varm_Return_reclaim(ast_runtime* rt, Get_varm_Return* get_varm_return_v)
+NCGet_varm_Return_reclaim(ast_runtime* rt, NCGet_varm_Return* ncget_varm_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&get_varm_return_v->value);
+        status = ast_reclaim_bytes(rt,&ncget_varm_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)get_varm_return_v);
+    ast_free(rt,(void*)ncget_varm_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_varm_Return_reclaim*/
+} /*NCGet_varm_Return_reclaim*/
 
 size_t
-Get_varm_Return_get_size(ast_runtime* rt, Get_varm_Return* get_varm_return_v)
+NCGet_varm_Return_get_size(ast_runtime* rt, NCGet_varm_Return* ncget_varm_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_varm_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_varm_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bytes,&get_varm_return_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncget_varm_return_v->value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_varm_Return_get_size*/
+} /*NCGet_varm_Return_get_size*/
 
 ast_err
-Put_varm_write(ast_runtime* rt, Put_varm* put_varm_v)
+NCPut_varm_write(ast_runtime* rt, NCPut_varm* ncput_varm_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_varm_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_varm_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&put_varm_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncput_varm_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<put_varm_v->start.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,3,&put_varm_v->start.values[i]);
+        for(i=0;i<ncput_varm_v->start.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,3,&ncput_varm_v->start.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<put_varm_v->edges.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&put_varm_v->edges.values[i]);
+        for(i=0;i<ncput_varm_v->edges.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncput_varm_v->edges.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<put_varm_v->stride.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,5,&put_varm_v->stride.values[i]);
+        for(i=0;i<ncput_varm_v->stride.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,5,&ncput_varm_v->stride.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
         int i = 0;
-        for(i=0;i<put_varm_v->imap.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,6,&put_varm_v->imap.values[i]);
+        for(i=0;i<ncput_varm_v->imap.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,6,&ncput_varm_v->imap.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,7,&put_varm_v->value);
+        status = ast_write_primitive(rt,ast_bytes,7,&ncput_varm_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,8,&put_varm_v->memtype);
+        status = ast_write_primitive(rt,ast_int32,8,&ncput_varm_v->memtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_varm_write*/
+} /*NCPut_varm_write*/
 
 ast_err
-Put_varm_read(ast_runtime* rt, Put_varm** put_varm_vp)
+NCPut_varm_read(ast_runtime* rt, NCPut_varm** ncput_varm_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_varm* put_varm_v;
+    NCPut_varm* ncput_varm_v;
     unsigned long pos;
 
-    put_varm_v = (Put_varm*)ast_alloc(rt,sizeof(Put_varm));
-    if(put_varm_v == NULL) return AST_ENOMEM;
+    ncput_varm_v = (NCPut_varm*)ast_alloc(rt,sizeof(NCPut_varm));
+    if(ncput_varm_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6662,48 +6639,48 @@ Put_varm_read(ast_runtime* rt, Put_varm** put_varm_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_varm|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_varm|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_varm_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_varm_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&put_varm_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncput_varm_v->varid);
             } break;
         case 3: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_varm_v->start,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_varm_v->start,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_varm_v->edges,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_varm_v->edges,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,5,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_varm_v->stride,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_varm_v->stride,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 6: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,6,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&put_varm_v->imap,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncput_varm_v->imap,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 7: {
-            status = ast_read_primitive(rt,ast_bytes,7,&put_varm_v->value);
+            status = ast_read_primitive(rt,ast_bytes,7,&ncput_varm_v->value);
             } break;
         case 8: {
-            status = ast_read_primitive(rt,ast_int32,8,&put_varm_v->memtype);
+            status = ast_read_primitive(rt,ast_int32,8,&ncput_varm_v->memtype);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6711,115 +6688,115 @@ Put_varm_read(ast_runtime* rt, Put_varm** put_varm_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_varm_vp) *put_varm_vp = put_varm_v;
+    if(ncput_varm_vp) *ncput_varm_vp = ncput_varm_v;
 done:
     return ACATCH(status);
-} /*Put_varm_read*/
+} /*NCPut_varm_read*/
 
 ast_err
-Put_varm_reclaim(ast_runtime* rt, Put_varm* put_varm_v)
+NCPut_varm_reclaim(ast_runtime* rt, NCPut_varm* ncput_varm_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&put_varm_v->value);
+        status = ast_reclaim_bytes(rt,&ncput_varm_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)put_varm_v);
+    ast_free(rt,(void*)ncput_varm_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_varm_reclaim*/
+} /*NCPut_varm_reclaim*/
 
 size_t
-Put_varm_get_size(ast_runtime* rt, Put_varm* put_varm_v)
+NCPut_varm_get_size(ast_runtime* rt, NCPut_varm* ncput_varm_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_varm_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_varm_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&put_varm_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_varm_v->varid);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_varm_v->start.count;i++) {
+        for(i=0;i<ncput_varm_v->start.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_varm_v->start.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_varm_v->start.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_varm_v->edges.count;i++) {
+        for(i=0;i<ncput_varm_v->edges.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_varm_v->edges.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_varm_v->edges.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_varm_v->stride.count;i++) {
+        for(i=0;i<ncput_varm_v->stride.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,5);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_varm_v->stride.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_varm_v->stride.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<put_varm_v->imap.count;i++) {
+        for(i=0;i<ncput_varm_v->imap.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,6);
-            fieldsize += ast_get_size(rt,ast_uint64,&put_varm_v->imap.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncput_varm_v->imap.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,7);
-        fieldsize += ast_get_size(rt,ast_bytes,&put_varm_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncput_varm_v->value);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,8);
-        fieldsize += ast_get_size(rt,ast_int32,&put_varm_v->memtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_varm_v->memtype);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_varm_get_size*/
+} /*NCPut_varm_get_size*/
 
 ast_err
-Put_varm_Return_write(ast_runtime* rt, Put_varm_Return* put_varm_return_v)
+NCPut_varm_Return_write(ast_runtime* rt, NCPut_varm_Return* ncput_varm_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_varm_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_varm_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_varm_Return_write*/
+} /*NCPut_varm_Return_write*/
 
 ast_err
-Put_varm_Return_read(ast_runtime* rt, Put_varm_Return** put_varm_return_vp)
+NCPut_varm_Return_read(ast_runtime* rt, NCPut_varm_Return** ncput_varm_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_varm_Return* put_varm_return_v;
+    NCPut_varm_Return* ncput_varm_return_v;
     unsigned long pos;
 
-    put_varm_return_v = (Put_varm_Return*)ast_alloc(rt,sizeof(Put_varm_Return));
-    if(put_varm_return_v == NULL) return AST_ENOMEM;
+    ncput_varm_return_v = (NCPut_varm_Return*)ast_alloc(rt,sizeof(NCPut_varm_Return));
+    if(ncput_varm_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6827,11 +6804,11 @@ Put_varm_Return_read(ast_runtime* rt, Put_varm_Return** put_varm_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_varm_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_varm_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_varm_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_varm_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6839,72 +6816,72 @@ Put_varm_Return_read(ast_runtime* rt, Put_varm_Return** put_varm_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_varm_return_vp) *put_varm_return_vp = put_varm_return_v;
+    if(ncput_varm_return_vp) *ncput_varm_return_vp = ncput_varm_return_v;
 done:
     return ACATCH(status);
-} /*Put_varm_Return_read*/
+} /*NCPut_varm_Return_read*/
 
 ast_err
-Put_varm_Return_reclaim(ast_runtime* rt, Put_varm_Return* put_varm_return_v)
+NCPut_varm_Return_reclaim(ast_runtime* rt, NCPut_varm_Return* ncput_varm_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)put_varm_return_v);
+    ast_free(rt,(void*)ncput_varm_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_varm_Return_reclaim*/
+} /*NCPut_varm_Return_reclaim*/
 
 size_t
-Put_varm_Return_get_size(ast_runtime* rt, Put_varm_Return* put_varm_return_v)
+NCPut_varm_Return_get_size(ast_runtime* rt, NCPut_varm_Return* ncput_varm_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_varm_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_varm_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_varm_Return_get_size*/
+} /*NCPut_varm_Return_get_size*/
 
 ast_err
-Inq_var_all_write(ast_runtime* rt, Inq_var_all* inq_var_all_v)
+NCInq_var_all_write(ast_runtime* rt, NCInq_var_all* ncinq_var_all_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_var_all_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_var_all_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_var_all_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_var_all_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&inq_var_all_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinq_var_all_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_var_all_write*/
+} /*NCInq_var_all_write*/
 
 ast_err
-Inq_var_all_read(ast_runtime* rt, Inq_var_all** inq_var_all_vp)
+NCInq_var_all_read(ast_runtime* rt, NCInq_var_all** ncinq_var_all_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_var_all* inq_var_all_v;
+    NCInq_var_all* ncinq_var_all_v;
     unsigned long pos;
 
-    inq_var_all_v = (Inq_var_all*)ast_alloc(rt,sizeof(Inq_var_all));
-    if(inq_var_all_v == NULL) return AST_ENOMEM;
+    ncinq_var_all_v = (NCInq_var_all*)ast_alloc(rt,sizeof(NCInq_var_all));
+    if(ncinq_var_all_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -6912,17 +6889,17 @@ Inq_var_all_read(ast_runtime* rt, Inq_var_all** inq_var_all_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_var_all|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_var_all|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_var_all_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_var_all_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_var_all_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_var_all_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&inq_var_all_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinq_var_all_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -6930,144 +6907,144 @@ Inq_var_all_read(ast_runtime* rt, Inq_var_all** inq_var_all_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_var_all_vp) *inq_var_all_vp = inq_var_all_v;
+    if(ncinq_var_all_vp) *ncinq_var_all_vp = ncinq_var_all_v;
 done:
     return ACATCH(status);
-} /*Inq_var_all_read*/
+} /*NCInq_var_all_read*/
 
 ast_err
-Inq_var_all_reclaim(ast_runtime* rt, Inq_var_all* inq_var_all_v)
+NCInq_var_all_reclaim(ast_runtime* rt, NCInq_var_all* ncinq_var_all_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_var_all_v->name);
+        status = ast_reclaim_string(rt,ncinq_var_all_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_var_all_v);
+    ast_free(rt,(void*)ncinq_var_all_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_var_all_reclaim*/
+} /*NCInq_var_all_reclaim*/
 
 size_t
-Inq_var_all_get_size(ast_runtime* rt, Inq_var_all* inq_var_all_v)
+NCInq_var_all_get_size(ast_runtime* rt, NCInq_var_all* ncinq_var_all_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&inq_var_all_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_var_all_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_var_all_get_size*/
+} /*NCInq_var_all_get_size*/
 
 ast_err
-Inq_var_all_Return_write(ast_runtime* rt, Inq_var_all_Return* inq_var_all_return_v)
+NCInq_var_all_Return_write(ast_runtime* rt, NCInq_var_all_Return* ncinq_var_all_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_var_all_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_var_all_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_var_all_return_v->xtype);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_var_all_return_v->xtype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&inq_var_all_return_v->ndims);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        int i = 0;
-        for(i=0;i<inq_var_all_return_v->dimids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,4,&inq_var_all_return_v->dimids.values[i]);
-            if(status != AST_NOERR) {ACATCH(status); goto done;}
-        }
-    }
-    {
-        status = ast_write_primitive(rt,ast_int32,5,&inq_var_all_return_v->natts);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        status = ast_write_primitive(rt,ast_bool,6,&inq_var_all_return_v->shuffle);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        status = ast_write_primitive(rt,ast_bool,7,&inq_var_all_return_v->deflate);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        status = ast_write_primitive(rt,ast_int32,8,&inq_var_all_return_v->deflate_level);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        status = ast_write_primitive(rt,ast_bool,9,&inq_var_all_return_v->fletcher32);
-        if(status != AST_NOERR) {ACATCH(status); goto done;}
-    }
-    {
-        status = ast_write_primitive(rt,ast_bool,10,&inq_var_all_return_v->contiguous);
+        status = ast_write_primitive(rt,ast_int32,3,&ncinq_var_all_return_v->ndims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_var_all_return_v->chunksizes.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,11,&inq_var_all_return_v->chunksizes.values[i]);
+        for(i=0;i<ncinq_var_all_return_v->dimids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,4,&ncinq_var_all_return_v->dimids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_bool,12,&inq_var_all_return_v->no_fill);
+        status = ast_write_primitive(rt,ast_int32,5,&ncinq_var_all_return_v->natts);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,13,&inq_var_all_return_v->fill_value);
+        status = ast_write_primitive(rt,ast_bool,6,&ncinq_var_all_return_v->shuffle);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,14,&inq_var_all_return_v->endianness);
+        status = ast_write_primitive(rt,ast_bool,7,&ncinq_var_all_return_v->deflate);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,15,&inq_var_all_return_v->options_mask);
+        status = ast_write_primitive(rt,ast_int32,8,&ncinq_var_all_return_v->deflate_level);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,16,&inq_var_all_return_v->pixels_per_block);
+        status = ast_write_primitive(rt,ast_bool,9,&ncinq_var_all_return_v->fletcher32);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_bool,10,&ncinq_var_all_return_v->contiguous);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        int i = 0;
+        for(i=0;i<ncinq_var_all_return_v->chunksizes.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,11,&ncinq_var_all_return_v->chunksizes.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        status = ast_write_primitive(rt,ast_bool,12,&ncinq_var_all_return_v->no_fill);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_bytes,13,&ncinq_var_all_return_v->fill_value);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_bool,14,&ncinq_var_all_return_v->endianness);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_int32,15,&ncinq_var_all_return_v->options_mask);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_int32,16,&ncinq_var_all_return_v->pixels_per_block);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_var_all_Return_write*/
+} /*NCInq_var_all_Return_write*/
 
 ast_err
-Inq_var_all_Return_read(ast_runtime* rt, Inq_var_all_Return** inq_var_all_return_vp)
+NCInq_var_all_Return_read(ast_runtime* rt, NCInq_var_all_Return** ncinq_var_all_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_var_all_Return* inq_var_all_return_v;
+    NCInq_var_all_Return* ncinq_var_all_return_v;
     unsigned long pos;
 
-    inq_var_all_return_v = (Inq_var_all_Return*)ast_alloc(rt,sizeof(Inq_var_all_Return));
-    if(inq_var_all_return_v == NULL) return AST_ENOMEM;
+    ncinq_var_all_return_v = (NCInq_var_all_Return*)ast_alloc(rt,sizeof(NCInq_var_all_Return));
+    if(ncinq_var_all_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7075,64 +7052,64 @@ Inq_var_all_Return_read(ast_runtime* rt, Inq_var_all_Return** inq_var_all_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_var_all_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_var_all_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_var_all_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_var_all_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_var_all_return_v->xtype);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_var_all_return_v->xtype);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&inq_var_all_return_v->ndims);
+            status = ast_read_primitive(rt,ast_int32,3,&ncinq_var_all_return_v->ndims);
             } break;
         case 4: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_var_all_return_v->dimids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_var_all_return_v->dimids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&inq_var_all_return_v->natts);
+            status = ast_read_primitive(rt,ast_int32,5,&ncinq_var_all_return_v->natts);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_bool,6,&inq_var_all_return_v->shuffle);
+            status = ast_read_primitive(rt,ast_bool,6,&ncinq_var_all_return_v->shuffle);
             } break;
         case 7: {
-            status = ast_read_primitive(rt,ast_bool,7,&inq_var_all_return_v->deflate);
+            status = ast_read_primitive(rt,ast_bool,7,&ncinq_var_all_return_v->deflate);
             } break;
         case 8: {
-            status = ast_read_primitive(rt,ast_int32,8,&inq_var_all_return_v->deflate_level);
+            status = ast_read_primitive(rt,ast_int32,8,&ncinq_var_all_return_v->deflate_level);
             } break;
         case 9: {
-            status = ast_read_primitive(rt,ast_bool,9,&inq_var_all_return_v->fletcher32);
+            status = ast_read_primitive(rt,ast_bool,9,&ncinq_var_all_return_v->fletcher32);
             } break;
         case 10: {
-            status = ast_read_primitive(rt,ast_bool,10,&inq_var_all_return_v->contiguous);
+            status = ast_read_primitive(rt,ast_bool,10,&ncinq_var_all_return_v->contiguous);
             } break;
         case 11: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,11,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&inq_var_all_return_v->chunksizes,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncinq_var_all_return_v->chunksizes,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 12: {
-            status = ast_read_primitive(rt,ast_bool,12,&inq_var_all_return_v->no_fill);
+            status = ast_read_primitive(rt,ast_bool,12,&ncinq_var_all_return_v->no_fill);
             } break;
         case 13: {
-            status = ast_read_primitive(rt,ast_bytes,13,&inq_var_all_return_v->fill_value);
+            status = ast_read_primitive(rt,ast_bytes,13,&ncinq_var_all_return_v->fill_value);
             } break;
         case 14: {
-            status = ast_read_primitive(rt,ast_bool,14,&inq_var_all_return_v->endianness);
+            status = ast_read_primitive(rt,ast_bool,14,&ncinq_var_all_return_v->endianness);
             } break;
         case 15: {
-            status = ast_read_primitive(rt,ast_int32,15,&inq_var_all_return_v->options_mask);
+            status = ast_read_primitive(rt,ast_int32,15,&ncinq_var_all_return_v->options_mask);
             } break;
         case 16: {
-            status = ast_read_primitive(rt,ast_int32,16,&inq_var_all_return_v->pixels_per_block);
+            status = ast_read_primitive(rt,ast_int32,16,&ncinq_var_all_return_v->pixels_per_block);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7140,149 +7117,149 @@ Inq_var_all_Return_read(ast_runtime* rt, Inq_var_all_Return** inq_var_all_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_var_all_return_vp) *inq_var_all_return_vp = inq_var_all_return_v;
+    if(ncinq_var_all_return_vp) *ncinq_var_all_return_vp = ncinq_var_all_return_v;
 done:
     return ACATCH(status);
-} /*Inq_var_all_Return_read*/
+} /*NCInq_var_all_Return_read*/
 
 ast_err
-Inq_var_all_Return_reclaim(ast_runtime* rt, Inq_var_all_Return* inq_var_all_return_v)
+NCInq_var_all_Return_reclaim(ast_runtime* rt, NCInq_var_all_Return* ncinq_var_all_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&inq_var_all_return_v->fill_value);
+        status = ast_reclaim_bytes(rt,&ncinq_var_all_return_v->fill_value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_var_all_return_v);
+    ast_free(rt,(void*)ncinq_var_all_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_var_all_Return_reclaim*/
+} /*NCInq_var_all_Return_reclaim*/
 
 size_t
-Inq_var_all_Return_get_size(ast_runtime* rt, Inq_var_all_Return* inq_var_all_return_v)
+NCInq_var_all_Return_get_size(ast_runtime* rt, NCInq_var_all_Return* ncinq_var_all_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->xtype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->xtype);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->ndims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->ndims);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_var_all_return_v->dimids.count;i++) {
+        for(i=0;i<ncinq_var_all_return_v->dimids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->dimids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->dimids.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->natts);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->natts);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_var_all_return_v->shuffle);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_var_all_return_v->shuffle);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,7);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_var_all_return_v->deflate);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_var_all_return_v->deflate);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,8);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->deflate_level);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->deflate_level);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,9);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_var_all_return_v->fletcher32);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_var_all_return_v->fletcher32);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,10);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_var_all_return_v->contiguous);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_var_all_return_v->contiguous);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_var_all_return_v->chunksizes.count;i++) {
+        for(i=0;i<ncinq_var_all_return_v->chunksizes.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,11);
-            fieldsize += ast_get_size(rt,ast_uint64,&inq_var_all_return_v->chunksizes.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncinq_var_all_return_v->chunksizes.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,12);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_var_all_return_v->no_fill);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_var_all_return_v->no_fill);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,13);
-        fieldsize += ast_get_size(rt,ast_bytes,&inq_var_all_return_v->fill_value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncinq_var_all_return_v->fill_value);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,14);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_var_all_return_v->endianness);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_var_all_return_v->endianness);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,15);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->options_mask);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->options_mask);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,16);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_var_all_return_v->pixels_per_block);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_var_all_return_v->pixels_per_block);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_var_all_Return_get_size*/
+} /*NCInq_var_all_Return_get_size*/
 
 ast_err
-Show_metadata_write(ast_runtime* rt, Show_metadata* show_metadata_v)
+NCShow_metadata_write(ast_runtime* rt, NCShow_metadata* ncshow_metadata_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&show_metadata_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncshow_metadata_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Show_metadata_write*/
+} /*NCShow_metadata_write*/
 
 ast_err
-Show_metadata_read(ast_runtime* rt, Show_metadata** show_metadata_vp)
+NCShow_metadata_read(ast_runtime* rt, NCShow_metadata** ncshow_metadata_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Show_metadata* show_metadata_v;
+    NCShow_metadata* ncshow_metadata_v;
     unsigned long pos;
 
-    show_metadata_v = (Show_metadata*)ast_alloc(rt,sizeof(Show_metadata));
-    if(show_metadata_v == NULL) return AST_ENOMEM;
+    ncshow_metadata_v = (NCShow_metadata*)ast_alloc(rt,sizeof(NCShow_metadata));
+    if(ncshow_metadata_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7290,11 +7267,11 @@ Show_metadata_read(ast_runtime* rt, Show_metadata** show_metadata_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Show_metadata|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCShow_metadata|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&show_metadata_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncshow_metadata_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7302,64 +7279,64 @@ Show_metadata_read(ast_runtime* rt, Show_metadata** show_metadata_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(show_metadata_vp) *show_metadata_vp = show_metadata_v;
+    if(ncshow_metadata_vp) *ncshow_metadata_vp = ncshow_metadata_v;
 done:
     return ACATCH(status);
-} /*Show_metadata_read*/
+} /*NCShow_metadata_read*/
 
 ast_err
-Show_metadata_reclaim(ast_runtime* rt, Show_metadata* show_metadata_v)
+NCShow_metadata_reclaim(ast_runtime* rt, NCShow_metadata* ncshow_metadata_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)show_metadata_v);
+    ast_free(rt,(void*)ncshow_metadata_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Show_metadata_reclaim*/
+} /*NCShow_metadata_reclaim*/
 
 size_t
-Show_metadata_get_size(ast_runtime* rt, Show_metadata* show_metadata_v)
+NCShow_metadata_get_size(ast_runtime* rt, NCShow_metadata* ncshow_metadata_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&show_metadata_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncshow_metadata_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Show_metadata_get_size*/
+} /*NCShow_metadata_get_size*/
 
 ast_err
-Show_metadata_Return_write(ast_runtime* rt, Show_metadata_Return* show_metadata_return_v)
+NCShow_metadata_Return_write(ast_runtime* rt, NCShow_metadata_Return* ncshow_metadata_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&show_metadata_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncshow_metadata_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Show_metadata_Return_write*/
+} /*NCShow_metadata_Return_write*/
 
 ast_err
-Show_metadata_Return_read(ast_runtime* rt, Show_metadata_Return** show_metadata_return_vp)
+NCShow_metadata_Return_read(ast_runtime* rt, NCShow_metadata_Return** ncshow_metadata_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Show_metadata_Return* show_metadata_return_v;
+    NCShow_metadata_Return* ncshow_metadata_return_v;
     unsigned long pos;
 
-    show_metadata_return_v = (Show_metadata_Return*)ast_alloc(rt,sizeof(Show_metadata_Return));
-    if(show_metadata_return_v == NULL) return AST_ENOMEM;
+    ncshow_metadata_return_v = (NCShow_metadata_Return*)ast_alloc(rt,sizeof(NCShow_metadata_Return));
+    if(ncshow_metadata_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7367,11 +7344,11 @@ Show_metadata_Return_read(ast_runtime* rt, Show_metadata_Return** show_metadata_
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Show_metadata_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCShow_metadata_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&show_metadata_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncshow_metadata_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7379,64 +7356,64 @@ Show_metadata_Return_read(ast_runtime* rt, Show_metadata_Return** show_metadata_
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(show_metadata_return_vp) *show_metadata_return_vp = show_metadata_return_v;
+    if(ncshow_metadata_return_vp) *ncshow_metadata_return_vp = ncshow_metadata_return_v;
 done:
     return ACATCH(status);
-} /*Show_metadata_Return_read*/
+} /*NCShow_metadata_Return_read*/
 
 ast_err
-Show_metadata_Return_reclaim(ast_runtime* rt, Show_metadata_Return* show_metadata_return_v)
+NCShow_metadata_Return_reclaim(ast_runtime* rt, NCShow_metadata_Return* ncshow_metadata_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)show_metadata_return_v);
+    ast_free(rt,(void*)ncshow_metadata_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Show_metadata_Return_reclaim*/
+} /*NCShow_metadata_Return_reclaim*/
 
 size_t
-Show_metadata_Return_get_size(ast_runtime* rt, Show_metadata_Return* show_metadata_return_v)
+NCShow_metadata_Return_get_size(ast_runtime* rt, NCShow_metadata_Return* ncshow_metadata_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&show_metadata_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncshow_metadata_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Show_metadata_Return_get_size*/
+} /*NCShow_metadata_Return_get_size*/
 
 ast_err
-Inq_unlimdims_write(ast_runtime* rt, Inq_unlimdims* inq_unlimdims_v)
+NCInq_unlimdims_write(ast_runtime* rt, NCInq_unlimdims* ncinq_unlimdims_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_unlimdims_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_unlimdims_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdims_write*/
+} /*NCInq_unlimdims_write*/
 
 ast_err
-Inq_unlimdims_read(ast_runtime* rt, Inq_unlimdims** inq_unlimdims_vp)
+NCInq_unlimdims_read(ast_runtime* rt, NCInq_unlimdims** ncinq_unlimdims_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_unlimdims* inq_unlimdims_v;
+    NCInq_unlimdims* ncinq_unlimdims_v;
     unsigned long pos;
 
-    inq_unlimdims_v = (Inq_unlimdims*)ast_alloc(rt,sizeof(Inq_unlimdims));
-    if(inq_unlimdims_v == NULL) return AST_ENOMEM;
+    ncinq_unlimdims_v = (NCInq_unlimdims*)ast_alloc(rt,sizeof(NCInq_unlimdims));
+    if(ncinq_unlimdims_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7444,11 +7421,11 @@ Inq_unlimdims_read(ast_runtime* rt, Inq_unlimdims** inq_unlimdims_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_unlimdims|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_unlimdims|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_unlimdims_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_unlimdims_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7456,56 +7433,56 @@ Inq_unlimdims_read(ast_runtime* rt, Inq_unlimdims** inq_unlimdims_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_unlimdims_vp) *inq_unlimdims_vp = inq_unlimdims_v;
+    if(ncinq_unlimdims_vp) *ncinq_unlimdims_vp = ncinq_unlimdims_v;
 done:
     return ACATCH(status);
-} /*Inq_unlimdims_read*/
+} /*NCInq_unlimdims_read*/
 
 ast_err
-Inq_unlimdims_reclaim(ast_runtime* rt, Inq_unlimdims* inq_unlimdims_v)
+NCInq_unlimdims_reclaim(ast_runtime* rt, NCInq_unlimdims* ncinq_unlimdims_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_unlimdims_v);
+    ast_free(rt,(void*)ncinq_unlimdims_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdims_reclaim*/
+} /*NCInq_unlimdims_reclaim*/
 
 size_t
-Inq_unlimdims_get_size(ast_runtime* rt, Inq_unlimdims* inq_unlimdims_v)
+NCInq_unlimdims_get_size(ast_runtime* rt, NCInq_unlimdims* ncinq_unlimdims_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdims_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdims_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_unlimdims_get_size*/
+} /*NCInq_unlimdims_get_size*/
 
 ast_err
-Inq_unlimdims_Return_write(ast_runtime* rt, Inq_unlimdims_Return* inq_unlimdims_return_v)
+NCInq_unlimdims_Return_write(ast_runtime* rt, NCInq_unlimdims_Return* ncinq_unlimdims_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_unlimdims_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_unlimdims_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_unlimdims_return_v->nunlimdims);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_unlimdims_return_v->nunlimdims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_unlimdims_return_v->unlimdimids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,3,&inq_unlimdims_return_v->unlimdimids.values[i]);
+        for(i=0;i<ncinq_unlimdims_return_v->unlimdimids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,3,&ncinq_unlimdims_return_v->unlimdimids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -7513,18 +7490,18 @@ Inq_unlimdims_Return_write(ast_runtime* rt, Inq_unlimdims_Return* inq_unlimdims_
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdims_Return_write*/
+} /*NCInq_unlimdims_Return_write*/
 
 ast_err
-Inq_unlimdims_Return_read(ast_runtime* rt, Inq_unlimdims_Return** inq_unlimdims_return_vp)
+NCInq_unlimdims_Return_read(ast_runtime* rt, NCInq_unlimdims_Return** ncinq_unlimdims_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_unlimdims_Return* inq_unlimdims_return_v;
+    NCInq_unlimdims_Return* ncinq_unlimdims_return_v;
     unsigned long pos;
 
-    inq_unlimdims_return_v = (Inq_unlimdims_Return*)ast_alloc(rt,sizeof(Inq_unlimdims_Return));
-    if(inq_unlimdims_return_v == NULL) return AST_ENOMEM;
+    ncinq_unlimdims_return_v = (NCInq_unlimdims_Return*)ast_alloc(rt,sizeof(NCInq_unlimdims_Return));
+    if(ncinq_unlimdims_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7532,20 +7509,20 @@ Inq_unlimdims_Return_read(ast_runtime* rt, Inq_unlimdims_Return** inq_unlimdims_
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_unlimdims_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_unlimdims_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_unlimdims_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_unlimdims_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_unlimdims_return_v->nunlimdims);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_unlimdims_return_v->nunlimdims);
             } break;
         case 3: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_unlimdims_return_v->unlimdimids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_unlimdims_return_v->unlimdimids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -7554,85 +7531,85 @@ Inq_unlimdims_Return_read(ast_runtime* rt, Inq_unlimdims_Return** inq_unlimdims_
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_unlimdims_return_vp) *inq_unlimdims_return_vp = inq_unlimdims_return_v;
+    if(ncinq_unlimdims_return_vp) *ncinq_unlimdims_return_vp = ncinq_unlimdims_return_v;
 done:
     return ACATCH(status);
-} /*Inq_unlimdims_Return_read*/
+} /*NCInq_unlimdims_Return_read*/
 
 ast_err
-Inq_unlimdims_Return_reclaim(ast_runtime* rt, Inq_unlimdims_Return* inq_unlimdims_return_v)
+NCInq_unlimdims_Return_reclaim(ast_runtime* rt, NCInq_unlimdims_Return* ncinq_unlimdims_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_unlimdims_return_v);
+    ast_free(rt,(void*)ncinq_unlimdims_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_unlimdims_Return_reclaim*/
+} /*NCInq_unlimdims_Return_reclaim*/
 
 size_t
-Inq_unlimdims_Return_get_size(ast_runtime* rt, Inq_unlimdims_Return* inq_unlimdims_return_v)
+NCInq_unlimdims_Return_get_size(ast_runtime* rt, NCInq_unlimdims_Return* ncinq_unlimdims_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdims_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdims_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdims_return_v->nunlimdims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdims_return_v->nunlimdims);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_unlimdims_return_v->unlimdimids.count;i++) {
+        for(i=0;i<ncinq_unlimdims_return_v->unlimdimids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_unlimdims_return_v->unlimdimids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_unlimdims_return_v->unlimdimids.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_unlimdims_Return_get_size*/
+} /*NCInq_unlimdims_Return_get_size*/
 
 ast_err
-Var_par_access_write(ast_runtime* rt, Var_par_access* var_par_access_v)
+NCVar_par_access_write(ast_runtime* rt, NCVar_par_access* ncvar_par_access_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&var_par_access_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncvar_par_access_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&var_par_access_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncvar_par_access_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,3,&var_par_access_v->par_access);
+        status = ast_write_primitive(rt,ast_bool,3,&ncvar_par_access_v->par_access);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Var_par_access_write*/
+} /*NCVar_par_access_write*/
 
 ast_err
-Var_par_access_read(ast_runtime* rt, Var_par_access** var_par_access_vp)
+NCVar_par_access_read(ast_runtime* rt, NCVar_par_access** ncvar_par_access_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Var_par_access* var_par_access_v;
+    NCVar_par_access* ncvar_par_access_v;
     unsigned long pos;
 
-    var_par_access_v = (Var_par_access*)ast_alloc(rt,sizeof(Var_par_access));
-    if(var_par_access_v == NULL) return AST_ENOMEM;
+    ncvar_par_access_v = (NCVar_par_access*)ast_alloc(rt,sizeof(NCVar_par_access));
+    if(ncvar_par_access_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7640,17 +7617,17 @@ Var_par_access_read(ast_runtime* rt, Var_par_access** var_par_access_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Var_par_access|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCVar_par_access|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&var_par_access_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncvar_par_access_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&var_par_access_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncvar_par_access_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bool,3,&var_par_access_v->par_access);
+            status = ast_read_primitive(rt,ast_bool,3,&ncvar_par_access_v->par_access);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7658,74 +7635,74 @@ Var_par_access_read(ast_runtime* rt, Var_par_access** var_par_access_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(var_par_access_vp) *var_par_access_vp = var_par_access_v;
+    if(ncvar_par_access_vp) *ncvar_par_access_vp = ncvar_par_access_v;
 done:
     return ACATCH(status);
-} /*Var_par_access_read*/
+} /*NCVar_par_access_read*/
 
 ast_err
-Var_par_access_reclaim(ast_runtime* rt, Var_par_access* var_par_access_v)
+NCVar_par_access_reclaim(ast_runtime* rt, NCVar_par_access* ncvar_par_access_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)var_par_access_v);
+    ast_free(rt,(void*)ncvar_par_access_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Var_par_access_reclaim*/
+} /*NCVar_par_access_reclaim*/
 
 size_t
-Var_par_access_get_size(ast_runtime* rt, Var_par_access* var_par_access_v)
+NCVar_par_access_get_size(ast_runtime* rt, NCVar_par_access* ncvar_par_access_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&var_par_access_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncvar_par_access_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&var_par_access_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncvar_par_access_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bool,&var_par_access_v->par_access);
+        fieldsize += ast_get_size(rt,ast_bool,&ncvar_par_access_v->par_access);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Var_par_access_get_size*/
+} /*NCVar_par_access_get_size*/
 
 ast_err
-Var_par_access_Return_write(ast_runtime* rt, Var_par_access_Return* var_par_access_return_v)
+NCVar_par_access_Return_write(ast_runtime* rt, NCVar_par_access_Return* ncvar_par_access_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&var_par_access_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncvar_par_access_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Var_par_access_Return_write*/
+} /*NCVar_par_access_Return_write*/
 
 ast_err
-Var_par_access_Return_read(ast_runtime* rt, Var_par_access_Return** var_par_access_return_vp)
+NCVar_par_access_Return_read(ast_runtime* rt, NCVar_par_access_Return** ncvar_par_access_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Var_par_access_Return* var_par_access_return_v;
+    NCVar_par_access_Return* ncvar_par_access_return_v;
     unsigned long pos;
 
-    var_par_access_return_v = (Var_par_access_Return*)ast_alloc(rt,sizeof(Var_par_access_Return));
-    if(var_par_access_return_v == NULL) return AST_ENOMEM;
+    ncvar_par_access_return_v = (NCVar_par_access_Return*)ast_alloc(rt,sizeof(NCVar_par_access_Return));
+    if(ncvar_par_access_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7733,11 +7710,11 @@ Var_par_access_Return_read(ast_runtime* rt, Var_par_access_Return** var_par_acce
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Var_par_access_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCVar_par_access_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&var_par_access_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncvar_par_access_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7745,68 +7722,68 @@ Var_par_access_Return_read(ast_runtime* rt, Var_par_access_Return** var_par_acce
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(var_par_access_return_vp) *var_par_access_return_vp = var_par_access_return_v;
+    if(ncvar_par_access_return_vp) *ncvar_par_access_return_vp = ncvar_par_access_return_v;
 done:
     return ACATCH(status);
-} /*Var_par_access_Return_read*/
+} /*NCVar_par_access_Return_read*/
 
 ast_err
-Var_par_access_Return_reclaim(ast_runtime* rt, Var_par_access_Return* var_par_access_return_v)
+NCVar_par_access_Return_reclaim(ast_runtime* rt, NCVar_par_access_Return* ncvar_par_access_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)var_par_access_return_v);
+    ast_free(rt,(void*)ncvar_par_access_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Var_par_access_Return_reclaim*/
+} /*NCVar_par_access_Return_reclaim*/
 
 size_t
-Var_par_access_Return_get_size(ast_runtime* rt, Var_par_access_Return* var_par_access_return_v)
+NCVar_par_access_Return_get_size(ast_runtime* rt, NCVar_par_access_Return* ncvar_par_access_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&var_par_access_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncvar_par_access_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Var_par_access_Return_get_size*/
+} /*NCVar_par_access_Return_get_size*/
 
 ast_err
-Inq_ncid_write(ast_runtime* rt, Inq_ncid* inq_ncid_v)
+NCInq_ncid_write(ast_runtime* rt, NCInq_ncid* ncinq_ncid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_ncid_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_ncid_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_ncid_v->group);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_ncid_v->group);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_ncid_write*/
+} /*NCInq_ncid_write*/
 
 ast_err
-Inq_ncid_read(ast_runtime* rt, Inq_ncid** inq_ncid_vp)
+NCInq_ncid_read(ast_runtime* rt, NCInq_ncid** ncinq_ncid_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_ncid* inq_ncid_v;
+    NCInq_ncid* ncinq_ncid_v;
     unsigned long pos;
 
-    inq_ncid_v = (Inq_ncid*)ast_alloc(rt,sizeof(Inq_ncid));
-    if(inq_ncid_v == NULL) return AST_ENOMEM;
+    ncinq_ncid_v = (NCInq_ncid*)ast_alloc(rt,sizeof(NCInq_ncid));
+    if(ncinq_ncid_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7814,14 +7791,14 @@ Inq_ncid_read(ast_runtime* rt, Inq_ncid** inq_ncid_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_ncid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_ncid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_ncid_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_ncid_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_ncid_v->group);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_ncid_v->group);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7829,77 +7806,77 @@ Inq_ncid_read(ast_runtime* rt, Inq_ncid** inq_ncid_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_ncid_vp) *inq_ncid_vp = inq_ncid_v;
+    if(ncinq_ncid_vp) *ncinq_ncid_vp = ncinq_ncid_v;
 done:
     return ACATCH(status);
-} /*Inq_ncid_read*/
+} /*NCInq_ncid_read*/
 
 ast_err
-Inq_ncid_reclaim(ast_runtime* rt, Inq_ncid* inq_ncid_v)
+NCInq_ncid_reclaim(ast_runtime* rt, NCInq_ncid* ncinq_ncid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_ncid_v->group);
+        status = ast_reclaim_string(rt,ncinq_ncid_v->group);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_ncid_v);
+    ast_free(rt,(void*)ncinq_ncid_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_ncid_reclaim*/
+} /*NCInq_ncid_reclaim*/
 
 size_t
-Inq_ncid_get_size(ast_runtime* rt, Inq_ncid* inq_ncid_v)
+NCInq_ncid_get_size(ast_runtime* rt, NCInq_ncid* ncinq_ncid_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_ncid_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_ncid_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_ncid_v->group);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_ncid_v->group);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_ncid_get_size*/
+} /*NCInq_ncid_get_size*/
 
 ast_err
-Inq_ncid_Return_write(ast_runtime* rt, Inq_ncid_Return* inq_ncid_return_v)
+NCInq_ncid_Return_write(ast_runtime* rt, NCInq_ncid_Return* ncinq_ncid_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_ncid_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_ncid_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_ncid_return_v->grp_ncid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_ncid_return_v->grp_ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_ncid_Return_write*/
+} /*NCInq_ncid_Return_write*/
 
 ast_err
-Inq_ncid_Return_read(ast_runtime* rt, Inq_ncid_Return** inq_ncid_return_vp)
+NCInq_ncid_Return_read(ast_runtime* rt, NCInq_ncid_Return** ncinq_ncid_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_ncid_Return* inq_ncid_return_v;
+    NCInq_ncid_Return* ncinq_ncid_return_v;
     unsigned long pos;
 
-    inq_ncid_return_v = (Inq_ncid_Return*)ast_alloc(rt,sizeof(Inq_ncid_Return));
-    if(inq_ncid_return_v == NULL) return AST_ENOMEM;
+    ncinq_ncid_return_v = (NCInq_ncid_Return*)ast_alloc(rt,sizeof(NCInq_ncid_Return));
+    if(ncinq_ncid_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7907,14 +7884,14 @@ Inq_ncid_Return_read(ast_runtime* rt, Inq_ncid_Return** inq_ncid_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_ncid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_ncid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_ncid_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_ncid_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_ncid_return_v->grp_ncid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_ncid_return_v->grp_ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -7922,69 +7899,69 @@ Inq_ncid_Return_read(ast_runtime* rt, Inq_ncid_Return** inq_ncid_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_ncid_return_vp) *inq_ncid_return_vp = inq_ncid_return_v;
+    if(ncinq_ncid_return_vp) *ncinq_ncid_return_vp = ncinq_ncid_return_v;
 done:
     return ACATCH(status);
-} /*Inq_ncid_Return_read*/
+} /*NCInq_ncid_Return_read*/
 
 ast_err
-Inq_ncid_Return_reclaim(ast_runtime* rt, Inq_ncid_Return* inq_ncid_return_v)
+NCInq_ncid_Return_reclaim(ast_runtime* rt, NCInq_ncid_Return* ncinq_ncid_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_ncid_return_v);
+    ast_free(rt,(void*)ncinq_ncid_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_ncid_Return_reclaim*/
+} /*NCInq_ncid_Return_reclaim*/
 
 size_t
-Inq_ncid_Return_get_size(ast_runtime* rt, Inq_ncid_Return* inq_ncid_return_v)
+NCInq_ncid_Return_get_size(ast_runtime* rt, NCInq_ncid_Return* ncinq_ncid_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_ncid_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_ncid_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_ncid_return_v->grp_ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_ncid_return_v->grp_ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_ncid_Return_get_size*/
+} /*NCInq_ncid_Return_get_size*/
 
 ast_err
-Inq_grps_write(ast_runtime* rt, Inq_grps* inq_grps_v)
+NCInq_grps_write(ast_runtime* rt, NCInq_grps* ncinq_grps_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grps_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grps_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grps_write*/
+} /*NCInq_grps_write*/
 
 ast_err
-Inq_grps_read(ast_runtime* rt, Inq_grps** inq_grps_vp)
+NCInq_grps_read(ast_runtime* rt, NCInq_grps** ncinq_grps_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grps* inq_grps_v;
+    NCInq_grps* ncinq_grps_v;
     unsigned long pos;
 
-    inq_grps_v = (Inq_grps*)ast_alloc(rt,sizeof(Inq_grps));
-    if(inq_grps_v == NULL) return AST_ENOMEM;
+    ncinq_grps_v = (NCInq_grps*)ast_alloc(rt,sizeof(NCInq_grps));
+    if(ncinq_grps_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -7992,11 +7969,11 @@ Inq_grps_read(ast_runtime* rt, Inq_grps** inq_grps_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grps|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grps|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grps_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grps_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8004,56 +7981,56 @@ Inq_grps_read(ast_runtime* rt, Inq_grps** inq_grps_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grps_vp) *inq_grps_vp = inq_grps_v;
+    if(ncinq_grps_vp) *ncinq_grps_vp = ncinq_grps_v;
 done:
     return ACATCH(status);
-} /*Inq_grps_read*/
+} /*NCInq_grps_read*/
 
 ast_err
-Inq_grps_reclaim(ast_runtime* rt, Inq_grps* inq_grps_v)
+NCInq_grps_reclaim(ast_runtime* rt, NCInq_grps* ncinq_grps_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grps_v);
+    ast_free(rt,(void*)ncinq_grps_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grps_reclaim*/
+} /*NCInq_grps_reclaim*/
 
 size_t
-Inq_grps_get_size(ast_runtime* rt, Inq_grps* inq_grps_v)
+NCInq_grps_get_size(ast_runtime* rt, NCInq_grps* ncinq_grps_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grps_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grps_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grps_get_size*/
+} /*NCInq_grps_get_size*/
 
 ast_err
-Inq_grps_Return_write(ast_runtime* rt, Inq_grps_Return* inq_grps_return_v)
+NCInq_grps_Return_write(ast_runtime* rt, NCInq_grps_Return* ncinq_grps_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grps_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grps_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_grps_return_v->ngroups);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_grps_return_v->ngroups);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_grps_return_v->ncids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,3,&inq_grps_return_v->ncids.values[i]);
+        for(i=0;i<ncinq_grps_return_v->ncids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,3,&ncinq_grps_return_v->ncids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -8061,18 +8038,18 @@ Inq_grps_Return_write(ast_runtime* rt, Inq_grps_Return* inq_grps_return_v)
 done:
     return ACATCH(status);
 
-} /*Inq_grps_Return_write*/
+} /*NCInq_grps_Return_write*/
 
 ast_err
-Inq_grps_Return_read(ast_runtime* rt, Inq_grps_Return** inq_grps_return_vp)
+NCInq_grps_Return_read(ast_runtime* rt, NCInq_grps_Return** ncinq_grps_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grps_Return* inq_grps_return_v;
+    NCInq_grps_Return* ncinq_grps_return_v;
     unsigned long pos;
 
-    inq_grps_return_v = (Inq_grps_Return*)ast_alloc(rt,sizeof(Inq_grps_Return));
-    if(inq_grps_return_v == NULL) return AST_ENOMEM;
+    ncinq_grps_return_v = (NCInq_grps_Return*)ast_alloc(rt,sizeof(NCInq_grps_Return));
+    if(ncinq_grps_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8080,20 +8057,20 @@ Inq_grps_Return_read(ast_runtime* rt, Inq_grps_Return** inq_grps_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grps_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grps_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grps_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grps_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_grps_return_v->ngroups);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_grps_return_v->ngroups);
             } break;
         case 3: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_grps_return_v->ncids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_grps_return_v->ncids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -8102,77 +8079,77 @@ Inq_grps_Return_read(ast_runtime* rt, Inq_grps_Return** inq_grps_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grps_return_vp) *inq_grps_return_vp = inq_grps_return_v;
+    if(ncinq_grps_return_vp) *ncinq_grps_return_vp = ncinq_grps_return_v;
 done:
     return ACATCH(status);
-} /*Inq_grps_Return_read*/
+} /*NCInq_grps_Return_read*/
 
 ast_err
-Inq_grps_Return_reclaim(ast_runtime* rt, Inq_grps_Return* inq_grps_return_v)
+NCInq_grps_Return_reclaim(ast_runtime* rt, NCInq_grps_Return* ncinq_grps_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grps_return_v);
+    ast_free(rt,(void*)ncinq_grps_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grps_Return_reclaim*/
+} /*NCInq_grps_Return_reclaim*/
 
 size_t
-Inq_grps_Return_get_size(ast_runtime* rt, Inq_grps_Return* inq_grps_return_v)
+NCInq_grps_Return_get_size(ast_runtime* rt, NCInq_grps_Return* ncinq_grps_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grps_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grps_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grps_return_v->ngroups);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grps_return_v->ngroups);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_grps_return_v->ncids.count;i++) {
+        for(i=0;i<ncinq_grps_return_v->ncids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_grps_return_v->ncids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_grps_return_v->ncids.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grps_Return_get_size*/
+} /*NCInq_grps_Return_get_size*/
 
 ast_err
-Inq_grpname_write(ast_runtime* rt, Inq_grpname* inq_grpname_v)
+NCInq_grpname_write(ast_runtime* rt, NCInq_grpname* ncinq_grpname_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grpname_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grpname_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_write*/
+} /*NCInq_grpname_write*/
 
 ast_err
-Inq_grpname_read(ast_runtime* rt, Inq_grpname** inq_grpname_vp)
+NCInq_grpname_read(ast_runtime* rt, NCInq_grpname** ncinq_grpname_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grpname* inq_grpname_v;
+    NCInq_grpname* ncinq_grpname_v;
     unsigned long pos;
 
-    inq_grpname_v = (Inq_grpname*)ast_alloc(rt,sizeof(Inq_grpname));
-    if(inq_grpname_v == NULL) return AST_ENOMEM;
+    ncinq_grpname_v = (NCInq_grpname*)ast_alloc(rt,sizeof(NCInq_grpname));
+    if(ncinq_grpname_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8180,11 +8157,11 @@ Inq_grpname_read(ast_runtime* rt, Inq_grpname** inq_grpname_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grpname|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grpname|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grpname_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grpname_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8192,68 +8169,68 @@ Inq_grpname_read(ast_runtime* rt, Inq_grpname** inq_grpname_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grpname_vp) *inq_grpname_vp = inq_grpname_v;
+    if(ncinq_grpname_vp) *ncinq_grpname_vp = ncinq_grpname_v;
 done:
     return ACATCH(status);
-} /*Inq_grpname_read*/
+} /*NCInq_grpname_read*/
 
 ast_err
-Inq_grpname_reclaim(ast_runtime* rt, Inq_grpname* inq_grpname_v)
+NCInq_grpname_reclaim(ast_runtime* rt, NCInq_grpname* ncinq_grpname_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grpname_v);
+    ast_free(rt,(void*)ncinq_grpname_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_reclaim*/
+} /*NCInq_grpname_reclaim*/
 
 size_t
-Inq_grpname_get_size(ast_runtime* rt, Inq_grpname* inq_grpname_v)
+NCInq_grpname_get_size(ast_runtime* rt, NCInq_grpname* ncinq_grpname_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grpname_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grpname_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grpname_get_size*/
+} /*NCInq_grpname_get_size*/
 
 ast_err
-Inq_grpname_Return_write(ast_runtime* rt, Inq_grpname_Return* inq_grpname_return_v)
+NCInq_grpname_Return_write(ast_runtime* rt, NCInq_grpname_Return* ncinq_grpname_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grpname_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grpname_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_grpname_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_grpname_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_Return_write*/
+} /*NCInq_grpname_Return_write*/
 
 ast_err
-Inq_grpname_Return_read(ast_runtime* rt, Inq_grpname_Return** inq_grpname_return_vp)
+NCInq_grpname_Return_read(ast_runtime* rt, NCInq_grpname_Return** ncinq_grpname_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grpname_Return* inq_grpname_return_v;
+    NCInq_grpname_Return* ncinq_grpname_return_v;
     unsigned long pos;
 
-    inq_grpname_return_v = (Inq_grpname_Return*)ast_alloc(rt,sizeof(Inq_grpname_Return));
-    if(inq_grpname_return_v == NULL) return AST_ENOMEM;
+    ncinq_grpname_return_v = (NCInq_grpname_Return*)ast_alloc(rt,sizeof(NCInq_grpname_Return));
+    if(ncinq_grpname_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8261,14 +8238,14 @@ Inq_grpname_Return_read(ast_runtime* rt, Inq_grpname_Return** inq_grpname_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grpname_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grpname_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grpname_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grpname_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_grpname_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_grpname_return_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8276,73 +8253,73 @@ Inq_grpname_Return_read(ast_runtime* rt, Inq_grpname_Return** inq_grpname_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grpname_return_vp) *inq_grpname_return_vp = inq_grpname_return_v;
+    if(ncinq_grpname_return_vp) *ncinq_grpname_return_vp = ncinq_grpname_return_v;
 done:
     return ACATCH(status);
-} /*Inq_grpname_Return_read*/
+} /*NCInq_grpname_Return_read*/
 
 ast_err
-Inq_grpname_Return_reclaim(ast_runtime* rt, Inq_grpname_Return* inq_grpname_return_v)
+NCInq_grpname_Return_reclaim(ast_runtime* rt, NCInq_grpname_Return* ncinq_grpname_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_grpname_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_grpname_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_grpname_return_v);
+    ast_free(rt,(void*)ncinq_grpname_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_Return_reclaim*/
+} /*NCInq_grpname_Return_reclaim*/
 
 size_t
-Inq_grpname_Return_get_size(ast_runtime* rt, Inq_grpname_Return* inq_grpname_return_v)
+NCInq_grpname_Return_get_size(ast_runtime* rt, NCInq_grpname_Return* ncinq_grpname_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grpname_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grpname_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_grpname_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_grpname_return_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grpname_Return_get_size*/
+} /*NCInq_grpname_Return_get_size*/
 
 ast_err
-Inq_grpname_full_write(ast_runtime* rt, Inq_grpname_full* inq_grpname_full_v)
+NCInq_grpname_full_write(ast_runtime* rt, NCInq_grpname_full* ncinq_grpname_full_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grpname_full_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grpname_full_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_full_write*/
+} /*NCInq_grpname_full_write*/
 
 ast_err
-Inq_grpname_full_read(ast_runtime* rt, Inq_grpname_full** inq_grpname_full_vp)
+NCInq_grpname_full_read(ast_runtime* rt, NCInq_grpname_full** ncinq_grpname_full_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grpname_full* inq_grpname_full_v;
+    NCInq_grpname_full* ncinq_grpname_full_v;
     unsigned long pos;
 
-    inq_grpname_full_v = (Inq_grpname_full*)ast_alloc(rt,sizeof(Inq_grpname_full));
-    if(inq_grpname_full_v == NULL) return AST_ENOMEM;
+    ncinq_grpname_full_v = (NCInq_grpname_full*)ast_alloc(rt,sizeof(NCInq_grpname_full));
+    if(ncinq_grpname_full_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8350,11 +8327,11 @@ Inq_grpname_full_read(ast_runtime* rt, Inq_grpname_full** inq_grpname_full_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grpname_full|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grpname_full|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grpname_full_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grpname_full_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8362,75 +8339,75 @@ Inq_grpname_full_read(ast_runtime* rt, Inq_grpname_full** inq_grpname_full_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grpname_full_vp) *inq_grpname_full_vp = inq_grpname_full_v;
+    if(ncinq_grpname_full_vp) *ncinq_grpname_full_vp = ncinq_grpname_full_v;
 done:
     return ACATCH(status);
-} /*Inq_grpname_full_read*/
+} /*NCInq_grpname_full_read*/
 
 ast_err
-Inq_grpname_full_reclaim(ast_runtime* rt, Inq_grpname_full* inq_grpname_full_v)
+NCInq_grpname_full_reclaim(ast_runtime* rt, NCInq_grpname_full* ncinq_grpname_full_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grpname_full_v);
+    ast_free(rt,(void*)ncinq_grpname_full_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_full_reclaim*/
+} /*NCInq_grpname_full_reclaim*/
 
 size_t
-Inq_grpname_full_get_size(ast_runtime* rt, Inq_grpname_full* inq_grpname_full_v)
+NCInq_grpname_full_get_size(ast_runtime* rt, NCInq_grpname_full* ncinq_grpname_full_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grpname_full_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grpname_full_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grpname_full_get_size*/
+} /*NCInq_grpname_full_get_size*/
 
 ast_err
-Inq_grpname_full_Return_write(ast_runtime* rt, Inq_grpname_full_Return* inq_grpname_full_return_v)
+NCInq_grpname_full_Return_write(ast_runtime* rt, NCInq_grpname_full_Return* ncinq_grpname_full_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grpname_full_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grpname_full_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_grpname_full_return_v->len.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,2,&inq_grpname_full_return_v->len.values[i]);
+        for(i=0;i<ncinq_grpname_full_return_v->len.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,2,&ncinq_grpname_full_return_v->len.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&inq_grpname_full_return_v->fullname);
+        status = ast_write_primitive(rt,ast_string,3,&ncinq_grpname_full_return_v->fullname);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_full_Return_write*/
+} /*NCInq_grpname_full_Return_write*/
 
 ast_err
-Inq_grpname_full_Return_read(ast_runtime* rt, Inq_grpname_full_Return** inq_grpname_full_return_vp)
+NCInq_grpname_full_Return_read(ast_runtime* rt, NCInq_grpname_full_Return** ncinq_grpname_full_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grpname_full_Return* inq_grpname_full_return_v;
+    NCInq_grpname_full_Return* ncinq_grpname_full_return_v;
     unsigned long pos;
 
-    inq_grpname_full_return_v = (Inq_grpname_full_Return*)ast_alloc(rt,sizeof(Inq_grpname_full_Return));
-    if(inq_grpname_full_return_v == NULL) return AST_ENOMEM;
+    ncinq_grpname_full_return_v = (NCInq_grpname_full_Return*)ast_alloc(rt,sizeof(NCInq_grpname_full_Return));
+    if(ncinq_grpname_full_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8438,21 +8415,21 @@ Inq_grpname_full_Return_read(ast_runtime* rt, Inq_grpname_full_Return** inq_grpn
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grpname_full_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grpname_full_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grpname_full_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grpname_full_return_v->ncstatus);
             } break;
         case 2: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,2,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&inq_grpname_full_return_v->len,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncinq_grpname_full_return_v->len,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&inq_grpname_full_return_v->fullname);
+            status = ast_read_primitive(rt,ast_string,3,&ncinq_grpname_full_return_v->fullname);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8460,81 +8437,81 @@ Inq_grpname_full_Return_read(ast_runtime* rt, Inq_grpname_full_Return** inq_grpn
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grpname_full_return_vp) *inq_grpname_full_return_vp = inq_grpname_full_return_v;
+    if(ncinq_grpname_full_return_vp) *ncinq_grpname_full_return_vp = ncinq_grpname_full_return_v;
 done:
     return ACATCH(status);
-} /*Inq_grpname_full_Return_read*/
+} /*NCInq_grpname_full_Return_read*/
 
 ast_err
-Inq_grpname_full_Return_reclaim(ast_runtime* rt, Inq_grpname_full_Return* inq_grpname_full_return_v)
+NCInq_grpname_full_Return_reclaim(ast_runtime* rt, NCInq_grpname_full_Return* ncinq_grpname_full_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_grpname_full_return_v->fullname);
+        status = ast_reclaim_string(rt,ncinq_grpname_full_return_v->fullname);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_grpname_full_return_v);
+    ast_free(rt,(void*)ncinq_grpname_full_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grpname_full_Return_reclaim*/
+} /*NCInq_grpname_full_Return_reclaim*/
 
 size_t
-Inq_grpname_full_Return_get_size(ast_runtime* rt, Inq_grpname_full_Return* inq_grpname_full_return_v)
+NCInq_grpname_full_Return_get_size(ast_runtime* rt, NCInq_grpname_full_Return* ncinq_grpname_full_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grpname_full_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grpname_full_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_grpname_full_return_v->len.count;i++) {
+        for(i=0;i<ncinq_grpname_full_return_v->len.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,2);
-            fieldsize += ast_get_size(rt,ast_uint64,&inq_grpname_full_return_v->len.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncinq_grpname_full_return_v->len.values[i]);
         }
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&inq_grpname_full_return_v->fullname);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_grpname_full_return_v->fullname);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grpname_full_Return_get_size*/
+} /*NCInq_grpname_full_Return_get_size*/
 
 ast_err
-Inq_grp_parent_write(ast_runtime* rt, Inq_grp_parent* inq_grp_parent_v)
+NCInq_grp_parent_write(ast_runtime* rt, NCInq_grp_parent* ncinq_grp_parent_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grp_parent_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grp_parent_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_parent_write*/
+} /*NCInq_grp_parent_write*/
 
 ast_err
-Inq_grp_parent_read(ast_runtime* rt, Inq_grp_parent** inq_grp_parent_vp)
+NCInq_grp_parent_read(ast_runtime* rt, NCInq_grp_parent** ncinq_grp_parent_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grp_parent* inq_grp_parent_v;
+    NCInq_grp_parent* ncinq_grp_parent_v;
     unsigned long pos;
 
-    inq_grp_parent_v = (Inq_grp_parent*)ast_alloc(rt,sizeof(Inq_grp_parent));
-    if(inq_grp_parent_v == NULL) return AST_ENOMEM;
+    ncinq_grp_parent_v = (NCInq_grp_parent*)ast_alloc(rt,sizeof(NCInq_grp_parent));
+    if(ncinq_grp_parent_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8542,11 +8519,11 @@ Inq_grp_parent_read(ast_runtime* rt, Inq_grp_parent** inq_grp_parent_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grp_parent|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grp_parent|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grp_parent_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grp_parent_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8554,68 +8531,68 @@ Inq_grp_parent_read(ast_runtime* rt, Inq_grp_parent** inq_grp_parent_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grp_parent_vp) *inq_grp_parent_vp = inq_grp_parent_v;
+    if(ncinq_grp_parent_vp) *ncinq_grp_parent_vp = ncinq_grp_parent_v;
 done:
     return ACATCH(status);
-} /*Inq_grp_parent_read*/
+} /*NCInq_grp_parent_read*/
 
 ast_err
-Inq_grp_parent_reclaim(ast_runtime* rt, Inq_grp_parent* inq_grp_parent_v)
+NCInq_grp_parent_reclaim(ast_runtime* rt, NCInq_grp_parent* ncinq_grp_parent_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grp_parent_v);
+    ast_free(rt,(void*)ncinq_grp_parent_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_parent_reclaim*/
+} /*NCInq_grp_parent_reclaim*/
 
 size_t
-Inq_grp_parent_get_size(ast_runtime* rt, Inq_grp_parent* inq_grp_parent_v)
+NCInq_grp_parent_get_size(ast_runtime* rt, NCInq_grp_parent* ncinq_grp_parent_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grp_parent_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grp_parent_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grp_parent_get_size*/
+} /*NCInq_grp_parent_get_size*/
 
 ast_err
-Inq_grp_parent_Return_write(ast_runtime* rt, Inq_grp_parent_Return* inq_grp_parent_return_v)
+NCInq_grp_parent_Return_write(ast_runtime* rt, NCInq_grp_parent_Return* ncinq_grp_parent_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grp_parent_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grp_parent_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_grp_parent_return_v->parentncid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_grp_parent_return_v->parentncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_parent_Return_write*/
+} /*NCInq_grp_parent_Return_write*/
 
 ast_err
-Inq_grp_parent_Return_read(ast_runtime* rt, Inq_grp_parent_Return** inq_grp_parent_return_vp)
+NCInq_grp_parent_Return_read(ast_runtime* rt, NCInq_grp_parent_Return** ncinq_grp_parent_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grp_parent_Return* inq_grp_parent_return_v;
+    NCInq_grp_parent_Return* ncinq_grp_parent_return_v;
     unsigned long pos;
 
-    inq_grp_parent_return_v = (Inq_grp_parent_Return*)ast_alloc(rt,sizeof(Inq_grp_parent_Return));
-    if(inq_grp_parent_return_v == NULL) return AST_ENOMEM;
+    ncinq_grp_parent_return_v = (NCInq_grp_parent_Return*)ast_alloc(rt,sizeof(NCInq_grp_parent_Return));
+    if(ncinq_grp_parent_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8623,14 +8600,14 @@ Inq_grp_parent_Return_read(ast_runtime* rt, Inq_grp_parent_Return** inq_grp_pare
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grp_parent_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grp_parent_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grp_parent_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grp_parent_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_grp_parent_return_v->parentncid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_grp_parent_return_v->parentncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8638,73 +8615,73 @@ Inq_grp_parent_Return_read(ast_runtime* rt, Inq_grp_parent_Return** inq_grp_pare
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grp_parent_return_vp) *inq_grp_parent_return_vp = inq_grp_parent_return_v;
+    if(ncinq_grp_parent_return_vp) *ncinq_grp_parent_return_vp = ncinq_grp_parent_return_v;
 done:
     return ACATCH(status);
-} /*Inq_grp_parent_Return_read*/
+} /*NCInq_grp_parent_Return_read*/
 
 ast_err
-Inq_grp_parent_Return_reclaim(ast_runtime* rt, Inq_grp_parent_Return* inq_grp_parent_return_v)
+NCInq_grp_parent_Return_reclaim(ast_runtime* rt, NCInq_grp_parent_Return* ncinq_grp_parent_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grp_parent_return_v);
+    ast_free(rt,(void*)ncinq_grp_parent_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_parent_Return_reclaim*/
+} /*NCInq_grp_parent_Return_reclaim*/
 
 size_t
-Inq_grp_parent_Return_get_size(ast_runtime* rt, Inq_grp_parent_Return* inq_grp_parent_return_v)
+NCInq_grp_parent_Return_get_size(ast_runtime* rt, NCInq_grp_parent_Return* ncinq_grp_parent_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grp_parent_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grp_parent_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grp_parent_return_v->parentncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grp_parent_return_v->parentncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grp_parent_Return_get_size*/
+} /*NCInq_grp_parent_Return_get_size*/
 
 ast_err
-Inq_grp_full_ncid_write(ast_runtime* rt, Inq_grp_full_ncid* inq_grp_full_ncid_v)
+NCInq_grp_full_ncid_write(ast_runtime* rt, NCInq_grp_full_ncid* ncinq_grp_full_ncid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grp_full_ncid_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grp_full_ncid_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_grp_full_ncid_v->fullname);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_grp_full_ncid_v->fullname);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_full_ncid_write*/
+} /*NCInq_grp_full_ncid_write*/
 
 ast_err
-Inq_grp_full_ncid_read(ast_runtime* rt, Inq_grp_full_ncid** inq_grp_full_ncid_vp)
+NCInq_grp_full_ncid_read(ast_runtime* rt, NCInq_grp_full_ncid** ncinq_grp_full_ncid_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grp_full_ncid* inq_grp_full_ncid_v;
+    NCInq_grp_full_ncid* ncinq_grp_full_ncid_v;
     unsigned long pos;
 
-    inq_grp_full_ncid_v = (Inq_grp_full_ncid*)ast_alloc(rt,sizeof(Inq_grp_full_ncid));
-    if(inq_grp_full_ncid_v == NULL) return AST_ENOMEM;
+    ncinq_grp_full_ncid_v = (NCInq_grp_full_ncid*)ast_alloc(rt,sizeof(NCInq_grp_full_ncid));
+    if(ncinq_grp_full_ncid_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8712,14 +8689,14 @@ Inq_grp_full_ncid_read(ast_runtime* rt, Inq_grp_full_ncid** inq_grp_full_ncid_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grp_full_ncid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grp_full_ncid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grp_full_ncid_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grp_full_ncid_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_grp_full_ncid_v->fullname);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_grp_full_ncid_v->fullname);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8727,77 +8704,77 @@ Inq_grp_full_ncid_read(ast_runtime* rt, Inq_grp_full_ncid** inq_grp_full_ncid_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grp_full_ncid_vp) *inq_grp_full_ncid_vp = inq_grp_full_ncid_v;
+    if(ncinq_grp_full_ncid_vp) *ncinq_grp_full_ncid_vp = ncinq_grp_full_ncid_v;
 done:
     return ACATCH(status);
-} /*Inq_grp_full_ncid_read*/
+} /*NCInq_grp_full_ncid_read*/
 
 ast_err
-Inq_grp_full_ncid_reclaim(ast_runtime* rt, Inq_grp_full_ncid* inq_grp_full_ncid_v)
+NCInq_grp_full_ncid_reclaim(ast_runtime* rt, NCInq_grp_full_ncid* ncinq_grp_full_ncid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_grp_full_ncid_v->fullname);
+        status = ast_reclaim_string(rt,ncinq_grp_full_ncid_v->fullname);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_grp_full_ncid_v);
+    ast_free(rt,(void*)ncinq_grp_full_ncid_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_full_ncid_reclaim*/
+} /*NCInq_grp_full_ncid_reclaim*/
 
 size_t
-Inq_grp_full_ncid_get_size(ast_runtime* rt, Inq_grp_full_ncid* inq_grp_full_ncid_v)
+NCInq_grp_full_ncid_get_size(ast_runtime* rt, NCInq_grp_full_ncid* ncinq_grp_full_ncid_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grp_full_ncid_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grp_full_ncid_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_grp_full_ncid_v->fullname);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_grp_full_ncid_v->fullname);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grp_full_ncid_get_size*/
+} /*NCInq_grp_full_ncid_get_size*/
 
 ast_err
-Inq_grp_full_ncid_Return_write(ast_runtime* rt, Inq_grp_full_ncid_Return* inq_grp_full_ncid_return_v)
+NCInq_grp_full_ncid_Return_write(ast_runtime* rt, NCInq_grp_full_ncid_Return* ncinq_grp_full_ncid_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_grp_full_ncid_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_grp_full_ncid_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_grp_full_ncid_return_v->groupncid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_grp_full_ncid_return_v->groupncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_full_ncid_Return_write*/
+} /*NCInq_grp_full_ncid_Return_write*/
 
 ast_err
-Inq_grp_full_ncid_Return_read(ast_runtime* rt, Inq_grp_full_ncid_Return** inq_grp_full_ncid_return_vp)
+NCInq_grp_full_ncid_Return_read(ast_runtime* rt, NCInq_grp_full_ncid_Return** ncinq_grp_full_ncid_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_grp_full_ncid_Return* inq_grp_full_ncid_return_v;
+    NCInq_grp_full_ncid_Return* ncinq_grp_full_ncid_return_v;
     unsigned long pos;
 
-    inq_grp_full_ncid_return_v = (Inq_grp_full_ncid_Return*)ast_alloc(rt,sizeof(Inq_grp_full_ncid_Return));
-    if(inq_grp_full_ncid_return_v == NULL) return AST_ENOMEM;
+    ncinq_grp_full_ncid_return_v = (NCInq_grp_full_ncid_Return*)ast_alloc(rt,sizeof(NCInq_grp_full_ncid_Return));
+    if(ncinq_grp_full_ncid_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8805,14 +8782,14 @@ Inq_grp_full_ncid_Return_read(ast_runtime* rt, Inq_grp_full_ncid_Return** inq_gr
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_grp_full_ncid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_grp_full_ncid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_grp_full_ncid_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_grp_full_ncid_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_grp_full_ncid_return_v->groupncid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_grp_full_ncid_return_v->groupncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8820,69 +8797,69 @@ Inq_grp_full_ncid_Return_read(ast_runtime* rt, Inq_grp_full_ncid_Return** inq_gr
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_grp_full_ncid_return_vp) *inq_grp_full_ncid_return_vp = inq_grp_full_ncid_return_v;
+    if(ncinq_grp_full_ncid_return_vp) *ncinq_grp_full_ncid_return_vp = ncinq_grp_full_ncid_return_v;
 done:
     return ACATCH(status);
-} /*Inq_grp_full_ncid_Return_read*/
+} /*NCInq_grp_full_ncid_Return_read*/
 
 ast_err
-Inq_grp_full_ncid_Return_reclaim(ast_runtime* rt, Inq_grp_full_ncid_Return* inq_grp_full_ncid_return_v)
+NCInq_grp_full_ncid_Return_reclaim(ast_runtime* rt, NCInq_grp_full_ncid_Return* ncinq_grp_full_ncid_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_grp_full_ncid_return_v);
+    ast_free(rt,(void*)ncinq_grp_full_ncid_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_grp_full_ncid_Return_reclaim*/
+} /*NCInq_grp_full_ncid_Return_reclaim*/
 
 size_t
-Inq_grp_full_ncid_Return_get_size(ast_runtime* rt, Inq_grp_full_ncid_Return* inq_grp_full_ncid_return_v)
+NCInq_grp_full_ncid_Return_get_size(ast_runtime* rt, NCInq_grp_full_ncid_Return* ncinq_grp_full_ncid_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grp_full_ncid_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grp_full_ncid_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_grp_full_ncid_return_v->groupncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_grp_full_ncid_return_v->groupncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_grp_full_ncid_Return_get_size*/
+} /*NCInq_grp_full_ncid_Return_get_size*/
 
 ast_err
-Inq_varids_write(ast_runtime* rt, Inq_varids* inq_varids_v)
+NCInq_varids_write(ast_runtime* rt, NCInq_varids* ncinq_varids_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_varids_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_varids_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_varids_write*/
+} /*NCInq_varids_write*/
 
 ast_err
-Inq_varids_read(ast_runtime* rt, Inq_varids** inq_varids_vp)
+NCInq_varids_read(ast_runtime* rt, NCInq_varids** ncinq_varids_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_varids* inq_varids_v;
+    NCInq_varids* ncinq_varids_v;
     unsigned long pos;
 
-    inq_varids_v = (Inq_varids*)ast_alloc(rt,sizeof(Inq_varids));
-    if(inq_varids_v == NULL) return AST_ENOMEM;
+    ncinq_varids_v = (NCInq_varids*)ast_alloc(rt,sizeof(NCInq_varids));
+    if(ncinq_varids_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8890,11 +8867,11 @@ Inq_varids_read(ast_runtime* rt, Inq_varids** inq_varids_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_varids|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_varids|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_varids_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_varids_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -8902,56 +8879,56 @@ Inq_varids_read(ast_runtime* rt, Inq_varids** inq_varids_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_varids_vp) *inq_varids_vp = inq_varids_v;
+    if(ncinq_varids_vp) *ncinq_varids_vp = ncinq_varids_v;
 done:
     return ACATCH(status);
-} /*Inq_varids_read*/
+} /*NCInq_varids_read*/
 
 ast_err
-Inq_varids_reclaim(ast_runtime* rt, Inq_varids* inq_varids_v)
+NCInq_varids_reclaim(ast_runtime* rt, NCInq_varids* ncinq_varids_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_varids_v);
+    ast_free(rt,(void*)ncinq_varids_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_varids_reclaim*/
+} /*NCInq_varids_reclaim*/
 
 size_t
-Inq_varids_get_size(ast_runtime* rt, Inq_varids* inq_varids_v)
+NCInq_varids_get_size(ast_runtime* rt, NCInq_varids* ncinq_varids_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_varids_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_varids_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_varids_get_size*/
+} /*NCInq_varids_get_size*/
 
 ast_err
-Inq_varids_Return_write(ast_runtime* rt, Inq_varids_Return* inq_varids_return_v)
+NCInq_varids_Return_write(ast_runtime* rt, NCInq_varids_Return* ncinq_varids_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_varids_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_varids_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_varids_return_v->nvars);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_varids_return_v->nvars);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_varids_return_v->varids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,3,&inq_varids_return_v->varids.values[i]);
+        for(i=0;i<ncinq_varids_return_v->varids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,3,&ncinq_varids_return_v->varids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -8959,18 +8936,18 @@ Inq_varids_Return_write(ast_runtime* rt, Inq_varids_Return* inq_varids_return_v)
 done:
     return ACATCH(status);
 
-} /*Inq_varids_Return_write*/
+} /*NCInq_varids_Return_write*/
 
 ast_err
-Inq_varids_Return_read(ast_runtime* rt, Inq_varids_Return** inq_varids_return_vp)
+NCInq_varids_Return_read(ast_runtime* rt, NCInq_varids_Return** ncinq_varids_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_varids_Return* inq_varids_return_v;
+    NCInq_varids_Return* ncinq_varids_return_v;
     unsigned long pos;
 
-    inq_varids_return_v = (Inq_varids_Return*)ast_alloc(rt,sizeof(Inq_varids_Return));
-    if(inq_varids_return_v == NULL) return AST_ENOMEM;
+    ncinq_varids_return_v = (NCInq_varids_Return*)ast_alloc(rt,sizeof(NCInq_varids_Return));
+    if(ncinq_varids_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -8978,20 +8955,20 @@ Inq_varids_Return_read(ast_runtime* rt, Inq_varids_Return** inq_varids_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_varids_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_varids_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_varids_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_varids_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_varids_return_v->nvars);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_varids_return_v->nvars);
             } break;
         case 3: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_varids_return_v->varids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_varids_return_v->varids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -9000,81 +8977,81 @@ Inq_varids_Return_read(ast_runtime* rt, Inq_varids_Return** inq_varids_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_varids_return_vp) *inq_varids_return_vp = inq_varids_return_v;
+    if(ncinq_varids_return_vp) *ncinq_varids_return_vp = ncinq_varids_return_v;
 done:
     return ACATCH(status);
-} /*Inq_varids_Return_read*/
+} /*NCInq_varids_Return_read*/
 
 ast_err
-Inq_varids_Return_reclaim(ast_runtime* rt, Inq_varids_Return* inq_varids_return_v)
+NCInq_varids_Return_reclaim(ast_runtime* rt, NCInq_varids_Return* ncinq_varids_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_varids_return_v);
+    ast_free(rt,(void*)ncinq_varids_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_varids_Return_reclaim*/
+} /*NCInq_varids_Return_reclaim*/
 
 size_t
-Inq_varids_Return_get_size(ast_runtime* rt, Inq_varids_Return* inq_varids_return_v)
+NCInq_varids_Return_get_size(ast_runtime* rt, NCInq_varids_Return* ncinq_varids_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_varids_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_varids_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_varids_return_v->nvars);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_varids_return_v->nvars);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_varids_return_v->varids.count;i++) {
+        for(i=0;i<ncinq_varids_return_v->varids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_varids_return_v->varids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_varids_return_v->varids.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_varids_Return_get_size*/
+} /*NCInq_varids_Return_get_size*/
 
 ast_err
-Inq_dimids_write(ast_runtime* rt, Inq_dimids* inq_dimids_v)
+NCInq_dimids_write(ast_runtime* rt, NCInq_dimids* ncinq_dimids_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_dimids_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_dimids_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,2,&inq_dimids_v->includeparents);
+        status = ast_write_primitive(rt,ast_bool,2,&ncinq_dimids_v->includeparents);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimids_write*/
+} /*NCInq_dimids_write*/
 
 ast_err
-Inq_dimids_read(ast_runtime* rt, Inq_dimids** inq_dimids_vp)
+NCInq_dimids_read(ast_runtime* rt, NCInq_dimids** ncinq_dimids_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_dimids* inq_dimids_v;
+    NCInq_dimids* ncinq_dimids_v;
     unsigned long pos;
 
-    inq_dimids_v = (Inq_dimids*)ast_alloc(rt,sizeof(Inq_dimids));
-    if(inq_dimids_v == NULL) return AST_ENOMEM;
+    ncinq_dimids_v = (NCInq_dimids*)ast_alloc(rt,sizeof(NCInq_dimids));
+    if(ncinq_dimids_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9082,14 +9059,14 @@ Inq_dimids_read(ast_runtime* rt, Inq_dimids** inq_dimids_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_dimids|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_dimids|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_dimids_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_dimids_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bool,2,&inq_dimids_v->includeparents);
+            status = ast_read_primitive(rt,ast_bool,2,&ncinq_dimids_v->includeparents);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9097,61 +9074,61 @@ Inq_dimids_read(ast_runtime* rt, Inq_dimids** inq_dimids_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_dimids_vp) *inq_dimids_vp = inq_dimids_v;
+    if(ncinq_dimids_vp) *ncinq_dimids_vp = ncinq_dimids_v;
 done:
     return ACATCH(status);
-} /*Inq_dimids_read*/
+} /*NCInq_dimids_read*/
 
 ast_err
-Inq_dimids_reclaim(ast_runtime* rt, Inq_dimids* inq_dimids_v)
+NCInq_dimids_reclaim(ast_runtime* rt, NCInq_dimids* ncinq_dimids_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_dimids_v);
+    ast_free(rt,(void*)ncinq_dimids_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimids_reclaim*/
+} /*NCInq_dimids_reclaim*/
 
 size_t
-Inq_dimids_get_size(ast_runtime* rt, Inq_dimids* inq_dimids_v)
+NCInq_dimids_get_size(ast_runtime* rt, NCInq_dimids* ncinq_dimids_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dimids_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimids_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_dimids_v->includeparents);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_dimids_v->includeparents);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_dimids_get_size*/
+} /*NCInq_dimids_get_size*/
 
 ast_err
-Inq_dimids_Return_write(ast_runtime* rt, Inq_dimids_Return* inq_dimids_return_v)
+NCInq_dimids_Return_write(ast_runtime* rt, NCInq_dimids_Return* ncinq_dimids_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_dimids_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_dimids_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_dimids_return_v->ndims);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_dimids_return_v->ndims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_dimids_return_v->dimids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,3,&inq_dimids_return_v->dimids.values[i]);
+        for(i=0;i<ncinq_dimids_return_v->dimids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,3,&ncinq_dimids_return_v->dimids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -9159,18 +9136,18 @@ Inq_dimids_Return_write(ast_runtime* rt, Inq_dimids_Return* inq_dimids_return_v)
 done:
     return ACATCH(status);
 
-} /*Inq_dimids_Return_write*/
+} /*NCInq_dimids_Return_write*/
 
 ast_err
-Inq_dimids_Return_read(ast_runtime* rt, Inq_dimids_Return** inq_dimids_return_vp)
+NCInq_dimids_Return_read(ast_runtime* rt, NCInq_dimids_Return** ncinq_dimids_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_dimids_Return* inq_dimids_return_v;
+    NCInq_dimids_Return* ncinq_dimids_return_v;
     unsigned long pos;
 
-    inq_dimids_return_v = (Inq_dimids_Return*)ast_alloc(rt,sizeof(Inq_dimids_Return));
-    if(inq_dimids_return_v == NULL) return AST_ENOMEM;
+    ncinq_dimids_return_v = (NCInq_dimids_Return*)ast_alloc(rt,sizeof(NCInq_dimids_Return));
+    if(ncinq_dimids_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9178,20 +9155,20 @@ Inq_dimids_Return_read(ast_runtime* rt, Inq_dimids_Return** inq_dimids_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_dimids_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_dimids_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_dimids_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_dimids_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_dimids_return_v->ndims);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_dimids_return_v->ndims);
             } break;
         case 3: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_dimids_return_v->dimids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_dimids_return_v->dimids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -9200,77 +9177,77 @@ Inq_dimids_Return_read(ast_runtime* rt, Inq_dimids_Return** inq_dimids_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_dimids_return_vp) *inq_dimids_return_vp = inq_dimids_return_v;
+    if(ncinq_dimids_return_vp) *ncinq_dimids_return_vp = ncinq_dimids_return_v;
 done:
     return ACATCH(status);
-} /*Inq_dimids_Return_read*/
+} /*NCInq_dimids_Return_read*/
 
 ast_err
-Inq_dimids_Return_reclaim(ast_runtime* rt, Inq_dimids_Return* inq_dimids_return_v)
+NCInq_dimids_Return_reclaim(ast_runtime* rt, NCInq_dimids_Return* ncinq_dimids_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_dimids_return_v);
+    ast_free(rt,(void*)ncinq_dimids_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_dimids_Return_reclaim*/
+} /*NCInq_dimids_Return_reclaim*/
 
 size_t
-Inq_dimids_Return_get_size(ast_runtime* rt, Inq_dimids_Return* inq_dimids_return_v)
+NCInq_dimids_Return_get_size(ast_runtime* rt, NCInq_dimids_Return* ncinq_dimids_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dimids_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimids_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_dimids_return_v->ndims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimids_return_v->ndims);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_dimids_return_v->dimids.count;i++) {
+        for(i=0;i<ncinq_dimids_return_v->dimids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_dimids_return_v->dimids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_dimids_return_v->dimids.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_dimids_Return_get_size*/
+} /*NCInq_dimids_Return_get_size*/
 
 ast_err
-Inq_typeids_write(ast_runtime* rt, Inq_typeids* inq_typeids_v)
+NCInq_typeids_write(ast_runtime* rt, NCInq_typeids* ncinq_typeids_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_typeids_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_typeids_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeids_write*/
+} /*NCInq_typeids_write*/
 
 ast_err
-Inq_typeids_read(ast_runtime* rt, Inq_typeids** inq_typeids_vp)
+NCInq_typeids_read(ast_runtime* rt, NCInq_typeids** ncinq_typeids_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_typeids* inq_typeids_v;
+    NCInq_typeids* ncinq_typeids_v;
     unsigned long pos;
 
-    inq_typeids_v = (Inq_typeids*)ast_alloc(rt,sizeof(Inq_typeids));
-    if(inq_typeids_v == NULL) return AST_ENOMEM;
+    ncinq_typeids_v = (NCInq_typeids*)ast_alloc(rt,sizeof(NCInq_typeids));
+    if(ncinq_typeids_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9278,11 +9255,11 @@ Inq_typeids_read(ast_runtime* rt, Inq_typeids** inq_typeids_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_typeids|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_typeids|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_typeids_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_typeids_v->ncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9290,56 +9267,56 @@ Inq_typeids_read(ast_runtime* rt, Inq_typeids** inq_typeids_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_typeids_vp) *inq_typeids_vp = inq_typeids_v;
+    if(ncinq_typeids_vp) *ncinq_typeids_vp = ncinq_typeids_v;
 done:
     return ACATCH(status);
-} /*Inq_typeids_read*/
+} /*NCInq_typeids_read*/
 
 ast_err
-Inq_typeids_reclaim(ast_runtime* rt, Inq_typeids* inq_typeids_v)
+NCInq_typeids_reclaim(ast_runtime* rt, NCInq_typeids* ncinq_typeids_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_typeids_v);
+    ast_free(rt,(void*)ncinq_typeids_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeids_reclaim*/
+} /*NCInq_typeids_reclaim*/
 
 size_t
-Inq_typeids_get_size(ast_runtime* rt, Inq_typeids* inq_typeids_v)
+NCInq_typeids_get_size(ast_runtime* rt, NCInq_typeids* ncinq_typeids_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_typeids_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeids_v->ncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_typeids_get_size*/
+} /*NCInq_typeids_get_size*/
 
 ast_err
-Inq_typeids_Return_write(ast_runtime* rt, Inq_typeids_Return* inq_typeids_return_v)
+NCInq_typeids_Return_write(ast_runtime* rt, NCInq_typeids_Return* ncinq_typeids_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_typeids_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_typeids_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_typeids_return_v->ntypes);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_typeids_return_v->ntypes);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_typeids_return_v->typeids.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,3,&inq_typeids_return_v->typeids.values[i]);
+        for(i=0;i<ncinq_typeids_return_v->typeids.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,3,&ncinq_typeids_return_v->typeids.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -9347,18 +9324,18 @@ Inq_typeids_Return_write(ast_runtime* rt, Inq_typeids_Return* inq_typeids_return
 done:
     return ACATCH(status);
 
-} /*Inq_typeids_Return_write*/
+} /*NCInq_typeids_Return_write*/
 
 ast_err
-Inq_typeids_Return_read(ast_runtime* rt, Inq_typeids_Return** inq_typeids_return_vp)
+NCInq_typeids_Return_read(ast_runtime* rt, NCInq_typeids_Return** ncinq_typeids_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_typeids_Return* inq_typeids_return_v;
+    NCInq_typeids_Return* ncinq_typeids_return_v;
     unsigned long pos;
 
-    inq_typeids_return_v = (Inq_typeids_Return*)ast_alloc(rt,sizeof(Inq_typeids_Return));
-    if(inq_typeids_return_v == NULL) return AST_ENOMEM;
+    ncinq_typeids_return_v = (NCInq_typeids_Return*)ast_alloc(rt,sizeof(NCInq_typeids_Return));
+    if(ncinq_typeids_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9366,20 +9343,20 @@ Inq_typeids_Return_read(ast_runtime* rt, Inq_typeids_Return** inq_typeids_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_typeids_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_typeids_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_typeids_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_typeids_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_typeids_return_v->ntypes);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_typeids_return_v->ntypes);
             } break;
         case 3: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,3,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_typeids_return_v->typeids,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_typeids_return_v->typeids,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -9388,89 +9365,89 @@ Inq_typeids_Return_read(ast_runtime* rt, Inq_typeids_Return** inq_typeids_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_typeids_return_vp) *inq_typeids_return_vp = inq_typeids_return_v;
+    if(ncinq_typeids_return_vp) *ncinq_typeids_return_vp = ncinq_typeids_return_v;
 done:
     return ACATCH(status);
-} /*Inq_typeids_Return_read*/
+} /*NCInq_typeids_Return_read*/
 
 ast_err
-Inq_typeids_Return_reclaim(ast_runtime* rt, Inq_typeids_Return* inq_typeids_return_v)
+NCInq_typeids_Return_reclaim(ast_runtime* rt, NCInq_typeids_Return* ncinq_typeids_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_typeids_return_v);
+    ast_free(rt,(void*)ncinq_typeids_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeids_Return_reclaim*/
+} /*NCInq_typeids_Return_reclaim*/
 
 size_t
-Inq_typeids_Return_get_size(ast_runtime* rt, Inq_typeids_Return* inq_typeids_return_v)
+NCInq_typeids_Return_get_size(ast_runtime* rt, NCInq_typeids_Return* ncinq_typeids_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_typeids_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeids_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_typeids_return_v->ntypes);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeids_return_v->ntypes);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_typeids_return_v->typeids.count;i++) {
+        for(i=0;i<ncinq_typeids_return_v->typeids.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,3);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_typeids_return_v->typeids.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeids_return_v->typeids.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_typeids_Return_get_size*/
+} /*NCInq_typeids_Return_get_size*/
 
 ast_err
-Inq_type_equal_write(ast_runtime* rt, Inq_type_equal* inq_type_equal_v)
+NCInq_type_equal_write(ast_runtime* rt, NCInq_type_equal* ncinq_type_equal_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_type_equal_v->ncid1);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_type_equal_v->ncid1);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_type_equal_v->typeid1);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_type_equal_v->typeid1);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&inq_type_equal_v->ncid2);
+        status = ast_write_primitive(rt,ast_int32,3,&ncinq_type_equal_v->ncid2);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&inq_type_equal_v->typeid2);
+        status = ast_write_primitive(rt,ast_int32,4,&ncinq_type_equal_v->typeid2);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_equal_write*/
+} /*NCInq_type_equal_write*/
 
 ast_err
-Inq_type_equal_read(ast_runtime* rt, Inq_type_equal** inq_type_equal_vp)
+NCInq_type_equal_read(ast_runtime* rt, NCInq_type_equal** ncinq_type_equal_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_type_equal* inq_type_equal_v;
+    NCInq_type_equal* ncinq_type_equal_v;
     unsigned long pos;
 
-    inq_type_equal_v = (Inq_type_equal*)ast_alloc(rt,sizeof(Inq_type_equal));
-    if(inq_type_equal_v == NULL) return AST_ENOMEM;
+    ncinq_type_equal_v = (NCInq_type_equal*)ast_alloc(rt,sizeof(NCInq_type_equal));
+    if(ncinq_type_equal_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9478,20 +9455,20 @@ Inq_type_equal_read(ast_runtime* rt, Inq_type_equal** inq_type_equal_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_type_equal|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_type_equal|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_type_equal_v->ncid1);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_type_equal_v->ncid1);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_type_equal_v->typeid1);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_type_equal_v->typeid1);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&inq_type_equal_v->ncid2);
+            status = ast_read_primitive(rt,ast_int32,3,&ncinq_type_equal_v->ncid2);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&inq_type_equal_v->typeid2);
+            status = ast_read_primitive(rt,ast_int32,4,&ncinq_type_equal_v->typeid2);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9499,83 +9476,83 @@ Inq_type_equal_read(ast_runtime* rt, Inq_type_equal** inq_type_equal_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_type_equal_vp) *inq_type_equal_vp = inq_type_equal_v;
+    if(ncinq_type_equal_vp) *ncinq_type_equal_vp = ncinq_type_equal_v;
 done:
     return ACATCH(status);
-} /*Inq_type_equal_read*/
+} /*NCInq_type_equal_read*/
 
 ast_err
-Inq_type_equal_reclaim(ast_runtime* rt, Inq_type_equal* inq_type_equal_v)
+NCInq_type_equal_reclaim(ast_runtime* rt, NCInq_type_equal* ncinq_type_equal_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_type_equal_v);
+    ast_free(rt,(void*)ncinq_type_equal_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_equal_reclaim*/
+} /*NCInq_type_equal_reclaim*/
 
 size_t
-Inq_type_equal_get_size(ast_runtime* rt, Inq_type_equal* inq_type_equal_v)
+NCInq_type_equal_get_size(ast_runtime* rt, NCInq_type_equal* ncinq_type_equal_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_equal_v->ncid1);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_equal_v->ncid1);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_equal_v->typeid1);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_equal_v->typeid1);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_equal_v->ncid2);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_equal_v->ncid2);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_equal_v->typeid2);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_equal_v->typeid2);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_type_equal_get_size*/
+} /*NCInq_type_equal_get_size*/
 
 ast_err
-Inq_type_equal_Return_write(ast_runtime* rt, Inq_type_equal_Return* inq_type_equal_return_v)
+NCInq_type_equal_Return_write(ast_runtime* rt, NCInq_type_equal_Return* ncinq_type_equal_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_type_equal_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_type_equal_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,2,&inq_type_equal_return_v->equal);
+        status = ast_write_primitive(rt,ast_bool,2,&ncinq_type_equal_return_v->equal);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_equal_Return_write*/
+} /*NCInq_type_equal_Return_write*/
 
 ast_err
-Inq_type_equal_Return_read(ast_runtime* rt, Inq_type_equal_Return** inq_type_equal_return_vp)
+NCInq_type_equal_Return_read(ast_runtime* rt, NCInq_type_equal_Return** ncinq_type_equal_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_type_equal_Return* inq_type_equal_return_v;
+    NCInq_type_equal_Return* ncinq_type_equal_return_v;
     unsigned long pos;
 
-    inq_type_equal_return_v = (Inq_type_equal_Return*)ast_alloc(rt,sizeof(Inq_type_equal_Return));
-    if(inq_type_equal_return_v == NULL) return AST_ENOMEM;
+    ncinq_type_equal_return_v = (NCInq_type_equal_Return*)ast_alloc(rt,sizeof(NCInq_type_equal_Return));
+    if(ncinq_type_equal_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9583,14 +9560,14 @@ Inq_type_equal_Return_read(ast_runtime* rt, Inq_type_equal_Return** inq_type_equ
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_type_equal_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_type_equal_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_type_equal_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_type_equal_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bool,2,&inq_type_equal_return_v->equal);
+            status = ast_read_primitive(rt,ast_bool,2,&ncinq_type_equal_return_v->equal);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9598,73 +9575,73 @@ Inq_type_equal_Return_read(ast_runtime* rt, Inq_type_equal_Return** inq_type_equ
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_type_equal_return_vp) *inq_type_equal_return_vp = inq_type_equal_return_v;
+    if(ncinq_type_equal_return_vp) *ncinq_type_equal_return_vp = ncinq_type_equal_return_v;
 done:
     return ACATCH(status);
-} /*Inq_type_equal_Return_read*/
+} /*NCInq_type_equal_Return_read*/
 
 ast_err
-Inq_type_equal_Return_reclaim(ast_runtime* rt, Inq_type_equal_Return* inq_type_equal_return_v)
+NCInq_type_equal_Return_reclaim(ast_runtime* rt, NCInq_type_equal_Return* ncinq_type_equal_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_type_equal_return_v);
+    ast_free(rt,(void*)ncinq_type_equal_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_type_equal_Return_reclaim*/
+} /*NCInq_type_equal_Return_reclaim*/
 
 size_t
-Inq_type_equal_Return_get_size(ast_runtime* rt, Inq_type_equal_Return* inq_type_equal_return_v)
+NCInq_type_equal_Return_get_size(ast_runtime* rt, NCInq_type_equal_Return* ncinq_type_equal_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_type_equal_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_type_equal_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bool,&inq_type_equal_return_v->equal);
+        fieldsize += ast_get_size(rt,ast_bool,&ncinq_type_equal_return_v->equal);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_type_equal_Return_get_size*/
+} /*NCInq_type_equal_Return_get_size*/
 
 ast_err
-Def_grp_write(ast_runtime* rt, Def_grp* def_grp_v)
+NCDef_Grp_write(ast_runtime* rt, NCDef_Grp* ncdef_grp_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_grp_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_grp_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&def_grp_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncdef_grp_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_grp_write*/
+} /*NCDef_Grp_write*/
 
 ast_err
-Def_grp_read(ast_runtime* rt, Def_grp** def_grp_vp)
+NCDef_Grp_read(ast_runtime* rt, NCDef_Grp** ncdef_grp_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_grp* def_grp_v;
+    NCDef_Grp* ncdef_grp_v;
     unsigned long pos;
 
-    def_grp_v = (Def_grp*)ast_alloc(rt,sizeof(Def_grp));
-    if(def_grp_v == NULL) return AST_ENOMEM;
+    ncdef_grp_v = (NCDef_Grp*)ast_alloc(rt,sizeof(NCDef_Grp));
+    if(ncdef_grp_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9672,14 +9649,14 @@ Def_grp_read(ast_runtime* rt, Def_grp** def_grp_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_grp|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Grp|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_grp_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_grp_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&def_grp_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncdef_grp_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9687,77 +9664,77 @@ Def_grp_read(ast_runtime* rt, Def_grp** def_grp_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_grp_vp) *def_grp_vp = def_grp_v;
+    if(ncdef_grp_vp) *ncdef_grp_vp = ncdef_grp_v;
 done:
     return ACATCH(status);
-} /*Def_grp_read*/
+} /*NCDef_Grp_read*/
 
 ast_err
-Def_grp_reclaim(ast_runtime* rt, Def_grp* def_grp_v)
+NCDef_Grp_reclaim(ast_runtime* rt, NCDef_Grp* ncdef_grp_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_grp_v->name);
+        status = ast_reclaim_string(rt,ncdef_grp_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_grp_v);
+    ast_free(rt,(void*)ncdef_grp_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_grp_reclaim*/
+} /*NCDef_Grp_reclaim*/
 
 size_t
-Def_grp_get_size(ast_runtime* rt, Def_grp* def_grp_v)
+NCDef_Grp_get_size(ast_runtime* rt, NCDef_Grp* ncdef_grp_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_grp_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_grp_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&def_grp_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_grp_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_grp_get_size*/
+} /*NCDef_Grp_get_size*/
 
 ast_err
-Def_grp_Return_write(ast_runtime* rt, Def_grp_Return* def_grp_return_v)
+NCDef_Grp_Return_write(ast_runtime* rt, NCDef_Grp_Return* ncdef_grp_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_grp_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_grp_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_grp_return_v->grpncid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_grp_return_v->grpncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_grp_Return_write*/
+} /*NCDef_Grp_Return_write*/
 
 ast_err
-Def_grp_Return_read(ast_runtime* rt, Def_grp_Return** def_grp_return_vp)
+NCDef_Grp_Return_read(ast_runtime* rt, NCDef_Grp_Return** ncdef_grp_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_grp_Return* def_grp_return_v;
+    NCDef_Grp_Return* ncdef_grp_return_v;
     unsigned long pos;
 
-    def_grp_return_v = (Def_grp_Return*)ast_alloc(rt,sizeof(Def_grp_Return));
-    if(def_grp_return_v == NULL) return AST_ENOMEM;
+    ncdef_grp_return_v = (NCDef_Grp_Return*)ast_alloc(rt,sizeof(NCDef_Grp_Return));
+    if(ncdef_grp_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9765,14 +9742,14 @@ Def_grp_Return_read(ast_runtime* rt, Def_grp_Return** def_grp_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_grp_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Grp_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_grp_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_grp_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_grp_return_v->grpncid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_grp_return_v->grpncid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9780,73 +9757,73 @@ Def_grp_Return_read(ast_runtime* rt, Def_grp_Return** def_grp_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_grp_return_vp) *def_grp_return_vp = def_grp_return_v;
+    if(ncdef_grp_return_vp) *ncdef_grp_return_vp = ncdef_grp_return_v;
 done:
     return ACATCH(status);
-} /*Def_grp_Return_read*/
+} /*NCDef_Grp_Return_read*/
 
 ast_err
-Def_grp_Return_reclaim(ast_runtime* rt, Def_grp_Return* def_grp_return_v)
+NCDef_Grp_Return_reclaim(ast_runtime* rt, NCDef_Grp_Return* ncdef_grp_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_grp_return_v);
+    ast_free(rt,(void*)ncdef_grp_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_grp_Return_reclaim*/
+} /*NCDef_Grp_Return_reclaim*/
 
 size_t
-Def_grp_Return_get_size(ast_runtime* rt, Def_grp_Return* def_grp_return_v)
+NCDef_Grp_Return_get_size(ast_runtime* rt, NCDef_Grp_Return* ncdef_grp_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_grp_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_grp_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_grp_return_v->grpncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_grp_return_v->grpncid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_grp_Return_get_size*/
+} /*NCDef_Grp_Return_get_size*/
 
 ast_err
-Inq_user_type_write(ast_runtime* rt, Inq_user_type* inq_user_type_v)
+NCInq_user_type_write(ast_runtime* rt, NCInq_user_type* ncinq_user_type_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_user_type_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_user_type_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_user_type_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_user_type_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_user_type_write*/
+} /*NCInq_user_type_write*/
 
 ast_err
-Inq_user_type_read(ast_runtime* rt, Inq_user_type** inq_user_type_vp)
+NCInq_user_type_read(ast_runtime* rt, NCInq_user_type** ncinq_user_type_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_user_type* inq_user_type_v;
+    NCInq_user_type* ncinq_user_type_v;
     unsigned long pos;
 
-    inq_user_type_v = (Inq_user_type*)ast_alloc(rt,sizeof(Inq_user_type));
-    if(inq_user_type_v == NULL) return AST_ENOMEM;
+    ncinq_user_type_v = (NCInq_user_type*)ast_alloc(rt,sizeof(NCInq_user_type));
+    if(ncinq_user_type_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9854,14 +9831,14 @@ Inq_user_type_read(ast_runtime* rt, Inq_user_type** inq_user_type_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_user_type|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_user_type|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_user_type_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_user_type_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_user_type_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_user_type_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9869,89 +9846,89 @@ Inq_user_type_read(ast_runtime* rt, Inq_user_type** inq_user_type_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_user_type_vp) *inq_user_type_vp = inq_user_type_v;
+    if(ncinq_user_type_vp) *ncinq_user_type_vp = ncinq_user_type_v;
 done:
     return ACATCH(status);
-} /*Inq_user_type_read*/
+} /*NCInq_user_type_read*/
 
 ast_err
-Inq_user_type_reclaim(ast_runtime* rt, Inq_user_type* inq_user_type_v)
+NCInq_user_type_reclaim(ast_runtime* rt, NCInq_user_type* ncinq_user_type_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_user_type_v);
+    ast_free(rt,(void*)ncinq_user_type_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_user_type_reclaim*/
+} /*NCInq_user_type_reclaim*/
 
 size_t
-Inq_user_type_get_size(ast_runtime* rt, Inq_user_type* inq_user_type_v)
+NCInq_user_type_get_size(ast_runtime* rt, NCInq_user_type* ncinq_user_type_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_user_type_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_user_type_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_user_type_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_user_type_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_user_type_get_size*/
+} /*NCInq_user_type_get_size*/
 
 ast_err
-Inq_user_type_Return_write(ast_runtime* rt, Inq_user_type_Return* inq_user_type_return_v)
+NCInq_user_type_Return_write(ast_runtime* rt, NCInq_user_type_Return* ncinq_user_type_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_user_type_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_user_type_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_user_type_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_user_type_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&inq_user_type_return_v->size);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncinq_user_type_return_v->size);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&inq_user_type_return_v->basetype);
+        status = ast_write_primitive(rt,ast_int32,4,&ncinq_user_type_return_v->basetype);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,5,&inq_user_type_return_v->nfields);
+        status = ast_write_primitive(rt,ast_uint64,5,&ncinq_user_type_return_v->nfields);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,6,&inq_user_type_return_v->typeclass);
+        status = ast_write_primitive(rt,ast_int32,6,&ncinq_user_type_return_v->typeclass);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_user_type_Return_write*/
+} /*NCInq_user_type_Return_write*/
 
 ast_err
-Inq_user_type_Return_read(ast_runtime* rt, Inq_user_type_Return** inq_user_type_return_vp)
+NCInq_user_type_Return_read(ast_runtime* rt, NCInq_user_type_Return** ncinq_user_type_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_user_type_Return* inq_user_type_return_v;
+    NCInq_user_type_Return* ncinq_user_type_return_v;
     unsigned long pos;
 
-    inq_user_type_return_v = (Inq_user_type_Return*)ast_alloc(rt,sizeof(Inq_user_type_Return));
-    if(inq_user_type_return_v == NULL) return AST_ENOMEM;
+    ncinq_user_type_return_v = (NCInq_user_type_Return*)ast_alloc(rt,sizeof(NCInq_user_type_Return));
+    if(ncinq_user_type_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -9959,26 +9936,26 @@ Inq_user_type_Return_read(ast_runtime* rt, Inq_user_type_Return** inq_user_type_
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_user_type_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_user_type_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_user_type_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_user_type_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_user_type_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_user_type_return_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&inq_user_type_return_v->size);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncinq_user_type_return_v->size);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&inq_user_type_return_v->basetype);
+            status = ast_read_primitive(rt,ast_int32,4,&ncinq_user_type_return_v->basetype);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_uint64,5,&inq_user_type_return_v->nfields);
+            status = ast_read_primitive(rt,ast_uint64,5,&ncinq_user_type_return_v->nfields);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_int32,6,&inq_user_type_return_v->typeclass);
+            status = ast_read_primitive(rt,ast_int32,6,&ncinq_user_type_return_v->typeclass);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -9986,97 +9963,97 @@ Inq_user_type_Return_read(ast_runtime* rt, Inq_user_type_Return** inq_user_type_
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_user_type_return_vp) *inq_user_type_return_vp = inq_user_type_return_v;
+    if(ncinq_user_type_return_vp) *ncinq_user_type_return_vp = ncinq_user_type_return_v;
 done:
     return ACATCH(status);
-} /*Inq_user_type_Return_read*/
+} /*NCInq_user_type_Return_read*/
 
 ast_err
-Inq_user_type_Return_reclaim(ast_runtime* rt, Inq_user_type_Return* inq_user_type_return_v)
+NCInq_user_type_Return_reclaim(ast_runtime* rt, NCInq_user_type_Return* ncinq_user_type_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_user_type_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_user_type_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_user_type_return_v);
+    ast_free(rt,(void*)ncinq_user_type_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_user_type_Return_reclaim*/
+} /*NCInq_user_type_Return_reclaim*/
 
 size_t
-Inq_user_type_Return_get_size(ast_runtime* rt, Inq_user_type_Return* inq_user_type_return_v)
+NCInq_user_type_Return_get_size(ast_runtime* rt, NCInq_user_type_Return* ncinq_user_type_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_user_type_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_user_type_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_user_type_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_user_type_return_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_user_type_return_v->size);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_user_type_return_v->size);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_user_type_return_v->basetype);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_user_type_return_v->basetype);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_user_type_return_v->nfields);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_user_type_return_v->nfields);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_user_type_return_v->typeclass);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_user_type_return_v->typeclass);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_user_type_Return_get_size*/
+} /*NCInq_user_type_Return_get_size*/
 
 ast_err
-Inq_typeid_write(ast_runtime* rt, Inq_typeid* inq_typeid_v)
+NCInq_typeid_write(ast_runtime* rt, NCInq_typeid* ncinq_typeid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_typeid_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_typeid_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_typeid_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_typeid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeid_write*/
+} /*NCInq_typeid_write*/
 
 ast_err
-Inq_typeid_read(ast_runtime* rt, Inq_typeid** inq_typeid_vp)
+NCInq_typeid_read(ast_runtime* rt, NCInq_typeid** ncinq_typeid_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_typeid* inq_typeid_v;
+    NCInq_typeid* ncinq_typeid_v;
     unsigned long pos;
 
-    inq_typeid_v = (Inq_typeid*)ast_alloc(rt,sizeof(Inq_typeid));
-    if(inq_typeid_v == NULL) return AST_ENOMEM;
+    ncinq_typeid_v = (NCInq_typeid*)ast_alloc(rt,sizeof(NCInq_typeid));
+    if(ncinq_typeid_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10084,14 +10061,14 @@ Inq_typeid_read(ast_runtime* rt, Inq_typeid** inq_typeid_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_typeid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_typeid|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_typeid_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_typeid_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_typeid_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_typeid_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10099,77 +10076,77 @@ Inq_typeid_read(ast_runtime* rt, Inq_typeid** inq_typeid_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_typeid_vp) *inq_typeid_vp = inq_typeid_v;
+    if(ncinq_typeid_vp) *ncinq_typeid_vp = ncinq_typeid_v;
 done:
     return ACATCH(status);
-} /*Inq_typeid_read*/
+} /*NCInq_typeid_read*/
 
 ast_err
-Inq_typeid_reclaim(ast_runtime* rt, Inq_typeid* inq_typeid_v)
+NCInq_typeid_reclaim(ast_runtime* rt, NCInq_typeid* ncinq_typeid_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_typeid_v->name);
+        status = ast_reclaim_string(rt,ncinq_typeid_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_typeid_v);
+    ast_free(rt,(void*)ncinq_typeid_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeid_reclaim*/
+} /*NCInq_typeid_reclaim*/
 
 size_t
-Inq_typeid_get_size(ast_runtime* rt, Inq_typeid* inq_typeid_v)
+NCInq_typeid_get_size(ast_runtime* rt, NCInq_typeid* ncinq_typeid_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_typeid_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeid_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_typeid_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_typeid_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_typeid_get_size*/
+} /*NCInq_typeid_get_size*/
 
 ast_err
-Inq_typeid_Return_write(ast_runtime* rt, Inq_typeid_Return* inq_typeid_return_v)
+NCInq_typeid_Return_write(ast_runtime* rt, NCInq_typeid_Return* ncinq_typeid_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_typeid_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_typeid_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_typeid_return_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_typeid_return_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeid_Return_write*/
+} /*NCInq_typeid_Return_write*/
 
 ast_err
-Inq_typeid_Return_read(ast_runtime* rt, Inq_typeid_Return** inq_typeid_return_vp)
+NCInq_typeid_Return_read(ast_runtime* rt, NCInq_typeid_Return** ncinq_typeid_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_typeid_Return* inq_typeid_return_v;
+    NCInq_typeid_Return* ncinq_typeid_return_v;
     unsigned long pos;
 
-    inq_typeid_return_v = (Inq_typeid_Return*)ast_alloc(rt,sizeof(Inq_typeid_Return));
-    if(inq_typeid_return_v == NULL) return AST_ENOMEM;
+    ncinq_typeid_return_v = (NCInq_typeid_Return*)ast_alloc(rt,sizeof(NCInq_typeid_Return));
+    if(ncinq_typeid_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10177,14 +10154,14 @@ Inq_typeid_Return_read(ast_runtime* rt, Inq_typeid_Return** inq_typeid_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_typeid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_typeid_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_typeid_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_typeid_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_typeid_return_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_typeid_return_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10192,77 +10169,77 @@ Inq_typeid_Return_read(ast_runtime* rt, Inq_typeid_Return** inq_typeid_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_typeid_return_vp) *inq_typeid_return_vp = inq_typeid_return_v;
+    if(ncinq_typeid_return_vp) *ncinq_typeid_return_vp = ncinq_typeid_return_v;
 done:
     return ACATCH(status);
-} /*Inq_typeid_Return_read*/
+} /*NCInq_typeid_Return_read*/
 
 ast_err
-Inq_typeid_Return_reclaim(ast_runtime* rt, Inq_typeid_Return* inq_typeid_return_v)
+NCInq_typeid_Return_reclaim(ast_runtime* rt, NCInq_typeid_Return* ncinq_typeid_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_typeid_return_v);
+    ast_free(rt,(void*)ncinq_typeid_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_typeid_Return_reclaim*/
+} /*NCInq_typeid_Return_reclaim*/
 
 size_t
-Inq_typeid_Return_get_size(ast_runtime* rt, Inq_typeid_Return* inq_typeid_return_v)
+NCInq_typeid_Return_get_size(ast_runtime* rt, NCInq_typeid_Return* ncinq_typeid_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_typeid_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeid_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_typeid_return_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_typeid_return_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_typeid_Return_get_size*/
+} /*NCInq_typeid_Return_get_size*/
 
 ast_err
-Def_compound_write(ast_runtime* rt, Def_compound* def_compound_v)
+NCDef_Compound_write(ast_runtime* rt, NCDef_Compound* ncdef_compound_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_compound_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_compound_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,2,&def_compound_v->size);
+        status = ast_write_primitive(rt,ast_uint64,2,&ncdef_compound_v->size);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&def_compound_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncdef_compound_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_compound_write*/
+} /*NCDef_Compound_write*/
 
 ast_err
-Def_compound_read(ast_runtime* rt, Def_compound** def_compound_vp)
+NCDef_Compound_read(ast_runtime* rt, NCDef_Compound** ncdef_compound_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_compound* def_compound_v;
+    NCDef_Compound* ncdef_compound_v;
     unsigned long pos;
 
-    def_compound_v = (Def_compound*)ast_alloc(rt,sizeof(Def_compound));
-    if(def_compound_v == NULL) return AST_ENOMEM;
+    ncdef_compound_v = (NCDef_Compound*)ast_alloc(rt,sizeof(NCDef_Compound));
+    if(ncdef_compound_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10270,17 +10247,17 @@ Def_compound_read(ast_runtime* rt, Def_compound** def_compound_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_compound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Compound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_compound_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_compound_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_uint64,2,&def_compound_v->size);
+            status = ast_read_primitive(rt,ast_uint64,2,&ncdef_compound_v->size);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&def_compound_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncdef_compound_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10288,82 +10265,82 @@ Def_compound_read(ast_runtime* rt, Def_compound** def_compound_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_compound_vp) *def_compound_vp = def_compound_v;
+    if(ncdef_compound_vp) *ncdef_compound_vp = ncdef_compound_v;
 done:
     return ACATCH(status);
-} /*Def_compound_read*/
+} /*NCDef_Compound_read*/
 
 ast_err
-Def_compound_reclaim(ast_runtime* rt, Def_compound* def_compound_v)
+NCDef_Compound_reclaim(ast_runtime* rt, NCDef_Compound* ncdef_compound_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_compound_v->name);
+        status = ast_reclaim_string(rt,ncdef_compound_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_compound_v);
+    ast_free(rt,(void*)ncdef_compound_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_compound_reclaim*/
+} /*NCDef_Compound_reclaim*/
 
 size_t
-Def_compound_get_size(ast_runtime* rt, Def_compound* def_compound_v)
+NCDef_Compound_get_size(ast_runtime* rt, NCDef_Compound* ncdef_compound_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_compound_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_compound_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_uint64,&def_compound_v->size);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncdef_compound_v->size);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&def_compound_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_compound_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_compound_get_size*/
+} /*NCDef_Compound_get_size*/
 
 ast_err
-Def_compound_Return_write(ast_runtime* rt, Def_compound_Return* def_compound_return_v)
+NCDef_Compound_Return_write(ast_runtime* rt, NCDef_Compound_Return* ncdef_compound_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_compound_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_compound_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_compound_return_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_compound_return_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_compound_Return_write*/
+} /*NCDef_Compound_Return_write*/
 
 ast_err
-Def_compound_Return_read(ast_runtime* rt, Def_compound_Return** def_compound_return_vp)
+NCDef_Compound_Return_read(ast_runtime* rt, NCDef_Compound_Return** ncdef_compound_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_compound_Return* def_compound_return_v;
+    NCDef_Compound_Return* ncdef_compound_return_v;
     unsigned long pos;
 
-    def_compound_return_v = (Def_compound_Return*)ast_alloc(rt,sizeof(Def_compound_Return));
-    if(def_compound_return_v == NULL) return AST_ENOMEM;
+    ncdef_compound_return_v = (NCDef_Compound_Return*)ast_alloc(rt,sizeof(NCDef_Compound_Return));
+    if(ncdef_compound_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10371,14 +10348,14 @@ Def_compound_Return_read(ast_runtime* rt, Def_compound_Return** def_compound_ret
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_compound_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Compound_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_compound_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_compound_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_compound_return_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_compound_return_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10386,85 +10363,85 @@ Def_compound_Return_read(ast_runtime* rt, Def_compound_Return** def_compound_ret
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_compound_return_vp) *def_compound_return_vp = def_compound_return_v;
+    if(ncdef_compound_return_vp) *ncdef_compound_return_vp = ncdef_compound_return_v;
 done:
     return ACATCH(status);
-} /*Def_compound_Return_read*/
+} /*NCDef_Compound_Return_read*/
 
 ast_err
-Def_compound_Return_reclaim(ast_runtime* rt, Def_compound_Return* def_compound_return_v)
+NCDef_Compound_Return_reclaim(ast_runtime* rt, NCDef_Compound_Return* ncdef_compound_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_compound_return_v);
+    ast_free(rt,(void*)ncdef_compound_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_compound_Return_reclaim*/
+} /*NCDef_Compound_Return_reclaim*/
 
 size_t
-Def_compound_Return_get_size(ast_runtime* rt, Def_compound_Return* def_compound_return_v)
+NCDef_Compound_Return_get_size(ast_runtime* rt, NCDef_Compound_Return* ncdef_compound_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_compound_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_compound_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_compound_return_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_compound_return_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_compound_Return_get_size*/
+} /*NCDef_Compound_Return_get_size*/
 
 ast_err
-Insert_compound_write(ast_runtime* rt, Insert_compound* insert_compound_v)
+NCInsert_compound_write(ast_runtime* rt, NCInsert_compound* ncinsert_compound_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&insert_compound_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinsert_compound_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&insert_compound_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinsert_compound_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&insert_compound_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinsert_compound_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,4,&insert_compound_v->offset);
+        status = ast_write_primitive(rt,ast_uint64,4,&ncinsert_compound_v->offset);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&insert_compound_v->fieldtypeid);
+        status = ast_write_primitive(rt,ast_int32,5,&ncinsert_compound_v->fieldtypeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Insert_compound_write*/
+} /*NCInsert_compound_write*/
 
 ast_err
-Insert_compound_read(ast_runtime* rt, Insert_compound** insert_compound_vp)
+NCInsert_compound_read(ast_runtime* rt, NCInsert_compound** ncinsert_compound_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Insert_compound* insert_compound_v;
+    NCInsert_compound* ncinsert_compound_v;
     unsigned long pos;
 
-    insert_compound_v = (Insert_compound*)ast_alloc(rt,sizeof(Insert_compound));
-    if(insert_compound_v == NULL) return AST_ENOMEM;
+    ncinsert_compound_v = (NCInsert_compound*)ast_alloc(rt,sizeof(NCInsert_compound));
+    if(ncinsert_compound_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10472,23 +10449,23 @@ Insert_compound_read(ast_runtime* rt, Insert_compound** insert_compound_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Insert_compound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInsert_compound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&insert_compound_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinsert_compound_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&insert_compound_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinsert_compound_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&insert_compound_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinsert_compound_v->name);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_uint64,4,&insert_compound_v->offset);
+            status = ast_read_primitive(rt,ast_uint64,4,&ncinsert_compound_v->offset);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&insert_compound_v->fieldtypeid);
+            status = ast_read_primitive(rt,ast_int32,5,&ncinsert_compound_v->fieldtypeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10496,88 +10473,88 @@ Insert_compound_read(ast_runtime* rt, Insert_compound** insert_compound_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(insert_compound_vp) *insert_compound_vp = insert_compound_v;
+    if(ncinsert_compound_vp) *ncinsert_compound_vp = ncinsert_compound_v;
 done:
     return ACATCH(status);
-} /*Insert_compound_read*/
+} /*NCInsert_compound_read*/
 
 ast_err
-Insert_compound_reclaim(ast_runtime* rt, Insert_compound* insert_compound_v)
+NCInsert_compound_reclaim(ast_runtime* rt, NCInsert_compound* ncinsert_compound_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,insert_compound_v->name);
+        status = ast_reclaim_string(rt,ncinsert_compound_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)insert_compound_v);
+    ast_free(rt,(void*)ncinsert_compound_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Insert_compound_reclaim*/
+} /*NCInsert_compound_reclaim*/
 
 size_t
-Insert_compound_get_size(ast_runtime* rt, Insert_compound* insert_compound_v)
+NCInsert_compound_get_size(ast_runtime* rt, NCInsert_compound* ncinsert_compound_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_compound_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_compound_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_compound_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_compound_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&insert_compound_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinsert_compound_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_uint64,&insert_compound_v->offset);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinsert_compound_v->offset);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_compound_v->fieldtypeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_compound_v->fieldtypeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Insert_compound_get_size*/
+} /*NCInsert_compound_get_size*/
 
 ast_err
-Insert_compound_Return_write(ast_runtime* rt, Insert_compound_Return* insert_compound_return_v)
+NCInsert_compound_Return_write(ast_runtime* rt, NCInsert_compound_Return* ncinsert_compound_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&insert_compound_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinsert_compound_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Insert_compound_Return_write*/
+} /*NCInsert_compound_Return_write*/
 
 ast_err
-Insert_compound_Return_read(ast_runtime* rt, Insert_compound_Return** insert_compound_return_vp)
+NCInsert_compound_Return_read(ast_runtime* rt, NCInsert_compound_Return** ncinsert_compound_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Insert_compound_Return* insert_compound_return_v;
+    NCInsert_compound_Return* ncinsert_compound_return_v;
     unsigned long pos;
 
-    insert_compound_return_v = (Insert_compound_Return*)ast_alloc(rt,sizeof(Insert_compound_Return));
-    if(insert_compound_return_v == NULL) return AST_ENOMEM;
+    ncinsert_compound_return_v = (NCInsert_compound_Return*)ast_alloc(rt,sizeof(NCInsert_compound_Return));
+    if(ncinsert_compound_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10585,11 +10562,11 @@ Insert_compound_Return_read(ast_runtime* rt, Insert_compound_Return** insert_com
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Insert_compound_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInsert_compound_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&insert_compound_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinsert_compound_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10597,72 +10574,72 @@ Insert_compound_Return_read(ast_runtime* rt, Insert_compound_Return** insert_com
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(insert_compound_return_vp) *insert_compound_return_vp = insert_compound_return_v;
+    if(ncinsert_compound_return_vp) *ncinsert_compound_return_vp = ncinsert_compound_return_v;
 done:
     return ACATCH(status);
-} /*Insert_compound_Return_read*/
+} /*NCInsert_compound_Return_read*/
 
 ast_err
-Insert_compound_Return_reclaim(ast_runtime* rt, Insert_compound_Return* insert_compound_return_v)
+NCInsert_compound_Return_reclaim(ast_runtime* rt, NCInsert_compound_Return* ncinsert_compound_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)insert_compound_return_v);
+    ast_free(rt,(void*)ncinsert_compound_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Insert_compound_Return_reclaim*/
+} /*NCInsert_compound_Return_reclaim*/
 
 size_t
-Insert_compound_Return_get_size(ast_runtime* rt, Insert_compound_Return* insert_compound_return_v)
+NCInsert_compound_Return_get_size(ast_runtime* rt, NCInsert_compound_Return* ncinsert_compound_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_compound_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_compound_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Insert_compound_Return_get_size*/
+} /*NCInsert_compound_Return_get_size*/
 
 ast_err
-Insert_array_compound_write(ast_runtime* rt, Insert_array_compound* insert_array_compound_v)
+NCInsert_array_compound_write(ast_runtime* rt, NCInsert_array_compound* ncinsert_array_compound_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&insert_array_compound_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinsert_array_compound_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&insert_array_compound_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinsert_array_compound_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&insert_array_compound_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinsert_array_compound_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,4,&insert_array_compound_v->offset);
+        status = ast_write_primitive(rt,ast_uint64,4,&ncinsert_array_compound_v->offset);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&insert_array_compound_v->fieldtypeid);
+        status = ast_write_primitive(rt,ast_int32,5,&ncinsert_array_compound_v->fieldtypeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,6,&insert_array_compound_v->ndims);
+        status = ast_write_primitive(rt,ast_int32,6,&ncinsert_array_compound_v->ndims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<insert_array_compound_v->dimsizes.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,7,&insert_array_compound_v->dimsizes.values[i]);
+        for(i=0;i<ncinsert_array_compound_v->dimsizes.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,7,&ncinsert_array_compound_v->dimsizes.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -10670,18 +10647,18 @@ Insert_array_compound_write(ast_runtime* rt, Insert_array_compound* insert_array
 done:
     return ACATCH(status);
 
-} /*Insert_array_compound_write*/
+} /*NCInsert_array_compound_write*/
 
 ast_err
-Insert_array_compound_read(ast_runtime* rt, Insert_array_compound** insert_array_compound_vp)
+NCInsert_array_compound_read(ast_runtime* rt, NCInsert_array_compound** ncinsert_array_compound_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Insert_array_compound* insert_array_compound_v;
+    NCInsert_array_compound* ncinsert_array_compound_v;
     unsigned long pos;
 
-    insert_array_compound_v = (Insert_array_compound*)ast_alloc(rt,sizeof(Insert_array_compound));
-    if(insert_array_compound_v == NULL) return AST_ENOMEM;
+    ncinsert_array_compound_v = (NCInsert_array_compound*)ast_alloc(rt,sizeof(NCInsert_array_compound));
+    if(ncinsert_array_compound_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10689,32 +10666,32 @@ Insert_array_compound_read(ast_runtime* rt, Insert_array_compound** insert_array
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Insert_array_compound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInsert_array_compound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&insert_array_compound_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinsert_array_compound_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&insert_array_compound_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinsert_array_compound_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&insert_array_compound_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinsert_array_compound_v->name);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_uint64,4,&insert_array_compound_v->offset);
+            status = ast_read_primitive(rt,ast_uint64,4,&ncinsert_array_compound_v->offset);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&insert_array_compound_v->fieldtypeid);
+            status = ast_read_primitive(rt,ast_int32,5,&ncinsert_array_compound_v->fieldtypeid);
             } break;
         case 6: {
-            status = ast_read_primitive(rt,ast_int32,6,&insert_array_compound_v->ndims);
+            status = ast_read_primitive(rt,ast_int32,6,&ncinsert_array_compound_v->ndims);
             } break;
         case 7: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,7,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&insert_array_compound_v->dimsizes,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinsert_array_compound_v->dimsizes,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -10723,101 +10700,101 @@ Insert_array_compound_read(ast_runtime* rt, Insert_array_compound** insert_array
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(insert_array_compound_vp) *insert_array_compound_vp = insert_array_compound_v;
+    if(ncinsert_array_compound_vp) *ncinsert_array_compound_vp = ncinsert_array_compound_v;
 done:
     return ACATCH(status);
-} /*Insert_array_compound_read*/
+} /*NCInsert_array_compound_read*/
 
 ast_err
-Insert_array_compound_reclaim(ast_runtime* rt, Insert_array_compound* insert_array_compound_v)
+NCInsert_array_compound_reclaim(ast_runtime* rt, NCInsert_array_compound* ncinsert_array_compound_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,insert_array_compound_v->name);
+        status = ast_reclaim_string(rt,ncinsert_array_compound_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)insert_array_compound_v);
+    ast_free(rt,(void*)ncinsert_array_compound_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Insert_array_compound_reclaim*/
+} /*NCInsert_array_compound_reclaim*/
 
 size_t
-Insert_array_compound_get_size(ast_runtime* rt, Insert_array_compound* insert_array_compound_v)
+NCInsert_array_compound_get_size(ast_runtime* rt, NCInsert_array_compound* ncinsert_array_compound_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_array_compound_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_array_compound_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_array_compound_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_array_compound_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&insert_array_compound_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinsert_array_compound_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_uint64,&insert_array_compound_v->offset);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinsert_array_compound_v->offset);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_array_compound_v->fieldtypeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_array_compound_v->fieldtypeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,6);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_array_compound_v->ndims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_array_compound_v->ndims);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<insert_array_compound_v->dimsizes.count;i++) {
+        for(i=0;i<ncinsert_array_compound_v->dimsizes.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,7);
-            fieldsize += ast_get_size(rt,ast_int32,&insert_array_compound_v->dimsizes.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinsert_array_compound_v->dimsizes.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Insert_array_compound_get_size*/
+} /*NCInsert_array_compound_get_size*/
 
 ast_err
-Insert_array_compound_Return_write(ast_runtime* rt, Insert_array_compound_Return* insert_array_compound_return_v)
+NCInsert_array_compound_Return_write(ast_runtime* rt, NCInsert_array_compound_Return* ncinsert_array_compound_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&insert_array_compound_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinsert_array_compound_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Insert_array_compound_Return_write*/
+} /*NCInsert_array_compound_Return_write*/
 
 ast_err
-Insert_array_compound_Return_read(ast_runtime* rt, Insert_array_compound_Return** insert_array_compound_return_vp)
+NCInsert_array_compound_Return_read(ast_runtime* rt, NCInsert_array_compound_Return** ncinsert_array_compound_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Insert_array_compound_Return* insert_array_compound_return_v;
+    NCInsert_array_compound_Return* ncinsert_array_compound_return_v;
     unsigned long pos;
 
-    insert_array_compound_return_v = (Insert_array_compound_Return*)ast_alloc(rt,sizeof(Insert_array_compound_Return));
-    if(insert_array_compound_return_v == NULL) return AST_ENOMEM;
+    ncinsert_array_compound_return_v = (NCInsert_array_compound_Return*)ast_alloc(rt,sizeof(NCInsert_array_compound_Return));
+    if(ncinsert_array_compound_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10825,11 +10802,11 @@ Insert_array_compound_Return_read(ast_runtime* rt, Insert_array_compound_Return*
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Insert_array_compound_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInsert_array_compound_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&insert_array_compound_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinsert_array_compound_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10837,72 +10814,72 @@ Insert_array_compound_Return_read(ast_runtime* rt, Insert_array_compound_Return*
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(insert_array_compound_return_vp) *insert_array_compound_return_vp = insert_array_compound_return_v;
+    if(ncinsert_array_compound_return_vp) *ncinsert_array_compound_return_vp = ncinsert_array_compound_return_v;
 done:
     return ACATCH(status);
-} /*Insert_array_compound_Return_read*/
+} /*NCInsert_array_compound_Return_read*/
 
 ast_err
-Insert_array_compound_Return_reclaim(ast_runtime* rt, Insert_array_compound_Return* insert_array_compound_return_v)
+NCInsert_array_compound_Return_reclaim(ast_runtime* rt, NCInsert_array_compound_Return* ncinsert_array_compound_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)insert_array_compound_return_v);
+    ast_free(rt,(void*)ncinsert_array_compound_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Insert_array_compound_Return_reclaim*/
+} /*NCInsert_array_compound_Return_reclaim*/
 
 size_t
-Insert_array_compound_Return_get_size(ast_runtime* rt, Insert_array_compound_Return* insert_array_compound_return_v)
+NCInsert_array_compound_Return_get_size(ast_runtime* rt, NCInsert_array_compound_Return* ncinsert_array_compound_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_array_compound_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_array_compound_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Insert_array_compound_Return_get_size*/
+} /*NCInsert_array_compound_Return_get_size*/
 
 ast_err
-Inq_compound_field_write(ast_runtime* rt, Inq_compound_field* inq_compound_field_v)
+NCInq_compound_field_write(ast_runtime* rt, NCInq_compound_field* ncinq_compound_field_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_compound_field_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_compound_field_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_compound_field_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_compound_field_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&inq_compound_field_v->fieldid);
+        status = ast_write_primitive(rt,ast_int32,3,&ncinq_compound_field_v->fieldid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_field_write*/
+} /*NCInq_compound_field_write*/
 
 ast_err
-Inq_compound_field_read(ast_runtime* rt, Inq_compound_field** inq_compound_field_vp)
+NCInq_compound_field_read(ast_runtime* rt, NCInq_compound_field** ncinq_compound_field_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_compound_field* inq_compound_field_v;
+    NCInq_compound_field* ncinq_compound_field_v;
     unsigned long pos;
 
-    inq_compound_field_v = (Inq_compound_field*)ast_alloc(rt,sizeof(Inq_compound_field));
-    if(inq_compound_field_v == NULL) return AST_ENOMEM;
+    ncinq_compound_field_v = (NCInq_compound_field*)ast_alloc(rt,sizeof(NCInq_compound_field));
+    if(ncinq_compound_field_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -10910,17 +10887,17 @@ Inq_compound_field_read(ast_runtime* rt, Inq_compound_field** inq_compound_field
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_compound_field|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_compound_field|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_compound_field_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_compound_field_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_compound_field_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_compound_field_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&inq_compound_field_v->fieldid);
+            status = ast_read_primitive(rt,ast_int32,3,&ncinq_compound_field_v->fieldid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -10928,78 +10905,78 @@ Inq_compound_field_read(ast_runtime* rt, Inq_compound_field** inq_compound_field
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_compound_field_vp) *inq_compound_field_vp = inq_compound_field_v;
+    if(ncinq_compound_field_vp) *ncinq_compound_field_vp = ncinq_compound_field_v;
 done:
     return ACATCH(status);
-} /*Inq_compound_field_read*/
+} /*NCInq_compound_field_read*/
 
 ast_err
-Inq_compound_field_reclaim(ast_runtime* rt, Inq_compound_field* inq_compound_field_v)
+NCInq_compound_field_reclaim(ast_runtime* rt, NCInq_compound_field* ncinq_compound_field_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_compound_field_v);
+    ast_free(rt,(void*)ncinq_compound_field_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_field_reclaim*/
+} /*NCInq_compound_field_reclaim*/
 
 size_t
-Inq_compound_field_get_size(ast_runtime* rt, Inq_compound_field* inq_compound_field_v)
+NCInq_compound_field_get_size(ast_runtime* rt, NCInq_compound_field* ncinq_compound_field_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_v->fieldid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_v->fieldid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_compound_field_get_size*/
+} /*NCInq_compound_field_get_size*/
 
 ast_err
-Inq_compound_field_Return_write(ast_runtime* rt, Inq_compound_field_Return* inq_compound_field_return_v)
+NCInq_compound_field_Return_write(ast_runtime* rt, NCInq_compound_field_Return* ncinq_compound_field_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_compound_field_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_compound_field_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_compound_field_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_compound_field_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&inq_compound_field_return_v->offset);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncinq_compound_field_return_v->offset);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,4,&inq_compound_field_return_v->fieldtypeid);
+        status = ast_write_primitive(rt,ast_int32,4,&ncinq_compound_field_return_v->fieldtypeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&inq_compound_field_return_v->ndims);
+        status = ast_write_primitive(rt,ast_int32,5,&ncinq_compound_field_return_v->ndims);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<inq_compound_field_return_v->dimsizes.count;i++) {
-            status = ast_write_primitive(rt,ast_int32,6,&inq_compound_field_return_v->dimsizes.values[i]);
+        for(i=0;i<ncinq_compound_field_return_v->dimsizes.count;i++) {
+            status = ast_write_primitive(rt,ast_int32,6,&ncinq_compound_field_return_v->dimsizes.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -11007,18 +10984,18 @@ Inq_compound_field_Return_write(ast_runtime* rt, Inq_compound_field_Return* inq_
 done:
     return ACATCH(status);
 
-} /*Inq_compound_field_Return_write*/
+} /*NCInq_compound_field_Return_write*/
 
 ast_err
-Inq_compound_field_Return_read(ast_runtime* rt, Inq_compound_field_Return** inq_compound_field_return_vp)
+NCInq_compound_field_Return_read(ast_runtime* rt, NCInq_compound_field_Return** ncinq_compound_field_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_compound_field_Return* inq_compound_field_return_v;
+    NCInq_compound_field_Return* ncinq_compound_field_return_v;
     unsigned long pos;
 
-    inq_compound_field_return_v = (Inq_compound_field_Return*)ast_alloc(rt,sizeof(Inq_compound_field_Return));
-    if(inq_compound_field_return_v == NULL) return AST_ENOMEM;
+    ncinq_compound_field_return_v = (NCInq_compound_field_Return*)ast_alloc(rt,sizeof(NCInq_compound_field_Return));
+    if(ncinq_compound_field_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11026,29 +11003,29 @@ Inq_compound_field_Return_read(ast_runtime* rt, Inq_compound_field_Return** inq_
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_compound_field_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_compound_field_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_compound_field_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_compound_field_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_compound_field_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_compound_field_return_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&inq_compound_field_return_v->offset);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncinq_compound_field_return_v->offset);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_int32,4,&inq_compound_field_return_v->fieldtypeid);
+            status = ast_read_primitive(rt,ast_int32,4,&ncinq_compound_field_return_v->fieldtypeid);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&inq_compound_field_return_v->ndims);
+            status = ast_read_primitive(rt,ast_int32,5,&ncinq_compound_field_return_v->ndims);
             } break;
         case 6: {
             int32_t tmp;
             status = ast_read_primitive(rt,ast_int32,6,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_int32,&inq_compound_field_return_v->dimsizes,&tmp);
+            status = ast_repeat_append(rt,ast_int32,&ncinq_compound_field_return_v->dimsizes,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -11057,104 +11034,104 @@ Inq_compound_field_Return_read(ast_runtime* rt, Inq_compound_field_Return** inq_
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_compound_field_return_vp) *inq_compound_field_return_vp = inq_compound_field_return_v;
+    if(ncinq_compound_field_return_vp) *ncinq_compound_field_return_vp = ncinq_compound_field_return_v;
 done:
     return ACATCH(status);
-} /*Inq_compound_field_Return_read*/
+} /*NCInq_compound_field_Return_read*/
 
 ast_err
-Inq_compound_field_Return_reclaim(ast_runtime* rt, Inq_compound_field_Return* inq_compound_field_return_v)
+NCInq_compound_field_Return_reclaim(ast_runtime* rt, NCInq_compound_field_Return* ncinq_compound_field_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_compound_field_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_compound_field_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_compound_field_return_v);
+    ast_free(rt,(void*)ncinq_compound_field_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_field_Return_reclaim*/
+} /*NCInq_compound_field_Return_reclaim*/
 
 size_t
-Inq_compound_field_Return_get_size(ast_runtime* rt, Inq_compound_field_Return* inq_compound_field_return_v)
+NCInq_compound_field_Return_get_size(ast_runtime* rt, NCInq_compound_field_Return* ncinq_compound_field_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_compound_field_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_compound_field_return_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_compound_field_return_v->offset);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_compound_field_return_v->offset);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_return_v->fieldtypeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_return_v->fieldtypeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_return_v->ndims);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_return_v->ndims);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<inq_compound_field_return_v->dimsizes.count;i++) {
+        for(i=0;i<ncinq_compound_field_return_v->dimsizes.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,6);
-            fieldsize += ast_get_size(rt,ast_int32,&inq_compound_field_return_v->dimsizes.values[i]);
+            fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_field_return_v->dimsizes.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_compound_field_Return_get_size*/
+} /*NCInq_compound_field_Return_get_size*/
 
 ast_err
-Inq_compound_fieldindex_write(ast_runtime* rt, Inq_compound_fieldindex* inq_compound_fieldindex_v)
+NCInq_compound_fieldindex_write(ast_runtime* rt, NCInq_compound_fieldindex* ncinq_compound_fieldindex_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_compound_fieldindex_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_compound_fieldindex_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_compound_fieldindex_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_compound_fieldindex_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&inq_compound_fieldindex_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinq_compound_fieldindex_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_fieldindex_write*/
+} /*NCInq_compound_fieldindex_write*/
 
 ast_err
-Inq_compound_fieldindex_read(ast_runtime* rt, Inq_compound_fieldindex** inq_compound_fieldindex_vp)
+NCInq_compound_fieldindex_read(ast_runtime* rt, NCInq_compound_fieldindex** ncinq_compound_fieldindex_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_compound_fieldindex* inq_compound_fieldindex_v;
+    NCInq_compound_fieldindex* ncinq_compound_fieldindex_v;
     unsigned long pos;
 
-    inq_compound_fieldindex_v = (Inq_compound_fieldindex*)ast_alloc(rt,sizeof(Inq_compound_fieldindex));
-    if(inq_compound_fieldindex_v == NULL) return AST_ENOMEM;
+    ncinq_compound_fieldindex_v = (NCInq_compound_fieldindex*)ast_alloc(rt,sizeof(NCInq_compound_fieldindex));
+    if(ncinq_compound_fieldindex_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11162,17 +11139,17 @@ Inq_compound_fieldindex_read(ast_runtime* rt, Inq_compound_fieldindex** inq_comp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_compound_fieldindex|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_compound_fieldindex|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_compound_fieldindex_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_compound_fieldindex_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_compound_fieldindex_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_compound_fieldindex_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&inq_compound_fieldindex_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinq_compound_fieldindex_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11180,82 +11157,82 @@ Inq_compound_fieldindex_read(ast_runtime* rt, Inq_compound_fieldindex** inq_comp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_compound_fieldindex_vp) *inq_compound_fieldindex_vp = inq_compound_fieldindex_v;
+    if(ncinq_compound_fieldindex_vp) *ncinq_compound_fieldindex_vp = ncinq_compound_fieldindex_v;
 done:
     return ACATCH(status);
-} /*Inq_compound_fieldindex_read*/
+} /*NCInq_compound_fieldindex_read*/
 
 ast_err
-Inq_compound_fieldindex_reclaim(ast_runtime* rt, Inq_compound_fieldindex* inq_compound_fieldindex_v)
+NCInq_compound_fieldindex_reclaim(ast_runtime* rt, NCInq_compound_fieldindex* ncinq_compound_fieldindex_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_compound_fieldindex_v->name);
+        status = ast_reclaim_string(rt,ncinq_compound_fieldindex_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_compound_fieldindex_v);
+    ast_free(rt,(void*)ncinq_compound_fieldindex_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_fieldindex_reclaim*/
+} /*NCInq_compound_fieldindex_reclaim*/
 
 size_t
-Inq_compound_fieldindex_get_size(ast_runtime* rt, Inq_compound_fieldindex* inq_compound_fieldindex_v)
+NCInq_compound_fieldindex_get_size(ast_runtime* rt, NCInq_compound_fieldindex* ncinq_compound_fieldindex_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_fieldindex_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_fieldindex_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_fieldindex_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_fieldindex_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&inq_compound_fieldindex_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_compound_fieldindex_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_compound_fieldindex_get_size*/
+} /*NCInq_compound_fieldindex_get_size*/
 
 ast_err
-Inq_compound_fieldindex_Return_write(ast_runtime* rt, Inq_compound_fieldindex_Return* inq_compound_fieldindex_return_v)
+NCInq_compound_fieldindex_Return_write(ast_runtime* rt, NCInq_compound_fieldindex_Return* ncinq_compound_fieldindex_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_compound_fieldindex_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_compound_fieldindex_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_compound_fieldindex_return_v->fieldid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_compound_fieldindex_return_v->fieldid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_fieldindex_Return_write*/
+} /*NCInq_compound_fieldindex_Return_write*/
 
 ast_err
-Inq_compound_fieldindex_Return_read(ast_runtime* rt, Inq_compound_fieldindex_Return** inq_compound_fieldindex_return_vp)
+NCInq_compound_fieldindex_Return_read(ast_runtime* rt, NCInq_compound_fieldindex_Return** ncinq_compound_fieldindex_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_compound_fieldindex_Return* inq_compound_fieldindex_return_v;
+    NCInq_compound_fieldindex_Return* ncinq_compound_fieldindex_return_v;
     unsigned long pos;
 
-    inq_compound_fieldindex_return_v = (Inq_compound_fieldindex_Return*)ast_alloc(rt,sizeof(Inq_compound_fieldindex_Return));
-    if(inq_compound_fieldindex_return_v == NULL) return AST_ENOMEM;
+    ncinq_compound_fieldindex_return_v = (NCInq_compound_fieldindex_Return*)ast_alloc(rt,sizeof(NCInq_compound_fieldindex_Return));
+    if(ncinq_compound_fieldindex_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11263,14 +11240,14 @@ Inq_compound_fieldindex_Return_read(ast_runtime* rt, Inq_compound_fieldindex_Ret
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_compound_fieldindex_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_compound_fieldindex_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_compound_fieldindex_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_compound_fieldindex_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_compound_fieldindex_return_v->fieldid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_compound_fieldindex_return_v->fieldid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11278,77 +11255,77 @@ Inq_compound_fieldindex_Return_read(ast_runtime* rt, Inq_compound_fieldindex_Ret
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_compound_fieldindex_return_vp) *inq_compound_fieldindex_return_vp = inq_compound_fieldindex_return_v;
+    if(ncinq_compound_fieldindex_return_vp) *ncinq_compound_fieldindex_return_vp = ncinq_compound_fieldindex_return_v;
 done:
     return ACATCH(status);
-} /*Inq_compound_fieldindex_Return_read*/
+} /*NCInq_compound_fieldindex_Return_read*/
 
 ast_err
-Inq_compound_fieldindex_Return_reclaim(ast_runtime* rt, Inq_compound_fieldindex_Return* inq_compound_fieldindex_return_v)
+NCInq_compound_fieldindex_Return_reclaim(ast_runtime* rt, NCInq_compound_fieldindex_Return* ncinq_compound_fieldindex_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_compound_fieldindex_return_v);
+    ast_free(rt,(void*)ncinq_compound_fieldindex_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_compound_fieldindex_Return_reclaim*/
+} /*NCInq_compound_fieldindex_Return_reclaim*/
 
 size_t
-Inq_compound_fieldindex_Return_get_size(ast_runtime* rt, Inq_compound_fieldindex_Return* inq_compound_fieldindex_return_v)
+NCInq_compound_fieldindex_Return_get_size(ast_runtime* rt, NCInq_compound_fieldindex_Return* ncinq_compound_fieldindex_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_fieldindex_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_fieldindex_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_compound_fieldindex_return_v->fieldid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_compound_fieldindex_return_v->fieldid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_compound_fieldindex_Return_get_size*/
+} /*NCInq_compound_fieldindex_Return_get_size*/
 
 ast_err
-Def_vlen_write(ast_runtime* rt, Def_vlen* def_vlen_v)
+NCDef_Vlen_write(ast_runtime* rt, NCDef_Vlen* ncdef_vlen_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_vlen_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_vlen_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&def_vlen_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncdef_vlen_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&def_vlen_v->base_typeid);
+        status = ast_write_primitive(rt,ast_int32,3,&ncdef_vlen_v->base_typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_vlen_write*/
+} /*NCDef_Vlen_write*/
 
 ast_err
-Def_vlen_read(ast_runtime* rt, Def_vlen** def_vlen_vp)
+NCDef_Vlen_read(ast_runtime* rt, NCDef_Vlen** ncdef_vlen_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_vlen* def_vlen_v;
+    NCDef_Vlen* ncdef_vlen_v;
     unsigned long pos;
 
-    def_vlen_v = (Def_vlen*)ast_alloc(rt,sizeof(Def_vlen));
-    if(def_vlen_v == NULL) return AST_ENOMEM;
+    ncdef_vlen_v = (NCDef_Vlen*)ast_alloc(rt,sizeof(NCDef_Vlen));
+    if(ncdef_vlen_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11356,17 +11333,17 @@ Def_vlen_read(ast_runtime* rt, Def_vlen** def_vlen_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_vlen|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Vlen|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_vlen_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_vlen_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&def_vlen_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncdef_vlen_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&def_vlen_v->base_typeid);
+            status = ast_read_primitive(rt,ast_int32,3,&ncdef_vlen_v->base_typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11374,82 +11351,82 @@ Def_vlen_read(ast_runtime* rt, Def_vlen** def_vlen_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_vlen_vp) *def_vlen_vp = def_vlen_v;
+    if(ncdef_vlen_vp) *ncdef_vlen_vp = ncdef_vlen_v;
 done:
     return ACATCH(status);
-} /*Def_vlen_read*/
+} /*NCDef_Vlen_read*/
 
 ast_err
-Def_vlen_reclaim(ast_runtime* rt, Def_vlen* def_vlen_v)
+NCDef_Vlen_reclaim(ast_runtime* rt, NCDef_Vlen* ncdef_vlen_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_vlen_v->name);
+        status = ast_reclaim_string(rt,ncdef_vlen_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_vlen_v);
+    ast_free(rt,(void*)ncdef_vlen_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_vlen_reclaim*/
+} /*NCDef_Vlen_reclaim*/
 
 size_t
-Def_vlen_get_size(ast_runtime* rt, Def_vlen* def_vlen_v)
+NCDef_Vlen_get_size(ast_runtime* rt, NCDef_Vlen* ncdef_vlen_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_vlen_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_vlen_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&def_vlen_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_vlen_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&def_vlen_v->base_typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_vlen_v->base_typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_vlen_get_size*/
+} /*NCDef_Vlen_get_size*/
 
 ast_err
-Def_vlen_Return_write(ast_runtime* rt, Def_vlen_Return* def_vlen_return_v)
+NCDef_Vlen_Return_write(ast_runtime* rt, NCDef_Vlen_Return* ncdef_vlen_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_vlen_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_vlen_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_vlen_return_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_vlen_return_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_vlen_Return_write*/
+} /*NCDef_Vlen_Return_write*/
 
 ast_err
-Def_vlen_Return_read(ast_runtime* rt, Def_vlen_Return** def_vlen_return_vp)
+NCDef_Vlen_Return_read(ast_runtime* rt, NCDef_Vlen_Return** ncdef_vlen_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_vlen_Return* def_vlen_return_v;
+    NCDef_Vlen_Return* ncdef_vlen_return_v;
     unsigned long pos;
 
-    def_vlen_return_v = (Def_vlen_Return*)ast_alloc(rt,sizeof(Def_vlen_Return));
-    if(def_vlen_return_v == NULL) return AST_ENOMEM;
+    ncdef_vlen_return_v = (NCDef_Vlen_Return*)ast_alloc(rt,sizeof(NCDef_Vlen_Return));
+    if(ncdef_vlen_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11457,14 +11434,14 @@ Def_vlen_Return_read(ast_runtime* rt, Def_vlen_Return** def_vlen_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_vlen_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Vlen_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_vlen_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_vlen_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_vlen_return_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_vlen_return_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11472,85 +11449,85 @@ Def_vlen_Return_read(ast_runtime* rt, Def_vlen_Return** def_vlen_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_vlen_return_vp) *def_vlen_return_vp = def_vlen_return_v;
+    if(ncdef_vlen_return_vp) *ncdef_vlen_return_vp = ncdef_vlen_return_v;
 done:
     return ACATCH(status);
-} /*Def_vlen_Return_read*/
+} /*NCDef_Vlen_Return_read*/
 
 ast_err
-Def_vlen_Return_reclaim(ast_runtime* rt, Def_vlen_Return* def_vlen_return_v)
+NCDef_Vlen_Return_reclaim(ast_runtime* rt, NCDef_Vlen_Return* ncdef_vlen_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_vlen_return_v);
+    ast_free(rt,(void*)ncdef_vlen_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_vlen_Return_reclaim*/
+} /*NCDef_Vlen_Return_reclaim*/
 
 size_t
-Def_vlen_Return_get_size(ast_runtime* rt, Def_vlen_Return* def_vlen_return_v)
+NCDef_Vlen_Return_get_size(ast_runtime* rt, NCDef_Vlen_Return* ncdef_vlen_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_vlen_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_vlen_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_vlen_return_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_vlen_return_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_vlen_Return_get_size*/
+} /*NCDef_Vlen_Return_get_size*/
 
 ast_err
-Put_vlen_element_write(ast_runtime* rt, Put_vlen_element* put_vlen_element_v)
+NCPut_vlen_element_write(ast_runtime* rt, NCPut_vlen_element* ncput_vlen_element_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_vlen_element_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_vlen_element_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&put_vlen_element_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncput_vlen_element_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,3,&put_vlen_element_v->element);
+        status = ast_write_primitive(rt,ast_bytes,3,&ncput_vlen_element_v->element);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,4,&put_vlen_element_v->len);
+        status = ast_write_primitive(rt,ast_uint64,4,&ncput_vlen_element_v->len);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,5,&put_vlen_element_v->data);
+        status = ast_write_primitive(rt,ast_bytes,5,&ncput_vlen_element_v->data);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_vlen_element_write*/
+} /*NCPut_vlen_element_write*/
 
 ast_err
-Put_vlen_element_read(ast_runtime* rt, Put_vlen_element** put_vlen_element_vp)
+NCPut_vlen_element_read(ast_runtime* rt, NCPut_vlen_element** ncput_vlen_element_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_vlen_element* put_vlen_element_v;
+    NCPut_vlen_element* ncput_vlen_element_v;
     unsigned long pos;
 
-    put_vlen_element_v = (Put_vlen_element*)ast_alloc(rt,sizeof(Put_vlen_element));
-    if(put_vlen_element_v == NULL) return AST_ENOMEM;
+    ncput_vlen_element_v = (NCPut_vlen_element*)ast_alloc(rt,sizeof(NCPut_vlen_element));
+    if(ncput_vlen_element_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11558,23 +11535,23 @@ Put_vlen_element_read(ast_runtime* rt, Put_vlen_element** put_vlen_element_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_vlen_element|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_vlen_element|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_vlen_element_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_vlen_element_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&put_vlen_element_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncput_vlen_element_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bytes,3,&put_vlen_element_v->element);
+            status = ast_read_primitive(rt,ast_bytes,3,&ncput_vlen_element_v->element);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_uint64,4,&put_vlen_element_v->len);
+            status = ast_read_primitive(rt,ast_uint64,4,&ncput_vlen_element_v->len);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_bytes,5,&put_vlen_element_v->data);
+            status = ast_read_primitive(rt,ast_bytes,5,&ncput_vlen_element_v->data);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11582,92 +11559,92 @@ Put_vlen_element_read(ast_runtime* rt, Put_vlen_element** put_vlen_element_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_vlen_element_vp) *put_vlen_element_vp = put_vlen_element_v;
+    if(ncput_vlen_element_vp) *ncput_vlen_element_vp = ncput_vlen_element_v;
 done:
     return ACATCH(status);
-} /*Put_vlen_element_read*/
+} /*NCPut_vlen_element_read*/
 
 ast_err
-Put_vlen_element_reclaim(ast_runtime* rt, Put_vlen_element* put_vlen_element_v)
+NCPut_vlen_element_reclaim(ast_runtime* rt, NCPut_vlen_element* ncput_vlen_element_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&put_vlen_element_v->element);
+        status = ast_reclaim_bytes(rt,&ncput_vlen_element_v->element);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_bytes(rt,&put_vlen_element_v->data);
+        status = ast_reclaim_bytes(rt,&ncput_vlen_element_v->data);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)put_vlen_element_v);
+    ast_free(rt,(void*)ncput_vlen_element_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_vlen_element_reclaim*/
+} /*NCPut_vlen_element_reclaim*/
 
 size_t
-Put_vlen_element_get_size(ast_runtime* rt, Put_vlen_element* put_vlen_element_v)
+NCPut_vlen_element_get_size(ast_runtime* rt, NCPut_vlen_element* ncput_vlen_element_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vlen_element_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vlen_element_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vlen_element_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vlen_element_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bytes,&put_vlen_element_v->element);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncput_vlen_element_v->element);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_uint64,&put_vlen_element_v->len);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncput_vlen_element_v->len);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_bytes,&put_vlen_element_v->data);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncput_vlen_element_v->data);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_vlen_element_get_size*/
+} /*NCPut_vlen_element_get_size*/
 
 ast_err
-Put_vlen_element_Return_write(ast_runtime* rt, Put_vlen_element_Return* put_vlen_element_return_v)
+NCPut_vlen_element_Return_write(ast_runtime* rt, NCPut_vlen_element_Return* ncput_vlen_element_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&put_vlen_element_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncput_vlen_element_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Put_vlen_element_Return_write*/
+} /*NCPut_vlen_element_Return_write*/
 
 ast_err
-Put_vlen_element_Return_read(ast_runtime* rt, Put_vlen_element_Return** put_vlen_element_return_vp)
+NCPut_vlen_element_Return_read(ast_runtime* rt, NCPut_vlen_element_Return** ncput_vlen_element_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Put_vlen_element_Return* put_vlen_element_return_v;
+    NCPut_vlen_element_Return* ncput_vlen_element_return_v;
     unsigned long pos;
 
-    put_vlen_element_return_v = (Put_vlen_element_Return*)ast_alloc(rt,sizeof(Put_vlen_element_Return));
-    if(put_vlen_element_return_v == NULL) return AST_ENOMEM;
+    ncput_vlen_element_return_v = (NCPut_vlen_element_Return*)ast_alloc(rt,sizeof(NCPut_vlen_element_Return));
+    if(ncput_vlen_element_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11675,11 +11652,11 @@ Put_vlen_element_Return_read(ast_runtime* rt, Put_vlen_element_Return** put_vlen
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Put_vlen_element_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCPut_vlen_element_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&put_vlen_element_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncput_vlen_element_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11687,68 +11664,68 @@ Put_vlen_element_Return_read(ast_runtime* rt, Put_vlen_element_Return** put_vlen
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(put_vlen_element_return_vp) *put_vlen_element_return_vp = put_vlen_element_return_v;
+    if(ncput_vlen_element_return_vp) *ncput_vlen_element_return_vp = ncput_vlen_element_return_v;
 done:
     return ACATCH(status);
-} /*Put_vlen_element_Return_read*/
+} /*NCPut_vlen_element_Return_read*/
 
 ast_err
-Put_vlen_element_Return_reclaim(ast_runtime* rt, Put_vlen_element_Return* put_vlen_element_return_v)
+NCPut_vlen_element_Return_reclaim(ast_runtime* rt, NCPut_vlen_element_Return* ncput_vlen_element_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)put_vlen_element_return_v);
+    ast_free(rt,(void*)ncput_vlen_element_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Put_vlen_element_Return_reclaim*/
+} /*NCPut_vlen_element_Return_reclaim*/
 
 size_t
-Put_vlen_element_Return_get_size(ast_runtime* rt, Put_vlen_element_Return* put_vlen_element_return_v)
+NCPut_vlen_element_Return_get_size(ast_runtime* rt, NCPut_vlen_element_Return* ncput_vlen_element_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&put_vlen_element_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncput_vlen_element_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Put_vlen_element_Return_get_size*/
+} /*NCPut_vlen_element_Return_get_size*/
 
 ast_err
-Get_vlen_element_write(ast_runtime* rt, Get_vlen_element* get_vlen_element_v)
+NCGet_vlen_element_write(ast_runtime* rt, NCGet_vlen_element* ncget_vlen_element_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_vlen_element_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_vlen_element_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&get_vlen_element_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncget_vlen_element_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_vlen_element_write*/
+} /*NCGet_vlen_element_write*/
 
 ast_err
-Get_vlen_element_read(ast_runtime* rt, Get_vlen_element** get_vlen_element_vp)
+NCGet_vlen_element_read(ast_runtime* rt, NCGet_vlen_element** ncget_vlen_element_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_vlen_element* get_vlen_element_v;
+    NCGet_vlen_element* ncget_vlen_element_v;
     unsigned long pos;
 
-    get_vlen_element_v = (Get_vlen_element*)ast_alloc(rt,sizeof(Get_vlen_element));
-    if(get_vlen_element_v == NULL) return AST_ENOMEM;
+    ncget_vlen_element_v = (NCGet_vlen_element*)ast_alloc(rt,sizeof(NCGet_vlen_element));
+    if(ncget_vlen_element_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11756,14 +11733,14 @@ Get_vlen_element_read(ast_runtime* rt, Get_vlen_element** get_vlen_element_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_vlen_element|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_vlen_element|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_vlen_element_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_vlen_element_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&get_vlen_element_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncget_vlen_element_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11771,81 +11748,81 @@ Get_vlen_element_read(ast_runtime* rt, Get_vlen_element** get_vlen_element_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_vlen_element_vp) *get_vlen_element_vp = get_vlen_element_v;
+    if(ncget_vlen_element_vp) *ncget_vlen_element_vp = ncget_vlen_element_v;
 done:
     return ACATCH(status);
-} /*Get_vlen_element_read*/
+} /*NCGet_vlen_element_read*/
 
 ast_err
-Get_vlen_element_reclaim(ast_runtime* rt, Get_vlen_element* get_vlen_element_v)
+NCGet_vlen_element_reclaim(ast_runtime* rt, NCGet_vlen_element* ncget_vlen_element_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)get_vlen_element_v);
+    ast_free(rt,(void*)ncget_vlen_element_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_vlen_element_reclaim*/
+} /*NCGet_vlen_element_reclaim*/
 
 size_t
-Get_vlen_element_get_size(ast_runtime* rt, Get_vlen_element* get_vlen_element_v)
+NCGet_vlen_element_get_size(ast_runtime* rt, NCGet_vlen_element* ncget_vlen_element_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vlen_element_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vlen_element_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vlen_element_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vlen_element_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_vlen_element_get_size*/
+} /*NCGet_vlen_element_get_size*/
 
 ast_err
-Get_vlen_element_Return_write(ast_runtime* rt, Get_vlen_element_Return* get_vlen_element_return_v)
+NCGet_vlen_element_Return_write(ast_runtime* rt, NCGet_vlen_element_Return* ncget_vlen_element_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_vlen_element_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_vlen_element_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,2,&get_vlen_element_return_v->element);
+        status = ast_write_primitive(rt,ast_bytes,2,&ncget_vlen_element_return_v->element);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&get_vlen_element_return_v->len);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncget_vlen_element_return_v->len);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,4,&get_vlen_element_return_v->data);
+        status = ast_write_primitive(rt,ast_bytes,4,&ncget_vlen_element_return_v->data);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_vlen_element_Return_write*/
+} /*NCGet_vlen_element_Return_write*/
 
 ast_err
-Get_vlen_element_Return_read(ast_runtime* rt, Get_vlen_element_Return** get_vlen_element_return_vp)
+NCGet_vlen_element_Return_read(ast_runtime* rt, NCGet_vlen_element_Return** ncget_vlen_element_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_vlen_element_Return* get_vlen_element_return_v;
+    NCGet_vlen_element_Return* ncget_vlen_element_return_v;
     unsigned long pos;
 
-    get_vlen_element_return_v = (Get_vlen_element_Return*)ast_alloc(rt,sizeof(Get_vlen_element_Return));
-    if(get_vlen_element_return_v == NULL) return AST_ENOMEM;
+    ncget_vlen_element_return_v = (NCGet_vlen_element_Return*)ast_alloc(rt,sizeof(NCGet_vlen_element_Return));
+    if(ncget_vlen_element_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11853,20 +11830,20 @@ Get_vlen_element_Return_read(ast_runtime* rt, Get_vlen_element_Return** get_vlen
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_vlen_element_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_vlen_element_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_vlen_element_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_vlen_element_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_bytes,2,&get_vlen_element_return_v->element);
+            status = ast_read_primitive(rt,ast_bytes,2,&ncget_vlen_element_return_v->element);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&get_vlen_element_return_v->len);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncget_vlen_element_return_v->len);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_bytes,4,&get_vlen_element_return_v->data);
+            status = ast_read_primitive(rt,ast_bytes,4,&ncget_vlen_element_return_v->data);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11874,95 +11851,95 @@ Get_vlen_element_Return_read(ast_runtime* rt, Get_vlen_element_Return** get_vlen
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_vlen_element_return_vp) *get_vlen_element_return_vp = get_vlen_element_return_v;
+    if(ncget_vlen_element_return_vp) *ncget_vlen_element_return_vp = ncget_vlen_element_return_v;
 done:
     return ACATCH(status);
-} /*Get_vlen_element_Return_read*/
+} /*NCGet_vlen_element_Return_read*/
 
 ast_err
-Get_vlen_element_Return_reclaim(ast_runtime* rt, Get_vlen_element_Return* get_vlen_element_return_v)
+NCGet_vlen_element_Return_reclaim(ast_runtime* rt, NCGet_vlen_element_Return* ncget_vlen_element_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&get_vlen_element_return_v->element);
+        status = ast_reclaim_bytes(rt,&ncget_vlen_element_return_v->element);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_bytes(rt,&get_vlen_element_return_v->data);
+        status = ast_reclaim_bytes(rt,&ncget_vlen_element_return_v->data);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)get_vlen_element_return_v);
+    ast_free(rt,(void*)ncget_vlen_element_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_vlen_element_Return_reclaim*/
+} /*NCGet_vlen_element_Return_reclaim*/
 
 size_t
-Get_vlen_element_Return_get_size(ast_runtime* rt, Get_vlen_element_Return* get_vlen_element_return_v)
+NCGet_vlen_element_Return_get_size(ast_runtime* rt, NCGet_vlen_element_Return* ncget_vlen_element_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_vlen_element_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_vlen_element_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_bytes,&get_vlen_element_return_v->element);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncget_vlen_element_return_v->element);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&get_vlen_element_return_v->len);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncget_vlen_element_return_v->len);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_bytes,&get_vlen_element_return_v->data);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncget_vlen_element_return_v->data);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_vlen_element_Return_get_size*/
+} /*NCGet_vlen_element_Return_get_size*/
 
 ast_err
-Def_enum_write(ast_runtime* rt, Def_enum* def_enum_v)
+NCDef_Enum_write(ast_runtime* rt, NCDef_Enum* ncdef_enum_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_enum_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_enum_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_enum_v->basetypeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_enum_v->basetypeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&def_enum_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncdef_enum_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_enum_write*/
+} /*NCDef_Enum_write*/
 
 ast_err
-Def_enum_read(ast_runtime* rt, Def_enum** def_enum_vp)
+NCDef_Enum_read(ast_runtime* rt, NCDef_Enum** ncdef_enum_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_enum* def_enum_v;
+    NCDef_Enum* ncdef_enum_v;
     unsigned long pos;
 
-    def_enum_v = (Def_enum*)ast_alloc(rt,sizeof(Def_enum));
-    if(def_enum_v == NULL) return AST_ENOMEM;
+    ncdef_enum_v = (NCDef_Enum*)ast_alloc(rt,sizeof(NCDef_Enum));
+    if(ncdef_enum_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -11970,17 +11947,17 @@ Def_enum_read(ast_runtime* rt, Def_enum** def_enum_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_enum|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Enum|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_enum_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_enum_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_enum_v->basetypeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_enum_v->basetypeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&def_enum_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncdef_enum_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -11988,82 +11965,82 @@ Def_enum_read(ast_runtime* rt, Def_enum** def_enum_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_enum_vp) *def_enum_vp = def_enum_v;
+    if(ncdef_enum_vp) *ncdef_enum_vp = ncdef_enum_v;
 done:
     return ACATCH(status);
-} /*Def_enum_read*/
+} /*NCDef_Enum_read*/
 
 ast_err
-Def_enum_reclaim(ast_runtime* rt, Def_enum* def_enum_v)
+NCDef_Enum_reclaim(ast_runtime* rt, NCDef_Enum* ncdef_enum_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_enum_v->name);
+        status = ast_reclaim_string(rt,ncdef_enum_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_enum_v);
+    ast_free(rt,(void*)ncdef_enum_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_enum_reclaim*/
+} /*NCDef_Enum_reclaim*/
 
 size_t
-Def_enum_get_size(ast_runtime* rt, Def_enum* def_enum_v)
+NCDef_Enum_get_size(ast_runtime* rt, NCDef_Enum* ncdef_enum_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_enum_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_enum_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_enum_v->basetypeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_enum_v->basetypeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&def_enum_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_enum_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_enum_get_size*/
+} /*NCDef_Enum_get_size*/
 
 ast_err
-Def_enum_Return_write(ast_runtime* rt, Def_enum_Return* def_enum_return_v)
+NCDef_Enum_Return_write(ast_runtime* rt, NCDef_Enum_Return* ncdef_enum_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_enum_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_enum_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_enum_return_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_enum_return_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_enum_Return_write*/
+} /*NCDef_Enum_Return_write*/
 
 ast_err
-Def_enum_Return_read(ast_runtime* rt, Def_enum_Return** def_enum_return_vp)
+NCDef_Enum_Return_read(ast_runtime* rt, NCDef_Enum_Return** ncdef_enum_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_enum_Return* def_enum_return_v;
+    NCDef_Enum_Return* ncdef_enum_return_v;
     unsigned long pos;
 
-    def_enum_return_v = (Def_enum_Return*)ast_alloc(rt,sizeof(Def_enum_Return));
-    if(def_enum_return_v == NULL) return AST_ENOMEM;
+    ncdef_enum_return_v = (NCDef_Enum_Return*)ast_alloc(rt,sizeof(NCDef_Enum_Return));
+    if(ncdef_enum_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12071,14 +12048,14 @@ Def_enum_Return_read(ast_runtime* rt, Def_enum_Return** def_enum_return_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_enum_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Enum_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_enum_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_enum_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_enum_return_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_enum_return_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12086,81 +12063,81 @@ Def_enum_Return_read(ast_runtime* rt, Def_enum_Return** def_enum_return_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_enum_return_vp) *def_enum_return_vp = def_enum_return_v;
+    if(ncdef_enum_return_vp) *ncdef_enum_return_vp = ncdef_enum_return_v;
 done:
     return ACATCH(status);
-} /*Def_enum_Return_read*/
+} /*NCDef_Enum_Return_read*/
 
 ast_err
-Def_enum_Return_reclaim(ast_runtime* rt, Def_enum_Return* def_enum_return_v)
+NCDef_Enum_Return_reclaim(ast_runtime* rt, NCDef_Enum_Return* ncdef_enum_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_enum_return_v);
+    ast_free(rt,(void*)ncdef_enum_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_enum_Return_reclaim*/
+} /*NCDef_Enum_Return_reclaim*/
 
 size_t
-Def_enum_Return_get_size(ast_runtime* rt, Def_enum_Return* def_enum_return_v)
+NCDef_Enum_Return_get_size(ast_runtime* rt, NCDef_Enum_Return* ncdef_enum_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_enum_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_enum_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_enum_return_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_enum_return_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_enum_Return_get_size*/
+} /*NCDef_Enum_Return_get_size*/
 
 ast_err
-Insert_enum_write(ast_runtime* rt, Insert_enum* insert_enum_v)
+NCInsert_enum_write(ast_runtime* rt, NCInsert_enum* ncinsert_enum_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&insert_enum_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinsert_enum_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&insert_enum_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinsert_enum_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&insert_enum_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncinsert_enum_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,4,&insert_enum_v->value);
+        status = ast_write_primitive(rt,ast_bytes,4,&ncinsert_enum_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Insert_enum_write*/
+} /*NCInsert_enum_write*/
 
 ast_err
-Insert_enum_read(ast_runtime* rt, Insert_enum** insert_enum_vp)
+NCInsert_enum_read(ast_runtime* rt, NCInsert_enum** ncinsert_enum_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Insert_enum* insert_enum_v;
+    NCInsert_enum* ncinsert_enum_v;
     unsigned long pos;
 
-    insert_enum_v = (Insert_enum*)ast_alloc(rt,sizeof(Insert_enum));
-    if(insert_enum_v == NULL) return AST_ENOMEM;
+    ncinsert_enum_v = (NCInsert_enum*)ast_alloc(rt,sizeof(NCInsert_enum));
+    if(ncinsert_enum_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12168,20 +12145,20 @@ Insert_enum_read(ast_runtime* rt, Insert_enum** insert_enum_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Insert_enum|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInsert_enum|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&insert_enum_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinsert_enum_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&insert_enum_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinsert_enum_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&insert_enum_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncinsert_enum_v->name);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_bytes,4,&insert_enum_v->value);
+            status = ast_read_primitive(rt,ast_bytes,4,&ncinsert_enum_v->value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12189,87 +12166,87 @@ Insert_enum_read(ast_runtime* rt, Insert_enum** insert_enum_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(insert_enum_vp) *insert_enum_vp = insert_enum_v;
+    if(ncinsert_enum_vp) *ncinsert_enum_vp = ncinsert_enum_v;
 done:
     return ACATCH(status);
-} /*Insert_enum_read*/
+} /*NCInsert_enum_read*/
 
 ast_err
-Insert_enum_reclaim(ast_runtime* rt, Insert_enum* insert_enum_v)
+NCInsert_enum_reclaim(ast_runtime* rt, NCInsert_enum* ncinsert_enum_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,insert_enum_v->name);
+        status = ast_reclaim_string(rt,ncinsert_enum_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_bytes(rt,&insert_enum_v->value);
+        status = ast_reclaim_bytes(rt,&ncinsert_enum_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)insert_enum_v);
+    ast_free(rt,(void*)ncinsert_enum_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Insert_enum_reclaim*/
+} /*NCInsert_enum_reclaim*/
 
 size_t
-Insert_enum_get_size(ast_runtime* rt, Insert_enum* insert_enum_v)
+NCInsert_enum_get_size(ast_runtime* rt, NCInsert_enum* ncinsert_enum_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_enum_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_enum_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_enum_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_enum_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&insert_enum_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinsert_enum_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_bytes,&insert_enum_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncinsert_enum_v->value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Insert_enum_get_size*/
+} /*NCInsert_enum_get_size*/
 
 ast_err
-Insert_enum_Return_write(ast_runtime* rt, Insert_enum_Return* insert_enum_return_v)
+NCInsert_enum_Return_write(ast_runtime* rt, NCInsert_enum_Return* ncinsert_enum_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&insert_enum_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinsert_enum_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Insert_enum_Return_write*/
+} /*NCInsert_enum_Return_write*/
 
 ast_err
-Insert_enum_Return_read(ast_runtime* rt, Insert_enum_Return** insert_enum_return_vp)
+NCInsert_enum_Return_read(ast_runtime* rt, NCInsert_enum_Return** ncinsert_enum_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Insert_enum_Return* insert_enum_return_v;
+    NCInsert_enum_Return* ncinsert_enum_return_v;
     unsigned long pos;
 
-    insert_enum_return_v = (Insert_enum_Return*)ast_alloc(rt,sizeof(Insert_enum_Return));
-    if(insert_enum_return_v == NULL) return AST_ENOMEM;
+    ncinsert_enum_return_v = (NCInsert_enum_Return*)ast_alloc(rt,sizeof(NCInsert_enum_Return));
+    if(ncinsert_enum_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12277,11 +12254,11 @@ Insert_enum_Return_read(ast_runtime* rt, Insert_enum_Return** insert_enum_return
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Insert_enum_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInsert_enum_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&insert_enum_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinsert_enum_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12289,72 +12266,72 @@ Insert_enum_Return_read(ast_runtime* rt, Insert_enum_Return** insert_enum_return
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(insert_enum_return_vp) *insert_enum_return_vp = insert_enum_return_v;
+    if(ncinsert_enum_return_vp) *ncinsert_enum_return_vp = ncinsert_enum_return_v;
 done:
     return ACATCH(status);
-} /*Insert_enum_Return_read*/
+} /*NCInsert_enum_Return_read*/
 
 ast_err
-Insert_enum_Return_reclaim(ast_runtime* rt, Insert_enum_Return* insert_enum_return_v)
+NCInsert_enum_Return_reclaim(ast_runtime* rt, NCInsert_enum_Return* ncinsert_enum_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)insert_enum_return_v);
+    ast_free(rt,(void*)ncinsert_enum_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Insert_enum_Return_reclaim*/
+} /*NCInsert_enum_Return_reclaim*/
 
 size_t
-Insert_enum_Return_get_size(ast_runtime* rt, Insert_enum_Return* insert_enum_return_v)
+NCInsert_enum_Return_get_size(ast_runtime* rt, NCInsert_enum_Return* ncinsert_enum_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&insert_enum_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinsert_enum_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Insert_enum_Return_get_size*/
+} /*NCInsert_enum_Return_get_size*/
 
 ast_err
-Inq_enum_member_write(ast_runtime* rt, Inq_enum_member* inq_enum_member_v)
+NCInq_enum_member_write(ast_runtime* rt, NCInq_enum_member* ncinq_enum_member_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_enum_member_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_enum_member_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_enum_member_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_enum_member_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,3,&inq_enum_member_v->index);
+        status = ast_write_primitive(rt,ast_int32,3,&ncinq_enum_member_v->index);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_member_write*/
+} /*NCInq_enum_member_write*/
 
 ast_err
-Inq_enum_member_read(ast_runtime* rt, Inq_enum_member** inq_enum_member_vp)
+NCInq_enum_member_read(ast_runtime* rt, NCInq_enum_member** ncinq_enum_member_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_enum_member* inq_enum_member_v;
+    NCInq_enum_member* ncinq_enum_member_v;
     unsigned long pos;
 
-    inq_enum_member_v = (Inq_enum_member*)ast_alloc(rt,sizeof(Inq_enum_member));
-    if(inq_enum_member_v == NULL) return AST_ENOMEM;
+    ncinq_enum_member_v = (NCInq_enum_member*)ast_alloc(rt,sizeof(NCInq_enum_member));
+    if(ncinq_enum_member_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12362,17 +12339,17 @@ Inq_enum_member_read(ast_runtime* rt, Inq_enum_member** inq_enum_member_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_enum_member|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_enum_member|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_enum_member_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_enum_member_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_enum_member_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_enum_member_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_int32,3,&inq_enum_member_v->index);
+            status = ast_read_primitive(rt,ast_int32,3,&ncinq_enum_member_v->index);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12380,82 +12357,82 @@ Inq_enum_member_read(ast_runtime* rt, Inq_enum_member** inq_enum_member_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_enum_member_vp) *inq_enum_member_vp = inq_enum_member_v;
+    if(ncinq_enum_member_vp) *ncinq_enum_member_vp = ncinq_enum_member_v;
 done:
     return ACATCH(status);
-} /*Inq_enum_member_read*/
+} /*NCInq_enum_member_read*/
 
 ast_err
-Inq_enum_member_reclaim(ast_runtime* rt, Inq_enum_member* inq_enum_member_v)
+NCInq_enum_member_reclaim(ast_runtime* rt, NCInq_enum_member* ncinq_enum_member_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_enum_member_v);
+    ast_free(rt,(void*)ncinq_enum_member_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_member_reclaim*/
+} /*NCInq_enum_member_reclaim*/
 
 size_t
-Inq_enum_member_get_size(ast_runtime* rt, Inq_enum_member* inq_enum_member_v)
+NCInq_enum_member_get_size(ast_runtime* rt, NCInq_enum_member* ncinq_enum_member_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_member_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_member_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_member_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_member_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_member_v->index);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_member_v->index);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_enum_member_get_size*/
+} /*NCInq_enum_member_get_size*/
 
 ast_err
-Inq_enum_member_Return_write(ast_runtime* rt, Inq_enum_member_Return* inq_enum_member_return_v)
+NCInq_enum_member_Return_write(ast_runtime* rt, NCInq_enum_member_Return* ncinq_enum_member_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_enum_member_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_enum_member_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_enum_member_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_enum_member_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,3,&inq_enum_member_return_v->value);
+        status = ast_write_primitive(rt,ast_bytes,3,&ncinq_enum_member_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_member_Return_write*/
+} /*NCInq_enum_member_Return_write*/
 
 ast_err
-Inq_enum_member_Return_read(ast_runtime* rt, Inq_enum_member_Return** inq_enum_member_return_vp)
+NCInq_enum_member_Return_read(ast_runtime* rt, NCInq_enum_member_Return** ncinq_enum_member_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_enum_member_Return* inq_enum_member_return_v;
+    NCInq_enum_member_Return* ncinq_enum_member_return_v;
     unsigned long pos;
 
-    inq_enum_member_return_v = (Inq_enum_member_Return*)ast_alloc(rt,sizeof(Inq_enum_member_Return));
-    if(inq_enum_member_return_v == NULL) return AST_ENOMEM;
+    ncinq_enum_member_return_v = (NCInq_enum_member_Return*)ast_alloc(rt,sizeof(NCInq_enum_member_Return));
+    if(ncinq_enum_member_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12463,17 +12440,17 @@ Inq_enum_member_Return_read(ast_runtime* rt, Inq_enum_member_Return** inq_enum_m
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_enum_member_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_enum_member_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_enum_member_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_enum_member_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_enum_member_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_enum_member_return_v->name);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bytes,3,&inq_enum_member_return_v->value);
+            status = ast_read_primitive(rt,ast_bytes,3,&ncinq_enum_member_return_v->value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12481,90 +12458,90 @@ Inq_enum_member_Return_read(ast_runtime* rt, Inq_enum_member_Return** inq_enum_m
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_enum_member_return_vp) *inq_enum_member_return_vp = inq_enum_member_return_v;
+    if(ncinq_enum_member_return_vp) *ncinq_enum_member_return_vp = ncinq_enum_member_return_v;
 done:
     return ACATCH(status);
-} /*Inq_enum_member_Return_read*/
+} /*NCInq_enum_member_Return_read*/
 
 ast_err
-Inq_enum_member_Return_reclaim(ast_runtime* rt, Inq_enum_member_Return* inq_enum_member_return_v)
+NCInq_enum_member_Return_reclaim(ast_runtime* rt, NCInq_enum_member_Return* ncinq_enum_member_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_enum_member_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_enum_member_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_reclaim_bytes(rt,&inq_enum_member_return_v->value);
+        status = ast_reclaim_bytes(rt,&ncinq_enum_member_return_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_enum_member_return_v);
+    ast_free(rt,(void*)ncinq_enum_member_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_member_Return_reclaim*/
+} /*NCInq_enum_member_Return_reclaim*/
 
 size_t
-Inq_enum_member_Return_get_size(ast_runtime* rt, Inq_enum_member_Return* inq_enum_member_return_v)
+NCInq_enum_member_Return_get_size(ast_runtime* rt, NCInq_enum_member_Return* ncinq_enum_member_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_member_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_member_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_enum_member_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_enum_member_return_v->name);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bytes,&inq_enum_member_return_v->value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncinq_enum_member_return_v->value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_enum_member_Return_get_size*/
+} /*NCInq_enum_member_Return_get_size*/
 
 ast_err
-Inq_enum_ident_write(ast_runtime* rt, Inq_enum_ident* inq_enum_ident_v)
+NCInq_enum_ident_write(ast_runtime* rt, NCInq_enum_ident* ncinq_enum_ident_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_enum_ident_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_enum_ident_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&inq_enum_ident_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncinq_enum_ident_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&inq_enum_ident_v->value);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncinq_enum_ident_v->value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_ident_write*/
+} /*NCInq_enum_ident_write*/
 
 ast_err
-Inq_enum_ident_read(ast_runtime* rt, Inq_enum_ident** inq_enum_ident_vp)
+NCInq_enum_ident_read(ast_runtime* rt, NCInq_enum_ident** ncinq_enum_ident_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_enum_ident* inq_enum_ident_v;
+    NCInq_enum_ident* ncinq_enum_ident_v;
     unsigned long pos;
 
-    inq_enum_ident_v = (Inq_enum_ident*)ast_alloc(rt,sizeof(Inq_enum_ident));
-    if(inq_enum_ident_v == NULL) return AST_ENOMEM;
+    ncinq_enum_ident_v = (NCInq_enum_ident*)ast_alloc(rt,sizeof(NCInq_enum_ident));
+    if(ncinq_enum_ident_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12572,17 +12549,17 @@ Inq_enum_ident_read(ast_runtime* rt, Inq_enum_ident** inq_enum_ident_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_enum_ident|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_enum_ident|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_enum_ident_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_enum_ident_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&inq_enum_ident_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncinq_enum_ident_v->typeid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&inq_enum_ident_v->value);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncinq_enum_ident_v->value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12590,78 +12567,78 @@ Inq_enum_ident_read(ast_runtime* rt, Inq_enum_ident** inq_enum_ident_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_enum_ident_vp) *inq_enum_ident_vp = inq_enum_ident_v;
+    if(ncinq_enum_ident_vp) *ncinq_enum_ident_vp = ncinq_enum_ident_v;
 done:
     return ACATCH(status);
-} /*Inq_enum_ident_read*/
+} /*NCInq_enum_ident_read*/
 
 ast_err
-Inq_enum_ident_reclaim(ast_runtime* rt, Inq_enum_ident* inq_enum_ident_v)
+NCInq_enum_ident_reclaim(ast_runtime* rt, NCInq_enum_ident* ncinq_enum_ident_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)inq_enum_ident_v);
+    ast_free(rt,(void*)ncinq_enum_ident_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_ident_reclaim*/
+} /*NCInq_enum_ident_reclaim*/
 
 size_t
-Inq_enum_ident_get_size(ast_runtime* rt, Inq_enum_ident* inq_enum_ident_v)
+NCInq_enum_ident_get_size(ast_runtime* rt, NCInq_enum_ident* ncinq_enum_ident_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_ident_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_ident_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_ident_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_ident_v->typeid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&inq_enum_ident_v->value);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncinq_enum_ident_v->value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_enum_ident_get_size*/
+} /*NCInq_enum_ident_get_size*/
 
 ast_err
-Inq_enum_ident_Return_write(ast_runtime* rt, Inq_enum_ident_Return* inq_enum_ident_return_v)
+NCInq_enum_ident_Return_write(ast_runtime* rt, NCInq_enum_ident_Return* ncinq_enum_ident_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&inq_enum_ident_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncinq_enum_ident_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,2,&inq_enum_ident_return_v->name);
+        status = ast_write_primitive(rt,ast_string,2,&ncinq_enum_ident_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_ident_Return_write*/
+} /*NCInq_enum_ident_Return_write*/
 
 ast_err
-Inq_enum_ident_Return_read(ast_runtime* rt, Inq_enum_ident_Return** inq_enum_ident_return_vp)
+NCInq_enum_ident_Return_read(ast_runtime* rt, NCInq_enum_ident_Return** ncinq_enum_ident_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Inq_enum_ident_Return* inq_enum_ident_return_v;
+    NCInq_enum_ident_Return* ncinq_enum_ident_return_v;
     unsigned long pos;
 
-    inq_enum_ident_return_v = (Inq_enum_ident_Return*)ast_alloc(rt,sizeof(Inq_enum_ident_Return));
-    if(inq_enum_ident_return_v == NULL) return AST_ENOMEM;
+    ncinq_enum_ident_return_v = (NCInq_enum_ident_Return*)ast_alloc(rt,sizeof(NCInq_enum_ident_Return));
+    if(ncinq_enum_ident_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12669,14 +12646,14 @@ Inq_enum_ident_Return_read(ast_runtime* rt, Inq_enum_ident_Return** inq_enum_ide
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Inq_enum_ident_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCInq_enum_ident_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&inq_enum_ident_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncinq_enum_ident_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_string,2,&inq_enum_ident_return_v->name);
+            status = ast_read_primitive(rt,ast_string,2,&ncinq_enum_ident_return_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12684,81 +12661,81 @@ Inq_enum_ident_Return_read(ast_runtime* rt, Inq_enum_ident_Return** inq_enum_ide
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(inq_enum_ident_return_vp) *inq_enum_ident_return_vp = inq_enum_ident_return_v;
+    if(ncinq_enum_ident_return_vp) *ncinq_enum_ident_return_vp = ncinq_enum_ident_return_v;
 done:
     return ACATCH(status);
-} /*Inq_enum_ident_Return_read*/
+} /*NCInq_enum_ident_Return_read*/
 
 ast_err
-Inq_enum_ident_Return_reclaim(ast_runtime* rt, Inq_enum_ident_Return* inq_enum_ident_return_v)
+NCInq_enum_ident_Return_reclaim(ast_runtime* rt, NCInq_enum_ident_Return* ncinq_enum_ident_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,inq_enum_ident_return_v->name);
+        status = ast_reclaim_string(rt,ncinq_enum_ident_return_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)inq_enum_ident_return_v);
+    ast_free(rt,(void*)ncinq_enum_ident_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Inq_enum_ident_Return_reclaim*/
+} /*NCInq_enum_ident_Return_reclaim*/
 
 size_t
-Inq_enum_ident_Return_get_size(ast_runtime* rt, Inq_enum_ident_Return* inq_enum_ident_return_v)
+NCInq_enum_ident_Return_get_size(ast_runtime* rt, NCInq_enum_ident_Return* ncinq_enum_ident_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&inq_enum_ident_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncinq_enum_ident_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_string,&inq_enum_ident_return_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncinq_enum_ident_return_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Inq_enum_ident_Return_get_size*/
+} /*NCInq_enum_ident_Return_get_size*/
 
 ast_err
-Def_opaque_write(ast_runtime* rt, Def_opaque* def_opaque_v)
+NCDef_Opaque_write(ast_runtime* rt, NCDef_Opaque* ncdef_opaque_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_opaque_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_opaque_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,2,&def_opaque_v->size);
+        status = ast_write_primitive(rt,ast_uint64,2,&ncdef_opaque_v->size);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_string,3,&def_opaque_v->name);
+        status = ast_write_primitive(rt,ast_string,3,&ncdef_opaque_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_opaque_write*/
+} /*NCDef_Opaque_write*/
 
 ast_err
-Def_opaque_read(ast_runtime* rt, Def_opaque** def_opaque_vp)
+NCDef_Opaque_read(ast_runtime* rt, NCDef_Opaque** ncdef_opaque_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_opaque* def_opaque_v;
+    NCDef_Opaque* ncdef_opaque_v;
     unsigned long pos;
 
-    def_opaque_v = (Def_opaque*)ast_alloc(rt,sizeof(Def_opaque));
-    if(def_opaque_v == NULL) return AST_ENOMEM;
+    ncdef_opaque_v = (NCDef_Opaque*)ast_alloc(rt,sizeof(NCDef_Opaque));
+    if(ncdef_opaque_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12766,17 +12743,17 @@ Def_opaque_read(ast_runtime* rt, Def_opaque** def_opaque_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_opaque|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Opaque|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_opaque_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_opaque_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_uint64,2,&def_opaque_v->size);
+            status = ast_read_primitive(rt,ast_uint64,2,&ncdef_opaque_v->size);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_string,3,&def_opaque_v->name);
+            status = ast_read_primitive(rt,ast_string,3,&ncdef_opaque_v->name);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12784,82 +12761,82 @@ Def_opaque_read(ast_runtime* rt, Def_opaque** def_opaque_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_opaque_vp) *def_opaque_vp = def_opaque_v;
+    if(ncdef_opaque_vp) *ncdef_opaque_vp = ncdef_opaque_v;
 done:
     return ACATCH(status);
-} /*Def_opaque_read*/
+} /*NCDef_Opaque_read*/
 
 ast_err
-Def_opaque_reclaim(ast_runtime* rt, Def_opaque* def_opaque_v)
+NCDef_Opaque_reclaim(ast_runtime* rt, NCDef_Opaque* ncdef_opaque_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,def_opaque_v->name);
+        status = ast_reclaim_string(rt,ncdef_opaque_v->name);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_opaque_v);
+    ast_free(rt,(void*)ncdef_opaque_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_opaque_reclaim*/
+} /*NCDef_Opaque_reclaim*/
 
 size_t
-Def_opaque_get_size(ast_runtime* rt, Def_opaque* def_opaque_v)
+NCDef_Opaque_get_size(ast_runtime* rt, NCDef_Opaque* ncdef_opaque_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_opaque_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_opaque_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_uint64,&def_opaque_v->size);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncdef_opaque_v->size);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_string,&def_opaque_v->name);
+        fieldsize += ast_get_size(rt,ast_string,&ncdef_opaque_v->name);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_opaque_get_size*/
+} /*NCDef_Opaque_get_size*/
 
 ast_err
-Def_opaque_Return_write(ast_runtime* rt, Def_opaque_Return* def_opaque_return_v)
+NCDef_Opaque_Return_write(ast_runtime* rt, NCDef_Opaque_Return* ncdef_opaque_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_opaque_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_opaque_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_opaque_return_v->typeid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_opaque_return_v->typeid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_opaque_Return_write*/
+} /*NCDef_Opaque_Return_write*/
 
 ast_err
-Def_opaque_Return_read(ast_runtime* rt, Def_opaque_Return** def_opaque_return_vp)
+NCDef_Opaque_Return_read(ast_runtime* rt, NCDef_Opaque_Return** ncdef_opaque_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_opaque_Return* def_opaque_return_v;
+    NCDef_Opaque_Return* ncdef_opaque_return_v;
     unsigned long pos;
 
-    def_opaque_return_v = (Def_opaque_Return*)ast_alloc(rt,sizeof(Def_opaque_Return));
-    if(def_opaque_return_v == NULL) return AST_ENOMEM;
+    ncdef_opaque_return_v = (NCDef_Opaque_Return*)ast_alloc(rt,sizeof(NCDef_Opaque_Return));
+    if(ncdef_opaque_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12867,14 +12844,14 @@ Def_opaque_Return_read(ast_runtime* rt, Def_opaque_Return** def_opaque_return_vp
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_opaque_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Opaque_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_opaque_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_opaque_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_opaque_return_v->typeid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_opaque_return_v->typeid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12882,85 +12859,85 @@ Def_opaque_Return_read(ast_runtime* rt, Def_opaque_Return** def_opaque_return_vp
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_opaque_return_vp) *def_opaque_return_vp = def_opaque_return_v;
+    if(ncdef_opaque_return_vp) *ncdef_opaque_return_vp = ncdef_opaque_return_v;
 done:
     return ACATCH(status);
-} /*Def_opaque_Return_read*/
+} /*NCDef_Opaque_Return_read*/
 
 ast_err
-Def_opaque_Return_reclaim(ast_runtime* rt, Def_opaque_Return* def_opaque_return_v)
+NCDef_Opaque_Return_reclaim(ast_runtime* rt, NCDef_Opaque_Return* ncdef_opaque_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_opaque_return_v);
+    ast_free(rt,(void*)ncdef_opaque_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_opaque_Return_reclaim*/
+} /*NCDef_Opaque_Return_reclaim*/
 
 size_t
-Def_opaque_Return_get_size(ast_runtime* rt, Def_opaque_Return* def_opaque_return_v)
+NCDef_Opaque_Return_get_size(ast_runtime* rt, NCDef_Opaque_Return* ncdef_opaque_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_opaque_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_opaque_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_opaque_return_v->typeid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_opaque_return_v->typeid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_opaque_Return_get_size*/
+} /*NCDef_Opaque_Return_get_size*/
 
 ast_err
-Def_var_deflate_write(ast_runtime* rt, Def_var_deflate* def_var_deflate_v)
+NCDef_var_deflate_write(ast_runtime* rt, NCDef_var_deflate* ncdef_var_deflate_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_deflate_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_deflate_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_var_deflate_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_var_deflate_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,3,&def_var_deflate_v->shuffle);
+        status = ast_write_primitive(rt,ast_bool,3,&ncdef_var_deflate_v->shuffle);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,4,&def_var_deflate_v->deflate);
+        status = ast_write_primitive(rt,ast_bool,4,&ncdef_var_deflate_v->deflate);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,5,&def_var_deflate_v->deflatelevel);
+        status = ast_write_primitive(rt,ast_int32,5,&ncdef_var_deflate_v->deflatelevel);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_deflate_write*/
+} /*NCDef_var_deflate_write*/
 
 ast_err
-Def_var_deflate_read(ast_runtime* rt, Def_var_deflate** def_var_deflate_vp)
+NCDef_var_deflate_read(ast_runtime* rt, NCDef_var_deflate** ncdef_var_deflate_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_deflate* def_var_deflate_v;
+    NCDef_var_deflate* ncdef_var_deflate_v;
     unsigned long pos;
 
-    def_var_deflate_v = (Def_var_deflate*)ast_alloc(rt,sizeof(Def_var_deflate));
-    if(def_var_deflate_v == NULL) return AST_ENOMEM;
+    ncdef_var_deflate_v = (NCDef_var_deflate*)ast_alloc(rt,sizeof(NCDef_var_deflate));
+    if(ncdef_var_deflate_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -12968,23 +12945,23 @@ Def_var_deflate_read(ast_runtime* rt, Def_var_deflate** def_var_deflate_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_deflate|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_var_deflate|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_deflate_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_deflate_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_var_deflate_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_var_deflate_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bool,3,&def_var_deflate_v->shuffle);
+            status = ast_read_primitive(rt,ast_bool,3,&ncdef_var_deflate_v->shuffle);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_bool,4,&def_var_deflate_v->deflate);
+            status = ast_read_primitive(rt,ast_bool,4,&ncdef_var_deflate_v->deflate);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_int32,5,&def_var_deflate_v->deflatelevel);
+            status = ast_read_primitive(rt,ast_int32,5,&ncdef_var_deflate_v->deflatelevel);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -12992,84 +12969,84 @@ Def_var_deflate_read(ast_runtime* rt, Def_var_deflate** def_var_deflate_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_deflate_vp) *def_var_deflate_vp = def_var_deflate_v;
+    if(ncdef_var_deflate_vp) *ncdef_var_deflate_vp = ncdef_var_deflate_v;
 done:
     return ACATCH(status);
-} /*Def_var_deflate_read*/
+} /*NCDef_var_deflate_read*/
 
 ast_err
-Def_var_deflate_reclaim(ast_runtime* rt, Def_var_deflate* def_var_deflate_v)
+NCDef_var_deflate_reclaim(ast_runtime* rt, NCDef_var_deflate* ncdef_var_deflate_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_deflate_v);
+    ast_free(rt,(void*)ncdef_var_deflate_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_deflate_reclaim*/
+} /*NCDef_var_deflate_reclaim*/
 
 size_t
-Def_var_deflate_get_size(ast_runtime* rt, Def_var_deflate* def_var_deflate_v)
+NCDef_var_deflate_get_size(ast_runtime* rt, NCDef_var_deflate* ncdef_var_deflate_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_deflate_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_deflate_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_deflate_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_deflate_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bool,&def_var_deflate_v->shuffle);
+        fieldsize += ast_get_size(rt,ast_bool,&ncdef_var_deflate_v->shuffle);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_bool,&def_var_deflate_v->deflate);
+        fieldsize += ast_get_size(rt,ast_bool,&ncdef_var_deflate_v->deflate);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_deflate_v->deflatelevel);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_deflate_v->deflatelevel);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_deflate_get_size*/
+} /*NCDef_var_deflate_get_size*/
 
 ast_err
-Def_var_deflate_Return_write(ast_runtime* rt, Def_var_deflate_Return* def_var_deflate_return_v)
+NCDef_var_deflate_Return_write(ast_runtime* rt, NCDef_var_deflate_Return* ncdef_var_deflate_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_deflate_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_deflate_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_deflate_Return_write*/
+} /*NCDef_var_deflate_Return_write*/
 
 ast_err
-Def_var_deflate_Return_read(ast_runtime* rt, Def_var_deflate_Return** def_var_deflate_return_vp)
+NCDef_var_deflate_Return_read(ast_runtime* rt, NCDef_var_deflate_Return** ncdef_var_deflate_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_deflate_Return* def_var_deflate_return_v;
+    NCDef_var_deflate_Return* ncdef_var_deflate_return_v;
     unsigned long pos;
 
-    def_var_deflate_return_v = (Def_var_deflate_Return*)ast_alloc(rt,sizeof(Def_var_deflate_Return));
-    if(def_var_deflate_return_v == NULL) return AST_ENOMEM;
+    ncdef_var_deflate_return_v = (NCDef_var_deflate_Return*)ast_alloc(rt,sizeof(NCDef_var_deflate_Return));
+    if(ncdef_var_deflate_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13077,11 +13054,11 @@ Def_var_deflate_Return_read(ast_runtime* rt, Def_var_deflate_Return** def_var_de
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_deflate_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_var_deflate_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_deflate_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_deflate_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13089,72 +13066,72 @@ Def_var_deflate_Return_read(ast_runtime* rt, Def_var_deflate_Return** def_var_de
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_deflate_return_vp) *def_var_deflate_return_vp = def_var_deflate_return_v;
+    if(ncdef_var_deflate_return_vp) *ncdef_var_deflate_return_vp = ncdef_var_deflate_return_v;
 done:
     return ACATCH(status);
-} /*Def_var_deflate_Return_read*/
+} /*NCDef_var_deflate_Return_read*/
 
 ast_err
-Def_var_deflate_Return_reclaim(ast_runtime* rt, Def_var_deflate_Return* def_var_deflate_return_v)
+NCDef_var_deflate_Return_reclaim(ast_runtime* rt, NCDef_var_deflate_Return* ncdef_var_deflate_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_deflate_return_v);
+    ast_free(rt,(void*)ncdef_var_deflate_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_deflate_Return_reclaim*/
+} /*NCDef_var_deflate_Return_reclaim*/
 
 size_t
-Def_var_deflate_Return_get_size(ast_runtime* rt, Def_var_deflate_Return* def_var_deflate_return_v)
+NCDef_var_deflate_Return_get_size(ast_runtime* rt, NCDef_var_deflate_Return* ncdef_var_deflate_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_deflate_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_deflate_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_deflate_Return_get_size*/
+} /*NCDef_var_deflate_Return_get_size*/
 
 ast_err
-Def_var_fletcher32_write(ast_runtime* rt, Def_var_fletcher32* def_var_fletcher32_v)
+NCDef_Var_Fletcher32_write(ast_runtime* rt, NCDef_Var_Fletcher32* ncdef_var_fletcher32_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_fletcher32_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_fletcher32_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_var_fletcher32_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_var_fletcher32_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,3,&def_var_fletcher32_v->fletcher32);
+        status = ast_write_primitive(rt,ast_bool,3,&ncdef_var_fletcher32_v->fletcher32);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fletcher32_write*/
+} /*NCDef_Var_Fletcher32_write*/
 
 ast_err
-Def_var_fletcher32_read(ast_runtime* rt, Def_var_fletcher32** def_var_fletcher32_vp)
+NCDef_Var_Fletcher32_read(ast_runtime* rt, NCDef_Var_Fletcher32** ncdef_var_fletcher32_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_fletcher32* def_var_fletcher32_v;
+    NCDef_Var_Fletcher32* ncdef_var_fletcher32_v;
     unsigned long pos;
 
-    def_var_fletcher32_v = (Def_var_fletcher32*)ast_alloc(rt,sizeof(Def_var_fletcher32));
-    if(def_var_fletcher32_v == NULL) return AST_ENOMEM;
+    ncdef_var_fletcher32_v = (NCDef_Var_Fletcher32*)ast_alloc(rt,sizeof(NCDef_Var_Fletcher32));
+    if(ncdef_var_fletcher32_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13162,17 +13139,17 @@ Def_var_fletcher32_read(ast_runtime* rt, Def_var_fletcher32** def_var_fletcher32
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_fletcher32|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Fletcher32|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_fletcher32_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_fletcher32_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_var_fletcher32_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_var_fletcher32_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bool,3,&def_var_fletcher32_v->fletcher32);
+            status = ast_read_primitive(rt,ast_bool,3,&ncdef_var_fletcher32_v->fletcher32);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13180,74 +13157,74 @@ Def_var_fletcher32_read(ast_runtime* rt, Def_var_fletcher32** def_var_fletcher32
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_fletcher32_vp) *def_var_fletcher32_vp = def_var_fletcher32_v;
+    if(ncdef_var_fletcher32_vp) *ncdef_var_fletcher32_vp = ncdef_var_fletcher32_v;
 done:
     return ACATCH(status);
-} /*Def_var_fletcher32_read*/
+} /*NCDef_Var_Fletcher32_read*/
 
 ast_err
-Def_var_fletcher32_reclaim(ast_runtime* rt, Def_var_fletcher32* def_var_fletcher32_v)
+NCDef_Var_Fletcher32_reclaim(ast_runtime* rt, NCDef_Var_Fletcher32* ncdef_var_fletcher32_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_fletcher32_v);
+    ast_free(rt,(void*)ncdef_var_fletcher32_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fletcher32_reclaim*/
+} /*NCDef_Var_Fletcher32_reclaim*/
 
 size_t
-Def_var_fletcher32_get_size(ast_runtime* rt, Def_var_fletcher32* def_var_fletcher32_v)
+NCDef_Var_Fletcher32_get_size(ast_runtime* rt, NCDef_Var_Fletcher32* ncdef_var_fletcher32_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_fletcher32_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_fletcher32_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_fletcher32_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_fletcher32_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bool,&def_var_fletcher32_v->fletcher32);
+        fieldsize += ast_get_size(rt,ast_bool,&ncdef_var_fletcher32_v->fletcher32);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_fletcher32_get_size*/
+} /*NCDef_Var_Fletcher32_get_size*/
 
 ast_err
-Def_var_fletcher32_Return_write(ast_runtime* rt, Def_var_fletcher32_Return* def_var_fletcher32_return_v)
+NCDef_Var_Fletcher32_Return_write(ast_runtime* rt, NCDef_Var_Fletcher32_Return* ncdef_var_fletcher32_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_fletcher32_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_fletcher32_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fletcher32_Return_write*/
+} /*NCDef_Var_Fletcher32_Return_write*/
 
 ast_err
-Def_var_fletcher32_Return_read(ast_runtime* rt, Def_var_fletcher32_Return** def_var_fletcher32_return_vp)
+NCDef_Var_Fletcher32_Return_read(ast_runtime* rt, NCDef_Var_Fletcher32_Return** ncdef_var_fletcher32_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_fletcher32_Return* def_var_fletcher32_return_v;
+    NCDef_Var_Fletcher32_Return* ncdef_var_fletcher32_return_v;
     unsigned long pos;
 
-    def_var_fletcher32_return_v = (Def_var_fletcher32_Return*)ast_alloc(rt,sizeof(Def_var_fletcher32_Return));
-    if(def_var_fletcher32_return_v == NULL) return AST_ENOMEM;
+    ncdef_var_fletcher32_return_v = (NCDef_Var_Fletcher32_Return*)ast_alloc(rt,sizeof(NCDef_Var_Fletcher32_Return));
+    if(ncdef_var_fletcher32_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13255,11 +13232,11 @@ Def_var_fletcher32_Return_read(ast_runtime* rt, Def_var_fletcher32_Return** def_
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_fletcher32_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Fletcher32_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_fletcher32_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_fletcher32_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13267,60 +13244,60 @@ Def_var_fletcher32_Return_read(ast_runtime* rt, Def_var_fletcher32_Return** def_
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_fletcher32_return_vp) *def_var_fletcher32_return_vp = def_var_fletcher32_return_v;
+    if(ncdef_var_fletcher32_return_vp) *ncdef_var_fletcher32_return_vp = ncdef_var_fletcher32_return_v;
 done:
     return ACATCH(status);
-} /*Def_var_fletcher32_Return_read*/
+} /*NCDef_Var_Fletcher32_Return_read*/
 
 ast_err
-Def_var_fletcher32_Return_reclaim(ast_runtime* rt, Def_var_fletcher32_Return* def_var_fletcher32_return_v)
+NCDef_Var_Fletcher32_Return_reclaim(ast_runtime* rt, NCDef_Var_Fletcher32_Return* ncdef_var_fletcher32_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_fletcher32_return_v);
+    ast_free(rt,(void*)ncdef_var_fletcher32_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fletcher32_Return_reclaim*/
+} /*NCDef_Var_Fletcher32_Return_reclaim*/
 
 size_t
-Def_var_fletcher32_Return_get_size(ast_runtime* rt, Def_var_fletcher32_Return* def_var_fletcher32_return_v)
+NCDef_Var_Fletcher32_Return_get_size(ast_runtime* rt, NCDef_Var_Fletcher32_Return* ncdef_var_fletcher32_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_fletcher32_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_fletcher32_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_fletcher32_Return_get_size*/
+} /*NCDef_Var_Fletcher32_Return_get_size*/
 
 ast_err
-Def_var_chunking_write(ast_runtime* rt, Def_var_chunking* def_var_chunking_v)
+NCDef_Var_Chunking_write(ast_runtime* rt, NCDef_Var_Chunking* ncdef_var_chunking_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_chunking_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_chunking_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_var_chunking_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_var_chunking_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,3,&def_var_chunking_v->contiguous);
+        status = ast_write_primitive(rt,ast_bool,3,&ncdef_var_chunking_v->contiguous);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
         int i = 0;
-        for(i=0;i<def_var_chunking_v->chunksizes.count;i++) {
-            status = ast_write_primitive(rt,ast_uint64,4,&def_var_chunking_v->chunksizes.values[i]);
+        for(i=0;i<ncdef_var_chunking_v->chunksizes.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,4,&ncdef_var_chunking_v->chunksizes.values[i]);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
         }
     }
@@ -13328,18 +13305,18 @@ Def_var_chunking_write(ast_runtime* rt, Def_var_chunking* def_var_chunking_v)
 done:
     return ACATCH(status);
 
-} /*Def_var_chunking_write*/
+} /*NCDef_Var_Chunking_write*/
 
 ast_err
-Def_var_chunking_read(ast_runtime* rt, Def_var_chunking** def_var_chunking_vp)
+NCDef_Var_Chunking_read(ast_runtime* rt, NCDef_Var_Chunking** ncdef_var_chunking_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_chunking* def_var_chunking_v;
+    NCDef_Var_Chunking* ncdef_var_chunking_v;
     unsigned long pos;
 
-    def_var_chunking_v = (Def_var_chunking*)ast_alloc(rt,sizeof(Def_var_chunking));
-    if(def_var_chunking_v == NULL) return AST_ENOMEM;
+    ncdef_var_chunking_v = (NCDef_Var_Chunking*)ast_alloc(rt,sizeof(NCDef_Var_Chunking));
+    if(ncdef_var_chunking_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13347,23 +13324,23 @@ Def_var_chunking_read(ast_runtime* rt, Def_var_chunking** def_var_chunking_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_chunking|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Chunking|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_chunking_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_chunking_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_var_chunking_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_var_chunking_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bool,3,&def_var_chunking_v->contiguous);
+            status = ast_read_primitive(rt,ast_bool,3,&ncdef_var_chunking_v->contiguous);
             } break;
         case 4: {
             uint64_t tmp;
             status = ast_read_primitive(rt,ast_uint64,4,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
-            status = ast_repeat_append(rt,ast_uint64,&def_var_chunking_v->chunksizes,&tmp);
+            status = ast_repeat_append(rt,ast_uint64,&ncdef_var_chunking_v->chunksizes,&tmp);
             if(status != AST_NOERR) {ACATCH(status); goto done;}
             } break;
         default:
@@ -13372,82 +13349,82 @@ Def_var_chunking_read(ast_runtime* rt, Def_var_chunking** def_var_chunking_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_chunking_vp) *def_var_chunking_vp = def_var_chunking_v;
+    if(ncdef_var_chunking_vp) *ncdef_var_chunking_vp = ncdef_var_chunking_v;
 done:
     return ACATCH(status);
-} /*Def_var_chunking_read*/
+} /*NCDef_Var_Chunking_read*/
 
 ast_err
-Def_var_chunking_reclaim(ast_runtime* rt, Def_var_chunking* def_var_chunking_v)
+NCDef_Var_Chunking_reclaim(ast_runtime* rt, NCDef_Var_Chunking* ncdef_var_chunking_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_chunking_v);
+    ast_free(rt,(void*)ncdef_var_chunking_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_chunking_reclaim*/
+} /*NCDef_Var_Chunking_reclaim*/
 
 size_t
-Def_var_chunking_get_size(ast_runtime* rt, Def_var_chunking* def_var_chunking_v)
+NCDef_Var_Chunking_get_size(ast_runtime* rt, NCDef_Var_Chunking* ncdef_var_chunking_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_chunking_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_chunking_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_chunking_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_chunking_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bool,&def_var_chunking_v->contiguous);
+        fieldsize += ast_get_size(rt,ast_bool,&ncdef_var_chunking_v->contiguous);
         totalsize += fieldsize;
     }
     {
         int i;
-        for(i=0;i<def_var_chunking_v->chunksizes.count;i++) {
+        for(i=0;i<ncdef_var_chunking_v->chunksizes.count;i++) {
             fieldsize += ast_get_tagsize(rt,ast_counted,4);
-            fieldsize += ast_get_size(rt,ast_uint64,&def_var_chunking_v->chunksizes.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint64,&ncdef_var_chunking_v->chunksizes.values[i]);
         }
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_chunking_get_size*/
+} /*NCDef_Var_Chunking_get_size*/
 
 ast_err
-Def_var_chunking_Return_write(ast_runtime* rt, Def_var_chunking_Return* def_var_chunking_return_v)
+NCDef_Var_Chunking_Return_write(ast_runtime* rt, NCDef_Var_Chunking_Return* ncdef_var_chunking_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_chunking_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_chunking_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_chunking_Return_write*/
+} /*NCDef_Var_Chunking_Return_write*/
 
 ast_err
-Def_var_chunking_Return_read(ast_runtime* rt, Def_var_chunking_Return** def_var_chunking_return_vp)
+NCDef_Var_Chunking_Return_read(ast_runtime* rt, NCDef_Var_Chunking_Return** ncdef_var_chunking_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_chunking_Return* def_var_chunking_return_v;
+    NCDef_Var_Chunking_Return* ncdef_var_chunking_return_v;
     unsigned long pos;
 
-    def_var_chunking_return_v = (Def_var_chunking_Return*)ast_alloc(rt,sizeof(Def_var_chunking_Return));
-    if(def_var_chunking_return_v == NULL) return AST_ENOMEM;
+    ncdef_var_chunking_return_v = (NCDef_Var_Chunking_Return*)ast_alloc(rt,sizeof(NCDef_Var_Chunking_Return));
+    if(ncdef_var_chunking_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13455,11 +13432,11 @@ Def_var_chunking_Return_read(ast_runtime* rt, Def_var_chunking_Return** def_var_
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_chunking_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Chunking_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_chunking_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_chunking_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13467,76 +13444,76 @@ Def_var_chunking_Return_read(ast_runtime* rt, Def_var_chunking_Return** def_var_
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_chunking_return_vp) *def_var_chunking_return_vp = def_var_chunking_return_v;
+    if(ncdef_var_chunking_return_vp) *ncdef_var_chunking_return_vp = ncdef_var_chunking_return_v;
 done:
     return ACATCH(status);
-} /*Def_var_chunking_Return_read*/
+} /*NCDef_Var_Chunking_Return_read*/
 
 ast_err
-Def_var_chunking_Return_reclaim(ast_runtime* rt, Def_var_chunking_Return* def_var_chunking_return_v)
+NCDef_Var_Chunking_Return_reclaim(ast_runtime* rt, NCDef_Var_Chunking_Return* ncdef_var_chunking_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_chunking_return_v);
+    ast_free(rt,(void*)ncdef_var_chunking_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_chunking_Return_reclaim*/
+} /*NCDef_Var_Chunking_Return_reclaim*/
 
 size_t
-Def_var_chunking_Return_get_size(ast_runtime* rt, Def_var_chunking_Return* def_var_chunking_return_v)
+NCDef_Var_Chunking_Return_get_size(ast_runtime* rt, NCDef_Var_Chunking_Return* ncdef_var_chunking_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_chunking_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_chunking_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_chunking_Return_get_size*/
+} /*NCDef_Var_Chunking_Return_get_size*/
 
 ast_err
-Def_var_fill_write(ast_runtime* rt, Def_var_fill* def_var_fill_v)
+NCDef_Var_Fill_write(ast_runtime* rt, NCDef_Var_Fill* ncdef_var_fill_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_fill_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_fill_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_var_fill_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_var_fill_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,3,&def_var_fill_v->nofill);
+        status = ast_write_primitive(rt,ast_bool,3,&ncdef_var_fill_v->nofill);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bytes,4,&def_var_fill_v->fill_value);
+        status = ast_write_primitive(rt,ast_bytes,4,&ncdef_var_fill_v->fill_value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fill_write*/
+} /*NCDef_Var_Fill_write*/
 
 ast_err
-Def_var_fill_read(ast_runtime* rt, Def_var_fill** def_var_fill_vp)
+NCDef_Var_Fill_read(ast_runtime* rt, NCDef_Var_Fill** ncdef_var_fill_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_fill* def_var_fill_v;
+    NCDef_Var_Fill* ncdef_var_fill_v;
     unsigned long pos;
 
-    def_var_fill_v = (Def_var_fill*)ast_alloc(rt,sizeof(Def_var_fill));
-    if(def_var_fill_v == NULL) return AST_ENOMEM;
+    ncdef_var_fill_v = (NCDef_Var_Fill*)ast_alloc(rt,sizeof(NCDef_Var_Fill));
+    if(ncdef_var_fill_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13544,20 +13521,20 @@ Def_var_fill_read(ast_runtime* rt, Def_var_fill** def_var_fill_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_fill|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Fill|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_fill_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_fill_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_var_fill_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_var_fill_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bool,3,&def_var_fill_v->nofill);
+            status = ast_read_primitive(rt,ast_bool,3,&ncdef_var_fill_v->nofill);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_bytes,4,&def_var_fill_v->fill_value);
+            status = ast_read_primitive(rt,ast_bytes,4,&ncdef_var_fill_v->fill_value);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13565,83 +13542,83 @@ Def_var_fill_read(ast_runtime* rt, Def_var_fill** def_var_fill_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_fill_vp) *def_var_fill_vp = def_var_fill_v;
+    if(ncdef_var_fill_vp) *ncdef_var_fill_vp = ncdef_var_fill_v;
 done:
     return ACATCH(status);
-} /*Def_var_fill_read*/
+} /*NCDef_Var_Fill_read*/
 
 ast_err
-Def_var_fill_reclaim(ast_runtime* rt, Def_var_fill* def_var_fill_v)
+NCDef_Var_Fill_reclaim(ast_runtime* rt, NCDef_Var_Fill* ncdef_var_fill_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_bytes(rt,&def_var_fill_v->fill_value);
+        status = ast_reclaim_bytes(rt,&ncdef_var_fill_v->fill_value);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)def_var_fill_v);
+    ast_free(rt,(void*)ncdef_var_fill_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fill_reclaim*/
+} /*NCDef_Var_Fill_reclaim*/
 
 size_t
-Def_var_fill_get_size(ast_runtime* rt, Def_var_fill* def_var_fill_v)
+NCDef_Var_Fill_get_size(ast_runtime* rt, NCDef_Var_Fill* ncdef_var_fill_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_fill_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_fill_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_fill_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_fill_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bool,&def_var_fill_v->nofill);
+        fieldsize += ast_get_size(rt,ast_bool,&ncdef_var_fill_v->nofill);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_bytes,&def_var_fill_v->fill_value);
+        fieldsize += ast_get_size(rt,ast_bytes,&ncdef_var_fill_v->fill_value);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_fill_get_size*/
+} /*NCDef_Var_Fill_get_size*/
 
 ast_err
-Def_var_fill_Return_write(ast_runtime* rt, Def_var_fill_Return* def_var_fill_return_v)
+NCDef_Var_Fill_Return_write(ast_runtime* rt, NCDef_Var_Fill_Return* ncdef_var_fill_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_fill_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_fill_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fill_Return_write*/
+} /*NCDef_Var_Fill_Return_write*/
 
 ast_err
-Def_var_fill_Return_read(ast_runtime* rt, Def_var_fill_Return** def_var_fill_return_vp)
+NCDef_Var_Fill_Return_read(ast_runtime* rt, NCDef_Var_Fill_Return** ncdef_var_fill_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_fill_Return* def_var_fill_return_v;
+    NCDef_Var_Fill_Return* ncdef_var_fill_return_v;
     unsigned long pos;
 
-    def_var_fill_return_v = (Def_var_fill_Return*)ast_alloc(rt,sizeof(Def_var_fill_Return));
-    if(def_var_fill_return_v == NULL) return AST_ENOMEM;
+    ncdef_var_fill_return_v = (NCDef_Var_Fill_Return*)ast_alloc(rt,sizeof(NCDef_Var_Fill_Return));
+    if(ncdef_var_fill_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13649,11 +13626,11 @@ Def_var_fill_Return_read(ast_runtime* rt, Def_var_fill_Return** def_var_fill_ret
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_fill_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_Fill_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_fill_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_fill_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13661,72 +13638,72 @@ Def_var_fill_Return_read(ast_runtime* rt, Def_var_fill_Return** def_var_fill_ret
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_fill_return_vp) *def_var_fill_return_vp = def_var_fill_return_v;
+    if(ncdef_var_fill_return_vp) *ncdef_var_fill_return_vp = ncdef_var_fill_return_v;
 done:
     return ACATCH(status);
-} /*Def_var_fill_Return_read*/
+} /*NCDef_Var_Fill_Return_read*/
 
 ast_err
-Def_var_fill_Return_reclaim(ast_runtime* rt, Def_var_fill_Return* def_var_fill_return_v)
+NCDef_Var_Fill_Return_reclaim(ast_runtime* rt, NCDef_Var_Fill_Return* ncdef_var_fill_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_fill_return_v);
+    ast_free(rt,(void*)ncdef_var_fill_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_fill_Return_reclaim*/
+} /*NCDef_Var_Fill_Return_reclaim*/
 
 size_t
-Def_var_fill_Return_get_size(ast_runtime* rt, Def_var_fill_Return* def_var_fill_return_v)
+NCDef_Var_Fill_Return_get_size(ast_runtime* rt, NCDef_Var_Fill_Return* ncdef_var_fill_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_fill_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_fill_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_fill_Return_get_size*/
+} /*NCDef_Var_Fill_Return_get_size*/
 
 ast_err
-Def_var_endian_write(ast_runtime* rt, Def_var_endian* def_var_endian_v)
+NCDef_Var_endian_write(ast_runtime* rt, NCDef_Var_endian* ncdef_var_endian_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_endian_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_endian_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&def_var_endian_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncdef_var_endian_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_bool,3,&def_var_endian_v->bigendian);
+        status = ast_write_primitive(rt,ast_bool,3,&ncdef_var_endian_v->bigendian);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_endian_write*/
+} /*NCDef_Var_endian_write*/
 
 ast_err
-Def_var_endian_read(ast_runtime* rt, Def_var_endian** def_var_endian_vp)
+NCDef_Var_endian_read(ast_runtime* rt, NCDef_Var_endian** ncdef_var_endian_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_endian* def_var_endian_v;
+    NCDef_Var_endian* ncdef_var_endian_v;
     unsigned long pos;
 
-    def_var_endian_v = (Def_var_endian*)ast_alloc(rt,sizeof(Def_var_endian));
-    if(def_var_endian_v == NULL) return AST_ENOMEM;
+    ncdef_var_endian_v = (NCDef_Var_endian*)ast_alloc(rt,sizeof(NCDef_Var_endian));
+    if(ncdef_var_endian_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13734,17 +13711,17 @@ Def_var_endian_read(ast_runtime* rt, Def_var_endian** def_var_endian_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_endian|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_endian|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_endian_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_endian_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&def_var_endian_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncdef_var_endian_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_bool,3,&def_var_endian_v->bigendian);
+            status = ast_read_primitive(rt,ast_bool,3,&ncdef_var_endian_v->bigendian);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13752,74 +13729,74 @@ Def_var_endian_read(ast_runtime* rt, Def_var_endian** def_var_endian_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_endian_vp) *def_var_endian_vp = def_var_endian_v;
+    if(ncdef_var_endian_vp) *ncdef_var_endian_vp = ncdef_var_endian_v;
 done:
     return ACATCH(status);
-} /*Def_var_endian_read*/
+} /*NCDef_Var_endian_read*/
 
 ast_err
-Def_var_endian_reclaim(ast_runtime* rt, Def_var_endian* def_var_endian_v)
+NCDef_Var_endian_reclaim(ast_runtime* rt, NCDef_Var_endian* ncdef_var_endian_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_endian_v);
+    ast_free(rt,(void*)ncdef_var_endian_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_endian_reclaim*/
+} /*NCDef_Var_endian_reclaim*/
 
 size_t
-Def_var_endian_get_size(ast_runtime* rt, Def_var_endian* def_var_endian_v)
+NCDef_Var_endian_get_size(ast_runtime* rt, NCDef_Var_endian* ncdef_var_endian_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_endian_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_endian_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_endian_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_endian_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_bool,&def_var_endian_v->bigendian);
+        fieldsize += ast_get_size(rt,ast_bool,&ncdef_var_endian_v->bigendian);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_endian_get_size*/
+} /*NCDef_Var_endian_get_size*/
 
 ast_err
-Def_var_endian_Return_write(ast_runtime* rt, Def_var_endian_Return* def_var_endian_return_v)
+NCDef_Var_endian_Return_write(ast_runtime* rt, NCDef_Var_endian_Return* ncdef_var_endian_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&def_var_endian_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncdef_var_endian_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Def_var_endian_Return_write*/
+} /*NCDef_Var_endian_Return_write*/
 
 ast_err
-Def_var_endian_Return_read(ast_runtime* rt, Def_var_endian_Return** def_var_endian_return_vp)
+NCDef_Var_endian_Return_read(ast_runtime* rt, NCDef_Var_endian_Return** ncdef_var_endian_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Def_var_endian_Return* def_var_endian_return_v;
+    NCDef_Var_endian_Return* ncdef_var_endian_return_v;
     unsigned long pos;
 
-    def_var_endian_return_v = (Def_var_endian_Return*)ast_alloc(rt,sizeof(Def_var_endian_Return));
-    if(def_var_endian_return_v == NULL) return AST_ENOMEM;
+    ncdef_var_endian_return_v = (NCDef_Var_endian_Return*)ast_alloc(rt,sizeof(NCDef_Var_endian_Return));
+    if(ncdef_var_endian_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13827,11 +13804,11 @@ Def_var_endian_Return_read(ast_runtime* rt, Def_var_endian_Return** def_var_endi
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Def_var_endian_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCDef_Var_endian_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&def_var_endian_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncdef_var_endian_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13839,80 +13816,80 @@ Def_var_endian_Return_read(ast_runtime* rt, Def_var_endian_Return** def_var_endi
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(def_var_endian_return_vp) *def_var_endian_return_vp = def_var_endian_return_v;
+    if(ncdef_var_endian_return_vp) *ncdef_var_endian_return_vp = ncdef_var_endian_return_v;
 done:
     return ACATCH(status);
-} /*Def_var_endian_Return_read*/
+} /*NCDef_Var_endian_Return_read*/
 
 ast_err
-Def_var_endian_Return_reclaim(ast_runtime* rt, Def_var_endian_Return* def_var_endian_return_v)
+NCDef_Var_endian_Return_reclaim(ast_runtime* rt, NCDef_Var_endian_Return* ncdef_var_endian_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)def_var_endian_return_v);
+    ast_free(rt,(void*)ncdef_var_endian_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Def_var_endian_Return_reclaim*/
+} /*NCDef_Var_endian_Return_reclaim*/
 
 size_t
-Def_var_endian_Return_get_size(ast_runtime* rt, Def_var_endian_Return* def_var_endian_return_v)
+NCDef_Var_endian_Return_get_size(ast_runtime* rt, NCDef_Var_endian_Return* ncdef_var_endian_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&def_var_endian_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncdef_var_endian_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Def_var_endian_Return_get_size*/
+} /*NCDef_Var_endian_Return_get_size*/
 
 ast_err
-Set_var_chunk_cache_write(ast_runtime* rt, Set_var_chunk_cache* set_var_chunk_cache_v)
+NCSet_var_chunk_cache_write(ast_runtime* rt, NCSet_var_chunk_cache* ncset_var_chunk_cache_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&set_var_chunk_cache_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncset_var_chunk_cache_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&set_var_chunk_cache_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncset_var_chunk_cache_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&set_var_chunk_cache_v->size);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncset_var_chunk_cache_v->size);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,4,&set_var_chunk_cache_v->nelems);
+        status = ast_write_primitive(rt,ast_uint64,4,&ncset_var_chunk_cache_v->nelems);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_float,5,&set_var_chunk_cache_v->preemption);
+        status = ast_write_primitive(rt,ast_float,5,&ncset_var_chunk_cache_v->preemption);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Set_var_chunk_cache_write*/
+} /*NCSet_var_chunk_cache_write*/
 
 ast_err
-Set_var_chunk_cache_read(ast_runtime* rt, Set_var_chunk_cache** set_var_chunk_cache_vp)
+NCSet_var_chunk_cache_read(ast_runtime* rt, NCSet_var_chunk_cache** ncset_var_chunk_cache_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Set_var_chunk_cache* set_var_chunk_cache_v;
+    NCSet_var_chunk_cache* ncset_var_chunk_cache_v;
     unsigned long pos;
 
-    set_var_chunk_cache_v = (Set_var_chunk_cache*)ast_alloc(rt,sizeof(Set_var_chunk_cache));
-    if(set_var_chunk_cache_v == NULL) return AST_ENOMEM;
+    ncset_var_chunk_cache_v = (NCSet_var_chunk_cache*)ast_alloc(rt,sizeof(NCSet_var_chunk_cache));
+    if(ncset_var_chunk_cache_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -13920,23 +13897,23 @@ Set_var_chunk_cache_read(ast_runtime* rt, Set_var_chunk_cache** set_var_chunk_ca
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Set_var_chunk_cache|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSet_var_chunk_cache|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&set_var_chunk_cache_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncset_var_chunk_cache_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&set_var_chunk_cache_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncset_var_chunk_cache_v->varid);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&set_var_chunk_cache_v->size);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncset_var_chunk_cache_v->size);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_uint64,4,&set_var_chunk_cache_v->nelems);
+            status = ast_read_primitive(rt,ast_uint64,4,&ncset_var_chunk_cache_v->nelems);
             } break;
         case 5: {
-            status = ast_read_primitive(rt,ast_float,5,&set_var_chunk_cache_v->preemption);
+            status = ast_read_primitive(rt,ast_float,5,&ncset_var_chunk_cache_v->preemption);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -13944,84 +13921,84 @@ Set_var_chunk_cache_read(ast_runtime* rt, Set_var_chunk_cache** set_var_chunk_ca
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(set_var_chunk_cache_vp) *set_var_chunk_cache_vp = set_var_chunk_cache_v;
+    if(ncset_var_chunk_cache_vp) *ncset_var_chunk_cache_vp = ncset_var_chunk_cache_v;
 done:
     return ACATCH(status);
-} /*Set_var_chunk_cache_read*/
+} /*NCSet_var_chunk_cache_read*/
 
 ast_err
-Set_var_chunk_cache_reclaim(ast_runtime* rt, Set_var_chunk_cache* set_var_chunk_cache_v)
+NCSet_var_chunk_cache_reclaim(ast_runtime* rt, NCSet_var_chunk_cache* ncset_var_chunk_cache_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)set_var_chunk_cache_v);
+    ast_free(rt,(void*)ncset_var_chunk_cache_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Set_var_chunk_cache_reclaim*/
+} /*NCSet_var_chunk_cache_reclaim*/
 
 size_t
-Set_var_chunk_cache_get_size(ast_runtime* rt, Set_var_chunk_cache* set_var_chunk_cache_v)
+NCSet_var_chunk_cache_get_size(ast_runtime* rt, NCSet_var_chunk_cache* ncset_var_chunk_cache_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&set_var_chunk_cache_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_var_chunk_cache_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&set_var_chunk_cache_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_var_chunk_cache_v->varid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&set_var_chunk_cache_v->size);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncset_var_chunk_cache_v->size);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_uint64,&set_var_chunk_cache_v->nelems);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncset_var_chunk_cache_v->nelems);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,5);
-        fieldsize += ast_get_size(rt,ast_float,&set_var_chunk_cache_v->preemption);
+        fieldsize += ast_get_size(rt,ast_float,&ncset_var_chunk_cache_v->preemption);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Set_var_chunk_cache_get_size*/
+} /*NCSet_var_chunk_cache_get_size*/
 
 ast_err
-Set_var_chunk_cache_Return_write(ast_runtime* rt, Set_var_chunk_cache_Return* set_var_chunk_cache_return_v)
+NCSet_var_chunk_cache_Return_write(ast_runtime* rt, NCSet_var_chunk_cache_Return* ncset_var_chunk_cache_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&set_var_chunk_cache_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncset_var_chunk_cache_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Set_var_chunk_cache_Return_write*/
+} /*NCSet_var_chunk_cache_Return_write*/
 
 ast_err
-Set_var_chunk_cache_Return_read(ast_runtime* rt, Set_var_chunk_cache_Return** set_var_chunk_cache_return_vp)
+NCSet_var_chunk_cache_Return_read(ast_runtime* rt, NCSet_var_chunk_cache_Return** ncset_var_chunk_cache_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Set_var_chunk_cache_Return* set_var_chunk_cache_return_v;
+    NCSet_var_chunk_cache_Return* ncset_var_chunk_cache_return_v;
     unsigned long pos;
 
-    set_var_chunk_cache_return_v = (Set_var_chunk_cache_Return*)ast_alloc(rt,sizeof(Set_var_chunk_cache_Return));
-    if(set_var_chunk_cache_return_v == NULL) return AST_ENOMEM;
+    ncset_var_chunk_cache_return_v = (NCSet_var_chunk_cache_Return*)ast_alloc(rt,sizeof(NCSet_var_chunk_cache_Return));
+    if(ncset_var_chunk_cache_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14029,11 +14006,11 @@ Set_var_chunk_cache_Return_read(ast_runtime* rt, Set_var_chunk_cache_Return** se
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Set_var_chunk_cache_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCSet_var_chunk_cache_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&set_var_chunk_cache_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncset_var_chunk_cache_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14041,68 +14018,68 @@ Set_var_chunk_cache_Return_read(ast_runtime* rt, Set_var_chunk_cache_Return** se
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(set_var_chunk_cache_return_vp) *set_var_chunk_cache_return_vp = set_var_chunk_cache_return_v;
+    if(ncset_var_chunk_cache_return_vp) *ncset_var_chunk_cache_return_vp = ncset_var_chunk_cache_return_v;
 done:
     return ACATCH(status);
-} /*Set_var_chunk_cache_Return_read*/
+} /*NCSet_var_chunk_cache_Return_read*/
 
 ast_err
-Set_var_chunk_cache_Return_reclaim(ast_runtime* rt, Set_var_chunk_cache_Return* set_var_chunk_cache_return_v)
+NCSet_var_chunk_cache_Return_reclaim(ast_runtime* rt, NCSet_var_chunk_cache_Return* ncset_var_chunk_cache_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)set_var_chunk_cache_return_v);
+    ast_free(rt,(void*)ncset_var_chunk_cache_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Set_var_chunk_cache_Return_reclaim*/
+} /*NCSet_var_chunk_cache_Return_reclaim*/
 
 size_t
-Set_var_chunk_cache_Return_get_size(ast_runtime* rt, Set_var_chunk_cache_Return* set_var_chunk_cache_return_v)
+NCSet_var_chunk_cache_Return_get_size(ast_runtime* rt, NCSet_var_chunk_cache_Return* ncset_var_chunk_cache_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&set_var_chunk_cache_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncset_var_chunk_cache_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Set_var_chunk_cache_Return_get_size*/
+} /*NCSet_var_chunk_cache_Return_get_size*/
 
 ast_err
-Get_var_chunk_cache_write(ast_runtime* rt, Get_var_chunk_cache* get_var_chunk_cache_v)
+NCGet_var_chunk_cache_write(ast_runtime* rt, NCGet_var_chunk_cache* ncget_var_chunk_cache_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_var_chunk_cache_v->ncid);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_var_chunk_cache_v->ncid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&get_var_chunk_cache_v->varid);
+        status = ast_write_primitive(rt,ast_int32,2,&ncget_var_chunk_cache_v->varid);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_var_chunk_cache_write*/
+} /*NCGet_var_chunk_cache_write*/
 
 ast_err
-Get_var_chunk_cache_read(ast_runtime* rt, Get_var_chunk_cache** get_var_chunk_cache_vp)
+NCGet_var_chunk_cache_read(ast_runtime* rt, NCGet_var_chunk_cache** ncget_var_chunk_cache_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_var_chunk_cache* get_var_chunk_cache_v;
+    NCGet_var_chunk_cache* ncget_var_chunk_cache_v;
     unsigned long pos;
 
-    get_var_chunk_cache_v = (Get_var_chunk_cache*)ast_alloc(rt,sizeof(Get_var_chunk_cache));
-    if(get_var_chunk_cache_v == NULL) return AST_ENOMEM;
+    ncget_var_chunk_cache_v = (NCGet_var_chunk_cache*)ast_alloc(rt,sizeof(NCGet_var_chunk_cache));
+    if(ncget_var_chunk_cache_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14110,14 +14087,14 @@ Get_var_chunk_cache_read(ast_runtime* rt, Get_var_chunk_cache** get_var_chunk_ca
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_var_chunk_cache|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_var_chunk_cache|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_var_chunk_cache_v->ncid);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_var_chunk_cache_v->ncid);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&get_var_chunk_cache_v->varid);
+            status = ast_read_primitive(rt,ast_int32,2,&ncget_var_chunk_cache_v->varid);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14125,81 +14102,81 @@ Get_var_chunk_cache_read(ast_runtime* rt, Get_var_chunk_cache** get_var_chunk_ca
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_var_chunk_cache_vp) *get_var_chunk_cache_vp = get_var_chunk_cache_v;
+    if(ncget_var_chunk_cache_vp) *ncget_var_chunk_cache_vp = ncget_var_chunk_cache_v;
 done:
     return ACATCH(status);
-} /*Get_var_chunk_cache_read*/
+} /*NCGet_var_chunk_cache_read*/
 
 ast_err
-Get_var_chunk_cache_reclaim(ast_runtime* rt, Get_var_chunk_cache* get_var_chunk_cache_v)
+NCGet_var_chunk_cache_reclaim(ast_runtime* rt, NCGet_var_chunk_cache* ncget_var_chunk_cache_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)get_var_chunk_cache_v);
+    ast_free(rt,(void*)ncget_var_chunk_cache_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_var_chunk_cache_reclaim*/
+} /*NCGet_var_chunk_cache_reclaim*/
 
 size_t
-Get_var_chunk_cache_get_size(ast_runtime* rt, Get_var_chunk_cache* get_var_chunk_cache_v)
+NCGet_var_chunk_cache_get_size(ast_runtime* rt, NCGet_var_chunk_cache* ncget_var_chunk_cache_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_var_chunk_cache_v->ncid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_var_chunk_cache_v->ncid);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&get_var_chunk_cache_v->varid);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_var_chunk_cache_v->varid);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_var_chunk_cache_get_size*/
+} /*NCGet_var_chunk_cache_get_size*/
 
 ast_err
-Get_var_chunk_cache_Return_write(ast_runtime* rt, Get_var_chunk_cache_Return* get_var_chunk_cache_return_v)
+NCGet_var_chunk_cache_Return_write(ast_runtime* rt, NCGet_var_chunk_cache_Return* ncget_var_chunk_cache_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&get_var_chunk_cache_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncget_var_chunk_cache_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,2,&get_var_chunk_cache_return_v->size);
+        status = ast_write_primitive(rt,ast_uint64,2,&ncget_var_chunk_cache_return_v->size);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_uint64,3,&get_var_chunk_cache_return_v->nelems);
+        status = ast_write_primitive(rt,ast_uint64,3,&ncget_var_chunk_cache_return_v->nelems);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_float,4,&get_var_chunk_cache_return_v->preemption);
+        status = ast_write_primitive(rt,ast_float,4,&ncget_var_chunk_cache_return_v->preemption);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*Get_var_chunk_cache_Return_write*/
+} /*NCGet_var_chunk_cache_Return_write*/
 
 ast_err
-Get_var_chunk_cache_Return_read(ast_runtime* rt, Get_var_chunk_cache_Return** get_var_chunk_cache_return_vp)
+NCGet_var_chunk_cache_Return_read(ast_runtime* rt, NCGet_var_chunk_cache_Return** ncget_var_chunk_cache_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    Get_var_chunk_cache_Return* get_var_chunk_cache_return_v;
+    NCGet_var_chunk_cache_Return* ncget_var_chunk_cache_return_v;
     unsigned long pos;
 
-    get_var_chunk_cache_return_v = (Get_var_chunk_cache_Return*)ast_alloc(rt,sizeof(Get_var_chunk_cache_Return));
-    if(get_var_chunk_cache_return_v == NULL) return AST_ENOMEM;
+    ncget_var_chunk_cache_return_v = (NCGet_var_chunk_cache_Return*)ast_alloc(rt,sizeof(NCGet_var_chunk_cache_Return));
+    if(ncget_var_chunk_cache_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14207,20 +14184,20 @@ Get_var_chunk_cache_Return_read(ast_runtime* rt, Get_var_chunk_cache_Return** ge
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|Get_var_chunk_cache_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCGet_var_chunk_cache_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&get_var_chunk_cache_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncget_var_chunk_cache_return_v->ncstatus);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_uint64,2,&get_var_chunk_cache_return_v->size);
+            status = ast_read_primitive(rt,ast_uint64,2,&ncget_var_chunk_cache_return_v->size);
             } break;
         case 3: {
-            status = ast_read_primitive(rt,ast_uint64,3,&get_var_chunk_cache_return_v->nelems);
+            status = ast_read_primitive(rt,ast_uint64,3,&ncget_var_chunk_cache_return_v->nelems);
             } break;
         case 4: {
-            status = ast_read_primitive(rt,ast_float,4,&get_var_chunk_cache_return_v->preemption);
+            status = ast_read_primitive(rt,ast_float,4,&ncget_var_chunk_cache_return_v->preemption);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14228,79 +14205,79 @@ Get_var_chunk_cache_Return_read(ast_runtime* rt, Get_var_chunk_cache_Return** ge
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(get_var_chunk_cache_return_vp) *get_var_chunk_cache_return_vp = get_var_chunk_cache_return_v;
+    if(ncget_var_chunk_cache_return_vp) *ncget_var_chunk_cache_return_vp = ncget_var_chunk_cache_return_v;
 done:
     return ACATCH(status);
-} /*Get_var_chunk_cache_Return_read*/
+} /*NCGet_var_chunk_cache_Return_read*/
 
 ast_err
-Get_var_chunk_cache_Return_reclaim(ast_runtime* rt, Get_var_chunk_cache_Return* get_var_chunk_cache_return_v)
+NCGet_var_chunk_cache_Return_reclaim(ast_runtime* rt, NCGet_var_chunk_cache_Return* ncget_var_chunk_cache_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)get_var_chunk_cache_return_v);
+    ast_free(rt,(void*)ncget_var_chunk_cache_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*Get_var_chunk_cache_Return_reclaim*/
+} /*NCGet_var_chunk_cache_Return_reclaim*/
 
 size_t
-Get_var_chunk_cache_Return_get_size(ast_runtime* rt, Get_var_chunk_cache_Return* get_var_chunk_cache_return_v)
+NCGet_var_chunk_cache_Return_get_size(ast_runtime* rt, NCGet_var_chunk_cache_Return* ncget_var_chunk_cache_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&get_var_chunk_cache_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncget_var_chunk_cache_return_v->ncstatus);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_uint64,&get_var_chunk_cache_return_v->size);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncget_var_chunk_cache_return_v->size);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,3);
-        fieldsize += ast_get_size(rt,ast_uint64,&get_var_chunk_cache_return_v->nelems);
+        fieldsize += ast_get_size(rt,ast_uint64,&ncget_var_chunk_cache_return_v->nelems);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,4);
-        fieldsize += ast_get_size(rt,ast_float,&get_var_chunk_cache_return_v->preemption);
+        fieldsize += ast_get_size(rt,ast_float,&ncget_var_chunk_cache_return_v->preemption);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*Get_var_chunk_cache_Return_get_size*/
+} /*NCGet_var_chunk_cache_Return_get_size*/
 
 ast_err
-NC_set_log_level_write(ast_runtime* rt, NC_set_log_level* nc_set_log_level_v)
+NCNC_set_log_level_write(ast_runtime* rt, NCNC_set_log_level* ncnc_set_log_level_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&nc_set_log_level_v->newlevel);
+        status = ast_write_primitive(rt,ast_int32,1,&ncnc_set_log_level_v->newlevel);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*NC_set_log_level_write*/
+} /*NCNC_set_log_level_write*/
 
 ast_err
-NC_set_log_level_read(ast_runtime* rt, NC_set_log_level** nc_set_log_level_vp)
+NCNC_set_log_level_read(ast_runtime* rt, NCNC_set_log_level** ncnc_set_log_level_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    NC_set_log_level* nc_set_log_level_v;
+    NCNC_set_log_level* ncnc_set_log_level_v;
     unsigned long pos;
 
-    nc_set_log_level_v = (NC_set_log_level*)ast_alloc(rt,sizeof(NC_set_log_level));
-    if(nc_set_log_level_v == NULL) return AST_ENOMEM;
+    ncnc_set_log_level_v = (NCNC_set_log_level*)ast_alloc(rt,sizeof(NCNC_set_log_level));
+    if(ncnc_set_log_level_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14308,11 +14285,11 @@ NC_set_log_level_read(ast_runtime* rt, NC_set_log_level** nc_set_log_level_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|NC_set_log_level|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCNC_set_log_level|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&nc_set_log_level_v->newlevel);
+            status = ast_read_primitive(rt,ast_int32,1,&ncnc_set_log_level_v->newlevel);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14320,64 +14297,64 @@ NC_set_log_level_read(ast_runtime* rt, NC_set_log_level** nc_set_log_level_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(nc_set_log_level_vp) *nc_set_log_level_vp = nc_set_log_level_v;
+    if(ncnc_set_log_level_vp) *ncnc_set_log_level_vp = ncnc_set_log_level_v;
 done:
     return ACATCH(status);
-} /*NC_set_log_level_read*/
+} /*NCNC_set_log_level_read*/
 
 ast_err
-NC_set_log_level_reclaim(ast_runtime* rt, NC_set_log_level* nc_set_log_level_v)
+NCNC_set_log_level_reclaim(ast_runtime* rt, NCNC_set_log_level* ncnc_set_log_level_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)nc_set_log_level_v);
+    ast_free(rt,(void*)ncnc_set_log_level_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*NC_set_log_level_reclaim*/
+} /*NCNC_set_log_level_reclaim*/
 
 size_t
-NC_set_log_level_get_size(ast_runtime* rt, NC_set_log_level* nc_set_log_level_v)
+NCNC_set_log_level_get_size(ast_runtime* rt, NCNC_set_log_level* ncnc_set_log_level_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&nc_set_log_level_v->newlevel);
+        fieldsize += ast_get_size(rt,ast_int32,&ncnc_set_log_level_v->newlevel);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*NC_set_log_level_get_size*/
+} /*NCNC_set_log_level_get_size*/
 
 ast_err
-NC_set_log_level_Return_write(ast_runtime* rt, NC_set_log_level_Return* nc_set_log_level_return_v)
+NCNC_set_log_level_Return_write(ast_runtime* rt, NCNC_set_log_level_Return* ncnc_set_log_level_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&nc_set_log_level_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncnc_set_log_level_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*NC_set_log_level_Return_write*/
+} /*NCNC_set_log_level_Return_write*/
 
 ast_err
-NC_set_log_level_Return_read(ast_runtime* rt, NC_set_log_level_Return** nc_set_log_level_return_vp)
+NCNC_set_log_level_Return_read(ast_runtime* rt, NCNC_set_log_level_Return** ncnc_set_log_level_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    NC_set_log_level_Return* nc_set_log_level_return_v;
+    NCNC_set_log_level_Return* ncnc_set_log_level_return_v;
     unsigned long pos;
 
-    nc_set_log_level_return_v = (NC_set_log_level_Return*)ast_alloc(rt,sizeof(NC_set_log_level_Return));
-    if(nc_set_log_level_return_v == NULL) return AST_ENOMEM;
+    ncnc_set_log_level_return_v = (NCNC_set_log_level_Return*)ast_alloc(rt,sizeof(NCNC_set_log_level_Return));
+    if(ncnc_set_log_level_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14385,11 +14362,11 @@ NC_set_log_level_Return_read(ast_runtime* rt, NC_set_log_level_Return** nc_set_l
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|NC_set_log_level_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCNC_set_log_level_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&nc_set_log_level_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncnc_set_log_level_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14397,59 +14374,59 @@ NC_set_log_level_Return_read(ast_runtime* rt, NC_set_log_level_Return** nc_set_l
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(nc_set_log_level_return_vp) *nc_set_log_level_return_vp = nc_set_log_level_return_v;
+    if(ncnc_set_log_level_return_vp) *ncnc_set_log_level_return_vp = ncnc_set_log_level_return_v;
 done:
     return ACATCH(status);
-} /*NC_set_log_level_Return_read*/
+} /*NCNC_set_log_level_Return_read*/
 
 ast_err
-NC_set_log_level_Return_reclaim(ast_runtime* rt, NC_set_log_level_Return* nc_set_log_level_return_v)
+NCNC_set_log_level_Return_reclaim(ast_runtime* rt, NCNC_set_log_level_Return* ncnc_set_log_level_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)nc_set_log_level_return_v);
+    ast_free(rt,(void*)ncnc_set_log_level_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*NC_set_log_level_Return_reclaim*/
+} /*NCNC_set_log_level_Return_reclaim*/
 
 size_t
-NC_set_log_level_Return_get_size(ast_runtime* rt, NC_set_log_level_Return* nc_set_log_level_return_v)
+NCNC_set_log_level_Return_get_size(ast_runtime* rt, NCNC_set_log_level_Return* ncnc_set_log_level_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&nc_set_log_level_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncnc_set_log_level_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*NC_set_log_level_Return_get_size*/
+} /*NCNC_set_log_level_Return_get_size*/
 
 ast_err
-NC_inq_libvers_write(ast_runtime* rt, NC_inq_libvers* nc_inq_libvers_v)
+NCNC_inq_libvers_write(ast_runtime* rt, NCNC_inq_libvers* ncnc_inq_libvers_v)
 {
     ast_err status = AST_NOERR;
 
 
     return ACATCH(status);
 
-} /*NC_inq_libvers_write*/
+} /*NCNC_inq_libvers_write*/
 
 ast_err
-NC_inq_libvers_read(ast_runtime* rt, NC_inq_libvers** nc_inq_libvers_vp)
+NCNC_inq_libvers_read(ast_runtime* rt, NCNC_inq_libvers** ncnc_inq_libvers_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    NC_inq_libvers* nc_inq_libvers_v;
+    NCNC_inq_libvers* ncnc_inq_libvers_v;
     unsigned long pos;
 
-    nc_inq_libvers_v = (NC_inq_libvers*)ast_alloc(rt,sizeof(NC_inq_libvers));
-    if(nc_inq_libvers_v == NULL) return AST_ENOMEM;
+    ncnc_inq_libvers_v = (NCNC_inq_libvers*)ast_alloc(rt,sizeof(NCNC_inq_libvers));
+    if(ncnc_inq_libvers_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14457,7 +14434,7 @@ NC_inq_libvers_read(ast_runtime* rt, NC_inq_libvers** nc_inq_libvers_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|NC_inq_libvers|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCNC_inq_libvers|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         default:
@@ -14466,58 +14443,58 @@ NC_inq_libvers_read(ast_runtime* rt, NC_inq_libvers** nc_inq_libvers_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(nc_inq_libvers_vp) *nc_inq_libvers_vp = nc_inq_libvers_v;
+    if(ncnc_inq_libvers_vp) *ncnc_inq_libvers_vp = ncnc_inq_libvers_v;
 done:
     return ACATCH(status);
-} /*NC_inq_libvers_read*/
+} /*NCNC_inq_libvers_read*/
 
 ast_err
-NC_inq_libvers_reclaim(ast_runtime* rt, NC_inq_libvers* nc_inq_libvers_v)
+NCNC_inq_libvers_reclaim(ast_runtime* rt, NCNC_inq_libvers* ncnc_inq_libvers_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)nc_inq_libvers_v);
+    ast_free(rt,(void*)ncnc_inq_libvers_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*NC_inq_libvers_reclaim*/
+} /*NCNC_inq_libvers_reclaim*/
 
 size_t
-NC_inq_libvers_get_size(ast_runtime* rt, NC_inq_libvers* nc_inq_libvers_v)
+NCNC_inq_libvers_get_size(ast_runtime* rt, NCNC_inq_libvers* ncnc_inq_libvers_v)
 {
     size_t totalsize = 0;
 
     return totalsize;
 
-} /*NC_inq_libvers_get_size*/
+} /*NCNC_inq_libvers_get_size*/
 
 ast_err
-NC_inq_libvers_Return_write(ast_runtime* rt, NC_inq_libvers_Return* nc_inq_libvers_return_v)
+NCNC_inq_libvers_Return_write(ast_runtime* rt, NCNC_inq_libvers_Return* ncnc_inq_libvers_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_string,1,&nc_inq_libvers_return_v->version);
+        status = ast_write_primitive(rt,ast_string,1,&ncnc_inq_libvers_return_v->version);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*NC_inq_libvers_Return_write*/
+} /*NCNC_inq_libvers_Return_write*/
 
 ast_err
-NC_inq_libvers_Return_read(ast_runtime* rt, NC_inq_libvers_Return** nc_inq_libvers_return_vp)
+NCNC_inq_libvers_Return_read(ast_runtime* rt, NCNC_inq_libvers_Return** ncnc_inq_libvers_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    NC_inq_libvers_Return* nc_inq_libvers_return_v;
+    NCNC_inq_libvers_Return* ncnc_inq_libvers_return_v;
     unsigned long pos;
 
-    nc_inq_libvers_return_v = (NC_inq_libvers_Return*)ast_alloc(rt,sizeof(NC_inq_libvers_Return));
-    if(nc_inq_libvers_return_v == NULL) return AST_ENOMEM;
+    ncnc_inq_libvers_return_v = (NCNC_inq_libvers_Return*)ast_alloc(rt,sizeof(NCNC_inq_libvers_Return));
+    if(ncnc_inq_libvers_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14525,11 +14502,11 @@ NC_inq_libvers_Return_read(ast_runtime* rt, NC_inq_libvers_Return** nc_inq_libve
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|NC_inq_libvers_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCNC_inq_libvers_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_string,1,&nc_inq_libvers_return_v->version);
+            status = ast_read_primitive(rt,ast_string,1,&ncnc_inq_libvers_return_v->version);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14537,72 +14514,72 @@ NC_inq_libvers_Return_read(ast_runtime* rt, NC_inq_libvers_Return** nc_inq_libve
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(nc_inq_libvers_return_vp) *nc_inq_libvers_return_vp = nc_inq_libvers_return_v;
+    if(ncnc_inq_libvers_return_vp) *ncnc_inq_libvers_return_vp = ncnc_inq_libvers_return_v;
 done:
     return ACATCH(status);
-} /*NC_inq_libvers_Return_read*/
+} /*NCNC_inq_libvers_Return_read*/
 
 ast_err
-NC_inq_libvers_Return_reclaim(ast_runtime* rt, NC_inq_libvers_Return* nc_inq_libvers_return_v)
+NCNC_inq_libvers_Return_reclaim(ast_runtime* rt, NCNC_inq_libvers_Return* ncnc_inq_libvers_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,nc_inq_libvers_return_v->version);
+        status = ast_reclaim_string(rt,ncnc_inq_libvers_return_v->version);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)nc_inq_libvers_return_v);
+    ast_free(rt,(void*)ncnc_inq_libvers_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*NC_inq_libvers_Return_reclaim*/
+} /*NCNC_inq_libvers_Return_reclaim*/
 
 size_t
-NC_inq_libvers_Return_get_size(ast_runtime* rt, NC_inq_libvers_Return* nc_inq_libvers_return_v)
+NCNC_inq_libvers_Return_get_size(ast_runtime* rt, NCNC_inq_libvers_Return* ncnc_inq_libvers_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_string,&nc_inq_libvers_return_v->version);
+        fieldsize += ast_get_size(rt,ast_string,&ncnc_inq_libvers_return_v->version);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*NC_inq_libvers_Return_get_size*/
+} /*NCNC_inq_libvers_Return_get_size*/
 
 ast_err
-NC_delete_mp_write(ast_runtime* rt, NC_delete_mp* nc_delete_mp_v)
+NCNC_delete_mp_write(ast_runtime* rt, NCNC_delete_mp* ncnc_delete_mp_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_string,1,&nc_delete_mp_v->path);
+        status = ast_write_primitive(rt,ast_string,1,&ncnc_delete_mp_v->path);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
     {
-        status = ast_write_primitive(rt,ast_int32,2,&nc_delete_mp_v->basepe);
+        status = ast_write_primitive(rt,ast_int32,2,&ncnc_delete_mp_v->basepe);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*NC_delete_mp_write*/
+} /*NCNC_delete_mp_write*/
 
 ast_err
-NC_delete_mp_read(ast_runtime* rt, NC_delete_mp** nc_delete_mp_vp)
+NCNC_delete_mp_read(ast_runtime* rt, NCNC_delete_mp** ncnc_delete_mp_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    NC_delete_mp* nc_delete_mp_v;
+    NCNC_delete_mp* ncnc_delete_mp_v;
     unsigned long pos;
 
-    nc_delete_mp_v = (NC_delete_mp*)ast_alloc(rt,sizeof(NC_delete_mp));
-    if(nc_delete_mp_v == NULL) return AST_ENOMEM;
+    ncnc_delete_mp_v = (NCNC_delete_mp*)ast_alloc(rt,sizeof(NCNC_delete_mp));
+    if(ncnc_delete_mp_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14610,14 +14587,14 @@ NC_delete_mp_read(ast_runtime* rt, NC_delete_mp** nc_delete_mp_vp)
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|NC_delete_mp|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCNC_delete_mp|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_string,1,&nc_delete_mp_v->path);
+            status = ast_read_primitive(rt,ast_string,1,&ncnc_delete_mp_v->path);
             } break;
         case 2: {
-            status = ast_read_primitive(rt,ast_int32,2,&nc_delete_mp_v->basepe);
+            status = ast_read_primitive(rt,ast_int32,2,&ncnc_delete_mp_v->basepe);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14625,73 +14602,73 @@ NC_delete_mp_read(ast_runtime* rt, NC_delete_mp** nc_delete_mp_vp)
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(nc_delete_mp_vp) *nc_delete_mp_vp = nc_delete_mp_v;
+    if(ncnc_delete_mp_vp) *ncnc_delete_mp_vp = ncnc_delete_mp_v;
 done:
     return ACATCH(status);
-} /*NC_delete_mp_read*/
+} /*NCNC_delete_mp_read*/
 
 ast_err
-NC_delete_mp_reclaim(ast_runtime* rt, NC_delete_mp* nc_delete_mp_v)
+NCNC_delete_mp_reclaim(ast_runtime* rt, NCNC_delete_mp* ncnc_delete_mp_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_reclaim_string(rt,nc_delete_mp_v->path);
+        status = ast_reclaim_string(rt,ncnc_delete_mp_v->path);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
-    ast_free(rt,(void*)nc_delete_mp_v);
+    ast_free(rt,(void*)ncnc_delete_mp_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*NC_delete_mp_reclaim*/
+} /*NCNC_delete_mp_reclaim*/
 
 size_t
-NC_delete_mp_get_size(ast_runtime* rt, NC_delete_mp* nc_delete_mp_v)
+NCNC_delete_mp_get_size(ast_runtime* rt, NCNC_delete_mp* ncnc_delete_mp_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_string,&nc_delete_mp_v->path);
+        fieldsize += ast_get_size(rt,ast_string,&ncnc_delete_mp_v->path);
         totalsize += fieldsize;
     }
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,2);
-        fieldsize += ast_get_size(rt,ast_int32,&nc_delete_mp_v->basepe);
+        fieldsize += ast_get_size(rt,ast_int32,&ncnc_delete_mp_v->basepe);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*NC_delete_mp_get_size*/
+} /*NCNC_delete_mp_get_size*/
 
 ast_err
-NC_delete_mp_Return_write(ast_runtime* rt, NC_delete_mp_Return* nc_delete_mp_return_v)
+NCNC_delete_mp_Return_write(ast_runtime* rt, NCNC_delete_mp_Return* ncnc_delete_mp_return_v)
 {
     ast_err status = AST_NOERR;
 
     {
-        status = ast_write_primitive(rt,ast_int32,1,&nc_delete_mp_return_v->ncstatus);
+        status = ast_write_primitive(rt,ast_int32,1,&ncnc_delete_mp_return_v->ncstatus);
         if(status != AST_NOERR) {ACATCH(status); goto done;}
     }
 
 done:
     return ACATCH(status);
 
-} /*NC_delete_mp_Return_write*/
+} /*NCNC_delete_mp_Return_write*/
 
 ast_err
-NC_delete_mp_Return_read(ast_runtime* rt, NC_delete_mp_Return** nc_delete_mp_return_vp)
+NCNC_delete_mp_Return_read(ast_runtime* rt, NCNC_delete_mp_Return** ncnc_delete_mp_return_vp)
 {
     ast_err status = AST_NOERR;
     uint32_t wiretype, fieldno;
-    NC_delete_mp_Return* nc_delete_mp_return_v;
+    NCNC_delete_mp_Return* ncnc_delete_mp_return_v;
     unsigned long pos;
 
-    nc_delete_mp_return_v = (NC_delete_mp_Return*)ast_alloc(rt,sizeof(NC_delete_mp_Return));
-    if(nc_delete_mp_return_v == NULL) return AST_ENOMEM;
+    ncnc_delete_mp_return_v = (NCNC_delete_mp_Return*)ast_alloc(rt,sizeof(NCNC_delete_mp_Return));
+    if(ncnc_delete_mp_return_v == NULL) return AST_ENOMEM;
 
     while(status == AST_NOERR) {
         pos = (unsigned long)xpos(rt);
@@ -14699,11 +14676,11 @@ NC_delete_mp_Return_read(ast_runtime* rt, NC_delete_mp_Return** nc_delete_mp_ret
         if(status == AST_EOF) {status = AST_NOERR; break;}
         if(status != AST_NOERR) break;
         {
-        fprintf(stderr,"|NC_delete_mp_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        fprintf(stderr,"|NCNC_delete_mp_Return|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
         }
         switch (fieldno) {
         case 1: {
-            status = ast_read_primitive(rt,ast_int32,1,&nc_delete_mp_return_v->ncstatus);
+            status = ast_read_primitive(rt,ast_int32,1,&ncnc_delete_mp_return_v->ncstatus);
             } break;
         default:
             status = ast_skip_field(rt,wiretype,fieldno);
@@ -14711,36 +14688,1498 @@ NC_delete_mp_Return_read(ast_runtime* rt, NC_delete_mp_Return** nc_delete_mp_ret
         }; /*switch*/
     };/*while*/
     if(status != AST_NOERR) {ACATCH(status); goto done;}
-    if(nc_delete_mp_return_vp) *nc_delete_mp_return_vp = nc_delete_mp_return_v;
+    if(ncnc_delete_mp_return_vp) *ncnc_delete_mp_return_vp = ncnc_delete_mp_return_v;
 done:
     return ACATCH(status);
-} /*NC_delete_mp_Return_read*/
+} /*NCNC_delete_mp_Return_read*/
 
 ast_err
-NC_delete_mp_Return_reclaim(ast_runtime* rt, NC_delete_mp_Return* nc_delete_mp_return_v)
+NCNC_delete_mp_Return_reclaim(ast_runtime* rt, NCNC_delete_mp_Return* ncnc_delete_mp_return_v)
 {
     ast_err status = AST_NOERR;
 
-    ast_free(rt,(void*)nc_delete_mp_return_v);
+    ast_free(rt,(void*)ncnc_delete_mp_return_v);
     goto done;
 
 done:
     return ACATCH(status);
 
-} /*NC_delete_mp_Return_reclaim*/
+} /*NCNC_delete_mp_Return_reclaim*/
 
 size_t
-NC_delete_mp_Return_get_size(ast_runtime* rt, NC_delete_mp_Return* nc_delete_mp_return_v)
+NCNC_delete_mp_Return_get_size(ast_runtime* rt, NCNC_delete_mp_Return* ncnc_delete_mp_return_v)
 {
     size_t totalsize = 0;
     size_t fieldsize = 0;
 
     {
         fieldsize += ast_get_tagsize(rt,ast_counted,1);
-        fieldsize += ast_get_size(rt,ast_int32,&nc_delete_mp_return_v->ncstatus);
+        fieldsize += ast_get_size(rt,ast_int32,&ncnc_delete_mp_return_v->ncstatus);
         totalsize += fieldsize;
     }
     return totalsize;
 
-} /*NC_delete_mp_Return_get_size*/
+} /*NCNC_delete_mp_Return_get_size*/
+
+ast_err
+MetaNode_write(ast_runtime* rt, MetaNode* metanode_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        size_t size;
+        status = ast_write_tag(rt,ast_counted,1);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+        size = MetaNode_get_size(rt,metanode_v->root);
+        status = ast_write_size(rt,size);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+        status = MetaNode_write(rt,metanode_v->root);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_enum,2,&metanode_v->nodeclass);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_enum,3,&metanode_v->subclass);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        if(metanode_v->ncid.defined) {
+            status = ast_write_primitive(rt,ast_int32,4,&metanode_v->ncid.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->typeid.defined) {
+            status = ast_write_primitive(rt,ast_int32,5,&metanode_v->typeid.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->name.defined) {
+            status = ast_write_primitive(rt,ast_string,6,&metanode_v->name.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->size.defined) {
+            status = ast_write_primitive(rt,ast_uint64,7,&metanode_v->size.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->basetype.defined) {
+            status = ast_write_tag(rt,ast_counted,8);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metanode_v->basetype.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metanode_v->basetype.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->graph.defined) {
+            status = ast_write_tag(rt,ast_counted,9);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaGraph_get_size(rt,metanode_v->graph.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaGraph_write(rt,metanode_v->graph.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->group.defined) {
+            status = ast_write_tag(rt,ast_counted,10);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaGroup_get_size(rt,metanode_v->group.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaGroup_write(rt,metanode_v->group.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->var.defined) {
+            status = ast_write_tag(rt,ast_counted,11);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaVar_get_size(rt,metanode_v->var.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaVar_write(rt,metanode_v->var.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->dim.defined) {
+            status = ast_write_tag(rt,ast_counted,12);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaDim_get_size(rt,metanode_v->dim.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaDim_write(rt,metanode_v->dim.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->compound_t.defined) {
+            status = ast_write_tag(rt,ast_counted,13);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaCompound_get_size(rt,metanode_v->compound_t.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaCompound_write(rt,metanode_v->compound_t.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        if(metanode_v->enum_t.defined) {
+            status = ast_write_tag(rt,ast_counted,14);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaEnum_get_size(rt,metanode_v->enum_t.value);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaEnum_write(rt,metanode_v->enum_t.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaNode_write*/
+
+ast_err
+MetaNode_read(ast_runtime* rt, MetaNode** metanode_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaNode* metanode_v;
+    unsigned long pos;
+
+    metanode_v = (MetaNode*)ast_alloc(rt,sizeof(MetaNode));
+    if(metanode_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaNode|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&metanode_v->root);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 2: {
+            status = ast_read_primitive(rt,ast_enum,2,&metanode_v->nodeclass);
+            } break;
+        case 3: {
+            status = ast_read_primitive(rt,ast_enum,3,&metanode_v->subclass);
+            } break;
+        case 4: {
+            metanode_v->ncid.defined = 1;
+            metanode_v->ncid.value = 0;
+            status = ast_read_primitive(rt,ast_int32,4,&metanode_v->ncid.value);
+            } break;
+        case 5: {
+            metanode_v->typeid.defined = 1;
+            metanode_v->typeid.value = 0;
+            status = ast_read_primitive(rt,ast_int32,5,&metanode_v->typeid.value);
+            } break;
+        case 6: {
+            metanode_v->name.defined = 1;
+            metanode_v->name.value = NULL;
+            status = ast_read_primitive(rt,ast_string,6,&metanode_v->name.value);
+            } break;
+        case 7: {
+            metanode_v->size.defined = 1;
+            metanode_v->size.value = 0;
+            status = ast_read_primitive(rt,ast_uint64,7,&metanode_v->size.value);
+            } break;
+        case 8: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->basetype.defined = 1;
+            metanode_v->basetype.value = NULL;
+            status = MetaNode_read(rt,&metanode_v->basetype.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 9: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->graph.defined = 1;
+            metanode_v->graph.value = NULL;
+            status = MetaGraph_read(rt,&metanode_v->graph.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 10: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->group.defined = 1;
+            metanode_v->group.value = NULL;
+            status = MetaGroup_read(rt,&metanode_v->group.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 11: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->var.defined = 1;
+            metanode_v->var.value = NULL;
+            status = MetaVar_read(rt,&metanode_v->var.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 12: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->dim.defined = 1;
+            metanode_v->dim.value = NULL;
+            status = MetaDim_read(rt,&metanode_v->dim.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 13: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->compound_t.defined = 1;
+            metanode_v->compound_t.value = NULL;
+            status = MetaCompound_read(rt,&metanode_v->compound_t.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 14: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            metanode_v->enum_t.defined = 1;
+            metanode_v->enum_t.value = NULL;
+            status = MetaEnum_read(rt,&metanode_v->enum_t.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(!metanode_v->ncid.defined) {
+        metanode_v->ncid.defined = 1;
+        metanode_v->ncid.value = 0;
+    }
+    if(!metanode_v->typeid.defined) {
+        metanode_v->typeid.defined = 1;
+        metanode_v->typeid.value = 0;
+    }
+    if(!metanode_v->name.defined) {
+        metanode_v->name.value = NULL;
+    }
+    if(!metanode_v->size.defined) {
+        metanode_v->size.defined = 1;
+        metanode_v->size.value = 0;
+    }
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metanode_vp) *metanode_vp = metanode_v;
+done:
+    return ACATCH(status);
+} /*MetaNode_read*/
+
+ast_err
+MetaNode_reclaim(ast_runtime* rt, MetaNode* metanode_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        status = MetaNode_reclaim(rt,metanode_v->root);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        if(metanode_v->name.defined) {
+            status = ast_reclaim_string(rt,metanode_v->name.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->basetype.defined) {
+            status = MetaNode_reclaim(rt,metanode_v->basetype.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->graph.defined) {
+            status = MetaGraph_reclaim(rt,metanode_v->graph.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->group.defined) {
+            status = MetaGroup_reclaim(rt,metanode_v->group.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->var.defined) {
+            status = MetaVar_reclaim(rt,metanode_v->var.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->dim.defined) {
+            status = MetaDim_reclaim(rt,metanode_v->dim.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->compound_t.defined) {
+            status = MetaCompound_reclaim(rt,metanode_v->compound_t.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        if(metanode_v->enum_t.defined) {
+            status = MetaEnum_reclaim(rt,metanode_v->enum_t.value);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    ast_free(rt,(void*)metanode_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaNode_reclaim*/
+
+size_t
+MetaNode_get_size(ast_runtime* rt, MetaNode* metanode_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        fieldsize += MetaNode_get_size(rt,metanode_v->root);
+        fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,2);
+        fieldsize += ast_get_size(rt,ast_enum,&metanode_v->nodeclass);
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,3);
+        fieldsize += ast_get_size(rt,ast_enum,&metanode_v->subclass);
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->ncid.defined) {
+            fieldsize += ast_get_tagsize(rt,ast_counted,4);
+            fieldsize += ast_get_size(rt,ast_int32,&metanode_v->ncid.value);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->typeid.defined) {
+            fieldsize += ast_get_tagsize(rt,ast_counted,5);
+            fieldsize += ast_get_size(rt,ast_int32,&metanode_v->typeid.value);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->name.defined) {
+            fieldsize += ast_get_tagsize(rt,ast_counted,6);
+            fieldsize += ast_get_size(rt,ast_string,&metanode_v->name.value);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->size.defined) {
+            fieldsize += ast_get_tagsize(rt,ast_counted,7);
+            fieldsize += ast_get_size(rt,ast_uint64,&metanode_v->size.value);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->basetype.defined) {
+            fieldsize += MetaNode_get_size(rt,metanode_v->basetype.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,8);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->graph.defined) {
+            fieldsize += MetaGraph_get_size(rt,metanode_v->graph.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,9);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->group.defined) {
+            fieldsize += MetaGroup_get_size(rt,metanode_v->group.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,10);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->var.defined) {
+            fieldsize += MetaVar_get_size(rt,metanode_v->var.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,11);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->dim.defined) {
+            fieldsize += MetaDim_get_size(rt,metanode_v->dim.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,12);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->compound_t.defined) {
+            fieldsize += MetaCompound_get_size(rt,metanode_v->compound_t.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,13);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        if(metanode_v->enum_t.defined) {
+            fieldsize += MetaEnum_get_size(rt,metanode_v->enum_t.value);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,14);
+        }
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaNode_get_size*/
+
+ast_err
+MetaGraph_write(ast_runtime* rt, MetaGraph* metagraph_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metagraph_v->nodeset.count;i++) {
+            status = ast_write_tag(rt,ast_counted,1);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metagraph_v->nodeset.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metagraph_v->nodeset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        status = ast_write_tag(rt,ast_counted,2);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+        size = MetaNode_get_size(rt,metagraph_v->rootgroup);
+        status = ast_write_size(rt,size);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+        status = MetaNode_write(rt,metagraph_v->rootgroup);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaGraph_write*/
+
+ast_err
+MetaGraph_read(ast_runtime* rt, MetaGraph** metagraph_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaGraph* metagraph_v;
+    unsigned long pos;
+
+    metagraph_v = (MetaGraph*)ast_alloc(rt,sizeof(MetaGraph));
+    if(metagraph_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaGraph|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metagraph_v->nodeset,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 2: {
+            size_t size;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&metagraph_v->rootgroup);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metagraph_vp) *metagraph_vp = metagraph_v;
+done:
+    return ACATCH(status);
+} /*MetaGraph_read*/
+
+ast_err
+MetaGraph_reclaim(ast_runtime* rt, MetaGraph* metagraph_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        int i;
+        for(i=0;i<metagraph_v->nodeset.count;i++) {
+            status = MetaNode_reclaim(rt,metagraph_v->nodeset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metagraph_v->nodeset.values);
+    }
+    {
+        status = MetaNode_reclaim(rt,metagraph_v->rootgroup);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    ast_free(rt,(void*)metagraph_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaGraph_reclaim*/
+
+size_t
+MetaGraph_get_size(ast_runtime* rt, MetaGraph* metagraph_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        int i;
+        for(i=0;i<metagraph_v->nodeset.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metagraph_v->nodeset.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += MetaNode_get_size(rt,metagraph_v->rootgroup);
+        fieldsize += ast_get_tagsize(rt,ast_counted,2);
+        fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaGraph_get_size*/
+
+ast_err
+MetaGroup_write(ast_runtime* rt, MetaGroup* metagroup_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metagroup_v->typeset.count;i++) {
+            status = ast_write_tag(rt,ast_counted,1);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metagroup_v->typeset.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metagroup_v->typeset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metagroup_v->varset.count;i++) {
+            status = ast_write_tag(rt,ast_counted,2);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metagroup_v->varset.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metagroup_v->varset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metagroup_v->dimrset.count;i++) {
+            status = ast_write_tag(rt,ast_counted,3);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metagroup_v->dimrset.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metagroup_v->dimrset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metagroup_v->groups.count;i++) {
+            status = ast_write_tag(rt,ast_counted,4);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metagroup_v->groups.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metagroup_v->groups.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaGroup_write*/
+
+ast_err
+MetaGroup_read(ast_runtime* rt, MetaGroup** metagroup_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaGroup* metagroup_v;
+    unsigned long pos;
+
+    metagroup_v = (MetaGroup*)ast_alloc(rt,sizeof(MetaGroup));
+    if(metagroup_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaGroup|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metagroup_v->typeset,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 2: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metagroup_v->varset,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 3: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metagroup_v->dimrset,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        case 4: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metagroup_v->groups,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metagroup_vp) *metagroup_vp = metagroup_v;
+done:
+    return ACATCH(status);
+} /*MetaGroup_read*/
+
+ast_err
+MetaGroup_reclaim(ast_runtime* rt, MetaGroup* metagroup_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        int i;
+        for(i=0;i<metagroup_v->typeset.count;i++) {
+            status = MetaNode_reclaim(rt,metagroup_v->typeset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metagroup_v->typeset.values);
+    }
+    {
+        int i;
+        for(i=0;i<metagroup_v->varset.count;i++) {
+            status = MetaNode_reclaim(rt,metagroup_v->varset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metagroup_v->varset.values);
+    }
+    {
+        int i;
+        for(i=0;i<metagroup_v->dimrset.count;i++) {
+            status = MetaNode_reclaim(rt,metagroup_v->dimrset.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metagroup_v->dimrset.values);
+    }
+    {
+        int i;
+        for(i=0;i<metagroup_v->groups.count;i++) {
+            status = MetaNode_reclaim(rt,metagroup_v->groups.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metagroup_v->groups.values);
+    }
+    ast_free(rt,(void*)metagroup_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaGroup_reclaim*/
+
+size_t
+MetaGroup_get_size(ast_runtime* rt, MetaGroup* metagroup_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        int i;
+        for(i=0;i<metagroup_v->typeset.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metagroup_v->typeset.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        int i;
+        for(i=0;i<metagroup_v->varset.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metagroup_v->varset.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,2);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        int i;
+        for(i=0;i<metagroup_v->dimrset.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metagroup_v->dimrset.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,3);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        int i;
+        for(i=0;i<metagroup_v->groups.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metagroup_v->groups.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,4);
+        }
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaGroup_get_size*/
+
+ast_err
+MetaVar_write(ast_runtime* rt, MetaVar* metavar_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metavar_v->dims.count;i++) {
+            status = ast_write_tag(rt,ast_counted,1);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metavar_v->dims.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metavar_v->dims.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaVar_write*/
+
+ast_err
+MetaVar_read(ast_runtime* rt, MetaVar** metavar_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaVar* metavar_v;
+    unsigned long pos;
+
+    metavar_v = (MetaVar*)ast_alloc(rt,sizeof(MetaVar));
+    if(metavar_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaVar|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metavar_v->dims,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metavar_vp) *metavar_vp = metavar_v;
+done:
+    return ACATCH(status);
+} /*MetaVar_read*/
+
+ast_err
+MetaVar_reclaim(ast_runtime* rt, MetaVar* metavar_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        int i;
+        for(i=0;i<metavar_v->dims.count;i++) {
+            status = MetaNode_reclaim(rt,metavar_v->dims.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metavar_v->dims.values);
+    }
+    ast_free(rt,(void*)metavar_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaVar_reclaim*/
+
+size_t
+MetaVar_get_size(ast_runtime* rt, MetaVar* metavar_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        int i;
+        for(i=0;i<metavar_v->dims.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metavar_v->dims.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        }
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaVar_get_size*/
+
+ast_err
+MetaDim_write(ast_runtime* rt, MetaDim* metadim_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        status = ast_write_primitive(rt,ast_uint64,1,&metadim_v->actualsize);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaDim_write*/
+
+ast_err
+MetaDim_read(ast_runtime* rt, MetaDim** metadim_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaDim* metadim_v;
+    unsigned long pos;
+
+    metadim_v = (MetaDim*)ast_alloc(rt,sizeof(MetaDim));
+    if(metadim_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaDim|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            status = ast_read_primitive(rt,ast_uint64,1,&metadim_v->actualsize);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metadim_vp) *metadim_vp = metadim_v;
+done:
+    return ACATCH(status);
+} /*MetaDim_read*/
+
+ast_err
+MetaDim_reclaim(ast_runtime* rt, MetaDim* metadim_v)
+{
+    ast_err status = AST_NOERR;
+
+    ast_free(rt,(void*)metadim_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaDim_reclaim*/
+
+size_t
+MetaDim_get_size(ast_runtime* rt, MetaDim* metadim_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        fieldsize += ast_get_size(rt,ast_uint64,&metadim_v->actualsize);
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaDim_get_size*/
+
+ast_err
+MetaCompound_write(ast_runtime* rt, MetaCompound* metacompound_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metacompound_v->fields.count;i++) {
+            status = ast_write_tag(rt,ast_counted,1);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaNode_get_size(rt,metacompound_v->fields.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaNode_write(rt,metacompound_v->fields.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaCompound_write*/
+
+ast_err
+MetaCompound_read(ast_runtime* rt, MetaCompound** metacompound_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaCompound* metacompound_v;
+    unsigned long pos;
+
+    metacompound_v = (MetaCompound*)ast_alloc(rt,sizeof(MetaCompound));
+    if(metacompound_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaCompound|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            size_t size;
+            MetaNode* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaNode_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metacompound_v->fields,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metacompound_vp) *metacompound_vp = metacompound_v;
+done:
+    return ACATCH(status);
+} /*MetaCompound_read*/
+
+ast_err
+MetaCompound_reclaim(ast_runtime* rt, MetaCompound* metacompound_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        int i;
+        for(i=0;i<metacompound_v->fields.count;i++) {
+            status = MetaNode_reclaim(rt,metacompound_v->fields.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metacompound_v->fields.values);
+    }
+    ast_free(rt,(void*)metacompound_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaCompound_reclaim*/
+
+size_t
+MetaCompound_get_size(ast_runtime* rt, MetaCompound* metacompound_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        int i;
+        for(i=0;i<metacompound_v->fields.count;i++) {
+            fieldsize += MetaNode_get_size(rt,metacompound_v->fields.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        }
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaCompound_get_size*/
+
+ast_err
+MetaField_write(ast_runtime* rt, MetaField* metafield_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        int i = 0;
+        for(i=0;i<metafield_v->dims.count;i++) {
+            status = ast_write_primitive(rt,ast_uint64,1,&metafield_v->dims.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+    {
+        status = ast_write_primitive(rt,ast_uint64,2,&metafield_v->offset);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_uint64,3,&metafield_v->alignment);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaField_write*/
+
+ast_err
+MetaField_read(ast_runtime* rt, MetaField** metafield_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaField* metafield_v;
+    unsigned long pos;
+
+    metafield_v = (MetaField*)ast_alloc(rt,sizeof(MetaField));
+    if(metafield_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaField|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            uint64_t tmp;
+            status = ast_read_primitive(rt,ast_uint64,1,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_uint64,&metafield_v->dims,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            } break;
+        case 2: {
+            status = ast_read_primitive(rt,ast_uint64,2,&metafield_v->offset);
+            } break;
+        case 3: {
+            status = ast_read_primitive(rt,ast_uint64,3,&metafield_v->alignment);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metafield_vp) *metafield_vp = metafield_v;
+done:
+    return ACATCH(status);
+} /*MetaField_read*/
+
+ast_err
+MetaField_reclaim(ast_runtime* rt, MetaField* metafield_v)
+{
+    ast_err status = AST_NOERR;
+
+    ast_free(rt,(void*)metafield_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaField_reclaim*/
+
+size_t
+MetaField_get_size(ast_runtime* rt, MetaField* metafield_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        int i;
+        for(i=0;i<metafield_v->dims.count;i++) {
+            fieldsize += ast_get_tagsize(rt,ast_counted,1);
+            fieldsize += ast_get_size(rt,ast_uint64,&metafield_v->dims.values[i]);
+        }
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,2);
+        fieldsize += ast_get_size(rt,ast_uint64,&metafield_v->offset);
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,3);
+        fieldsize += ast_get_size(rt,ast_uint64,&metafield_v->alignment);
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaField_get_size*/
+
+ast_err
+MetaEnum_write(ast_runtime* rt, MetaEnum* metaenum_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        size_t size;
+        int i;
+        for(i=0;i<metaenum_v->econsts.count;i++) {
+            status = ast_write_tag(rt,ast_counted,1);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            size = MetaEconst_get_size(rt,metaenum_v->econsts.values[i]);
+            status = ast_write_size(rt,size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = MetaEconst_write(rt,metaenum_v->econsts.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaEnum_write*/
+
+ast_err
+MetaEnum_read(ast_runtime* rt, MetaEnum** metaenum_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaEnum* metaenum_v;
+    unsigned long pos;
+
+    metaenum_v = (MetaEnum*)ast_alloc(rt,sizeof(MetaEnum));
+    if(metaenum_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaEnum|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            size_t size;
+            MetaEconst* tmp;
+            if(wiretype != ast_counted) {status=AST_EFAIL; goto done;}
+            status = ast_read_size(rt,&size);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_mark(rt,size);
+            status = MetaEconst_read(rt,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            status = ast_repeat_append(rt,ast_message,&metaenum_v->econsts,&tmp);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+            ast_unmark(rt);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metaenum_vp) *metaenum_vp = metaenum_v;
+done:
+    return ACATCH(status);
+} /*MetaEnum_read*/
+
+ast_err
+MetaEnum_reclaim(ast_runtime* rt, MetaEnum* metaenum_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        int i;
+        for(i=0;i<metaenum_v->econsts.count;i++) {
+            status = MetaEconst_reclaim(rt,metaenum_v->econsts.values[i]);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }
+        ast_free(rt,metaenum_v->econsts.values);
+    }
+    ast_free(rt,(void*)metaenum_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaEnum_reclaim*/
+
+size_t
+MetaEnum_get_size(ast_runtime* rt, MetaEnum* metaenum_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        int i;
+        for(i=0;i<metaenum_v->econsts.count;i++) {
+            fieldsize += MetaEconst_get_size(rt,metaenum_v->econsts.values[i]);
+            fieldsize += ast_get_size(rt,ast_uint32,&fieldsize);
+            fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        }
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaEnum_get_size*/
+
+ast_err
+MetaEconst_write(ast_runtime* rt, MetaEconst* metaeconst_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        status = ast_write_primitive(rt,ast_string,1,&metaeconst_v->name);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_write_primitive(rt,ast_bytes,2,&metaeconst_v->value);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+
+done:
+    return ACATCH(status);
+
+} /*MetaEconst_write*/
+
+ast_err
+MetaEconst_read(ast_runtime* rt, MetaEconst** metaeconst_vp)
+{
+    ast_err status = AST_NOERR;
+    uint32_t wiretype, fieldno;
+    MetaEconst* metaeconst_v;
+    unsigned long pos;
+
+    metaeconst_v = (MetaEconst*)ast_alloc(rt,sizeof(MetaEconst));
+    if(metaeconst_v == NULL) return AST_ENOMEM;
+
+    while(status == AST_NOERR) {
+        pos = (unsigned long)xpos(rt);
+        status = ast_read_tag(rt,&wiretype,&fieldno);
+        if(status == AST_EOF) {status = AST_NOERR; break;}
+        if(status != AST_NOERR) break;
+        {
+        fprintf(stderr,"|MetaEconst|: before=%lu fieldno=%lu wiretype=%lu after=%lu\n",pos,(unsigned long)fieldno,(unsigned long)wiretype,(unsigned long)xpos(rt));
+        }
+        switch (fieldno) {
+        case 1: {
+            status = ast_read_primitive(rt,ast_string,1,&metaeconst_v->name);
+            } break;
+        case 2: {
+            status = ast_read_primitive(rt,ast_bytes,2,&metaeconst_v->value);
+            } break;
+        default:
+            status = ast_skip_field(rt,wiretype,fieldno);
+            if(status != AST_NOERR) {ACATCH(status); goto done;}
+        }; /*switch*/
+    };/*while*/
+    if(status != AST_NOERR) {ACATCH(status); goto done;}
+    if(metaeconst_vp) *metaeconst_vp = metaeconst_v;
+done:
+    return ACATCH(status);
+} /*MetaEconst_read*/
+
+ast_err
+MetaEconst_reclaim(ast_runtime* rt, MetaEconst* metaeconst_v)
+{
+    ast_err status = AST_NOERR;
+
+    {
+        status = ast_reclaim_string(rt,metaeconst_v->name);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    {
+        status = ast_reclaim_bytes(rt,&metaeconst_v->value);
+        if(status != AST_NOERR) {ACATCH(status); goto done;}
+    }
+    ast_free(rt,(void*)metaeconst_v);
+    goto done;
+
+done:
+    return ACATCH(status);
+
+} /*MetaEconst_reclaim*/
+
+size_t
+MetaEconst_get_size(ast_runtime* rt, MetaEconst* metaeconst_v)
+{
+    size_t totalsize = 0;
+    size_t fieldsize = 0;
+
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,1);
+        fieldsize += ast_get_size(rt,ast_string,&metaeconst_v->name);
+        totalsize += fieldsize;
+    }
+    {
+        fieldsize += ast_get_tagsize(rt,ast_counted,2);
+        fieldsize += ast_get_size(rt,ast_bytes,&metaeconst_v->value);
+        totalsize += fieldsize;
+    }
+    return totalsize;
+
+} /*MetaEconst_get_size*/
 
