@@ -13,24 +13,14 @@ COPYRIGHT file for copying and redistribution conditions.
 int
 NCD_set_base_pe(int ncid, int pe)
 {
-   NC_FILE_INFO_T *nc;
-   if (!(nc = nc4_find_nc_file(ncid)))
-      return NC_EBADID;
-   if (nc->nc4_info)
-      return NC_ENOTNC3;
-   return NC3_set_base_pe(nc->int_ncid,  pe);
+   return NC_NOERR;
 }
 
 /* This function only does anything for netcdf-3 files. */
 int
 NCD_inq_base_pe(int ncid, int *pe)
 {
-   NC_FILE_INFO_T *nc;
-   if (!(nc = nc4_find_nc_file(ncid)))
-      return NC_EBADID;
-   if (nc->nc4_info)
-      return NC_ENOTNC3;
-   return NC3_inq_base_pe(nc->int_ncid, pe);
+   return NC_NOERR;
 }
 
 /* Get the format (i.e. classic, 64-bit-offset, or netcdf-4) of an
@@ -49,12 +39,7 @@ NCD_inq_format(int ncid, int *formatp)
    if (!(nc = nc4_find_nc_file(ncid)))
       return NC_EBADID;
 
-   /* If this isn't a netcdf-4 file, pass this call on to the netcdf-3
-    * library. */
-   if (!nc->nc4_info)
-      return NC3_inq_format(nc->int_ncid, formatp);
-   
-   /* Otherwise, this is a netcdf-4 file. Check if classic NC3 rules
+    /* Otherwise, this is a netcdf-4 file. Check if classic NC3 rules
     * are in effect for this file. */
    if (nc->nc4_info->cmode & NC_CLASSIC_MODEL)
       *formatp = NC_FORMAT_NETCDF4_CLASSIC;

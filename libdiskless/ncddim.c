@@ -177,10 +177,8 @@ static int
 ncd_find_dim_len(NC_GRP_INFO_T *grp, int dimid, size_t **len)
 {
    NC_GRP_INFO_T *g;
-   NC_DIM_INFO_T *dim;
    NC_VAR_INFO_T *var;
-   int d, ndims, dimids[NC_MAX_DIMS];
-   size_t dimlen[NC_MAX_DIMS];
+   int d;
    int retval; 
    
    assert(grp && len);

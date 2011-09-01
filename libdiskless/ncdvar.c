@@ -195,9 +195,10 @@ NCD_def_var(int ncid, const char *name, nc_type xtype, int ndims,
 	    return NC_ENOMEM;
       }
 
-      /* Allocate space for the data. */
-      if (!(var->diskless_data = malloc(num_values * var->type_info->size)))
-	 return NC_ENOMEM;
+      /* Allocate space for the data, except for record vars. */
+      if (!num_unlim)
+	 if (!(var->diskless_data = malloc(num_values * var->type_info->size)))
+	    return NC_ENOMEM;
 
       /* At the same time, check to see if this is a coordinate
        * variable. If so, it will have the same name as one of its
@@ -224,7 +225,7 @@ NCD_def_var(int ncid, const char *name, nc_type xtype, int ndims,
       if (!(var->diskless_dimlens = malloc(sizeof(size_t) * var->ndims)))
 	 return NC_ENOMEM;
       for (d = 0; d < ndims; d++)
-	 var->diskless_dimlens[d] = var->dim[d]->unlimited ? 0 : var->dim[d]->len;
+	 var->diskless_dimlens[d] = var->dim[d]->len;
 
       /* If the user names this variable the same as a dimension, but
        * doesn't use that dimension first in its list of dimension ids,
@@ -745,7 +746,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    NC_FILE_INFO_T *nc;
    NC_GRP_INFO_T *grp, *g;
    NC_VAR_INFO_T *var;
-   NC_DIM_INFO_T *dim;
+   NC_DIM_INFO_T *dim, *dim1;
    void *copy_point = NULL;
    void *bufr = NULL;
    size_t num_values = 1, num_values_to_start = 0;
@@ -753,9 +754,10 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    int need_to_convert = 0;
    int is_long = 0;
    int range_error = 0;
-   int d, retval;
-   int break_it, d2;
-   void *fillvalue;
+   int retval;
+   int break_it, d1, d2;
+   void *fillvalue, *fillvalue_rec;
+   size_t rec_size;
 
    if (!(nc = nc4_find_nc_file(ncid)))
       return NC_EBADID;
@@ -803,9 +805,22 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 			return NC_ENOMEM;
 
 		     /* Copy the old buffer, then free it.. */
-		     memcpy(newbuf, var->diskless_data, var->diskless_dimlens[d2] * file_type_size);
-		     free(var->diskless_data);
+		     if (var->diskless_data)
+		     {
+			memcpy(newbuf, var->diskless_data, var->diskless_dimlens[d2] * file_type_size);
+			free(var->diskless_data);
+		     }
 		     var->diskless_data = newbuf;
+
+		     /* Create a record-full of fill values. */
+		     rec_size = 1;
+		     for (dim1 = *(var->dim); dim1; dim1 = dim1->next)
+			if (!dim1->unlimited)
+			   rec_size *= dim1->len;
+		     if (!(fillvalue_rec = malloc(rec_size * file_type_size)))
+			return NC_ENOMEM;
+		     for (i = 0; i < rec_size; i++)
+			memcpy(fillvalue_rec, fillvalue, file_type_size);			
 
 		     /* Copy fill values to new extent. */
 		     newbuf = (char *)newbuf + (var->diskless_dimlens[d2] * file_type_size);
@@ -829,16 +844,16 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    if (var->ndims)
    {
       num_values_to_start = 1;
-      for (d = 0; d < var->ndims; d++)
-	 num_values_to_start *= (startp[d] * var->dim[d]->len);
+      for (d1 = 0; d1 < var->ndims; d1++)
+	 num_values_to_start *= (startp[d1] * var->dim[d1]->len);
    }
    copy_point = (void *)((char *)var->diskless_data + 
 			 num_values_to_start * file_type_size);
 
    /* How many values do I copy? */
    if (var->ndims)
-      for (d = 0; d < var->ndims; d++)
-	 num_values *= countp[d];
+      for (d1 = 0; d1 < var->ndims; d1++)
+	 num_values *= countp[d1];
    
    /* Are we going to convert any data? (No converting of compound or
     * opaque types.) */
@@ -962,7 +977,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    
    /* A little quirk: if any of the count values are zero, don't
     * read. */
-   if (var->ndims)
+   if (var->ndims && !provide_fill)
       for (d = 0; d < var->ndims; d++)
 	 if (count[d] == 0)
 	    return NC_NOERR;

@@ -284,7 +284,7 @@ main(int argc, char **argv)
       if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;
-   printf("*** testing diskless file with unlimited dimension...");
+   printf("*** testing diskless file with 1D vars with unlimited dimension...");
    {
 #define NVARS 5
 #define DIM_NAME "a_really_fun_dimension"
@@ -348,6 +348,149 @@ main(int argc, char **argv)
       if (float_data_in != float_data) ERR;
       if (nc_get_vara_float(ncid, varid[4], start, count, &float_data_in)) ERR;
       if (float_data_in != (float)double_data) ERR;
+
+      /* Close the file. */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing diskless file with 2D var with unlimited dimension...");
+   {
+#define WETTNESS "wettness"
+#define PRICE "price"
+#define BEER "beer"
+#define NDIMS2 2
+#define WETTNESS_LEN 3
+#define PRICE_LEN 1
+
+      int ncid, varid, dimid[NDIMS2];
+      int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[2];
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      int int_data[PRICE_LEN][WETTNESS_LEN];
+      int int_data_in[PRICE_LEN][WETTNESS_LEN];
+      size_t start[NDIMS2] = {0, 0}, count[NDIMS2];
+      int p, w;
+
+      for (p = 0; p < PRICE_LEN; p++)
+	 for (w = 0; w < WETTNESS_LEN; w++)
+	    int_data[p][w] = p * w;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL, 
+		    &ncid)) ERR;
+
+      /* Define two dimensions. */
+      if (nc_def_dim(ncid, PRICE, NC_UNLIMITED, &dimid[0])) ERR;
+      if (nc_def_dim(ncid, WETTNESS, WETTNESS_LEN, &dimid[1])) ERR;
+
+      /* Define a variable. */
+      if (nc_def_var(ncid, BEER, NC_INT, NDIMS2, dimid, &varid)) ERR;
+
+      /* Write some data to the variable. */
+      count[0] = PRICE_LEN;
+      count[1] = WETTNESS_LEN;
+      if (nc_put_vara_int(ncid, varid, start, count, &int_data[0][0])) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != NDIMS2 || nvars_in != 1 || natts_in != 0 || 
+	  unlimdimid_in != 0) ERR;
+
+      /* Check variable. */
+      if (nc_inq_var(ncid, varid, name_in, &type_in, &ndims_in, 
+		     dimids_in, &natts_in)) ERR;
+      if (strcmp(name_in, BEER) || type_in != NC_INT || ndims_in != NDIMS2
+	  || dimids_in[0] != 0 || dimids_in[1] != 1 || natts_in) ERR;
+
+      /* Read the data. */
+      if (nc_get_vara_int(ncid, varid, start, count, &int_data_in[0][0])) ERR;
+
+      /* Check the result. */
+      for (p = 0; p < PRICE_LEN; p++)
+	 for (w = 0; w < WETTNESS_LEN; w++)
+	    if (int_data_in[p][w] != int_data[p][w]) ERR;
+
+      /* Close the file. */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing diskless file with 2 2D vars with unlimited dimension...");
+   {
+#define WETTNESS "wettness"
+#define PRICE "price"
+#define BEER "beer"
+#define WINE "wine"
+#define NDIMS2 2
+#define WETTNESS_LEN 3
+#define PRICE_LEN 1
+
+      int ncid, varid, dimid[NDIMS2], varid2;
+      int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[2];
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      int int_data[PRICE_LEN][WETTNESS_LEN];
+      int int_data_in[PRICE_LEN][WETTNESS_LEN];
+      size_t start[NDIMS2] = {0, 0}, count[NDIMS2];
+      size_t len;
+      int p, w;
+
+      for (p = 0; p < PRICE_LEN; p++)
+	 for (w = 0; w < WETTNESS_LEN; w++)
+	    int_data[p][w] = p * w;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL, 
+		    &ncid)) ERR;
+
+      /* Define two dimensions. */
+      if (nc_def_dim(ncid, PRICE, NC_UNLIMITED, &dimid[0])) ERR;
+      if (nc_def_dim(ncid, WETTNESS, WETTNESS_LEN, &dimid[1])) ERR;
+
+      /* Define a variable. */
+      if (nc_def_var(ncid, BEER, NC_INT, NDIMS2, dimid, &varid)) ERR;
+      if (nc_def_var(ncid, WINE, NC_INT, NDIMS2, dimid, &varid2)) ERR;
+
+      /* Write some data to the variable. */
+      count[0] = PRICE_LEN;
+      count[1] = WETTNESS_LEN;
+      if (nc_put_vara_int(ncid, varid, start, count, &int_data[0][0])) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != NDIMS2 || nvars_in != 2 || natts_in != 0 || 
+	  unlimdimid_in != 0) ERR;
+
+      /* Check variables. */
+      if (nc_inq_var(ncid, varid, name_in, &type_in, &ndims_in, 
+		     dimids_in, &natts_in)) ERR;
+      if (strcmp(name_in, BEER) || type_in != NC_INT || ndims_in != NDIMS2
+	  || dimids_in[0] != 0 || dimids_in[1] != 1 || natts_in) ERR;
+
+      /* Check variables. */
+      if (nc_inq_var(ncid, varid2, name_in, &type_in, &ndims_in, 
+		     dimids_in, &natts_in)) ERR;
+      if (strcmp(name_in, WINE) || type_in != NC_INT || ndims_in != NDIMS2
+	  || dimids_in[0] != 0 || dimids_in[1] != 1 || natts_in) ERR;
+
+      /* Read the data. */
+      if (nc_get_vara_int(ncid, varid, start, count, &int_data_in[0][0])) ERR;
+
+      /* Check the result. */
+      for (p = 0; p < PRICE_LEN; p++)
+	 for (w = 0; w < WETTNESS_LEN; w++)
+	    if (int_data_in[p][w] != int_data[p][w]) ERR;
+
+      /* Check the length of the unlimited dimension. */
+      if (nc_inq_dimlen(ncid, dimid[0], &len)) ERR;
+      if (len != PRICE_LEN) ERR;
+
+      /* Get data from the other var - should get fill values. */
+      if (nc_get_vara_int(ncid, varid2, start, count, &int_data_in[0][0])) ERR;
+
+      /* Check the result. */
+      for (p = 0; p < PRICE_LEN; p++)
+	 for (w = 0; w < WETTNESS_LEN; w++)
+	    if (int_data_in[p][w] != NC_FILL_INT) ERR;
 
       /* Close the file. */
       if (nc_close(ncid)) ERR;
