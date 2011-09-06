@@ -502,20 +502,20 @@ main(int argc, char **argv)
 #define BEER "beer"
 #define WINE "wine"
 #define NDIMS2 2
-#define WETTNESS_LEN2 5
-#define PRICE_LEN 1
+#define WETTNESS_LEN2 10
+#define PRICE_LEN2 34
 
       int ncid, varid, dimid[NDIMS2], varid2;
       int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[2];
       char name_in[NC_MAX_NAME + 1];
       nc_type type_in;
-      int int_data[PRICE_LEN][WETTNESS_LEN2];
-      int int_data_in[PRICE_LEN][WETTNESS_LEN2];
+      int int_data[PRICE_LEN2][WETTNESS_LEN2];
+      int int_data_in[PRICE_LEN2][WETTNESS_LEN2];
       size_t start[NDIMS2] = {0, 0}, count[NDIMS2];
       size_t len;
       int p, w;
 
-      for (p = 0; p < PRICE_LEN; p++)
+      for (p = 0; p < PRICE_LEN2; p++)
 	 for (w = 0; w < WETTNESS_LEN2; w++)
 	    int_data[p][w] = p * w;
 
@@ -532,7 +532,7 @@ main(int argc, char **argv)
       if (nc_def_var(ncid, WINE, NC_INT, NDIMS2, dimid, &varid2)) ERR;
 
       /* Write some data to the variable. */
-      count[0] = PRICE_LEN;
+      count[0] = PRICE_LEN2;
       count[1] = WETTNESS_LEN2;
       if (nc_put_vara_int(ncid, varid, start, count, &int_data[0][0])) ERR;
 
@@ -557,21 +557,108 @@ main(int argc, char **argv)
       if (nc_get_vara_int(ncid, varid, start, count, &int_data_in[0][0])) ERR;
 
       /* Check the result. */
-      for (p = 0; p < PRICE_LEN; p++)
+      for (p = 0; p < PRICE_LEN2; p++)
 	 for (w = 0; w < WETTNESS_LEN2; w++)
 	    if (int_data_in[p][w] != int_data[p][w]) ERR;
 
       /* Check the length of the unlimited dimension. */
       if (nc_inq_dimlen(ncid, dimid[0], &len)) ERR;
-      if (len != PRICE_LEN) ERR;
+      if (len != PRICE_LEN2) ERR;
 
       /* Get data from the other var - should get fill values. */
       if (nc_get_vara_int(ncid, varid2, start, count, &int_data_in[0][0])) ERR;
 
       /* Check the result. */
-      for (p = 0; p < PRICE_LEN; p++)
+      for (p = 0; p < PRICE_LEN2; p++)
 	 for (w = 0; w < WETTNESS_LEN2; w++)
 	    if (int_data_in[p][w] != NC_FILL_INT) ERR;
+
+      /* Close the file. */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
+   printf("*** testing diskless file with 2 3D vars with unlimited dimension using subsets...");
+   {
+#define WINSTON "winston"
+#define BIRTH "BIRTH"
+#define BRITAIN "BRITAIN"
+#define SAXON "saxon"
+#define ANGLO "anglo"
+#define NDIMS3 3
+#define BIRTH_LEN2 1
+#define BRITAIN_LEN2 1
+#define WINSTON_LEN2 1
+
+      int ncid, varid, dimid[NDIMS3], varid2;
+      int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[2];
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      int int_data[BRITAIN_LEN2][BIRTH_LEN2][WINSTON_LEN2];
+      int int_data_in[BRITAIN_LEN2][BIRTH_LEN2][WINSTON_LEN2];
+      size_t start[NDIMS3] = {0, 0, 0}, count[NDIMS3];
+      size_t len;
+      int p, b, w;
+
+      for (p = 0; p < BRITAIN_LEN2; p++)
+	 for (b = 0; b < BIRTH_LEN2; b++)
+	    for (w = 0; w < WINSTON_LEN2; w++)
+	       int_data[p][b][w] = p * w * b;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL,
+		    &ncid)) ERR;
+
+      /* Define two dimensions. */
+      if (nc_def_dim(ncid, BRITAIN, NC_UNLIMITED, &dimid[0])) ERR;
+      if (nc_def_dim(ncid, BIRTH, BIRTH_LEN2, &dimid[1])) ERR;
+      if (nc_def_dim(ncid, WINSTON, WINSTON_LEN2, &dimid[2])) ERR;
+
+      /* Define a variable. */
+      if (nc_def_var(ncid, SAXON, NC_INT, NDIMS3, dimid, &varid)) ERR;
+      if (nc_def_var(ncid, ANGLO, NC_INT, NDIMS3, dimid, &varid2)) ERR;
+
+      /* Write some data to the variable. */
+      count[0] = BRITAIN_LEN2;
+      count[1] = BIRTH_LEN2;
+      count[2] = WINSTON_LEN2;
+      if (nc_put_vara_int(ncid, varid, start, count, &int_data[0][0][0])) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != NDIMS3 || nvars_in != 2 || natts_in != 0 ||
+	  unlimdimid_in != 0) ERR;
+
+      /* Check variables. */
+      if (nc_inq_var(ncid, varid, name_in, &type_in, &ndims_in,
+		     dimids_in, &natts_in)) ERR;
+      if (strcmp(name_in, SAXON) || type_in != NC_INT || ndims_in != NDIMS3
+	  || dimids_in[0] != 0 || dimids_in[1] != 1 || natts_in) ERR;
+      if (nc_inq_var(ncid, varid2, name_in, &type_in, &ndims_in,
+		     dimids_in, &natts_in)) ERR;
+      if (strcmp(name_in, ANGLO) || type_in != NC_INT || ndims_in != NDIMS3
+	  || dimids_in[0] != 0 || dimids_in[1] != 1 || natts_in) ERR;
+
+      /* Read the data. */
+      if (nc_get_vara_int(ncid, varid, start, count, &int_data_in[0][0][0])) ERR;
+
+      /* Check the result. */
+      for (p = 0; p < BRITAIN_LEN2; p++)
+	 for (b = 0; b < BIRTH_LEN2; b++)
+	    for (w = 0; w < WINSTON_LEN2; w++)
+	       if (int_data_in[p][b][w] != int_data[p][b][w]) ERR;
+
+      /* Check the length of the unlimited dimension. */
+      if (nc_inq_dimlen(ncid, dimid[0], &len)) ERR;
+      if (len != BRITAIN_LEN2) ERR;
+
+      /* Get data from the other var - should get fill values. */
+      if (nc_get_vara_int(ncid, varid2, start, count, &int_data_in[0][0][0])) ERR;
+
+      /* Check the result. */
+      for (p = 0; p < BRITAIN_LEN2; p++)
+	 for (b = 0; b < BIRTH_LEN2; b++)
+	    for (w = 0; w < WINSTON_LEN2; w++)
+	       if (int_data_in[p][b][w] != NC_FILL_INT) ERR;
 
       /* Close the file. */
       if (nc_close(ncid)) ERR;
