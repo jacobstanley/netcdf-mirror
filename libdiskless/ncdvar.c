@@ -755,7 +755,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    int is_long = 0;
    int range_error = 0;
    int retval;
-   int break_it, d1, d2;
+   int break_it, d1, d2, d3;
    void *fillvalue, *fillvalue_rec;
    size_t rec_size;
 
@@ -772,9 +772,6 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    if ((retval = nc4_get_typelen_mem(nc->nc4_info, var->xtype, 0, &file_type_size)))
       return retval;
    
-   if (nc4_get_fill_value(nc->nc4_info, var, &fillvalue) < 0)
-      return NC_EHDFERR;
-
    /* Check dimension bounds. Remember that unlimited dimnsions can
     * put data beyond their current length. */
    for (d2 = 0, break_it = 0; d2 < var->ndims; d2++)
@@ -800,33 +797,42 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 		     void *newbuf;
 		     int i;
 
+		     /* Find the number of data elements in one record. */
+		     rec_size = 1;
+		     for (d3 = 0; d3 < var->ndims; d3++)
+			if (!var->dim[d3]->unlimited)
+			   rec_size *= var->dim[d3]->len;
+
 		     /* Allocate a new buffer. */
-		     if (!(newbuf = malloc(file_type_size * (startp[d2] + countp[d2]))))
+		     if (!(newbuf = malloc(rec_size * file_type_size * (startp[d2] + countp[d2]))))
 			return NC_ENOMEM;
 
 		     /* Copy the old buffer, then free it.. */
 		     if (var->diskless_data)
 		     {
-			memcpy(newbuf, var->diskless_data, var->diskless_dimlens[d2] * file_type_size);
+			memcpy(newbuf, var->diskless_data, var->diskless_dimlens[d2] * file_type_size * rec_size);
 			free(var->diskless_data);
 		     }
 		     var->diskless_data = newbuf;
 
+		     if (nc4_get_fill_value(nc->nc4_info, var, &fillvalue) < 0)
+			return NC_EHDFERR;
+
 		     /* Create a record-full of fill values. */
-		     rec_size = 1;
-		     for (dim1 = *(var->dim); dim1; dim1 = dim1->next)
-			if (!dim1->unlimited)
-			   rec_size *= dim1->len;
 		     if (!(fillvalue_rec = malloc(rec_size * file_type_size)))
 			return NC_ENOMEM;
 		     for (i = 0; i < rec_size; i++)
 			memcpy(fillvalue_rec, fillvalue, file_type_size);			
+		     free(fillvalue);
 
 		     /* Copy fill values to new extent. */
 		     newbuf = (char *)newbuf + (var->diskless_dimlens[d2] * file_type_size);
 		     for (i = 0; i < (startp[d2] + countp[d2]) - var->diskless_dimlens[d2]; i++)
-			memcpy(newbuf, fillvalue, file_type_size);
+			memcpy(newbuf, fillvalue_rec, rec_size * file_type_size);
 		     var->diskless_dimlens[d2] = startp[d2] + countp[d2];
+
+		     /* Free memory. */
+		     free(fillvalue_rec);
 		  }
 	       }
             }
@@ -880,6 +886,9 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    /* Copy the data to memory. */
    memcpy(copy_point, bufr, 
 	  num_values * var->type_info->size);
+
+   if (need_to_convert)
+      free(bufr);
    
    return NC_NOERR;
 }
@@ -1026,10 +1035,9 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    else
       bufr = ip;
    
-   
-   /* Copy the data to memory. */
+   /* Copy the data to memory. Still might have to convert it. */
    memcpy(bufr, copy_point, num_values * var->type_info->size);
-   
+
    if (need_to_convert)
    {
       if ((retval = nc4_convert_type(bufr, ip, var->xtype, memtype, 
@@ -1045,6 +1053,9 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
 	  range_error)
 	 range_error = 0;
    }
+   
+   if (need_to_convert)
+      free(bufr);
    
    /* Now we need to fake up any further data that was asked for,
       using the fill values instead. First skip past the data we
@@ -1086,6 +1097,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
             filldata = (char *)filldata + file_type_size;
          }
       }
+      free(fillvalue);
    }
    return NC_NOERR;
 }
