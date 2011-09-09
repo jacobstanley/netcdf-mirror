@@ -145,6 +145,7 @@ Use this in mode flags for both nc_create() and nc_open(). */
 #define NC_FORMAT_64BIT   (2)
 #define NC_FORMAT_NETCDF4 (3)
 #define NC_FORMAT_NETCDF4_CLASSIC  (4)
+#define NC_FORMAT_DISKLESS_CLASSIC  (5)
 /**@}*/
 
 /** Let nc__create() or nc__open() figure out as suitable chunk

@@ -425,19 +425,19 @@ nc4_rec_find_named_type(NC_GRP_INFO_T *start_grp, char *name)
 
 /* Use a netCDF typeid to find a type in a type_list. */
 int
-nc4_find_type(NC_HDF5_FILE_INFO_T *h5, nc_type typeid, NC_TYPE_INFO_T **type)
+nc4_find_type(NC_HDF5_FILE_INFO_T *h5, nc_type xtypeid, NC_TYPE_INFO_T **type)
 {
-   if (typeid < 0 || !type)
+   if (xtypeid < 0 || !type)
       return NC_EINVAL;
    *type = NULL;
 
    /* Atomic types don't have associated NC_TYPE_INFO_T struct, just
     * return NOERR. */
-   if (typeid <= NC_STRING)
+   if (xtypeid <= NC_STRING)
       return NC_NOERR;
 
    /* Find the type. */
-   if(!(*type = nc4_rec_find_nc_type(h5->root_grp, typeid)))
+   if(!(*type = nc4_rec_find_nc_type(h5->root_grp, xtypeid)))
       return NC_EBADTYPID;
 
    return NC_NOERR;

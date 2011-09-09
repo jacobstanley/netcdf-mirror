@@ -768,6 +768,11 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
       return retval;
    assert(grp && var && var->name);
 
+   /* No NC_CHAR conversions, you pervert! */
+   if (var->xtype != memtype && 
+       (var->xtype == NC_CHAR || memtype == NC_CHAR))
+      return NC_ECHAR;
+
    /* Need to know the size of the type to be written. */
    if ((retval = nc4_get_typelen_mem(nc->nc4_info, var->xtype, 0, &file_type_size)))
       return retval;
@@ -889,7 +894,21 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 
    if (need_to_convert)
       free(bufr);
+
+   /* For strict netcdf-3 rules, ignore erange errors between UBYTE
+    * and BYTE types. */
+   if ((nc->nc4_info->cmode & NC_CLASSIC_MODEL) &&
+       (var->xtype == NC_UBYTE || var->xtype == NC_BYTE) &&
+       (memtype == NC_UBYTE || memtype == NC_BYTE) &&
+       range_error)
+      range_error = 0;
    
+   /* If there was an error return it, otherwise return any potential
+      range error value. If none, return NC_NOERR as usual.*/
+   if (retval)      
+      return retval;
+   if (range_error)
+      return NC_ERANGE;
    return NC_NOERR;
 }
 
@@ -921,6 +940,11 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    if ((retval = nc4_find_g_var_nc(nc, ncid, varid, &grp, &var)))
       return retval;
    assert(grp && nc->nc4_info && var && var->name);
+
+   /* No NC_CHAR conversions, you pervert! */
+   if (var->xtype != memtype && 
+       (var->xtype == NC_CHAR || memtype == NC_CHAR))
+      return NC_ECHAR;
 
    for (i = 0; i < var->ndims; i++)
       count[i] = countp[i];
@@ -1001,7 +1025,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    {
       num_values_to_start = 1;
       for (d = 0; d < var->ndims; d++)
-	 num_values_to_start *= (start[d] * var->dim[d]->len);
+	 num_values_to_start *= start[d];
    }
    copy_point = (void *)((char *)var->diskless_data + 
 			 num_values_to_start * var->type_info->size);
@@ -1020,9 +1044,6 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
       
       /* We must convert - allocate a buffer. */
       need_to_convert++;
-      if (var->ndims)
-	 for (d2 = 0; d2 < var->ndims; d2++)
-	    num_values *= count[d2];
       LOG((4, "converting data for var %s type=%d len=%d", var->name, 
 	   var->xtype, num_values));
       
@@ -1099,5 +1120,10 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
       }
       free(fillvalue);
    }
+
+   /* If there was an error return it, otherwise return any potential
+      range error value. If none, return NC_NOERR as usual.*/
+   if (range_error)
+      return NC_ERANGE;
    return NC_NOERR;
 }

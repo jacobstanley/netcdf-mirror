@@ -80,6 +80,12 @@ NCD_create(const char* path, int cmode, size_t initialsz, int basepe,
       cmode |= NC_NETCDF4;
       cmode |= NC_CLASSIC_MODEL;
    }
+   else if (default_create_format == NC_FORMAT_DISKLESS_CLASSIC)
+   {
+      cmode |= NC_DISKLESS;
+      cmode |= NC_NETCDF4;
+      cmode |= NC_CLASSIC_MODEL;
+   }
    LOG((2, "cmode after applying default format: 0x%x", cmode));
 
    /* Fill in information we already know. */
@@ -261,7 +267,17 @@ static int NCD_enddef(int ncid)
    /* Take care of netcdf-3 files. */
    assert(nc->nc4_info);
 
-   return nc4_enddef_netcdf4_file(nc->nc4_info);
+   /* If we're not in define mode, return an error. */
+   if (!(nc->nc4_info->flags & NC_INDEF))
+      return NC_ENOTINDEFINE;
+
+   /* Turn define mode off. */
+   nc->nc4_info->flags ^= NC_INDEF;
+
+   /* Redef mode needs to be tracked seperately for nc_abort. */
+   nc->nc4_info->redef = 0;
+
+   return NC_NOERR;
 }
 
 /* This function will write all changed metadata, and (someday) reread
@@ -294,22 +310,7 @@ sync_netcdf4_file(NC_HDF5_FILE_INFO_T *h5)
    log_metadata_nc(h5->root_grp->file);
 #endif
 
-   /* Write any metadata that has changed. */
-   if (!(h5->cmode & NC_NOWRITE))
-   {
-      if ((retval = nc4_rec_write_types(h5->root_grp)))
-	 return retval;
-      if ((retval = nc4_rec_write_metadata(h5->root_grp)))
-	 return retval;
-   }
-
-   H5Fflush(h5->hdfid, H5F_SCOPE_GLOBAL);
-
-   /* Reread all the metadata. */
-   /*if ((retval = nc4_rec_read_metadata(grp)))
-     return retval;*/
-
-   return retval;
+   return NC_NOERR;
 }
 
 /* Flushes all buffers associated with the file, after writing all

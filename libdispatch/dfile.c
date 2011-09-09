@@ -1320,6 +1320,11 @@ NC_create(const char *path, int cmode, size_t initialsz,
 	    xcmode |= NC_CLASSIC_MODEL;
 	    model = NC_DISPATCH_NC4;
 	    break;
+	 case NC_FORMAT_DISKLESS_CLASSIC:
+	    xcmode |= NC_CLASSIC_MODEL;
+	    xcmode |= NC_NETCDF4;
+	    model = NC_DISPATCH_DISKLESS;
+	    break;
 #endif
 	 case NC_FORMAT_64BIT:
 	    xcmode |= NC_64BIT_OFFSET;

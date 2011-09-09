@@ -138,7 +138,7 @@ test_nc_open(void)
 
     err = nc_close(ncid);
     IF (err)
-	error("nc_close: %s", nc_strerror(err));
+       error("nc_close: %s", nc_strerror(err));
 }
 
 
@@ -207,10 +207,15 @@ test_nc_inq(void)
     int nvars;			/* number of variables */
     int ngatts;			/* number of global attributes */
     int recdim;			/* id of unlimited dimension */
-    int err = nc_open(testfile, NC_NOWRITE, &ncid);
+    int err;
 
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       if ((err = nc_open(testfile, NC_NOWRITE, &ncid)))
+	   error("nc_open: %s", nc_strerror(err));
+    } 
+    else
+       ncid = ext_ncid;
     
     /* Try on bad handle */
     err = nc_inq(BAD_ID, 0, 0, 0, 0);
@@ -320,15 +325,18 @@ test_nc_inq(void)
 	    else IF (ngatts != ngatts0 + 1)
 		error("nc_inq in define mode: ngatts wrong, %d", ngatts);
 	    (void) nc_close(ncid2);
-	    err = remove(scratch);
-	    IF (err)
-		error("remove of %s failed", scratch);
+	    if (!ext_ncid)
+	    {
+	       err = remove(scratch);
+	       IF (err)
+		  error("remove of %s failed", scratch);
+	    }
 	}
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+       if ((err = nc_close(ncid)))
+	  error("nc_close: %s", nc_strerror(err));
 }
 
 
@@ -342,17 +350,25 @@ test_nc_inq_natts(void)
     err = nc_inq_natts(BAD_ID, &ngatts);
     IF (err != NC_EBADID)
 	error("bad ncid: status = %d", err);
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     err = nc_inq_natts(ncid, &ngatts);
     IF (err)
 	error("nc_inq_natts: %s", nc_strerror(err));
     else IF (ngatts != NGATTS)
 	error("nc_inq_natts: wrong number of global atts returned, %d", ngatts);
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -366,17 +382,25 @@ test_nc_inq_ndims(void)
     err = nc_inq_ndims(BAD_ID, &ndims);
     IF (err != NC_EBADID)
 	error("bad ncid: status = %d", err);
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     err = nc_inq_ndims(ncid, &ndims);
     IF (err)
 	error("nc_inq_ndims: %s", nc_strerror(err));
     else IF (ndims != NDIMS)
 	error("nc_inq_ndims: wrong number returned, %d", ndims);
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -390,17 +414,25 @@ test_nc_inq_nvars(void)
     err = nc_inq_nvars(BAD_ID, &nvars);
     IF (err != NC_EBADID)
 	error("bad ncid: status = %d", err);
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     err = nc_inq_nvars(ncid, &nvars);
     IF (err)
 	error("nc_inq_nvars: %s", nc_strerror(err));
     else IF (nvars != NVARS)
 	error("nc_inq_nvars: wrong number returned, %d", nvars);
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -414,17 +446,25 @@ test_nc_inq_unlimdim(void)
     err = nc_inq_unlimdim(BAD_ID, &unlimdim);
     IF (err != NC_EBADID)
 	error("bad ncid: status = %d", err);
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     err = nc_inq_unlimdim(ncid, &unlimdim);
     IF (err)
 	error("nc_inq_unlimdim: %s", nc_strerror(err));
     else IF (unlimdim != RECDIM)
 	error("nc_inq_unlimdim: wrong number returned, %d", unlimdim);
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -436,9 +476,15 @@ test_nc_inq_dimid(void)
     int i;
     int err;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
+
     err = nc_inq_dimid(ncid, "noSuch", &dimid);
     IF (err != NC_EBADDIM)
 	error("bad dim name: status = %d", err);
@@ -452,9 +498,12 @@ test_nc_inq_dimid(void)
 	else IF (dimid != i)
 	    error("expected %d, got %d", i, dimid);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -467,9 +516,14 @@ test_nc_inq_dim(void)
     char name[NC_MAX_NAME];
     size_t length;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NDIMS; i++) {
 	err = nc_inq_dim(BAD_ID, i, name, &length);
         IF (err != NC_EBADID)
@@ -498,9 +552,12 @@ test_nc_inq_dim(void)
 	else IF (dim_len[i] != length)
 	    error("size expected: %d, got: %d",dim_len[i],length);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -512,9 +569,14 @@ test_nc_inq_dimlen(void)
     int err;
     size_t length;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NDIMS; i++) {
 	err = nc_inq_dimlen(BAD_ID, i, &length);
         IF (err != NC_EBADID)
@@ -528,9 +590,12 @@ test_nc_inq_dimlen(void)
 	else IF (dim_len[i] != length)
 	    error("size expected: %d, got: %d",dim_len[i],length);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -542,9 +607,14 @@ test_nc_inq_dimname(void)
     int err;
     char name[NC_MAX_NAME];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NDIMS; i++) {
 	err = nc_inq_dimname(BAD_ID, i, name);
         IF (err != NC_EBADID)
@@ -558,9 +628,12 @@ test_nc_inq_dimname(void)
 	else IF (strcmp(dim_name[i],name)) 
 	    error("name expected: %s, got: %s",dim_name[i],name);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -572,9 +645,14 @@ test_nc_inq_varid(void)
     int i;
     int err;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     err = nc_inq_varid(ncid, "noSuch", &varid);
     IF (err != NC_ENOTVAR)
@@ -591,9 +669,12 @@ test_nc_inq_varid(void)
 	    error("expected %d, got %d", i, varid);
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -609,9 +690,14 @@ test_nc_inq_var(void)
     int dimids[MAX_RANK];
     int natts;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
 	err = nc_inq_var(BAD_ID, i, name, &datatype, &ndims, dimids, &natts);
         IF (err != NC_EBADID)
@@ -661,9 +747,12 @@ test_nc_inq_var(void)
         else IF (var_natts[i] != natts)
             error("natts expected: %d, got: %d",var_natts[i],natts);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -675,9 +764,14 @@ test_nc_inq_vardimid(void)
     int err;
     int dimids[MAX_RANK];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
 	err = nc_inq_vardimid(BAD_ID, i, dimids);
         IF (err != NC_EBADID)
@@ -691,9 +785,12 @@ test_nc_inq_vardimid(void)
 	else IF (!int_vec_eq(var_dimid[i], dimids, var_rank[i]))
 	    error("unexpected dimid");
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -705,9 +802,14 @@ test_nc_inq_varname(void)
     int err;
     char name[NC_MAX_NAME];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
 	err = nc_inq_varname(BAD_ID, i, name);
         IF (err != NC_EBADID)
@@ -721,9 +823,12 @@ test_nc_inq_varname(void)
 	else IF (strcmp(var_name[i],name)) 
 	    error("name expected: %s, got: %s",var_name[i],name);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -735,9 +840,14 @@ test_nc_inq_varnatts(void)
     int err;
     int natts;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = -1; i < NVARS; i++) {
 	err = nc_inq_varnatts(BAD_ID, i, &natts);
         IF (err != NC_EBADID)
@@ -751,9 +861,12 @@ test_nc_inq_varnatts(void)
         else IF (NATTS(i) != natts)
             error("natts expected: %d, got: %d",NATTS(i),natts);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -765,9 +878,14 @@ test_nc_inq_varndims(void)
     int err;
     int ndims;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
 	err = nc_inq_varndims(BAD_ID, i, &ndims);
         IF (err != NC_EBADID)
@@ -781,9 +899,12 @@ test_nc_inq_varndims(void)
         else IF (var_rank[i] != ndims)
             error("ndims expected: %d, got: %d",var_rank[i],ndims);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -795,9 +916,14 @@ test_nc_inq_vartype(void)
     int err;
     nc_type datatype;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
 	err = nc_inq_vartype(BAD_ID, i, &datatype);
         IF (err != NC_EBADID)
@@ -811,9 +937,12 @@ test_nc_inq_vartype(void)
         else IF (var_type[i] != datatype)
             error("type expected: %d, got: %d", var_type[i], datatype);
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -833,9 +962,14 @@ test_nc_get_var1(void)
     double buf[1];		/* (void *) buffer */
     double value;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
 	for (j = 0; j < var_rank[i]; j++)
 	    index[j] = 0;
@@ -875,9 +1009,12 @@ test_nc_get_var1(void)
 	    }
         }
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 
@@ -908,9 +1045,14 @@ test_nc_get_vara(void)
     double expect;
     double got;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         assert(var_rank[i] <= MAX_RANK);
         assert(var_nels[i] <= MAX_NELS);
@@ -994,9 +1136,12 @@ test_nc_get_vara(void)
 	    }
 	}
     }
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 
@@ -1035,9 +1180,14 @@ test_nc_get_vars(void)
     double expect;
     double got;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         assert(var_rank[i] <= MAX_RANK);
         assert(var_nels[i] <= MAX_NELS);
@@ -1161,9 +1311,12 @@ test_nc_get_vars(void)
 	    }
 	}
     }
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 
@@ -1202,9 +1355,14 @@ test_nc_get_varm(void)
     double expect;
     double got;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         assert(var_rank[i] <= MAX_RANK);
         assert(var_nels[i] <= MAX_NELS);
@@ -1320,9 +1478,12 @@ test_nc_get_varm(void)
             p += nctypelen(var_type[i]);
 	}
     }
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 
@@ -1341,9 +1502,14 @@ test_nc_get_att(void)
     double got;
     int nok = 0;      /* count of valid comparisons */
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err) 
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err) 
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
         for (j = 0; j < NATTS(i); j++) {
@@ -1389,9 +1555,12 @@ test_nc_get_att(void)
 	}
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 
@@ -1406,9 +1575,14 @@ test_nc_inq_att(void)
     nc_type t;
     size_t n;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err) 
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err) 
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
         for (j = 0; j < NATTS(i); j++) {
@@ -1433,9 +1607,12 @@ test_nc_inq_att(void)
 	}
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -1448,9 +1625,14 @@ test_nc_inq_attlen(void)
     int err;
     size_t len;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
 	err = nc_inq_attlen(ncid, i, "noSuch", &len);
@@ -1473,9 +1655,12 @@ test_nc_inq_attlen(void)
         }
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -1488,9 +1673,14 @@ test_nc_inq_atttype(void)
     int err;
     nc_type datatype;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
 	err = nc_inq_atttype(ncid, i, "noSuch", &datatype);
@@ -1513,9 +1703,12 @@ test_nc_inq_atttype(void)
         }
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -1528,9 +1721,14 @@ test_nc_inq_attname(void)
     int err;
     char name[NC_MAX_NAME];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
 	err = nc_inq_attname(ncid, i, BAD_ATTNUM, name);
@@ -1556,9 +1754,12 @@ test_nc_inq_attname(void)
         }
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 
 
@@ -1571,9 +1772,14 @@ test_nc_inq_attid(void)
     int err;
     int attnum;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
 	err = nc_inq_attid(ncid, i, "noSuch", &attnum);
@@ -1596,8 +1802,11 @@ test_nc_inq_attid(void)
         }
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+    }
 }
 

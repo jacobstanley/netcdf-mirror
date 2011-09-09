@@ -717,7 +717,7 @@ put_vars(int ncid)
 
 /* Create & write all of specified file using global variables */
 void
-write_file(char *filename) 
+write_file(char *filename, int close_it, int *ncid_out) 
 {
     int  ncid;			/* netCDF id */
     int  err;		/* status */
@@ -734,9 +734,16 @@ write_file(char *filename)
 	error("nc_enddef: %s", nc_strerror(err));
     put_vars(ncid);
 
-    err = nc_close (ncid);
-    IF (err) 
-	error("nc_close: %s", nc_strerror(err));
+    if (close_it)
+    {
+       err = nc_close (ncid);
+       IF (err) 
+	  error("nc_close: %s", nc_strerror(err));
+    } 
+    else
+    {
+       *ncid_out = ncid;
+    }
 }
 
 

@@ -18,6 +18,10 @@ conditions.
 #include "ncdispatch.h" /* from libdispatch */
 #include <utf8proc.h>
 
+#ifdef LOGGING
+extern int nc_log_level;
+#endif
+
 /** Show the in-memory metadata for a netcdf file. */
 int
 NCD_show_metadata(int ncid)

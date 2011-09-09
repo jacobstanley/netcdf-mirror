@@ -174,6 +174,7 @@ extern nc_type gatt_type[NGATTS];
 extern size_t att_len[NVARS][MAX_NATTS];
 extern size_t gatt_len[NGATTS];
 
+   extern int ext_ncid; /* Used for diskless file tests. */
 
     /* Macros for accessing attribute test data */
     /* varid is -1 for NC_GLOBAL so can do global atts in same loop */
@@ -416,7 +417,7 @@ void put_atts(int ncid);
 
 void put_vars(int ncid);
 
-void write_file(char *filename);
+void write_file(char *filename, int close_it, int *ncid_out);
 
 void check_dims(int  ncid);
 

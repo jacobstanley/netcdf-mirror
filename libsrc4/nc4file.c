@@ -392,6 +392,12 @@ NC4_create(const char* path, int cmode, size_t initialsz, int basepe,
       cmode |= NC_NETCDF4;
       cmode |= NC_CLASSIC_MODEL;
    }
+   else if (default_create_format == NC_FORMAT_DISKLESS_CLASSIC)
+   {
+      cmode |= NC_NETCDF4;
+      cmode |= NC_CLASSIC_MODEL;
+      cmode |= NC_DISKLESS;
+   }
    LOG((2, "cmode after applying default format: 0x%x", cmode));
 
    /* Check to see if we want a netcdf3 or netcdf4 file. Open it, and

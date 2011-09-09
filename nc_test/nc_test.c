@@ -43,6 +43,9 @@ nc_type gatt_type[NGATTS];
 size_t att_len[NVARS][MAX_NATTS];
 size_t gatt_len[NGATTS];
 
+
+int ext_ncid = 0; /* Used for diskless file tests. */
+
 /* 
  * command-line options
  */
@@ -76,7 +79,7 @@ char scratch[] = "scratch.nc";  /* writable scratch file */
 /* Test everything for classic and 64-bit offsetfiles. If netcdf-4 is
  * included, that means another whole round of testing. */
 #ifdef USE_NETCDF4
-#define NUM_FORMATS (3)
+#define NUM_FORMATS (4)
 #else
 #define NUM_FORMATS (2)
 #endif
@@ -105,14 +108,15 @@ main(int argc, char *argv[])
      * start. */
     /*nc_set_log_level(3);*/
 
-    fprintf(stderr, "Testing %d different netCDF formats.\n", NUM_FORMATS);
+    fprintf(stderr, "\nTesting %d different netCDF formats.\n", NUM_FORMATS);
 
     /* Go thru formats and run all tests for each of two (for netCDF-3
      * only builds), or 3 (for netCDF-4 builds) different formats. Do
      * the netCDF-4 format last, however, because, as an additional
      * test, the ../nc_test4/tst_nc_test_file program looks at the
      * output of this program. */
-    for (i = 1; i <= NUM_FORMATS; i++)
+/*    for (i = 1; i <= NUM_FORMATS; i++)*/
+    for (i = NUM_FORMATS; i > 3; i--)
     {
        switch (i) 
        {
@@ -132,6 +136,11 @@ main(int argc, char *argv[])
 	     strcpy(testfile, "nc_test_netcdf4.nc");
 	     fprintf(stderr, "\n\nSwitching to netCDF-4 format (with NC_CLASSIC_MODEL).\n");
 	     break;
+	  case 4:
+	     nc_set_default_format(NC_FORMAT_DISKLESS_CLASSIC, NULL);
+	     strcpy(testfile, "nc_test_netcdf4.nc");
+	     fprintf(stderr, "\n\nSwitching to diskless format (with NC_CLASSIC_MODEL).\n");
+	     break;
 #endif
 	  default:
 	     fprintf(stderr, "Unexpected format!\n");
@@ -139,15 +148,18 @@ main(int argc, char *argv[])
        }
 
 	/* Write the test file, needed for the read-only tests below. */
-       write_file(testfile);
+       write_file(testfile, (i == 4 ? 0 : 1), &ext_ncid);
 
 	/* delete any existing scratch netCDF file */
        (void) remove(scratch);
 
 	/* Test read-only functions, using pre-generated test-file */
  	NC_TEST(nc_strerror);
-	NC_TEST(nc_open);
-	NC_TEST(nc_close);
+	if (i != 4)
+	{
+	   NC_TEST(nc_open);
+	   NC_TEST(nc_close);
+	}
 	NC_TEST(nc_inq);
 	NC_TEST(nc_inq_dimid);
 	NC_TEST(nc_inq_dim);
@@ -172,7 +184,11 @@ main(int argc, char *argv[])
 	NC_TEST(nc_get_var_long);
 	NC_TEST(nc_get_var_float);
 	NC_TEST(nc_get_var_double);
+	nc_set_log_level(4);
+	nc_show_metadata(ext_ncid);
 	NC_TEST(nc_get_var1_text);
+	nc_close(ext_ncid);
+	return 0;
 	NC_TEST(nc_get_var1_uchar);
 	NC_TEST(nc_get_var1_schar);
 	NC_TEST(nc_get_var1_short);

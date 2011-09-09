@@ -47,10 +47,14 @@ test_nc_get_var1_$1(void)
     double expect;
     int canConvert;     /* Both text or both numeric */
     $1 value;
-
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    
+    if (!ext_ncid) {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+          error("nc_open: %s", nc_strerror(err));
+    }	  
+    else
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
 	for (j = 0; j < var_rank[i]; j++)
@@ -107,9 +111,12 @@ test_nc_get_var1_$1(void)
 	    }
 	}
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	   error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 ')dnl
@@ -144,9 +151,13 @@ test_nc_get_var_$1(void)
     $1 value[MAX_NELS];
     double expect[MAX_NELS];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+   	error("nc_open: %s", nc_strerror(err));
+    }
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
         assert(var_rank[i] <= MAX_RANK);
@@ -212,9 +223,12 @@ test_nc_get_var_$1(void)
 		error("wrong type: status = %d", err);
 	}
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+  	error("nc_close: %s", nc_strerror(err));
+    }
     print_nok(nok);
 }
 ')dnl
@@ -255,9 +269,13 @@ test_nc_get_vara_$1(void)
     $1 value[MAX_NELS];
     double expect[MAX_NELS];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+   	error("nc_open: %s", nc_strerror(err));
+    }
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
         assert(var_rank[i] <= MAX_RANK);
@@ -392,10 +410,13 @@ test_nc_get_vara_$1(void)
             }
         }
     }
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
-    print_nok(nok);
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+  	error("nc_close: %s", nc_strerror(err));
+    }
+      print_nok(nok);
 }
 ')dnl
 
@@ -441,9 +462,13 @@ test_nc_get_vars_$1(void)
     $1 value[MAX_NELS];
     double expect[MAX_NELS];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+           error("nc_open: %s", nc_strerror(err));
+    }
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
         assert(var_rank[i] <= MAX_RANK);
@@ -582,10 +607,13 @@ test_nc_get_vars_$1(void)
 	}
 
     }
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
-    print_nok(nok);
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+          error("nc_close: %s", nc_strerror(err));
+    }
+      print_nok(nok);
 }
 ')dnl
 
@@ -632,9 +660,13 @@ test_nc_get_varm_$1(void)
     $1 value[MAX_NELS];
     double expect[MAX_NELS];
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err)
+           error("nc_open: %s", nc_strerror(err));
+    }
+       ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
         assert(var_rank[i] <= MAX_RANK);
@@ -780,10 +812,13 @@ test_nc_get_varm_$1(void)
             }
         }
     }
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
-    print_nok(nok);
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+          error("nc_close: %s", nc_strerror(err));
+    }
+      print_nok(nok);
 }
 ')dnl
 
@@ -816,9 +851,13 @@ test_nc_get_att_$1(void)
     double expect[MAX_NELS];
     int nok = 0;      /* count of valid comparisons */
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid);
-    IF (err) 
-	error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid);
+       IF (err) 
+   	error("nc_open: %s", nc_strerror(err));
+    }
+       ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
         for (j = 0; j < NATTS(i); j++) {
@@ -882,10 +921,13 @@ test_nc_get_att_$1(void)
 	}
     }
 
-    err = nc_close(ncid);
-    IF (err)
-	error("nc_close: %s", nc_strerror(err));
-    print_nok(nok);
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+  	error("nc_close: %s", nc_strerror(err));
+    }
+      print_nok(nok);
 }
 ')dnl
 
