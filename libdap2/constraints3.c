@@ -290,11 +290,11 @@ matchsuffix3(NClist* matchpath, NClist* segments, int index0)
 	DCEsegment* seg = (DCEsegment*)nclistget(segments,i);
 	CDFnode* node = (CDFnode*)nclistget(matchpath,index0+i);
 	int match;
-	int rank = nclistlength(seg->slices);
+	int rank = seg->rank;
 	/* Do the names match */
 	if(strcmp(seg->name,node->name) != 0) return 0; /* no match */
 	/* Do the ranks match (watch out for sequences) */
-	if(rank == 0) /* matches any set of dimensions */
+	if(rank == 0) /* matches any set of dimensions (why?)*/
 	    match = 1;
 	else if(node->nctype == NC_Sequence)
 	    match = (rank == 1?1:0);

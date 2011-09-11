@@ -23,9 +23,9 @@ endif # USE_NETCDF4
 # remote tests are optional
 # because the server may be down
 if ENABLE_DAP_REMOTE_TESTS
-TESTS += tst_remote3.sh
+ignore=0 #TESTS += tst_remote3.sh
 if ENABLE_DAP_LONG_TESTS
-TESTS += tst_longremote3.sh
+ignore -= 0 #TESTS += tst_longremote3.sh
 endif
 
 if USE_NETCDF4
@@ -51,13 +51,13 @@ else
 test_cvt3_SOURCES = test_cvt.c
 test_varm3_SOURCES = test_varm3.c
 test_vara_SOURCES = test_vara.c
-check_PROGRAMS += t_dap3a test_cvt3 test_varm3 test_vara
-TESTS += t_dap3a test_cvt3 test_varm3 test_vara
+#check_PROGRAMS += t_dap3a test_cvt3 test_varm3 test_vara
+#TESTS += t_dap3a test_cvt3 test_varm3 test_vara
 endif
 
 t_dap3a_SOURCES = t_dap3a.c
-check_PROGRAMS += t_dap3a
-TESTS += t_dap3a
+#check_PROGRAMS += t_dap3a
+#TESTS += t_dap3a
 
 endif ENABLE_DAP_REMOTE_TESTS
 

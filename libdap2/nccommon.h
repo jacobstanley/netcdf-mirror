@@ -129,7 +129,7 @@ typedef struct NCOC {
 } NCOC;
 
 typedef struct NCCDF {
-    struct CDFnode* ddsroot; /* unconstrained dds */
+    struct CDFnode* ddsroot; /* constrained dds */
     /* Collected sets of useful nodes (in unconstrainted tree space) */
     NClist*  varnodes; /* nodes which can represent netcdf variables */
     NClist*  seqnodes; /* sequence nodes; */
