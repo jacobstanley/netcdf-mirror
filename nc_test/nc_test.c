@@ -184,11 +184,7 @@ main(int argc, char *argv[])
 	NC_TEST(nc_get_var_long);
 	NC_TEST(nc_get_var_float);
 	NC_TEST(nc_get_var_double);
-	nc_set_log_level(4);
-	nc_show_metadata(ext_ncid);
 	NC_TEST(nc_get_var1_text);
-	nc_close(ext_ncid);
-	return 0;
 	NC_TEST(nc_get_var1_uchar);
 	NC_TEST(nc_get_var1_schar);
 	NC_TEST(nc_get_var1_short);
@@ -196,7 +192,11 @@ main(int argc, char *argv[])
 	NC_TEST(nc_get_var1_long);
 	NC_TEST(nc_get_var1_float);
 	NC_TEST(nc_get_var1_double);
+	nc_set_log_level(4);
+	nc_show_metadata(ext_ncid);
 	NC_TEST(nc_get_var1);
+	nc_close(ext_ncid);
+	return 0;
 	NC_TEST(nc_get_vara_text);
 	NC_TEST(nc_get_vara_uchar);
 	NC_TEST(nc_get_vara_schar);

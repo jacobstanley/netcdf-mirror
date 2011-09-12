@@ -831,7 +831,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 		     free(fillvalue);
 
 		     /* Copy fill values to new extent. */
-		     newbuf = (char *)newbuf + (var->diskless_dimlens[d2] * file_type_size);
+		     newbuf = (char *)newbuf + (var->diskless_dimlens[d2] * file_type_size * rec_size);
 		     for (i = 0; i < (startp[d2] + countp[d2]) - var->diskless_dimlens[d2]; i++)
 			memcpy(newbuf, fillvalue_rec, rec_size * file_type_size);
 		     var->diskless_dimlens[d2] = startp[d2] + countp[d2];
@@ -856,7 +856,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    {
       num_values_to_start = 1;
       for (d1 = 0; d1 < var->ndims; d1++)
-	 num_values_to_start *= (startp[d1] * var->dim[d1]->len);
+	 num_values_to_start *= (startp[d1] * var->diskless_dimlens[d1]);
    }
    copy_point = (void *)((char *)var->diskless_data + 
 			 num_values_to_start * file_type_size);
@@ -1023,9 +1023,17 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    /* Where do I start reading this data? */
    if (var->ndims)
    {
-      num_values_to_start = 1;
+      num_values_to_start = 0;
       for (d = 0; d < var->ndims; d++)
-	 num_values_to_start *= start[d];
+      {
+	 size_t multi_factor = 1;
+	 int di;
+	 for (di = d + 1; di < var->ndims; di++)
+	    multi_factor *= var->dim[di]->len;
+	 num_values_to_start += start[d] * multi_factor;
+/*	 num_values_to_start = num_values_to_start + start[d] * 
+	 ((d == var->ndims - 1) ? 1 : var->diskless_dimlens[d]);*/
+      }
    }
    copy_point = (void *)((char *)var->diskless_data + 
 			 num_values_to_start * var->type_info->size);
