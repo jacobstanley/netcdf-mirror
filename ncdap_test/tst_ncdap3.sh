@@ -1,6 +1,6 @@
 #!/bin/sh
 
-X="-x"
+#X="-x"
 #grind="checkleaks"
 
 # if this is part of a distcheck action, then this script

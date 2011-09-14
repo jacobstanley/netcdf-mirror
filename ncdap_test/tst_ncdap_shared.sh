@@ -42,14 +42,13 @@ test.nc text.nc"
 # only to detect which are considered XFAIL tests.
 XFAILTESTS=""
 
-#FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1} ${ACTUALDATA2}"
-FILETESTS="${SYNTHETICDATA}"
+FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1} ${ACTUALDATA2}"
 
 ##################################################
 # Remote test info
 ##################################################
 
-# REMOTEURL1="http://test.opendap.org:8080/dods/dts"
+# REMOTEURL1="http://motherlode.ucar.edu:8081/dods/dts"
 # REMOTEURL2="http://test.opendap.org/dap/netcdf/examples"
 # 
 # 
