@@ -591,7 +591,6 @@ fprintf(stderr,"total estimatedsize = %lu\n",totalsize);
     nccomm->cdf.totalestimatedsize = totalsize;
 }
 
-#ifdef DDSTEMPLATE
 NCerror
 fetchtemplatemetadata3(NCDAPCOMMON* nccomm)
 {
@@ -642,25 +641,32 @@ fetchtemplatemetadata3(NCDAPCOMMON* nccomm)
 	ocstat = OC_NOERR;
     }
 
-    /* Construct our dds tree */
+    /* Construct our parallel dds tree */
     ncstat = buildcdftree34(nccomm,ocroot,OCDDS,&ddsroot);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
 #ifdef IGNORE
     if(nccomm->cdf.ddsroot != NULL)
 	freecdfroot34(&drno->dap->cdf.ddsroot);
 #endif
-    nccomm->cdf.ddsroot = ddsroot;
 
-    /* Combine */
+#ifdef DDSNEW
+    nccomm->cdf.fullddsroot = ddsroot;
+#else
+    nccomm->cdf.ddsroot = ddsroot;
+#endif
+
+#ifdef DDSNEW
+#else
+    /* Combine DDS and DAS */
     ncstat = dapmerge3(nccomm,ddsroot,nccomm->oc.ocdasroot);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+#endif
 
 done:
     nullfree(ce);
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     return ncstat;
 }
-#endif /*DDSTEMPLATE*/
 
 NCerror
 fetchconstrainedmetadata3(NCDAPCOMMON* nccomm)
@@ -676,67 +682,60 @@ fetchconstrainedmetadata3(NCDAPCOMMON* nccomm)
     else
         ce = buildconstraintstring3(nccomm->oc.dapconstraint);
 
-#ifdef DDSTEMPLATE
+#ifdef DDSNEW
+#else
     if(ce == NULL || strlen(ce) == 0) {
 	/* no need to get the dds again; just imprint on self */
         ncstat = imprintself3(nccomm->cdf.ddsroot);
-        if(ncstat) goto done;
-    } else 
-#endif /*DDSTEMPLATE*/
+        if(ncstat) goto fail;
+    } else
+#endif
     {
         ocstat = dap_oc_fetch(nccomm,nccomm->oc.conn,ce,OCDDS,&ocroot);
-        if(ocstat != OC_NOERR) {THROWCHK(ocstat); goto done;}
+        if(ocstat != OC_NOERR) {THROWCHK(ocstat); goto fail;}
 
-#ifdef DDSTEMPLATE
-        /* Get constrained DAS */
-        if(nccomm->oc.ocdasroot != OCNULL)
-	    oc_root_free(nccomm->oc.conn,nccomm->oc.ocdasroot);
-        nccomm->oc.ocdasroot = OCNULL;
-        ocstat = dap_oc_fetch(nccomm,nccomm->oc.conn,ce,OCDAS,&nccomm->oc.ocdasroot);
-        if(ocstat != OC_NOERR) {
-	    /* Ignore but complain */
-	    nclog(NCLOGWARN,"Could not read DAS; ignored");
-            nccomm->oc.ocdasroot = OCNULL;	
-	    ocstat = OC_NOERR;
-        }
-#endif /*DDSTEMPLATE*/
-
-        /* Construct our dds tree; including attributes*/
+        /* Construct our parallel dds tree; including attributes*/
         ncstat = buildcdftree34(nccomm,ocroot,OCDDS,&ddsroot);
-        if(ncstat) goto done;
-        nccomm->cdf.ddsroot = ddsroot;
+        if(ncstat) goto fail;
 
-#ifdef DDSTEMPLATE
+#ifdef DDSNEW
+	nccomm->cdf.ddsroot = ddsroot;
+#endif
+
         if(!FLAGSET(nccomm->controls,NCF_UNCONSTRAINABLE)) {
-            /* fix DAP server problem by adding back any missing grid nodes */
+            /* fix DAP server problem by adding back any missing grid structure nodes */
+#ifdef DDSNEW
+            ncstat = regrid3(ddsroot,nccomm->cdf.fullddsroot,nccomm->oc.dapconstraint->projections);    
+#else
             ncstat = regrid3(ddsroot,nccomm->cdf.ddsroot,nccomm->oc.dapconstraint->projections);    
+#endif
             if(ncstat) goto fail;
 	}
-#else /*!DDSTEMPLATE*/
-        /* make all nodes visible */
-        ncstat = imprintself3(nccomm->cdf.ddsroot);
-        if(ncstat) goto done;
-
-        /* Combine */
-        ncstat = dapmerge3(nccomm,ddsroot,nccomm->oc.ocdasroot);
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
-#endif /*DDSTEMPLATE*/
 
 #ifdef DEBUG
 fprintf(stderr,"constrained:\n%s",dumptree(ddsroot));
 #endif
 
-#ifdef DDSTEMPLATE
+#ifdef DDSNEW
+        /* Combine DDS and DAS */
+	if(nccomm->oc.ocdasroot != NULL) {
+            ncstat = dapmerge3(nccomm,ddsroot,nccomm->oc.ocdasroot);
+            if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+	}
+
+        /* map the constrained DDS to the unconstrained DDS */
+        ncstat = mapnodes3(ddsroot,nccomm->cdf.fullddsroot);
+        if(ncstat) goto fail;
+#else
         /* Imprint the constrained DDS data over the unconstrained DDS */
         ncstat = imprint3(nccomm->cdf.ddsroot,ddsroot);
         if(ncstat) goto fail;
-
         /* Throw away the constrained DDS */
         freecdfroot34(ddsroot);
-#endif /*DDSTEMPLATE*/
+#endif
     }
 
-done:
+fail:
     nullfree(ce);
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     return ncstat;

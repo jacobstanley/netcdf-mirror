@@ -195,7 +195,6 @@ ocdebug = 1;
         oc_logopen(value);
     }
 
-#ifdef DDSTEMPLATE
     /* fetch and build the unconstrained DDS */
     ncstat = fetchtemplatemetadata3(&drno->dap);
     if(ncstat != NC_NOERR) goto done;
@@ -203,7 +202,6 @@ ocdebug = 1;
     /* Process the constraints to map the CDF tree */
     ncstat = mapconstraints3(&drno->dap);
     if(ncstat != NC_NOERR) goto done;
-#endif
 
     /* fetch and build the constrained DDS */
     ncstat = fetchconstrainedmetadata3(&drno->dap);
