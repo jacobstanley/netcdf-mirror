@@ -1,3 +1,4 @@
+
 ## This is a automake file, part of Unidata's netCDF package.
 # Copyright 2010, see the COPYRIGHT file for more information.
 
@@ -22,24 +23,23 @@ protorpc.h \
 nc_path.h \
 rpc_includes.h \
 rpc.h \
+rpccurl.h \
 rpcdebug.h \
 rpcdispatch.h \
-rpccurl.h \
 rpcutil.h
 
 SRC=\
 protorpc.c \
 nc_path.c \
+rpccurl.c \
 rpcdebug.c \
 rpcdispatch.c \
 rpcserialize.c \
-rpccurl.c \
 rpcutil.c
 
 if BUILD_RPC
 
-noinst_LTLIBRARIES = librpcclient.la
-#librcpserver.la
+noinst_LTLIBRARIES = librpcclient.la librcpserver.la
 
 # Build convenience library
 librpcclient_la_SOURCES = $(SRC) $(HDRS)
@@ -71,7 +71,7 @@ endif # BUILD_V2
 
 EXTRA_DIST += ast.jar protorpc.proto
 
-protorpc protorpc.c protorpc.h: protorpc.proto ast.jar
+protorpc.c protorpc.h: protorpc.proto ast.jar
 	java -jar ast.jar -WdT -I. protorpc.proto
 
 ##################################################

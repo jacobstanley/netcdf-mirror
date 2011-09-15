@@ -2,9 +2,9 @@
 #X="-x"
 
 HDF5=1
-DAP=1
+#DAP=1
 #CDMR=1
-#RPC=1
+RPC=1
 
 #M32=1
 #M64=1

@@ -234,7 +234,7 @@ AC_MSG_RESULT($enable_rpc)
 # Curl support is required if these flags are set:
 # 1. --enable-dap
 # 2. --enable-cdmremote
-# 2. --enable-rpc
+# 3. --enable-rpc
 
 # If --disable-dap && --disable cdmremote && --disable-rpc,
 # then libcurl is not required

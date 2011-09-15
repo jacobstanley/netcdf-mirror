@@ -5,15 +5,14 @@
  *   $Header$
  *********************************************************************/
 
-#ifndef NCRPC_H
-#define NCRPC_H 1
+#ifndef RPCUTIL_H
+#define RPCUTIL_H
 
-/**************************************************/
-/*Forwards*/
-struct NC;
-struct NC_URI;
-struct NClist;
+/*Forward*/
+struct RPCnode;
 
+extern int rpcstrindex(char* s, char* match);
 
-#endif /*NCRPC_H*/
+extern void rpccollectnodepath(struct RPCnode*, NClist* path);
 
+#endif /*RPCUTIL_H*/
