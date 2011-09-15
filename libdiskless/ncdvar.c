@@ -1068,6 +1068,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    
    /* Copy the data to memory. Still might have to convert it
     * later. */
+   write_point = bufr;
    if (var->ndims < 2)
    {
       /* Scalars and 1D variables are easy. */
@@ -1078,18 +1079,19 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
       int blob_size = var->type_info->size, half_blob_size = var->type_info->size;
       int c0, c1, c2, d3;
 
-      write_point = bufr;
       for (d3 = 1; d3 < var->ndims; d3++)
 	 blob_size *= var->dim[d3]->len;
       
       for (c0 = 0; c0 < count[0]; c0++)
       {
-	 read_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size);
-	 read_point = (char *)read_point + start[1] * var->type_info->size;
-	 memcpy(write_point, read_point, count[1] * var->type_info->size);	 
-	 write_point = (char *)write_point + count[1] * var->type_info->size;
-	 /* Move to next record. */
-	 /*read_point = (void *)((char *)var->diskless_data + inc + (c0 + 1) * blob_size);*/
+	 void *rec_point;
+	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size);
+	 for (c1 = 0; c1 < count[1]; c1++)
+	 {
+	    read_point = (char *)rec_point + start[1] * half_blob_size + c1 * half_blob_size;
+	    memcpy(write_point, read_point, var->type_info->size);	 
+	    write_point = (char *)write_point + var->type_info->size;
+	 }
       }
    }
    else if (var->ndims == 3)
@@ -1097,7 +1099,6 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
       int blob_size = var->type_info->size, half_blob_size = var->type_info->size;
       int c0, c1, c2, d3;
 
-      write_point = bufr;
       for (d3 = 1; d3 < var->ndims; d3++)
 	 blob_size *= var->dim[d3]->len;
       for (d3 = 2; d3 < var->ndims; d3++)
