@@ -746,7 +746,7 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    NC_FILE_INFO_T *nc;
    NC_GRP_INFO_T *grp, *g;
    NC_VAR_INFO_T *var;
-   NC_DIM_INFO_T *dim, *dim1;
+   NC_DIM_INFO_T *dim;
    void *copy_point = NULL;
    void *bufr = NULL;
    size_t num_values = 1, num_values_to_start = 0;
@@ -920,7 +920,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    NC_FILE_INFO_T *nc;
    NC_GRP_INFO_T *grp;
    NC_VAR_INFO_T *var;
-   void *copy_point = NULL;
+   void *read_point = NULL, *write_point = NULL;
    size_t num_values = 1, num_values_to_start = 0;
    void *bufr = NULL;
    int need_to_convert = 0;
@@ -940,6 +940,10 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    if ((retval = nc4_find_g_var_nc(nc, ncid, varid, &grp, &var)))
       return retval;
    assert(grp && nc->nc4_info && var && var->name);
+
+   /* If memtype was not provided, assume the var's type. */
+   if (!memtype)
+      memtype = var->xtype;
 
    /* No NC_CHAR conversions, you pervert! */
    if (var->xtype != memtype && 
@@ -1035,7 +1039,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
 	 ((d == var->ndims - 1) ? 1 : var->diskless_dimlens[d]);*/
       }
    }
-   copy_point = (void *)((char *)var->diskless_data + 
+   read_point = (void *)((char *)var->diskless_data + 
 			 num_values_to_start * var->type_info->size);
    
    /* How many values do I copy? */
@@ -1048,8 +1052,6 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    if ((memtype != var->xtype || (var->xtype == NC_INT && is_long)) && 
        memtype != NC_COMPOUND && memtype != NC_OPAQUE)
    {
-      int d2;
-      
       /* We must convert - allocate a buffer. */
       need_to_convert++;
       LOG((4, "converting data for var %s type=%d len=%d", var->name, 
@@ -1064,8 +1066,70 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    else
       bufr = ip;
    
-   /* Copy the data to memory. Still might have to convert it. */
-   memcpy(bufr, copy_point, num_values * var->type_info->size);
+   /* Copy the data to memory. Still might have to convert it
+    * later. */
+   if (var->ndims < 2)
+   {
+      /* Scalars and 1D variables are easy. */
+      memcpy(bufr, read_point, num_values * var->type_info->size);
+   }
+   else if (var->ndims == 2)
+   {
+      int blob_size = 1;
+      int c, d3;
+      int inc;
+
+      write_point = bufr;
+      for (d3 = 1; d3 < var->ndims; d3++)
+	 blob_size *= var->dim[d3]->len;
+      
+      /* Get to start of correct record. */
+      inc = start[0] * blob_size * var->type_info->size;
+      read_point = (void *)((char *)var->diskless_data + inc);
+      
+      for (c = 0; c < count[0]; c++)
+      {
+	 read_point = (char *)read_point + start[1] * var->type_info->size;
+	 memcpy(write_point, read_point, count[1] * var->type_info->size);	 
+	 write_point = (char *)write_point + count[1] * var->type_info->size;
+	 /* Move to next record. */
+	 read_point = (void *)((char *)var->diskless_data + inc + (c + 1) * blob_size * var->type_info->size);
+      }
+   }
+   else if (var->ndims == 3)
+   {
+      int blob_size = 1, half_blob_size = 1;
+      int c0, c1, c2, d3;
+
+      write_point = bufr;
+      for (d3 = 1; d3 < var->ndims; d3++)
+	 blob_size *= var->dim[d3]->len;
+      for (d3 = 2; d3 < var->ndims; d3++)
+	 half_blob_size *= var->dim[d3]->len;
+      
+      for (c0 = 0; c0 < count[0]; c0++)
+      {
+	 void *rec_point;
+
+	 /* Get to start of correct record, in absolute terms. */
+	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size * var->type_info->size + c0 * blob_size * var->type_info->size);
+	 for (c1 = 0; c1 < count[1]; c1++)
+	 {
+	    void *mid_rec_point;
+	    mid_rec_point = (char *)rec_point + start[1] * half_blob_size * var->type_info->size + c1 * half_blob_size * var->type_info->size;
+	    for (c2 = 0; c2 < count[2]; c2++)
+	    {
+	       read_point = (char *)mid_rec_point + start[2] * var->type_info->size + c2 * var->type_info->size;
+	       memcpy(write_point, read_point, var->type_info->size);	 
+	       write_point = (char *)write_point + var->type_info->size;
+	    }
+	 }
+      }
+   }
+   else
+   {
+      memcpy(bufr, read_point, num_values * var->type_info->size);
+   }
 
    if (need_to_convert)
    {

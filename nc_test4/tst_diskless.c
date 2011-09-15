@@ -368,11 +368,11 @@ main(int argc, char **argv)
       int int_data[PRICE_LEN][WETTNESS_LEN];
       int int_data_in[PRICE_LEN][WETTNESS_LEN];
       size_t start[NDIMS2] = {0, 0}, count[NDIMS2];
-      int p, w;
+      int p, w, i = 0;
 
       for (p = 0; p < PRICE_LEN; p++)
 	 for (w = 0; w < WETTNESS_LEN; w++)
-	    int_data[p][w] = p * w;
+	    int_data[p][w] = i++;
 
       /* Create a netCDF file (which exists only in memory). */
       if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL,
@@ -597,12 +597,13 @@ main(int argc, char **argv)
       int int_data_in[BRITAIN_LEN2][BIRTH_LEN2][WINSTON_LEN2];
       size_t start[NDIMS3] = {0, 0, 0}, count[NDIMS3];
       size_t len;
-      int p, b, w;
+      int p, b, w, i = 0;
 
+      /* Initialize sample data. */
       for (p = 0; p < BRITAIN_LEN2; p++)
 	 for (b = 0; b < BIRTH_LEN2; b++)
 	    for (w = 0; w < WINSTON_LEN2; w++)
-	       int_data[p][b][w] = p * w * b;
+	       int_data[p][b][w] = i++;
 
       /* Create a netCDF file (which exists only in memory). */
       if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL,
