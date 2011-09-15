@@ -1098,7 +1098,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    }
    else if (var->ndims == 3)
    {
-      int blob_size = 1, half_blob_size = 1;
+      int blob_size = var->type_info->size, half_blob_size = var->type_info->size;
       int c0, c1, c2, d3;
 
       write_point = bufr;
@@ -1112,11 +1112,11 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
 	 void *rec_point;
 
 	 /* Get to start of correct record, in absolute terms. */
-	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size * var->type_info->size + c0 * blob_size * var->type_info->size);
+	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size);
 	 for (c1 = 0; c1 < count[1]; c1++)
 	 {
 	    void *mid_rec_point;
-	    mid_rec_point = (char *)rec_point + start[1] * half_blob_size * var->type_info->size + c1 * half_blob_size * var->type_info->size;
+	    mid_rec_point = (char *)rec_point + start[1] * half_blob_size + c1 * half_blob_size;
 	    for (c2 = 0; c2 < count[2]; c2++)
 	    {
 	       read_point = (char *)mid_rec_point + start[2] * var->type_info->size + c2 * var->type_info->size;
