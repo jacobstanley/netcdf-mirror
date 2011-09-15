@@ -1077,23 +1077,19 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    {
       int blob_size = var->type_info->size, half_blob_size = var->type_info->size;
       int c0, c1, c2, d3;
-      int inc;
 
       write_point = bufr;
       for (d3 = 1; d3 < var->ndims; d3++)
 	 blob_size *= var->dim[d3]->len;
       
-      /* Get to start of correct record. */
-      inc = start[0] * blob_size;
-      read_point = (void *)((char *)var->diskless_data + inc);
-      
       for (c0 = 0; c0 < count[0]; c0++)
       {
+	 read_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size);
 	 read_point = (char *)read_point + start[1] * var->type_info->size;
 	 memcpy(write_point, read_point, count[1] * var->type_info->size);	 
 	 write_point = (char *)write_point + count[1] * var->type_info->size;
 	 /* Move to next record. */
-	 read_point = (void *)((char *)var->diskless_data + inc + (c0 + 1) * blob_size);
+	 /*read_point = (void *)((char *)var->diskless_data + inc + (c0 + 1) * blob_size);*/
       }
    }
    else if (var->ndims == 3)
