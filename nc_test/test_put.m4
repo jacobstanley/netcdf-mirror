@@ -331,9 +331,12 @@ test_nc_put_var1_$1(void)
 
     check_vars_$1(scratch);
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+           error("remove of %s failed", scratch);
+    }
 }
 ')dnl
 
@@ -468,9 +471,12 @@ test_nc_put_var_$1(void)
 
     check_vars_$1(scratch);
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+           error("remove of %s failed", scratch);
+    }
 }
 ')dnl
 
@@ -633,9 +639,12 @@ test_nc_put_vara_$1(void)
 
     check_vars_$1(scratch);
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+           error("remove of %s failed", scratch);
+    }
 }
 ')dnl
 
@@ -806,9 +815,12 @@ test_nc_put_vars_$1(void)
 
     check_vars_$1(scratch);
 
-    err = remove(scratch);
-    IF (err)
-	error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+   	error("remove of %s failed", scratch);
+    }
 }
 ')dnl
 
@@ -987,9 +999,12 @@ test_nc_put_varm_$1(void)
 
     check_vars_$1(scratch);
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+           error("remove of %s failed", scratch);
+    }
 }
 ')dnl
 
@@ -1058,9 +1073,12 @@ test_nc_put_att_text(void)
     IF (err)
         error("nc_close: %s", nc_strerror(err));
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+           error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1126,9 +1144,12 @@ test_nc_put_att_$1(void)
     IF (err)
         error("nc_close: %s", nc_strerror(err));
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+           error("remove of %s failed", scratch);
+    }
 }
 ')dnl
 

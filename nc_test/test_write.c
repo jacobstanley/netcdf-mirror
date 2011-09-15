@@ -559,9 +559,13 @@ test_nc_def_dim(void)
     err = nc_close(ncid);
     IF (err)
 	error("nc_close: %s", nc_strerror(err));
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -607,9 +611,12 @@ test_nc_rename_dim(void)
     err = nc_close(ncid);
     IF (err)
         error("nc_close: %s", nc_strerror(err));
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -683,9 +690,12 @@ test_nc_def_var(void)
     err = nc_close(ncid);
     IF (err)
         error("nc_close: %s", nc_strerror(err));
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 
         /* general tests using global vars */
     err = nc_create(scratch, NC_CLOBBER, &ncid);
@@ -712,9 +722,12 @@ test_nc_def_var(void)
     IF (err)
         error("nc_close: %s", nc_strerror(err));
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1303,9 +1316,12 @@ test_nc_rename_var(void)
     IF (err)
         error("nc_close: %s", nc_strerror(err));
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1373,9 +1389,12 @@ test_nc_put_att(void)
     IF (err)
         error("nc_close: %s", nc_strerror(err));
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1405,9 +1424,15 @@ test_nc_copy_att(void)
     size_t length;              /* of att */
     char  value;
 
-    err = nc_open(testfile, NC_NOWRITE, &ncid_in);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid) 
+    {
+       err = nc_open(testfile, NC_NOWRITE, &ncid_in);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+       ncid_in = ext_ncid;
+
     err = nc_create(scratch, NC_NOCLOBBER, &ncid_out);
     IF (err) {
         error("nc_create: %s", nc_strerror(err));
@@ -1444,17 +1469,21 @@ test_nc_copy_att(void)
 	}
     }
 
-    err = nc_close(ncid_in);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid_in);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
 
-        /* Close scratch. Reopen & check attributes */
-    err = nc_close(ncid_out);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
-    err = nc_open(scratch, NC_WRITE, &ncid_out);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+       /* Close scratch. Reopen & check attributes */
+       err = nc_close(ncid_out);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+       err = nc_open(scratch, NC_WRITE, &ncid_out);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+       err = nc_redef(ncid_out);
+    }
     check_atts(ncid_out);
 
        /* 
@@ -1462,7 +1491,6 @@ test_nc_copy_att(void)
 	* define single char. global att. ':a' with value 'A'
 	* This will be used as source for following copies
 	*/
-    err = nc_redef(ncid_out);
     IF (err)
         error("nc_redef: %s", nc_strerror(err));
     err = nc_put_att_text(ncid_out, NC_GLOBAL, "a", 1, "A");
@@ -1489,14 +1517,17 @@ test_nc_copy_att(void)
 		error("nc_copy_att: %s", nc_strerror(err));
 	}
     }
-    err = nc_close(ncid_out);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid_out);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
 
-	/* Reopen & check */
-    err = nc_open(scratch, NC_WRITE, &ncid_out);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+       /* Reopen & check */
+       err = nc_open(scratch, NC_WRITE, &ncid_out);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
     for (i = 0; i < NVARS; i++) {
 	if (NATTS(i) > 0 && ATT_LEN(i,j) > 0) {
 	    err = nc_inq_att(ncid_out, i, "a", &datatype, &length);
@@ -1517,9 +1548,12 @@ test_nc_copy_att(void)
     err = nc_close(ncid_out);
     IF (err)
         error("nc_close: %s", nc_strerror(err));
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1591,12 +1625,21 @@ test_nc_rename_att(void)
     }
 
         /* Close. Reopen & check */
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
-    err = nc_open(scratch, NC_WRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+       err = nc_open(scratch, NC_WRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+    {
+       err = nc_enddef(ncid);
+       IF (err)
+	  error("nc_enddef: %s", nc_strerror(err));
+    }
 
     for (i = -1; i < NVARS; i++) {
         varid = VARID(i);
@@ -1678,9 +1721,12 @@ test_nc_rename_att(void)
     IF (err)
         error("nc_close: %s", nc_strerror(err));
 
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1750,12 +1796,21 @@ test_nc_del_att(void)
     }
 
         /* Close. Reopen & check no attributes left */
-    err = nc_close(ncid);
-    IF (err)
-        error("nc_close: %s", nc_strerror(err));
-    err = nc_open(scratch, NC_WRITE, &ncid);
-    IF (err)
-        error("nc_open: %s", nc_strerror(err));
+    if (!ext_ncid)
+    {
+       err = nc_close(ncid);
+       IF (err)
+	  error("nc_close: %s", nc_strerror(err));
+       err = nc_open(scratch, NC_WRITE, &ncid);
+       IF (err)
+	  error("nc_open: %s", nc_strerror(err));
+    }
+    else
+    {
+       err = nc_enddef(ncid);
+       IF (err)
+	  error("nc_enddef: %s", nc_strerror(err));
+    }
     err = nc_inq_natts(ncid, &natts);
     IF (err)
 	error("nc_inq_natts: %s", nc_strerror(err));
@@ -1793,9 +1848,12 @@ test_nc_del_att(void)
     err = nc_close(ncid);
     IF (err)
         error("nc_close: %s", nc_strerror(err));
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 
@@ -1983,9 +2041,12 @@ test_nc_set_fill(void)
     err = nc_close(ncid);
     IF (err)
         error("nc_close: %s", nc_strerror(err));
-    err = remove(scratch);
-    IF (err)
-        error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       err = remove(scratch);
+       IF (err)
+	  error("remove of %s failed", scratch);
+    }
 }
 
 /* This function gets the version of a netCDF file, 1 is for netCDF
@@ -2070,6 +2131,9 @@ test_nc_set_default_format(void)
     }
 
     /* Remove the left-over file. */
-    if ((err = remove(scratch)))
-       error("remove of %s failed", scratch);
+    if (!ext_ncid)
+    {
+       if ((err = remove(scratch)))
+	  error("remove of %s failed", scratch);
+    }
 }

@@ -115,8 +115,8 @@ main(int argc, char *argv[])
      * the netCDF-4 format last, however, because, as an additional
      * test, the ../nc_test4/tst_nc_test_file program looks at the
      * output of this program. */
-/*    for (i = 1; i <= NUM_FORMATS; i++)*/
-    for (i = NUM_FORMATS; i > 3; i--)
+/*    for (i = NUM_FORMATS; i > 3; i--)*/
+    for (i = 1; i <= NUM_FORMATS; i++)
     {
        switch (i) 
        {
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 	     break;
 	  case 4:
 	     nc_set_default_format(NC_FORMAT_DISKLESS_CLASSIC, NULL);
-	     strcpy(testfile, "nc_test_netcdf4.nc");
+	     strcpy(testfile, "nc_test_netcdf_diskless.nc");
 	     fprintf(stderr, "\n\nSwitching to diskless format (with NC_CLASSIC_MODEL).\n");
 	     break;
 #endif
@@ -237,14 +237,19 @@ main(int argc, char *argv[])
 	NC_TEST(nc_inq_atttype);
 
 	/* Test write functions */
-	NC_TEST(nc_create);
-	NC_TEST(nc_redef);
+	if (i != 4)
+	{
+	   NC_TEST(nc_create);
+	   NC_TEST(nc_redef);
 	/* NC_TEST(nc_enddef); *//* redundant */
-	NC_TEST(nc_sync);
-	NC_TEST(nc_abort);
+	   NC_TEST(nc_sync);
+	   NC_TEST(nc_abort);
+	}
 	NC_TEST(nc_def_dim);
 	NC_TEST(nc_rename_dim);
 	NC_TEST(nc_def_var);
+	if (i != 4)
+	{
 	NC_TEST(nc_put_var_text);
 	NC_TEST(nc_put_var_uchar);
 	NC_TEST(nc_put_var_schar);
@@ -289,6 +294,7 @@ main(int argc, char *argv[])
 	NC_TEST(nc_put_varm_float);
 	NC_TEST(nc_put_varm_double);
 	NC_TEST(nc_put_varm);
+	}
 	NC_TEST(nc_rename_var);
 	NC_TEST(nc_put_att_text);
 	NC_TEST(nc_put_att_uchar);

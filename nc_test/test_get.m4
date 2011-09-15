@@ -157,6 +157,7 @@ test_nc_get_var_$1(void)
        IF (err)
    	error("nc_open: %s", nc_strerror(err));
     }
+    else
        ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
@@ -275,6 +276,7 @@ test_nc_get_vara_$1(void)
        IF (err)
    	error("nc_open: %s", nc_strerror(err));
     }
+    else
        ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
@@ -468,6 +470,7 @@ test_nc_get_vars_$1(void)
        IF (err)
            error("nc_open: %s", nc_strerror(err));
     }
+    else
        ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
@@ -666,6 +669,7 @@ test_nc_get_varm_$1(void)
        IF (err)
            error("nc_open: %s", nc_strerror(err));
     }
+    else
        ncid = ext_ncid;
     for (i = 0; i < NVARS; i++) {
         canConvert = (var_type[i] == NC_CHAR) == (NCT_ITYPE($1) == NCT_TEXT);
@@ -857,6 +861,7 @@ test_nc_get_att_$1(void)
        IF (err) 
    	error("nc_open: %s", nc_strerror(err));
     }
+    else
        ncid = ext_ncid;
 
     for (i = -1; i < NVARS; i++) {
