@@ -13,10 +13,63 @@ redistribution conditions.
 
 #define FILE_NAME "tst_diskless.nc"
 
+int inc_ptr(int ndims, size_t *start, size_t *count,
+	    size_t *ptr, int *done)
+{
+   int d, id, ret;
+
+   printf("start ");
+   for (d = 0; d < ndims; d++)
+      printf("%d", (int)start[d]);
+   printf("\n");
+
+   if (ndims > 1)
+      if ((ret = inc_ptr(ndims - 1, &start[1], &count[1], &ptr[1], done)))
+	 return ret;
+
+   ptr[ndims - 1]++;
+   for (id = ndims - 1; id > 0; id--)
+      if (ptr[id] >= start[id] + count[id])
+      {
+	 ptr[id - 1]++;
+	 ptr[id] = start[id];
+      }
+
+   printf("ptr   ");
+   for (d = 0; d < ndims; d++)
+      printf("%d", (int)ptr[d]);
+   printf("\n");
+   
+   return 0;
+}
+
 int
 main(int argc, char **argv) 
 {
    printf("\n*** Testing the diskless API.\n");
+
+   {
+#define NDIMS3 3
+#define D0 2
+#define D1 3
+#define D2 5
+
+      size_t start[NDIMS3] = {1,1,1};
+      size_t count[NDIMS3] = {2,2,2};
+      size_t ptr[NDIMS3] = {1,1,1};
+      int done = 0, d, c;
+      int ret;
+
+      for (d = NDIMS3 - 1; d >= 0; d--)
+	 for (c = 0; c < count[d]; c++)
+	 {
+	    printf("d %d c %d\n", d, c);
+      	    if ((ret = inc_ptr(NDIMS3, start, count, ptr, &done)))
+	       return ret;
+	 }
+   }
+
+   return 0;
    printf("*** testing diskless file with scalar vars...");
    {
 #define RESISTOR "resistor_value"
@@ -502,8 +555,8 @@ main(int argc, char **argv)
 #define BEER "beer"
 #define WINE "wine"
 #define NDIMS2 2
-#define WETTNESS_LEN2 10
-#define PRICE_LEN2 34
+#define WETTNESS_LEN2 2
+#define PRICE_LEN2 1
 
       int ncid, varid, dimid[NDIMS2], varid2;
       int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[2];

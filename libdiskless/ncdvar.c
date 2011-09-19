@@ -912,9 +912,66 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
    return NC_NOERR;
 }
 
+/** Given a start for an n-dimensional variable, read one value
+ * (i.e. count array all 1s). */
+static int
+get_diskless_datum(NC_VAR_INFO_T *var, const size_t *start, void *datum)
+{
+   int d;
+   void *r1 = var->diskless_data;
+
+   for (d = 0; d < var->ndims; d++)
+   {
+      size_t blob_size = var->type_info->size;
+      int d3;
+      
+      for (d3 = d + 1; d3 < var->ndims; d3++)
+	 blob_size *= var->dim[d3]->len;
+      
+      r1 = (char *)(r1 + start[d] * blob_size);
+   }
+
+   memcpy(datum, r1, var->type_info->size);
+   return NC_NOERR;
+}
+
+/*
+ * Updates a vector of size_t, odometer style.  Returns 0 if odometer
+ * overflowed, else 1.
+ */
+static int
+up_start(
+     int ndims,		 /* Number of dimensions */
+     const size_t *dims, /* The "odometer" limits for each dimension */
+     int incdim,	 /* the odmometer increment dimension */
+     size_t inc,	 /* the odometer increment for that dimension */
+     size_t* odom	 /* The "odometer" vector to be updated */
+     )
+{
+    int id;
+    int ret = 1;
+
+   if (!ndims)
+      return 1;
+	 
+    if(inc == 0) {
+	return 0;
+    }
+    odom[incdim] += inc;
+    for (id = incdim; id > 0; id--) {
+	if(odom[id] >= dims[id]) {
+	    odom[id-1]++;
+	    odom[id] -= dims[id];
+	}
+    }
+    if (odom[0] < dims[0])
+      ret = 0;
+    return ret;
+}
+
 /** \internal Read an array of values from a diskless file. */
 int
-NCD_get_vara(int ncid, int varid, const size_t *start, 
+NCD_get_vara(int ncid, int varid, const size_t *startp, 
 	     const size_t *countp, void *ip, int memtype)
 {
    NC_FILE_INFO_T *nc;
@@ -925,7 +982,9 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    void *bufr = NULL;
    int need_to_convert = 0;
    int d, retval;
-   int fill_value_size[NC_MAX_VAR_DIMS], count[NC_MAX_VAR_DIMS];
+   int fill_value_size[NC_MAX_VAR_DIMS];
+   size_t start[NC_MAX_VAR_DIMS], count[NC_MAX_VAR_DIMS];
+   size_t limit[NC_MAX_VAR_DIMS];
    void *fillvalue = NULL;
    int no_read = 0, provide_fill = 0;
    size_t file_type_size;
@@ -950,8 +1009,19 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
        (var->xtype == NC_CHAR || memtype == NC_CHAR))
       return NC_ECHAR;
 
-   for (i = 0; i < var->ndims; i++)
-      count[i] = countp[i];
+   if (var->ndims)
+      for (i = 0; i < var->ndims; i++)
+      {
+	 count[i] = countp[i];
+	 start[i] = startp[i];
+	 limit[i] = startp[i] + countp[i];
+      }
+   else
+   {
+      count[0] = 1;
+      start[0] = 0;
+      limit[0] = 1;
+   }
 
    if (var->ndims)
    {
@@ -1002,6 +1072,7 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
 		     else
 			fill_value_size[d2] = 0;
 		     count[d2] -= fill_value_size[d2];
+		     limit[d2] -= fill_value_size[d2];
 		     if (fill_value_size[d2])
 			provide_fill++;
 		  }
@@ -1065,68 +1136,101 @@ NCD_get_vara(int ncid, int varid, const size_t *start,
    }
    else
       bufr = ip;
-   
-   /* Copy the data to memory. Still might have to convert it
-    * later. */
+
+   printf("\ncount[0]=%d count[1]=%d\n", (int)count[0], (int)count[1]);
+
    write_point = bufr;
-   if (var->ndims < 2)
+   if (limit[0])
    {
-      /* Scalars and 1D variables are easy. */
-      memcpy(bufr, read_point, num_values * var->type_info->size);
-   }
-   else if (var->ndims == 2)
-   {
-      int blob_size = var->type_info->size, half_blob_size = var->type_info->size;
-      int c0, c1, c2, d3;
+      int ret;
 
-      for (d3 = 1; d3 < var->ndims; d3++)
-	 blob_size *= var->dim[d3]->len;
-      
-      for (c0 = 0; c0 < count[0]; c0++)
+      if (var->ndims)
       {
-	 void *rec_point;
-	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size);
-	 for (c1 = 0; c1 < count[1]; c1++)
+	 int dd;
+	 for (dd = var->ndims - 1; dd >= 0; dd--)
 	 {
-	    read_point = (char *)rec_point + start[1] * half_blob_size + c1 * half_blob_size;
-	    memcpy(write_point, read_point, var->type_info->size);	 
-	    write_point = (char *)write_point + var->type_info->size;
-	 }
-      }
-   }
-   else if (var->ndims == 3)
-   {
-      int blob_size = var->type_info->size, half_blob_size = var->type_info->size;
-      int c0, c1, c2, d3;
-
-      for (d3 = 1; d3 < var->ndims; d3++)
-	 blob_size *= var->dim[d3]->len;
-      for (d3 = 2; d3 < var->ndims; d3++)
-	 half_blob_size *= var->dim[d3]->len;
-      
-      for (c0 = 0; c0 < count[0]; c0++)
-      {
-	 void *rec_point;
-
-	 /* Get to start of correct record, in absolute terms. */
-	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size);
-	 for (c1 = 0; c1 < count[1]; c1++)
-	 {
-	    void *mid_rec_point;
-	    mid_rec_point = (char *)rec_point + start[1] * half_blob_size + c1 * half_blob_size;
-	    for (c2 = 0; c2 < count[2]; c2++)
+	    int cc;
+	    int ret = 0;
+	    for (cc = 0; cc < count[dd]; cc++)
 	    {
-	       read_point = (char *)mid_rec_point + start[2] * var->type_info->size + c2 * var->type_info->size;
-	       memcpy(write_point, read_point, var->type_info->size);	 
+	       if ((ret = get_diskless_datum(var, start, write_point)))
+		  return ret;
 	       write_point = (char *)write_point + var->type_info->size;
+	       printf("\nstart[0]=%d start[1]=%d\n", start[0], start[1]);
+/*	       ret = up_start(var->ndims, limit, dd, 1, start);*/
+	       start[dd]++;
+	       printf("ret=%d start[0]=%d start[1]=%d\n", ret, start[0], start[1]);
 	    }
 	 }
       }
+      else
+      {
+
+	    if ((ret = get_diskless_datum(var, start, write_point)))
+	       return ret;
+	    write_point = (char *)write_point + var->type_info->size;
+      }
    }
-   else
-   {
-      memcpy(bufr, read_point, num_values * var->type_info->size);
-   }
+   
+   /* /\* Copy the data to memory. Still might have to convert it */
+   /*  * later. *\/ */
+   /* if (var->ndims < 2) */
+   /* { */
+   /*    /\* Scalars and 1D variables are easy. *\/ */
+   /*    memcpy(bufr, read_point, num_values * var->type_info->size); */
+   /* } */
+   /* else if (var->ndims == 2) */
+   /* { */
+   /*    int blob_size = var->type_info->size, half_blob_size = var->type_info->size; */
+   /*    int c0, c1, c2, d3; */
+
+   /*    for (d3 = 1; d3 < var->ndims; d3++) */
+   /* 	 blob_size *= var->dim[d3]->len; */
+   /*    for (d3 = 2; d3 < var->ndims; d3++) */
+   /* 	 half_blob_size *= var->dim[d3]->len; */
+      
+   /*    for (c0 = 0; c0 < count[0]; c0++) */
+   /*    { */
+   /* 	 void *rec_point; */
+   /* 	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size); */
+   /* 	 for (c1 = 0; c1 < count[1]; c1++) */
+   /* 	 { */
+   /* 	    read_point = (char *)rec_point + start[1] * half_blob_size + c1 * half_blob_size; */
+   /* 	    memcpy(write_point, read_point, var->type_info->size);	  */
+   /* 	    write_point = (char *)write_point + var->type_info->size; */
+   /* 	 } */
+   /*    } */
+   /* } */
+   /* else if (var->ndims == 3) */
+   /* { */
+   /*    int blob_size = var->type_info->size, half_blob_size = var->type_info->size; */
+   /*    int c0, c1, c2, d3; */
+   /*    for (d3 = 1; d3 < var->ndims; d3++) */
+   /* 	 blob_size *= var->dim[d3]->len; */
+   /*    for (d3 = 2; d3 < var->ndims; d3++) */
+   /* 	 half_blob_size *= var->dim[d3]->len; */
+      
+   /*    for (c0 = 0; c0 < count[0]; c0++) */
+   /*    { */
+   /* 	 void *rec_point; */
+   /* 	 rec_point = (void *)((char *)var->diskless_data + start[0] * blob_size + c0 * blob_size); */
+   /* 	 for (c1 = 0; c1 < count[1]; c1++) */
+   /* 	 { */
+   /* 	    void *mid_rec_point; */
+   /* 	    mid_rec_point = (char *)rec_point + start[1] * half_blob_size + c1 * half_blob_size; */
+   /* 	    for (c2 = 0; c2 < count[2]; c2++) */
+   /* 	    { */
+   /* 	       read_point = (char *)mid_rec_point + start[2] * var->type_info->size + c2 * var->type_info->size; */
+   /* 	       memcpy(write_point, read_point, var->type_info->size);	  */
+   /* 	       write_point = (char *)write_point + var->type_info->size; */
+   /* 	    } */
+   /* 	 } */
+   /*    } */
+   /* } */
+   /* else */
+   /* { */
+   /*    memcpy(bufr, read_point, num_values * var->type_info->size); */
+   /* } */
 
    if (need_to_convert)
    {

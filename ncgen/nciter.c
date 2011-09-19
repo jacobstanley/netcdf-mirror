@@ -264,7 +264,7 @@ up_start(
 	    odom[id] -= dims[id];
 	}
     }
-    if (odom[0] >= dims[0])
+    if (odom[0] <= dims[0])
       ret = 0;
     return ret;
 }
