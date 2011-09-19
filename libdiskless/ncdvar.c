@@ -945,14 +945,15 @@ up_start(
      const size_t *dims, /* The "odometer" limits for each dimension */
      int incdim,	 /* the odmometer increment dimension */
      size_t inc,	 /* the odometer increment for that dimension */
-     size_t* odom	 /* The "odometer" vector to be updated */
+     size_t* odom,	 /* The "odometer" vector to be updated */
+     int *change
      )
 {
     int id;
-    int ret = 1;
+    int ret = -1;
 
    if (!ndims)
-      return 1;
+      return -1;
 	 
     if(inc == 0) {
 	return 0;
@@ -962,6 +963,7 @@ up_start(
 	if(odom[id] >= dims[id]) {
 	    odom[id-1]++;
 	    odom[id] -= dims[id];
+	    *change = id;
 	}
     }
     if (odom[0] < dims[0])
@@ -1014,7 +1016,7 @@ NCD_get_vara(int ncid, int varid, const size_t *startp,
       {
 	 count[i] = countp[i];
 	 start[i] = startp[i];
-	 limit[i] = startp[i] + countp[i];
+	 limit[i] = var->diskless_dimlens[i];
       }
    else
    {
@@ -1137,7 +1139,7 @@ NCD_get_vara(int ncid, int varid, const size_t *startp,
    else
       bufr = ip;
 
-   printf("\ncount[0]=%d count[1]=%d\n", (int)count[0], (int)count[1]);
+/*   printf("\ncount[0]=%d count[1]=%d\n", (int)count[0], (int)count[1]);*/
 
    write_point = bufr;
    if (limit[0])
@@ -1147,20 +1149,23 @@ NCD_get_vara(int ncid, int varid, const size_t *startp,
       if (var->ndims)
       {
 	 int dd;
-	 for (dd = var->ndims - 1; dd >= 0; dd--)
+	 int cc;
+	 int ret = 0;
+	 int change = 0;
+	 
+	 for (cc = 0; cc < num_values; cc++)
 	 {
-	    int cc;
-	    int ret = 0;
-	    for (cc = 0; cc < count[dd]; cc++)
+	    if ((ret = get_diskless_datum(var, start, write_point)))
+	       return ret;
+	    write_point = (char *)write_point + var->type_info->size;
+/*	    printf("\nstart[0]=%d start[1]=%d\n", (int)start[0], (int)start[1]);*/
+	    ret = up_start(var->ndims, limit, var->ndims - 1, 1, start, &change);
+	    if (change)
 	    {
-	       if ((ret = get_diskless_datum(var, start, write_point)))
-		  return ret;
-	       write_point = (char *)write_point + var->type_info->size;
-	       printf("\nstart[0]=%d start[1]=%d\n", start[0], start[1]);
-/*	       ret = up_start(var->ndims, limit, dd, 1, start);*/
-	       start[dd]++;
-	       printf("ret=%d start[0]=%d start[1]=%d\n", ret, start[0], start[1]);
+	       start[change] = startp[change];
+	       change = 0;
 	    }
+/*	    printf("ret=%d start[0]=%d start[1]=%d\n", ret, start[0], start[1]);*/
 	 }
       }
       else
