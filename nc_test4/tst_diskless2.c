@@ -359,5 +359,67 @@ main(int argc, char **argv)
       if (nc_close(ncid)) ERR;
    }
    SUMMARIZE_ERR;
+   printf("*** testing diskless file with a 2D text var like nc_test...");
+   {
+#define DIM0 "dim0"
+#define DIM1 "DIM1"
+#define NDIMS2 2
+#define DIM0_LENGTH1 3
+#define DIM1_LENGTH1 4
+#define VAR "var"
+
+      int ncid, varid, dimid[NDIMS2];
+      int ndims_in, nvars_in, natts_in, unlimdimid_in, dimids_in[2];
+      char name_in[NC_MAX_NAME + 1];
+      nc_type type_in;
+      char char_data[DIM1_LENGTH1][DIM0_LENGTH1];
+      char char_data_in[2][1];
+      size_t start[NDIMS2] = {0, 0}, count[NDIMS2];
+      int p, s, i = 0;
+
+      for (s = 0; s < DIM1_LENGTH1; s++)
+	 for (p = 0; p < DIM0_LENGTH1; p++)
+	    char_data[s][p] = i++;
+
+      /* Create a netCDF file (which exists only in memory). */
+      if (nc_create(FILE_NAME, NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL,
+		    &ncid)) ERR;
+
+      /* Define two dimensions. */
+      if (nc_def_dim(ncid, DIM0, DIM0_LENGTH1, &dimid[1])) ERR;
+      if (nc_def_dim(ncid, DIM1, DIM1_LENGTH1, &dimid[0])) ERR;
+
+      /* Define a variable. */
+      if (nc_def_var(ncid, VAR, NC_CHAR, NDIMS2, dimid, &varid)) ERR;
+
+      /* Write some data to the variable. */
+      count[0] = DIM1_LENGTH1;
+      count[1] = DIM0_LENGTH1;
+      if (nc_put_vara_text(ncid, varid, start, count, &char_data[0][0])) ERR;
+
+      /* Now check the phony file. */
+      if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
+      if (ndims_in != NDIMS2 || nvars_in != 1 || natts_in != 0 ||
+	  unlimdimid_in != -1) ERR;
+
+      /* Check variable. */
+      if (nc_inq_var(ncid, varid, name_in, &type_in, &ndims_in,
+		     dimids_in, &natts_in)) ERR;
+      if (strcmp(name_in, VAR) || type_in != NC_CHAR || ndims_in != NDIMS2
+	  || dimids_in[0] != 1 || dimids_in[1] != 0 || natts_in) ERR;
+
+      /* Read part of the data. */
+      start[0] = 2;
+      start[1] = 0;
+      count[0] = 2;
+      count[1] = 1;
+      if (nc_get_vara_text(ncid, varid, start, count, &char_data_in[0][0])) ERR;
+      if (char_data_in[0][0] != char_data[2][0]) ERR;
+      if (char_data_in[1][0] != char_data[3][0]) ERR;
+
+      /* Close the file. */
+      if (nc_close(ncid)) ERR;
+   }
+   SUMMARIZE_ERR;
    FINAL_RESULTS;
 }

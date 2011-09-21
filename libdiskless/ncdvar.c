@@ -915,11 +915,13 @@ NCD_put_vara(int ncid, int varid, const size_t *startp,
 /** Given a start for an n-dimensional variable, read one value
  * (i.e. count array all 1s). */
 static int
-get_diskless_datum(NC_VAR_INFO_T *var, const size_t *start, void *datum)
+get_diskless_datum(NC_VAR_INFO_T *var, const size_t *start, size_t *count, size_t *current, 
+		   void *datum, int *done)
 {
    int d;
    void *r1 = var->diskless_data;
 
+   /* Find point to read data from. */
    for (d = 0; d < var->ndims; d++)
    {
       size_t blob_size = var->type_info->size;
@@ -931,7 +933,25 @@ get_diskless_datum(NC_VAR_INFO_T *var, const size_t *start, void *datum)
       r1 = (char *)(r1 + start[d] * blob_size);
    }
 
+   /* Copy one value. */
    memcpy(datum, r1, var->type_info->size);
+
+   /* Set current to the next read point, if there is one. */
+   ret = up_start(var->ndims, var->diskless_dimlens, incdim, 1, current, &change);
+   
+/*	    printf("\ncurrent[0]=%d current[1]=%d\n", (int)current[0], (int)current[1]);*/
+	    if (change)
+	    {
+	       current[change] = currentp[change];
+	       change = 0;
+	    }
+	    if (!--my_count[incdim])
+	    {
+	       current[incdim] = currentp[incdim];
+	       current[incdim - 1] 
+/*	    printf("ret=%d current[0]=%d current[1]=%d\n", ret, current[0], current[1]);*/
+	 }
+
    return NC_NOERR;
 }
 
@@ -1152,20 +1172,18 @@ NCD_get_vara(int ncid, int varid, const size_t *startp,
 	 int cc;
 	 int ret = 0;
 	 int change = 0;
-	 
-	 for (cc = 0; cc < num_values; cc++)
+	 int incdim = var->ndims - 1;
+	 size_t current[NC_MAX_DIMS];
+	 int done = 0;
+
+	 for (i = 0; i < var->ndims; i++)
+	    my_count[i] = countp[i];
+
+	 while (!done)
 	 {
-	    if ((ret = get_diskless_datum(var, start, write_point)))
+	    if ((ret = get_diskless_datum(var, start, count, current, write_point, &done)))
 	       return ret;
 	    write_point = (char *)write_point + var->type_info->size;
-/*	    printf("\nstart[0]=%d start[1]=%d\n", (int)start[0], (int)start[1]);*/
-	    ret = up_start(var->ndims, limit, var->ndims - 1, 1, start, &change);
-	    if (change)
-	    {
-	       start[change] = startp[change];
-	       change = 0;
-	    }
-/*	    printf("ret=%d start[0]=%d start[1]=%d\n", ret, start[0], start[1]);*/
 	 }
       }
       else

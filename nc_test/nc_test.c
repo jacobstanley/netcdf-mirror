@@ -115,8 +115,8 @@ main(int argc, char *argv[])
      * the netCDF-4 format last, however, because, as an additional
      * test, the ../nc_test4/tst_nc_test_file program looks at the
      * output of this program. */
-/*    for (i = NUM_FORMATS; i > 3; i--)*/
-    for (i = 1; i <= NUM_FORMATS; i++)
+    for (i = NUM_FORMATS; i > 3; i--)
+/*    for (i = 1; i <= NUM_FORMATS; i++)*/
     {
        switch (i) 
        {
@@ -176,7 +176,6 @@ main(int argc, char *argv[])
 	NC_TEST(nc_inq_varnatts);
 	NC_TEST(nc_inq_varndims);
 	NC_TEST(nc_inq_vartype);
-/*	nc_show_metadata(ext_ncid);*/
 	NC_TEST(nc_get_var_text);
 	NC_TEST(nc_get_var_uchar);
 	NC_TEST(nc_get_var_schar);
@@ -185,6 +184,7 @@ main(int argc, char *argv[])
 	NC_TEST(nc_get_var_long);
 	NC_TEST(nc_get_var_float);
 	NC_TEST(nc_get_var_double);
+	nc_show_metadata(ext_ncid);
 	NC_TEST(nc_get_var1_text);
 	NC_TEST(nc_get_var1_uchar);
 	NC_TEST(nc_get_var1_schar);
@@ -195,120 +195,120 @@ main(int argc, char *argv[])
 	NC_TEST(nc_get_var1_double);
 	NC_TEST(nc_get_var1);
 	NC_TEST(nc_get_vara_text);
-	NC_TEST(nc_get_vara_uchar);
-	NC_TEST(nc_get_vara_schar);
-	NC_TEST(nc_get_vara_short);
-	NC_TEST(nc_get_vara_int);
-	NC_TEST(nc_get_vara_long);
-	NC_TEST(nc_get_vara_float);
-	NC_TEST(nc_get_vara_double);
-	NC_TEST(nc_get_vara);
-	NC_TEST(nc_get_vars_text);
-	NC_TEST(nc_get_vars_uchar);
-	NC_TEST(nc_get_vars_schar);
-	NC_TEST(nc_get_vars_short);
-	NC_TEST(nc_get_vars_int);
-	NC_TEST(nc_get_vars_long);
-	NC_TEST(nc_get_vars_float);
-	NC_TEST(nc_get_vars_double);
-	NC_TEST(nc_get_vars);
-	NC_TEST(nc_get_varm_text);
-	NC_TEST(nc_get_varm_uchar);
-	NC_TEST(nc_get_varm_schar);
-	NC_TEST(nc_get_varm_short);
-	NC_TEST(nc_get_varm_int);
-	NC_TEST(nc_get_varm_long);
-	NC_TEST(nc_get_varm_float);
-	NC_TEST(nc_get_varm_double);
-	NC_TEST(nc_get_varm);
-	NC_TEST(nc_get_att_text);
-	NC_TEST(nc_get_att_uchar);
-	NC_TEST(nc_get_att_schar);
-	NC_TEST(nc_get_att_short);
-	NC_TEST(nc_get_att_int);
-	NC_TEST(nc_get_att_long);
-	NC_TEST(nc_get_att_float);
-	NC_TEST(nc_get_att_double);
-	NC_TEST(nc_get_att);
-	NC_TEST(nc_inq_att);
-	NC_TEST(nc_inq_attname);
-	NC_TEST(nc_inq_attid);
-	NC_TEST(nc_inq_attlen);
-	NC_TEST(nc_inq_atttype);
+	/* NC_TEST(nc_get_vara_uchar); */
+	/* NC_TEST(nc_get_vara_schar); */
+	/* NC_TEST(nc_get_vara_short); */
+	/* NC_TEST(nc_get_vara_int); */
+	/* NC_TEST(nc_get_vara_long); */
+	/* NC_TEST(nc_get_vara_float); */
+	/* NC_TEST(nc_get_vara_double); */
+	/* NC_TEST(nc_get_vara); */
+	/* NC_TEST(nc_get_vars_text); */
+	/* NC_TEST(nc_get_vars_uchar); */
+	/* NC_TEST(nc_get_vars_schar); */
+	/* NC_TEST(nc_get_vars_short); */
+	/* NC_TEST(nc_get_vars_int); */
+	/* NC_TEST(nc_get_vars_long); */
+	/* NC_TEST(nc_get_vars_float); */
+	/* NC_TEST(nc_get_vars_double); */
+	/* NC_TEST(nc_get_vars); */
+	/* NC_TEST(nc_get_varm_text); */
+	/* NC_TEST(nc_get_varm_uchar); */
+	/* NC_TEST(nc_get_varm_schar); */
+	/* NC_TEST(nc_get_varm_short); */
+	/* NC_TEST(nc_get_varm_int); */
+	/* NC_TEST(nc_get_varm_long); */
+	/* NC_TEST(nc_get_varm_float); */
+	/* NC_TEST(nc_get_varm_double); */
+	/* NC_TEST(nc_get_varm); */
+	/* NC_TEST(nc_get_att_text); */
+	/* NC_TEST(nc_get_att_uchar); */
+	/* NC_TEST(nc_get_att_schar); */
+	/* NC_TEST(nc_get_att_short); */
+	/* NC_TEST(nc_get_att_int); */
+	/* NC_TEST(nc_get_att_long); */
+	/* NC_TEST(nc_get_att_float); */
+	/* NC_TEST(nc_get_att_double); */
+	/* NC_TEST(nc_get_att); */
+	/* NC_TEST(nc_inq_att); */
+	/* NC_TEST(nc_inq_attname); */
+	/* NC_TEST(nc_inq_attid); */
+	/* NC_TEST(nc_inq_attlen); */
+	/* NC_TEST(nc_inq_atttype); */
 
-	/* Test write functions */
-	if (i != 4)
-	{
-	   NC_TEST(nc_create);
-	   NC_TEST(nc_redef);
-	/* NC_TEST(nc_enddef); *//* redundant */
-	   NC_TEST(nc_sync);
-	   NC_TEST(nc_abort);
-	}
-	NC_TEST(nc_def_dim);
-	NC_TEST(nc_rename_dim);
-	NC_TEST(nc_def_var);
-	if (i != 4)
-	{
-	NC_TEST(nc_put_var_text);
-	NC_TEST(nc_put_var_uchar);
-	NC_TEST(nc_put_var_schar);
-	NC_TEST(nc_put_var_short);
-	NC_TEST(nc_put_var_int);
-	NC_TEST(nc_put_var_long);
-	NC_TEST(nc_put_var_float);
-	NC_TEST(nc_put_var_double);
-	NC_TEST(nc_put_var1_text);
-	NC_TEST(nc_put_var1_uchar);
-	NC_TEST(nc_put_var1_schar);
-	NC_TEST(nc_put_var1_short);
-	NC_TEST(nc_put_var1_int);
-	NC_TEST(nc_put_var1_long);
-	NC_TEST(nc_put_var1_float);
-	NC_TEST(nc_put_var1_double);
-	NC_TEST(nc_put_var1);
-	NC_TEST(nc_put_vara_text);
-	NC_TEST(nc_put_vara_uchar);
-	NC_TEST(nc_put_vara_schar);
-	NC_TEST(nc_put_vara_short);
-	NC_TEST(nc_put_vara_int);
-	NC_TEST(nc_put_vara_long);
-	NC_TEST(nc_put_vara_float);
-	NC_TEST(nc_put_vara_double);
-	NC_TEST(nc_put_vara);
-	NC_TEST(nc_put_vars_text);
-	NC_TEST(nc_put_vars_uchar);
-	NC_TEST(nc_put_vars_schar);
-	NC_TEST(nc_put_vars_short);
-	NC_TEST(nc_put_vars_int);
-	NC_TEST(nc_put_vars_long);
-	NC_TEST(nc_put_vars_float);
-	NC_TEST(nc_put_vars_double);
-	NC_TEST(nc_put_vars);
-	NC_TEST(nc_put_varm_text);
-	NC_TEST(nc_put_varm_uchar);
-	NC_TEST(nc_put_varm_schar);
-	NC_TEST(nc_put_varm_short);
-	NC_TEST(nc_put_varm_int);
-	NC_TEST(nc_put_varm_long);
-	NC_TEST(nc_put_varm_float);
-	NC_TEST(nc_put_varm_double);
-	NC_TEST(nc_put_varm);
-	}
-	NC_TEST(nc_rename_var);
-	NC_TEST(nc_put_att_text);
-	NC_TEST(nc_put_att_uchar);
-	NC_TEST(nc_put_att_schar);
-	NC_TEST(nc_put_att_short);
-	NC_TEST(nc_put_att_int);
-	NC_TEST(nc_put_att_long);
-	NC_TEST(nc_put_att_float);
-	NC_TEST(nc_put_att_double);
-	NC_TEST(nc_put_att);
-	NC_TEST(nc_copy_att);
-	NC_TEST(nc_rename_att);
-	NC_TEST(nc_del_att);
-	NC_TEST(nc_set_default_format);
+	/* /\* Test write functions *\/ */
+	/* if (i != 4) */
+	/* { */
+	/*    NC_TEST(nc_create); */
+	/*    NC_TEST(nc_redef); */
+	/* /\* NC_TEST(nc_enddef); *\//\* redundant *\/ */
+	/*    NC_TEST(nc_sync); */
+	/*    NC_TEST(nc_abort); */
+	/* } */
+	/* NC_TEST(nc_def_dim); */
+	/* NC_TEST(nc_rename_dim); */
+	/* NC_TEST(nc_def_var); */
+	/* if (i != 4) */
+	/* { */
+	/* NC_TEST(nc_put_var_text); */
+	/* NC_TEST(nc_put_var_uchar); */
+	/* NC_TEST(nc_put_var_schar); */
+	/* NC_TEST(nc_put_var_short); */
+	/* NC_TEST(nc_put_var_int); */
+	/* NC_TEST(nc_put_var_long); */
+	/* NC_TEST(nc_put_var_float); */
+	/* NC_TEST(nc_put_var_double); */
+	/* NC_TEST(nc_put_var1_text); */
+	/* NC_TEST(nc_put_var1_uchar); */
+	/* NC_TEST(nc_put_var1_schar); */
+	/* NC_TEST(nc_put_var1_short); */
+	/* NC_TEST(nc_put_var1_int); */
+	/* NC_TEST(nc_put_var1_long); */
+	/* NC_TEST(nc_put_var1_float); */
+	/* NC_TEST(nc_put_var1_double); */
+	/* NC_TEST(nc_put_var1); */
+	/* NC_TEST(nc_put_vara_text); */
+	/* NC_TEST(nc_put_vara_uchar); */
+	/* NC_TEST(nc_put_vara_schar); */
+	/* NC_TEST(nc_put_vara_short); */
+	/* NC_TEST(nc_put_vara_int); */
+	/* NC_TEST(nc_put_vara_long); */
+	/* NC_TEST(nc_put_vara_float); */
+	/* NC_TEST(nc_put_vara_double); */
+	/* NC_TEST(nc_put_vara); */
+	/* NC_TEST(nc_put_vars_text); */
+	/* NC_TEST(nc_put_vars_uchar); */
+	/* NC_TEST(nc_put_vars_schar); */
+	/* NC_TEST(nc_put_vars_short); */
+	/* NC_TEST(nc_put_vars_int); */
+	/* NC_TEST(nc_put_vars_long); */
+	/* NC_TEST(nc_put_vars_float); */
+	/* NC_TEST(nc_put_vars_double); */
+	/* NC_TEST(nc_put_vars); */
+	/* NC_TEST(nc_put_varm_text); */
+	/* NC_TEST(nc_put_varm_uchar); */
+	/* NC_TEST(nc_put_varm_schar); */
+	/* NC_TEST(nc_put_varm_short); */
+	/* NC_TEST(nc_put_varm_int); */
+	/* NC_TEST(nc_put_varm_long); */
+	/* NC_TEST(nc_put_varm_float); */
+	/* NC_TEST(nc_put_varm_double); */
+	/* NC_TEST(nc_put_varm); */
+	/* } */
+	/* NC_TEST(nc_rename_var); */
+	/* NC_TEST(nc_put_att_text); */
+	/* NC_TEST(nc_put_att_uchar); */
+	/* NC_TEST(nc_put_att_schar); */
+	/* NC_TEST(nc_put_att_short); */
+	/* NC_TEST(nc_put_att_int); */
+	/* NC_TEST(nc_put_att_long); */
+	/* NC_TEST(nc_put_att_float); */
+	/* NC_TEST(nc_put_att_double); */
+	/* NC_TEST(nc_put_att); */
+	/* NC_TEST(nc_copy_att); */
+	/* NC_TEST(nc_rename_att); */
+	/* NC_TEST(nc_del_att); */
+	/* NC_TEST(nc_set_default_format); */
     }
 
     fprintf(stderr, "\n*** Total number of failures: %d\n", nfailsTotal);
