@@ -830,12 +830,12 @@ AC_CONFIG_FILES([Makefile
                   librpc/Makefile
                   libdispatch/Makefile
                   liblib/Makefile
-                  ncdap_test/Makefile
-                  ncdap_test/testdata3/Makefile
-                  ncdap_test/expected3/Makefile
-                  ncdap_test/expected4/Makefile
-                  ncdap_test/expectremote3/Makefile
-                  ncdap_test/expectremote4/Makefile
+                  ncremote_test/Makefile
+                  ncremote_test/testdata3/Makefile
+                  ncremote_test/expected3/Makefile
+                  ncremote_test/expected4/Makefile
+                  ncremote_test/expectremote3/Makefile
+                  ncremote_test/expectremote4/Makefile
                   ncdump/cdl4/Makefile
                   ncdump/expected4/Makefile],
                  [test -f  nc-config && chmod 755 nc-config ])
