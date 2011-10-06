@@ -226,7 +226,7 @@ mergeprojection(DCEprojection* dst, DCEprojection* src)
     return ncstat;
 }
 
-/* Convert an DCEprojection instance into a string
+/* Convert a DCEprojection instance into a string
    that can be used with the url
 */
 

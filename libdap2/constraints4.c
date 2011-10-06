@@ -31,7 +31,7 @@ buildvaraprojection4(Getvara* getvar,
     segment = (DCEsegment*)dcecreate(CES_SEGMENT);
     segment->cdfnode = var;
     ASSERT((segment->cdfnode != NULL));
-    segment->name = nulldup(segment->cdfnode->name);
+    segment->name = nulldup(segment->cdfnode->ncbasename);
     segment->slicesdefined = 0; /* temporary */
     segment->slicesdeclized = 0; /* temporary */
     segments = nclistnew();

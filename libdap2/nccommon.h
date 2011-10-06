@@ -230,43 +230,41 @@ typedef struct NCtypesize {
 
 /* Closely mimics struct OCnode*/
 typedef struct CDFnode {
-    nc_type          nctype; /* redundant but convenient*/
-    nc_type          etype;  /* redundant but convenient*/
-    char*            name;   /* oc base name; redundant but convenient*/
-    OCobject         dds;    /* mirror node*/
+    nc_type          nctype;     /* e.g. var, dimension  */
+    nc_type          etype;      /* e.g. NC_INT, NC_FLOAT if applicable,*/
+    char*            ocname;     /* oc base name */
+    char*            ncbasename; /* generally cdflegalname(ocname) */
+    char*            ncfullname; /* complete path name from root to this node*/
+    OCobject         dds;        /* oc mirror node*/
     struct CDFnode*  container;
     struct CDFnode*  root;
-    CDFtree*         tree; /* pointer so we can pass it around */
-    CDFdim           dim;
-    CDFarray         array;
-    NClist*          subnodes; /*NClist<OCobject>*/
-    NClist*          attributes; /*NClist<NCattribute*>*/
-    NCDODS           dodsspecial; /*these are the special attributes like
-                                       maxStrlen */
-    char*            ncfullname;     /* with parent name prefixing*/
-    char*            ncbasename;     /* without parent name prefixing, but legitimate */
-    nc_type          externaltype;   /* the type as represented to nc_inq*/
-    int              ncid;           /* relevant NC id for this object*/
+    CDFtree*         tree;          /* root level metadata;only defined if root*/
+    CDFdim           dim;           /* nctype == dimension */
+    CDFarray         array;         /* nctype == grid,var,etc. with dimensions */
+    NClist*          subnodes;      /* if nctype == grid, sequence, etc. */
+    NClist*          attributes;    /*NClist<NCattribute*>*/
+    NCDODS           dodsspecial;   /* special attributes like maxStrlen */
+    nc_type          externaltype   /* the type as represented to nc_inq*/
+    int              ncid;          /* relevant NC id for this object*/
     unsigned long    maxstringlength;
     unsigned long    sequencelimit; /* 0=>unlimited */
-    BOOL	     usesequence; /* If this sequence is usable */
-    BOOL             elided;  /* 1 => node does not partipate in naming*/
-    struct CDFnode*  basenode; /* map from constrained tree to unconstrained */
-    BOOL	     visible; /* 1 => node is present in constrained tree;
-                                 independent of elided flag */
-    BOOL	     zerodim; /* 1 => node has a zero dimension */
+    BOOL	     usesequence;   /* If this sequence is usable */
+    BOOL             elided;        /* 1 => node does not partipate in naming*/
+    struct CDFnode*  basenode;      /* derived tree map to template tree */
+    BOOL	     visible;       /* 1 => node is present in derived tree; independent of elided flag */
+    BOOL	     zerodim;       /* 1 => node has a zero dimension */
     /* These two flags track the effects on grids of constraints */
-    BOOL             virtual; /* Is this node added ? */
-    BOOL             projected; /* Is this a node referenced by projection */
-    struct CDFnode* attachment;  /* DDS<->DATADDS cross link*/
-    struct CDFnode* template; /* temporary field for regridding */
+    BOOL             virtual;       /* node added by regrid */
+    BOOL             projected;     /* node referenced by projection */
+    struct CDFnode* attachment;     /* DDS<->DATADDS cross link*/
+    struct CDFnode* template;       /* temporary field for regridding */
     /* Fields for use by libncdap4 */
     NCtypesize       typesize;
-    int              typeid;    /* when treating field as type */
-    int              basetypeid;   /* when typeid is vlen */
+    int              typeid;        /* when treating field as type */
+    int              basetypeid;    /* when typeid is vlen */
     char*            typename;
-    char*            vlenname; /* for sequence types */
-    int              singleton; /* for singleton sequences */
+    char*            vlenname;      /* for sequence types */
+    int              singleton;     /* for singleton sequences */
     unsigned long    estimatedsize; /* > 0 Only for var nodes */
 } CDFnode;
 

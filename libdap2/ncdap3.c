@@ -186,10 +186,6 @@ fprintf(stderr,"parsed constraint: %s\n",
 
     /* The following actions are (mostly) WRT to the constrained tree */
 
-    /* Process the constraints to map to the constrained CDF tree */
-    ncstat = mapconstraints3(dapcomm->oc.dapconstraint,dapcomm->cdf.ddsroot);
-    if(ncstat != NC_NOERR) goto done;
-
     /* Accumulate useful nodes sets  */
     ncstat = computecdfnodesets3(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto done;}
@@ -197,6 +193,11 @@ fprintf(stderr,"parsed constraint: %s\n",
     /* Fix grids */
     ncstat = fixgrids3(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto done;}
+
+    /* Process the constraints to map to the constrained CDF tree */
+    /* (must follow fixgrids3 */
+    ncstat = mapconstraints3(dapcomm->oc.dapconstraint,dapcomm->cdf.ddsroot);
+    if(ncstat != NC_NOERR) goto done;
 
     /* Locate and mark usable sequences */
     ncstat = sequencecheck3(dapcomm);
@@ -377,7 +378,7 @@ builddims(NCDAPCOMMON* dapcomm)
 	CDFnode* unlimited = dapcomm->cdf.unlimited;
 	size_t unlimsize;
         ncstat = nc_def_dim(drno->substrate,
-			unlimited->name,
+			unlimited->ncbasename,
 			NC_UNLIMITED,
 			&unlimited->ncid);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
@@ -496,7 +497,7 @@ buildglobalattrs3(NCDAPCOMMON* dapcomm, CDFnode* root)
 	    CDFnode* dim = (CDFnode*)nclistget(cdfnodes,i);
 	    if(dim->nctype != NC_Dimension) continue;
 	    if(DIMFLAG(dim,CDFDIMSEQ)) {
-	        char* cname = cdflegalname3(dim->name);
+	        char* cname = cdflegalname3(dim->ocname);
 	        if(ncbyteslength(buf) > 0) ncbytescat(buf,", ");
 	        ncbytescat(buf,cname);
 	        nullfree(cname);

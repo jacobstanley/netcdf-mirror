@@ -95,10 +95,6 @@ extern int dceparseconstraints(char* constraints, DCEconstraint* DCEonstraint);
 extern int dceslicemerge(DCEslice* dst, DCEslice* src);
 extern int dcemergeprojections(NClist* dst, NClist* src);
 
-extern char* dcebuildprojectionstring(NClist* projections);
-extern char* dcebuildselectionstring(NClist* selections);
-extern char* dcebuildconstraintstring(DCEconstraint* constraints);
-
 extern DCEnode* dceclone(DCEnode* node);
 extern NClist* dceclonelist(NClist* list);
 

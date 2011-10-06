@@ -18,6 +18,8 @@ extern int oc_dumpnode(OClink, OCobject);
 #define LBRACKET '['
 #define RBRACKET ']'
 
+static char* makepathstring3(CDFnode* var, const char* separator, int ocify);
+
 /**************************************************/
 /* Provide a hidden interface to allow utilities*/
 /* to check if a given path name is really an ncdap3 url.*/
@@ -462,9 +464,23 @@ nclistdeleteall(NClist* l, ncelem elem)
 }
 
 /* Convert a path to a name string; elide the initial Dataset node*/
-/* and elide any node marked as elided.*/
+/* and elide any node marked as elided */
 char*
 makecdfpathstring3(CDFnode* var, const char* separator)
+{
+    return makepathstring3(var,separator,0);
+}
+
+/*Like makecdfpathstring3, but using ocname*/
+
+char*
+ocifypathstring3(CDFnode* var, const char* separator)
+{
+    return makepathstring3(var,separator,1);
+}
+
+static char*
+makepathstring3(CDFnode* var, const char* separator, int ocify)
 {
     int slen,i,len,first;
     char* pathname;
@@ -477,7 +493,11 @@ makecdfpathstring3(CDFnode* var, const char* separator)
     for(slen=0,i=0;i<len;i++) {
 	CDFnode* node = (CDFnode*)nclistget(path,i);
 	if(node->nctype == NC_Dataset) continue;
-	slen += strlen(node->ncbasename?node->ncbasename:node->name);
+	if(ocify)
+	    slen += strlen(node->ocname);
+	else
+	    slen += strlen(node->ncbasename?node->ncbasename
+                                           :cdflegalname3(node->ocname));
     }
     slen += ((len-2)); /* for 1-char separators */
     slen += 1;   /* for null terminator*/
@@ -486,7 +506,12 @@ makecdfpathstring3(CDFnode* var, const char* separator)
     pathname[0] = '\0';    
     for(first=1,i=0;i<len;i++) {
 	CDFnode* node = (CDFnode*)nclistget(path,i);
-	char* name = (node->ncbasename?node->ncbasename:node->name);
+	char* name;
+	if(ocify)
+	    name = node->ocname;
+	else
+	    name = (node->ncbasename?node->ncbasename
+                                    :cdflegalname3(node->ocname));
 	if(node->nctype == NC_Dataset) continue;
 	if(node->elided) continue;
 	if(!first) strcat(pathname,separator);
@@ -498,7 +523,7 @@ done:
     return pathname;
 }
 
-/* Like makecdfpathstring, but using node->name. */
+/* Like makecdfpathstring, but using node->ncbasename. */
 char*
 makesimplepathstring3(CDFnode* var)
 {
@@ -511,7 +536,7 @@ makesimplepathstring3(CDFnode* var)
     if(len == 0) {pathname = nulldup(""); goto done;} /* Dataset only */
     for(slen=0,i=0;i<len;i++) {
 	CDFnode* node = (CDFnode*)nclistget(path,i);
-	slen += (node->name?strlen(node->name):0);
+	slen += (node->ncbasename?strlen(node->ncbasename):0);
     }
     slen += (len-1); /* for 1-char separators */
     slen += 1;   /* for null terminator*/
@@ -520,7 +545,7 @@ makesimplepathstring3(CDFnode* var)
     pathname[0] = '\0';    
     for(first=1,i=0;i<len;i++) {
 	CDFnode* node = (CDFnode*)nclistget(path,i);
-	char* name = node->name;
+	char* name = node->ncbasename;
 	if(!first) strcat(pathname,".");
         strcat(pathname,name?name:"null");
 	first = 0;
@@ -595,7 +620,7 @@ clonenodenamepath3(CDFnode* node, NClist* path, int withdataset)
     if(node->nctype != NC_Dataset)
         clonenodenamepath3(node->container,path,withdataset);
     if(node->nctype != NC_Dataset || withdataset)
-        nclistpush(path,(ncelem)nulldup(node->name));
+        nclistpush(path,(ncelem)nulldup(node->ncbasename));
 }
 
 char*

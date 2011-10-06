@@ -377,7 +377,7 @@ fprintf(stderr,"getcontent4r: rank=%lu mode=%d nctype=%s\n",
 
     if(tnode->nctype == NC_Primitive) {
 	DCEsegment seg; /* temporary */
-	seg.name = tnode->name;
+	seg.name = tnode->ocname;
 	seg.cdfnode = tnode;
 	makewholesegment3(&seg,tnode);
 	ncstat = getcontent4prim(dapcomm,xgetvar,tnode,&seg,currentcontent,memory);
@@ -394,7 +394,7 @@ abort();
         unsigned int rank = nclistlength(tnode->array.dimensions);
 	DCEsegment seg; /* temporary */
 	ASSERT((tnode->nctype == NC_Structure));
-	seg.name = tnode->name;
+	seg.name = tnode->ocname;
 	seg.cdfnode = tnode;
 	makewholesegment3(&seg,tnode);
 

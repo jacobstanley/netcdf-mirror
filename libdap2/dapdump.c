@@ -9,6 +9,7 @@
 #endif
 #include "ncdap3.h"
 #include "dapdump.h"
+#include "dceconstraints.h"
 
 #define CHECK(n) if((n) != NC_NOERR) {return (n);} else {}
 
@@ -242,7 +243,7 @@ dumppath(CDFnode* leaf)
     for(i=0;i<nclistlength(path);i++) {
 	CDFnode* node = (CDFnode*)nclistget(path,i);
 	if(i > 0) ncbytescat(buf,".");
-	ncbytescat(buf,node->name);
+	ncbytescat(buf,node->ncbasename);
     }
     result = ncbytesdup(buf);
     ncbytesfree(buf);
@@ -285,7 +286,7 @@ dumptreer1(CDFnode* root, NCbytes* buf, int indent, char* tag, int visible)
     }
     dumpindent(indent,buf);
     ncbytescat(buf,"} ");
-    ncbytescat(buf,root->name);
+    ncbytescat(buf,root->ncbasename);
 }
 
 static void
@@ -326,7 +327,7 @@ dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible)
 	dumpindent(indent,buf);
 	ncbytescat(buf,primtype);
 	ncbytescat(buf," ");
-	ncbytescat(buf,root->name);
+	ncbytescat(buf,root->ncbasename);
 	break;
     default: break;    
     }
@@ -336,8 +337,8 @@ dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible)
 	    CDFnode* dim = (CDFnode*)nclistget(root->array.dimensions,i);
 	    char tmp[64];
 	    ncbytescat(buf,"[");
-	    if(dim->name != NULL) {
-		ncbytescat(buf,dim->name);
+	    if(dim->ncbasename != NULL) {
+		ncbytescat(buf,dim->ncbasename);
 	        ncbytescat(buf,"=");
 	    }
 	    snprintf(tmp,sizeof(tmp),"%lu",(unsigned long)dim->dim.declsize);
@@ -406,15 +407,15 @@ dumpnode(CDFnode* node)
     default: break;    
     }
     snprintf(tmp,sizeof(tmp),"%s %s {\n",
-		(nctype?nctype:primtype),node->name);
+		(nctype?nctype:primtype),node->ocname);
     ncbytescat(buf,tmp);
     snprintf(tmp,sizeof(tmp),"dds=%lx\n",(unsigned long)node->dds);
     ncbytescat(buf,tmp);
     snprintf(tmp,sizeof(tmp),"container=%s\n",
-		(node->container?node->container->name:"null"));
+		(node->container?node->container->ocname:"null"));
     ncbytescat(buf,tmp);
     snprintf(tmp,sizeof(tmp),"root=%s\n",
-		(node->root?node->root->name:"null"));
+		(node->root?node->root->ocname:"null"));
     ncbytescat(buf,tmp);
     snprintf(tmp,sizeof(tmp),"ncbasename=%s\n",node->ncbasename);
     ncbytescat(buf,tmp);
@@ -437,7 +438,7 @@ dumpnode(CDFnode* node)
     snprintf(tmp,sizeof(tmp),"visible=%d\n",node->visible);
     ncbytescat(buf,tmp);
     snprintf(tmp,sizeof(tmp),"attachment=%s\n",
-		(node->attachment?node->attachment->name:"null"));
+		(node->attachment?node->attachment->ocname:"null"));
     ncbytescat(buf,tmp);
     snprintf(tmp,sizeof(tmp),"rank=%u\n",nclistlength(node->array.dimensions));
     ncbytescat(buf,tmp);
@@ -445,7 +446,9 @@ dumpnode(CDFnode* node)
 	CDFnode* dim = (CDFnode*)nclistget(node->array.dimensions,i);
         snprintf(tmp,sizeof(tmp),"dims[%d]={\n",i);
         ncbytescat(buf,tmp);
-	snprintf(tmp,sizeof(tmp),"    name=%s\n",dim->name);
+	snprintf(tmp,sizeof(tmp),"    ocname=%s\n",dim->ocname);
+        ncbytescat(buf,tmp);
+	snprintf(tmp,sizeof(tmp),"    ncbasename=%s\n",dim->ncbasename);
         ncbytescat(buf,tmp);
 	snprintf(tmp,sizeof(tmp),"    dimflags=%u\n",
 			(unsigned int)dim->dim.dimflags);
@@ -490,11 +493,12 @@ dumpcachenode(NCcachenode* node)
 
     if(node == NULL) return strdup("cachenode{null}");
     buf = ncbytesnew();
+    result = buildconstraintstring3(node->constraint);
     snprintf(tmp,sizeof(tmp),"cachenode%s(%lx){size=%lu; constraint=%s; vars=",
 		node->prefetch?"*":"",
 		(unsigned long)node,
 		(unsigned long)node->xdrsize,
-		buildconstraintstring3(node->constraint));
+	        result);
     ncbytescat(buf,tmp);
     if(nclistlength(node->vars)==0)
 	ncbytescat(buf,"null");

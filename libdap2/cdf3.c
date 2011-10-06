@@ -73,7 +73,7 @@ computevarnodes3(NCDAPCOMMON* nccomm, NClist* allnodes, NClist* varnodes)
     for(i=0;i<nclistlength(allnodes);i++) {
 	CDFnode* node = (CDFnode*)nclistget(allnodes,i);
 	/* If this node has a bad name, make it invisible */
-	if(dap_badname(node->name)) node->visible=0;
+	if(dap_badname(node->ocname)) node->visible=0;
 	if(!node->visible) continue;
 	if(node->nctype == NC_Primitive)
 	    nclistpush(allvarnodes,(ncelem)node);
@@ -393,7 +393,7 @@ fprintf(stderr,"regrid: template=%s\n",dumptree(template));
        This includes containers and subnodes. If there are no
        projections then mark all nodes 
     */
-        projectall3(template->tree->nodes);
+     projectall3(template->tree->nodes);
 
     if(simplenodematch34(ddsroot,template)) {
         ncstat = regrid3r(ddsroot,template,newstructs);
@@ -464,7 +464,7 @@ regrid3r(CDFnode* node, CDFnode* template, NClist* structnodes)
     */
 #ifdef DEBUG
 fprintf(stderr,"regrid: matched: %s -> %s\n",
-node->ncfullname,template->ncfullname);
+node->ocname,template->ocname);
 #endif
     for(inode=0;inode<nclistlength(node->subnodes);inode++) {
         CDFnode* subnode = (CDFnode*)nclistget(node->subnodes,inode);
@@ -485,6 +485,7 @@ node->ncfullname,template->ncfullname);
                 CDFnode* subtemp = (CDFnode*)nclistget(template->subnodes,itemp);
 		if(subtemp->nctype != NC_Grid) continue;
 		if(!subtemp->projected) continue;
+fprintf(stderr,"xxx: subtemp=%s subnode=%s\n",subtemp->ocname,subnode->ocname);
 		ncstat = testregrid3(subnode,subtemp,structnodes);
                 if(ncstat == NC_NOERR) {match=1; break;}
 	    }
@@ -554,7 +555,8 @@ makenewstruct3(CDFnode* node, CDFnode* template)
     if(newstruct == NULL) return NULL;
     memset((void*)newstruct,0,sizeof(CDFnode));
     newstruct->virtual = 1;
-    newstruct->name = nulldup(template->name);
+    newstruct->ocname = nulldup(template->ocname);
+    newstruct->ncbasename = nulldup(template->ncbasename);
     newstruct->nctype = NC_Structure;
     newstruct->subnodes = nclistnew();
     newstruct->container = node->container;

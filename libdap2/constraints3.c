@@ -13,7 +13,6 @@
 static NCerror mergeprojection31(DCEprojection*, DCEprojection*);
 
 static NCerror matchpartialname3(NClist*, NClist*, CDFnode**);
-static void collectsegmentnames3(NClist* segments, NClist* path);
 static void completesegments3(NClist* fullpath, NClist* segments);
 
 static NCerror qualifyconstraints3(DCEconstraint*);
@@ -59,7 +58,7 @@ fprintf(stderr,"constraint: %s",dumpconstraint(dceconstraint));
     return ncstat;
 }
 
-/* Map constraint paths to CDFnode paths in specied tree; the difficulty
+/* Map constraint paths to CDFnode paths in specified tree; the difficulty
    is that suffix paths are legal.
 */
 
@@ -79,7 +78,7 @@ mapconstraints3(DCEconstraint* constraint,
     /* Convert the projection paths to leaves in the dds tree */
     for(i=0;i<nclistlength(dceprojections);i++) {
 	DCEprojection* proj = (DCEprojection*)nclistget(dceprojections,i);
-	if(proj->discrim != CES_VAR) continue;
+	if(proj->discrim != CES_VAR) continue; // ignore functions
 	ncstat = matchpartialname3(nodes,proj->var->segments,
 				   &proj->var->cdfleaf);
 	if(ncstat) goto done;
@@ -154,7 +153,7 @@ completesegments3(NClist* fullpath, NClist* segments)
 	int j;
         DCEsegment* seg = (DCEsegment*)dcecreate(CES_SEGMENT);
         CDFnode* node = (CDFnode*)nclistget(fullpath,i);
-        seg->name = nulldup(node->name);
+        seg->name = nulldup(node->ncbasename);
         seg->cdfnode = node;
 	seg->rank = nclistlength(node->array.dimensions);
 	for(j=0;j<seg->rank;j++) {
@@ -281,18 +280,18 @@ Additional constraints (4/12/2010):
 */
 
 static int
-matchsuffix3(NClist* matchpath, NClist* segments, int index0)
+matchsuffix3(NClist* matchpath, NClist* segments)
 {
     int i;
     int nsegs = nclistlength(segments);
-    ASSERT(index0 >= 0 && (index0+nsegs) <= nclistlength(matchpath));
+    ASSERT(nsegs <= nclistlength(matchpath));
     for(i=0;i<nsegs;i++) {
 	DCEsegment* seg = (DCEsegment*)nclistget(segments,i);
-	CDFnode* node = (CDFnode*)nclistget(matchpath,index0+i);
+	CDFnode* node = (CDFnode*)nclistget(matchpath,i);
 	int match;
 	int rank = seg->rank;
-	/* Do the names match */
-	if(strcmp(seg->name,node->name) != 0) return 0; /* no match */
+	/* Do the names match (in oc name space) */
+	if(strcmp(seg->name,node->ocname) != 0) return 0; /* no match */
 	/* Do the ranks match (watch out for sequences) */
 	if(rank == 0) /* matches any set of dimensions */
 	    match = 1;
@@ -305,10 +304,20 @@ matchsuffix3(NClist* matchpath, NClist* segments, int index0)
    return 1;
 }
 
+/**
+ * Given a path as segments,
+ * try to locate the CDFnode
+ * instance (from a given set)
+ * that corresponds to the path.
+ * The key difficulty is that the
+ * path may only be a suffix of the
+ * complete path.
+ */
+
 static NCerror
 matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
 {
-    int i,j,nsegs;
+    int i,nsegs;
     NCerror ncstat = NC_NOERR;
     DCEsegment* lastseg = NULL;
     NClist* namematches = nclistnew();
@@ -322,13 +331,18 @@ matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
     lastseg = (DCEsegment*)nclistget(segments,nsegs-1);
     for(i=0;i<nclistlength(nodes);i++) {
         CDFnode* node = (CDFnode*)nclistget(nodes,i);
-        if(strcmp(node->name,lastseg->name) != 0)
+	if(node->ncbasename == null)
 	    continue;
-        if(node->nctype != NC_Sequence
+	/* Path names come from oc space */
+        if(strcmp(node->ocname,lastseg->name) != 0)
+	    continue;
+	/* Only look at selected kinds of nodes */
+	if(node->nctype != NC_Sequence
                && node->nctype != NC_Structure
                && node->nctype != NC_Grid
                && node->nctype != NC_Primitive
-        ) continue;
+          )
+	    continue;
 	nclistpush(namematches,(ncelem)node);
     }    
     if(nclistlength(namematches)==0) {
@@ -343,15 +357,9 @@ matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
 	nclistclear(matchpath);
 	collectnodepath3(matchnode,matchpath,0);
 	/* Do a suffix match */
-	/* starting at each node in matchpath in the path in turn,
-           try to suffix match */
-	for(j=0;j<nclistlength(matchpath);j++) {
-	    if(nclistlength(matchpath)- j < nsegs)
-	        continue; /* cannot match */
-	    if(matchsuffix3(matchpath,segments,j)) {
-		nclistpush(matches,(ncelem)matchnode);
-		break;
-	    }
+        if(matchsuffix3(matchpath,segments)) {
+	    nclistpush(matches,(ncelem)matchnode);
+	    break;
 	}
     }
     /* |matches|==0 => no match; |matches|>1 => ambiguity */
@@ -398,6 +406,7 @@ done:
     return THROW(ncstat);
 }
 
+#ifdef IGNORE
 static void
 collectsegmentnames3(NClist* segments, NClist* path)
 {
@@ -408,7 +417,7 @@ collectsegmentnames3(NClist* segments, NClist* path)
 	nclistpush(path,(ncelem)segment->name);
     }
 }
-
+#endif /*IGNORE*/
 
 /*
 Compute the projection using heuristics
@@ -504,7 +513,7 @@ fprintf(stderr,"restriction.candidate=|%s|\n",var->ncfullname);
 	    for(j=0;j<nclistlength(path);j++) {
 	        CDFnode* node = (CDFnode*)nclistget(path,j);
 	        DCEsegment* newseg = (DCEsegment*)dcecreate(CES_SEGMENT);
-	        newseg->name = nulldup(node->name);
+	        newseg->name = nulldup(node->ncbasename);
 	        makewholesegment3(newseg,node);/*treat as simple projections*/
 	        newseg->cdfnode = node;
 	        nclistpush(newp->var->segments,(ncelem)newseg);
@@ -740,7 +749,7 @@ mergeprojection31(DCEprojection* dst, DCEprojection* src)
     return ncstat;
 }
 
-/* Convert an DCEprojection instance into a string
+/* Convert a DCEprojection instance into a string
    that can be used with the url
 */
 
@@ -777,6 +786,7 @@ buildconstraintstring3(DCEconstraint* constraints)
     return result;
 }
 
+#ifdef IGNORE
 /* Remove all CDFnode* references from constraint */
 void
 dereference3(DCEconstraint* constraint)
@@ -822,7 +832,7 @@ fillsegmentpath(DCEprojection* p, NClist* nodes)
 	CDFnode* node = (CDFnode*)nclistget(path,i);
 	seg->cdfnode = node;
 #ifdef DEBUG
-fprintf(stderr,"reref: %s -> %s\n",seg->name,node->name);
+fprintf(stderr,"reref: %s -> %s\n",seg->name,node->ncbasename);
 #endif
     }
     
@@ -881,6 +891,8 @@ done:
     return ncstat;
 }
 
+#endif /*IGNORE*/
+
 NCerror
 buildvaraprojection3(Getvara* getvar,
 		     const size_t* startp, const size_t* countp, const ptrdiff_t* stridep,
@@ -909,7 +921,7 @@ buildvaraprojection3(Getvara* getvar,
 	CDFnode* n = (CDFnode*)nclistget(path,i);
 	segment->cdfnode = n;
 	ASSERT((segment->cdfnode != NULL));
-        segment->name = nulldup(n->name);
+        segment->name = nulldup(n->ncbasename);
 	segment->slicesdefined = 0; /* temporary */
 	segment->slicesdeclized = 0; /* temporary */
 	nclistpush(segments,(ncelem)segment);

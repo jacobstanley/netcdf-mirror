@@ -119,7 +119,7 @@ addstringdims(NCDAPCOMMON* dapcomm)
 	sdim->dim.declsize = dimsize;
 	nullfree(sdim->ncbasename);
 	nullfree(sdim->ncfullname);
-	sdim->ncbasename = cdflegalname3(sdim->name);
+	sdim->ncbasename = cdflegalname3(sdim->ocname);
 	sdim->ncfullname = nulldup(sdim->ncbasename);
 	/* tag the variable with its string dimension*/
 	var->array.stringdim = sdim;
@@ -142,7 +142,7 @@ defrecorddim3(NCDAPCOMMON* dapcomm)
         CDFnode* dim = (CDFnode*)nclistget(alldims,i);
 	if(dim->nctype != NC_Dimension) continue;    
 	if(dim->dim.basedim != NULL) continue; /* not the controlling dim */
-	if(strcmp(dim->name,dapcomm->cdf.recorddim) != 0) continue;
+	if(strcmp(dim->ocname,dapcomm->cdf.recorddim) != 0) continue;
 	if(DIMFLAG(dim,CDFDIMCLONE)) PANIC("cloned record dim");
 	if(dapcomm->cdf.unlimited != NULL) PANIC("Multiple unlimited");
         DIMFLAGSET(dim,CDFDIMUNLIM|CDFDIMRECORD);
@@ -186,7 +186,7 @@ defseqdims(NCDAPCOMMON* dapcomm)
         nclistpush(dapcomm->cdf.ddsroot->tree->nodes,(ncelem)unlimited);
         nullfree(unlimited->ncbasename);
         nullfree(unlimited->ncfullname);
-        unlimited->ncbasename = cdflegalname3(unlimited->name);
+        unlimited->ncbasename = cdflegalname3(unlimited->ocname);
         unlimited->ncfullname = nulldup(unlimited->ncbasename);
         DIMFLAGSET(unlimited,CDFDIMUNLIM);
         dapcomm->cdf.unlimited = unlimited;
@@ -267,7 +267,7 @@ fprintf(stderr,"minconstraints: %s\n",ncbytescontents(minconstraints));
     ncstat = countsequence(dapcomm,xseq,&seqsize);
     if(ncstat) goto fail;
 #ifdef DEBUG
-fprintf(stderr,"sequencesize: %s = %lu\n",seq->name,(unsigned long)seqsize);
+fprintf(stderr,"sequencesize: %s = %lu\n",seq->ocname,(unsigned long)seqsize);
 #endif
     /* throw away the fetch'd trees */
     unattach34(dapcomm->cdf.ddsroot);
@@ -301,12 +301,12 @@ makeseqdim(NCDAPCOMMON* dapcomm, CDFnode* seq, size_t count, CDFnode** sqdimp)
     CDFtree* tree = root->tree;
 
     /* build the dimension with given size */
-    sqdim = makecdfnode34(dapcomm,seq->name,OC_Dimension,OCNULL,root);
+    sqdim = makecdfnode34(dapcomm,seq->ocname,OC_Dimension,OCNULL,root);
     if(sqdim == NULL) return THROW(NC_ENOMEM);
     nclistpush(tree->nodes,(ncelem)sqdim);
     nullfree(sqdim->ncbasename);
     nullfree(sqdim->ncfullname);
-    sqdim->ncbasename = cdflegalname3(seq->name);
+    sqdim->ncbasename = cdflegalname3(seq->ocname);
     sqdim->ncfullname = nulldup(sqdim->ncbasename);
     sqdim->dim.declsize = count;
     DIMFLAGSET(sqdim,CDFDIMSEQ);
@@ -392,7 +392,7 @@ showprojection3(NCDAPCOMMON* dapcomm, CDFnode* var)
     for(i=0;i<nclistlength(path);i++) {
         CDFnode* node = (CDFnode*)nclistget(path,i);
 	if(i > 0) ncbytescat(projection,".");
-	ncbytescat(projection,node->name);
+	ncbytescat(projection,node->ocname);
     }
     /* Now, add the dimension info */
     rank = nclistlength(var->array.dimensions);
@@ -506,7 +506,7 @@ computeminconstraints3(NCDAPCOMMON* dapcomm, CDFnode* seq, NCbytes* minconstrain
     for(i=0;i<nclistlength(path);i++) {
 	CDFnode* node = (CDFnode*)nclistget(path,i);
 	if(i > 0) ncbytescat(minconstraints,".");
-	ncbytescat(minconstraints,node->name);
+	ncbytescat(minconstraints,node->ocname);
 	if(node == seq) {
 	    /* Use the limit */
 	    if(node->sequencelimit > 0) {

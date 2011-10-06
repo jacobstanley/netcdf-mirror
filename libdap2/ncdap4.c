@@ -92,8 +92,10 @@ NCD4_open(const char * path, int mode,
     mode |= (NC_WRITE|NC_CLOBBER);
 
 #ifdef DEBUG
+{
 extern int ocdebug;
 ocdebug = 1;
+}
 #endif
 
 #ifdef OCCOMPILEBYDEFAULT
@@ -202,10 +204,6 @@ ocdebug = 1;
 
     /* The following actions are WRT to the constrained tree */
 
-    /* Process the constraints to map the CDF tree */
-    ncstat = mapconstraints3(dapcomm->oc.dapconstraint,dapcomm->cdf.ddsroot);
-    if(ncstat != NC_NOERR) goto fail;
-
     /* Accumulate useful nodes sets  */
     ncstat = computecdfnodesets4(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto fail;}
@@ -213,6 +211,11 @@ ocdebug = 1;
     /* Fix grids */
     ncstat = fixgrids4(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto fail;}
+
+    /* Process the constraints to map the CDF tree */
+    /* (must follow fixgrids4 */
+    ncstat = mapconstraints3(dapcomm->oc.dapconstraint,dapcomm->cdf.ddsroot);
+    if(ncstat != NC_NOERR) goto fail;
 
     /* apply client parameters (after computcdfinfo and computecdfvars)*/
     ncstat = applyclientparams34(dapcomm);
@@ -641,7 +644,7 @@ showprojection4(NCDAPCOMMON* dapcomm, CDFnode* var)
     for(i=0;i<nclistlength(path);i++) {
         CDFnode* node = (CDFnode*)nclistget(path,i);
 	if(i > 0) ncbytescat(projection,".");
-	ncbytescat(projection,node->name);
+	ncbytescat(projection,node->ocname);
     }
     /* Now, add the dimension info */
     rank = nclistlength(var->array.dimensions);
@@ -713,7 +716,7 @@ estimatesizes4r(NCDAPCOMMON* dapcomm, CDFnode* node)
 #ifdef DEBUG
 fprintf(stderr,"estimatedsize: %s%s/%u = %lu (= %lu = %lu * %lu)\n",
 	(node->visible?"":"*"),
-	node->name,rank,
+	node->ncbasename,rank,
 	totalsize,
 	node->estimatedsize,
 	size,dimsize);

@@ -31,10 +31,10 @@ static int getcompletedimset3(CDFnode*, NClist*);
 static NCerror
 fix1node34(NCDAPCOMMON* nccomm, CDFnode* node)
 {
-    if(node->nctype == NC_Dimension && node->name == NULL) return NC_NOERR;
-    ASSERT((node->name != NULL));
+    if(node->nctype == NC_Dimension && node->ocname == NULL) return NC_NOERR;
+    ASSERT((node->ocname != NULL));
     nullfree(node->ncbasename);
-    node->ncbasename = cdflegalname3(node->name);
+    node->ncbasename = cdflegalname3(node->ocname);
     if(node->ncbasename == NULL) return NC_ENOMEM;
     nullfree(node->ncfullname);
     node->ncfullname = makecdfpathstring3(node,nccomm->cdf.separator);
@@ -113,29 +113,30 @@ fixgrid34(NCDAPCOMMON* nccomm, CDFnode* grid)
 	if(nclistlength(map->array.dimensions) != 1) goto invalid;
 	/* and the map name must match the ith array dimension */
 	if(!DIMFLAG(arraydim,CDFDIMANON)
-	   && strcmp(arraydim->name,map->name)!= 0)
+	   && strcmp(arraydim->ocname,map->ocname)!= 0)
 	    goto invalid;
 	/* and the map name must match its dim name (if any) */
 	mapdim = (CDFnode*)nclistget(map->array.dimensions,0);
-	if(!DIMFLAG(mapdim,CDFDIMANON) && strcmp(mapdim->name,map->name)!= 0)
+	if(!DIMFLAG(mapdim,CDFDIMANON)
+	   && strcmp(mapdim->ocname,map->ocname)!= 0)
 	    goto invalid;
 	/* Add appropriate names for the anonymous dimensions */
 	/* Do the map name first, so the array dim may inherit */
 	if(DIMFLAG(mapdim,CDFDIMANON)) {
-	    nullfree(mapdim->name);
+	    nullfree(mapdim->ocname);
 	    nullfree(mapdim->ncbasename);
-	    mapdim->name = nulldup(map->name);
-	    if(!mapdim->name) return NC_ENOMEM;
-	    mapdim->ncbasename = cdflegalname3(mapdim->name);
+	    mapdim->ocname = nulldup(map->ocname);
+	    if(!mapdim->ocname) return NC_ENOMEM;
+	    mapdim->ncbasename = cdflegalname3(mapdim->ocname);
 	    if(!mapdim->ncbasename) return NC_ENOMEM;
 	    DIMFLAGCLR(mapdim,CDFDIMANON);
 	}
 	if(DIMFLAG(arraydim,CDFDIMANON)) {
-	    nullfree(arraydim->name); /* just in case */
+	    nullfree(arraydim->ocname); /* just in case */
 	    nullfree(arraydim->ncbasename);
-	    arraydim->name = nulldup(map->name);
-	    if(!arraydim->name) return NC_ENOMEM;
-	    arraydim->ncbasename = cdflegalname3(arraydim->name);
+	    arraydim->ocname = nulldup(map->ocname);
+	    if(!arraydim->ocname) return NC_ENOMEM;
+	    arraydim->ncbasename = cdflegalname3(arraydim->ocname);
 	    if(!arraydim->ncbasename) return NC_ENOMEM;
 	    DIMFLAGCLR(arraydim,CDFDIMANON);
 	}
@@ -176,7 +177,7 @@ static CDFnode*
 clonedim(NCDAPCOMMON* nccomm, CDFnode* dim, CDFnode* var)
 {
     CDFnode* clone;
-    clone = makecdfnode34(nccomm,dim->name,OC_Dimension,
+    clone = makecdfnode34(nccomm,dim->ocname,OC_Dimension,
 			  OCNULL,dim->container);
     /* Record its existence */
     nclistpush(dim->container->root->tree->nodes,(ncelem)clone);
@@ -288,7 +289,7 @@ computecdfdimnames34(NCDAPCOMMON* nccomm)
                 dim->ncfullname = cdflegalname3(tmp);
     	    } else { /* !anonymous */
 	        nullfree(dim->ncbasename);
-	        dim->ncbasename = cdflegalname3(dim->name);
+	        dim->ncbasename = cdflegalname3(dim->ocname);
     	        nullfree(dim->ncfullname);
 	        dim->ncfullname = nulldup(dim->ncbasename);
 	    }
@@ -413,14 +414,14 @@ makecdfnode34(NCDAPCOMMON* nccomm, char* name, OCtype octype,
     node = (CDFnode*)calloc(1,sizeof(CDFnode));
     if(node == NULL) return (CDFnode*)NULL;
 
-    node->name = NULL;
+    node->ocname = NULL;
     if(name) {
         size_t len = strlen(name);
         if(len >= NC_MAX_NAME) len = NC_MAX_NAME-1;
-        node->name = (char*)malloc(len+1);
-	if(node->name == NULL) return NULL;
-	memcpy(node->name,name,len);
-	node->name[len] = '\0';
+        node->ocname = (char*)malloc(len+1);
+	if(node->ocname == NULL) return NULL;
+	memcpy(node->ocname,name,len);
+	node->ocname[len] = '\0';
     }
     node->nctype = octypetonc(octype);
     node->dds = ocnode;
@@ -667,7 +668,7 @@ free1cdfnode34(CDFnode* node)
 {
     unsigned int j,k;
     if(node == NULL) return;
-    nullfree(node->name);
+    nullfree(node->ocname);
     nullfree(node->ncbasename);
     nullfree(node->ncfullname);
     if(node->attributes != NULL) {
@@ -711,16 +712,16 @@ nodematch34(CDFnode* node1, CDFnode* node2)
 	/* Check for Grid->Structure match */
 	if((node1->nctype == NC_Structure && node2->nctype == NC_Grid)
 	   || (node2->nctype == NC_Structure && node1->nctype == NC_Grid)){
-	   if(node1->name == NULL || node2->name == NULL
-	      || strcmp(node1->name,node2->name) !=0) return 0;	    	
+	   if(node1->ncbasename == NULL || node2->ncbasename == NULL
+	      || strcmp(node1->ncbasename,node2->ncbasename) !=0) return 0;	    	
 	} else return 0;
     }
     /* Add hack to address the screwed up Columbia server */
     if(node1->nctype == NC_Dataset) return 1;
     if(node1->nctype == NC_Primitive
        && node1->etype != node2->etype) return 0;
-    if(node1->name != NULL && node2->name != NULL
-       && strcmp(node1->name,node2->name)!=0) return 0;
+    if(node1->ncbasename != NULL && node2->ncbasename != NULL
+       && strcmp(node1->ncbasename,node2->ncbasename)!=0) return 0;
     if(nclistlength(node1->array.dimensions)
        != nclistlength(node2->array.dimensions)) {/*look closer*/
 	ASSERT((node1->array.dimensions0 != NULL));
@@ -744,16 +745,16 @@ simplenodematch34(CDFnode* node1, CDFnode* node2)
 	/* Check for Grid->Structure match */
 	if((node1->nctype == NC_Structure && node2->nctype == NC_Grid)
 	   || (node2->nctype == NC_Structure && node1->nctype == NC_Grid)){
-	   if(node1->name == NULL || node2->name == NULL
-	      || strcmp(node1->name,node2->name) !=0) return 0;	    	
+	   if(node1->ocname == NULL || node2->ocname == NULL
+	      || strcmp(node1->ocname,node2->ocname) !=0) return 0;	    	
 	} else return 0;
     }
     /* Add hack to address the screwed up Columbia server */
     if(node1->nctype == NC_Dataset) return 1;
     if(node1->nctype == NC_Primitive
        && node1->etype != node2->etype) return 0;
-    if(node1->name != NULL && node2->name != NULL
-       && strcmp(node1->name,node2->name)!=0) return 0;
+    if(node1->ocname != NULL && node2->ocname != NULL
+       && strcmp(node1->ocname,node2->ocname)!=0) return 0;
     if(nclistlength(node1->array.dimensions0)
        != nclistlength(node2->array.dimensions0)) return 0;
     return 1;

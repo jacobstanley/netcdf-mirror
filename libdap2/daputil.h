@@ -23,6 +23,7 @@ extern char* maketmppath(char* path, char* prefix);
 #define WITHOUTDATASET 0
 extern void collectnodepath3(struct CDFnode*, NClist* path, int dataset);
 extern char* makecdfpathstring3(struct CDFnode*,const char*);
+extern char* ocifypathstring3(struct CDFnode*,const char*);
 extern char* makesimplepathstring3(struct CDFnode*);
 extern char* simplepathstring3(NClist*,char*);
 extern void clonenodenamepath3(struct CDFnode*, NClist*, int);
