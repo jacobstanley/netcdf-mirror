@@ -49,7 +49,7 @@ NCDAP3 = libncdap3
 NCDAP4 = libncdap4
 DAP2 = libdap2
 if BUILD_UTILITIES
-NCREMOTETESTDIR = ncremote_test
+NCDAPTESTDIR = ncdap_test
 endif # BUILD_UTILITIES
 endif
 
@@ -68,7 +68,7 @@ endif
 # depend on it. 
 SUBDIRS = include $(H5_TEST_DIR) libdispatch $(OCLIB) libsrc		\
 $(LIBDISKLESS) $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBRPC) liblib $(V2_TEST) \
-nc_test $(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCREMOTETESTDIR) man4    \
+nc_test $(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
 $(EXAMPLES)
 
 # Remove these generated files, for a distclean.
