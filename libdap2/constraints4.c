@@ -13,7 +13,8 @@
 /* In order to construct the projection,
 we need to make sure to match the relevant dimensions
 against the relevant nodes in which the ultimate target
-is contained.
+is contained. For netcdf4, we only need to do this
+for one level.
 */
 NCerror
 buildvaraprojection4(Getvara* getvar,
@@ -31,7 +32,7 @@ buildvaraprojection4(Getvara* getvar,
     segment = (DCEsegment*)dcecreate(CES_SEGMENT);
     segment->cdfnode = var;
     ASSERT((segment->cdfnode != NULL));
-    segment->name = nulldup(segment->cdfnode->ncbasename);
+    segment->name = nulldup(segment->cdfnode->ocname);
     segment->slicesdefined = 0; /* temporary */
     segment->slicesdeclized = 0; /* temporary */
     segments = nclistnew();
@@ -65,6 +66,7 @@ buildvaraprojection4(Getvara* getvar,
     return ncstat;
 }
 
+#ifdef IGNORE
 /* Compute the set of prefetched data;
    note that even if caching is off, we will
    still prefetch the small variables.
@@ -111,7 +113,7 @@ prefetchdata4(NCDAPCOMMON* nccomm)
     /* Construct the projections for this set of vars */
     newconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
     /* Initially, the constraints are same as the merged constraints */
-    newconstraint->projections = dceclonelist(constraint->projections);
+    newconstraint = dceclone((DCEnode*)constraint);
     restrictprojection34(vars,newconstraint->projections);
     /* similar for selections */
     newconstraint->selections = dceclonelist(constraint->selections);
@@ -143,7 +145,6 @@ done:
     return THROW(ncstat);
 }
 
-#ifdef IGNORE
 /* Based on the tactic, determine the set of variables to add */
 static void
 computevarset4(NCDAP4* drno, Getvara* getvar, NClist* varlist)

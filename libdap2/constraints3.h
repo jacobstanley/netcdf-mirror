@@ -12,7 +12,7 @@ extern NCerror mapconstraints3(DCEconstraint*,CDFnode*);
 extern char* simplepathstring(NClist* segments, char* separator);
 extern void makesegmentstring3(NClist* segments, NCbytes* buf, char* separator);
 
-extern NCerror mergeprojections3(NClist*, NClist*);
+extern NCerror unifyprojections3(NClist*);
 extern int iswholeprojection(DCEprojection*);
 
 extern void freegetvara(struct Getvara* vara);

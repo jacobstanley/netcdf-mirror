@@ -10,16 +10,17 @@
 #include "dapdump.h"
 #include "dceparselex.h"
 
-static NCerror mergeprojection31(DCEprojection*, DCEprojection*);
+static NCerror unifyprojection3r(DCEprojection*, DCEprojection*);
 
 static NCerror matchpartialname3(NClist*, NClist*, CDFnode**);
+static int matchsuffix3(NClist* matchpath, NClist* segments);
 static void completesegments3(NClist* fullpath, NClist* segments);
 
 static NCerror qualifyconstraints3(DCEconstraint*);
 static NCerror qualifyprojectionnames3(DCEprojection*);
 static NCerror qualifyprojectionsizes3(DCEprojection*);
 static NCerror qualifyselectionnames3(DCEselection*);
-static NClist* unifyprojectionnodes3(NClist* varlist);
+static NClist* compressprojectionnodes3(NClist* varlist);
 static int treecontains3(CDFnode* var, CDFnode* root);
 
 /* Parse incoming url constraints, if any,
@@ -153,7 +154,7 @@ completesegments3(NClist* fullpath, NClist* segments)
 	int j;
         DCEsegment* seg = (DCEsegment*)dcecreate(CES_SEGMENT);
         CDFnode* node = (CDFnode*)nclistget(fullpath,i);
-        seg->name = nulldup(node->ncbasename);
+        seg->name = nulldup(node->ocname);
         seg->cdfnode = node;
 	seg->rank = nclistlength(node->array.dimensions);
 	for(j=0;j<seg->rank;j++) {
@@ -214,12 +215,14 @@ qualifyprojectionsizes3(DCEprojection* proj)
 	NClist* dimset = NULL;
 	int rank;
 	ASSERT(seg->cdfnode != NULL);
-	/* Must use dimensions0 (the original set) because
+	/* Must use dimensions0 of the template because
            the segments are wrt the underlying dce DDS */
         dimset = seg->cdfnode->array.dimensions0;
         rank = nclistlength(dimset);
         for(j=0;j<rank;j++) {
 	    CDFnode* dim = (CDFnode*)nclistget(dimset,j);
+	    dim = dim->basenode;
+            assert(dim != null);
             seg->slices[j].declsize = dim->dim.declsize;	    
 	}
     }
@@ -258,9 +261,9 @@ fprintf(stderr,"qualify.sel: %s -> ",
 
 /*
 We are given a set of segments (in path)
-representing a partial path for a DCE variable.
+representing a partial path for a CDFnode variable.
 Our goal is to locate all matching
-DCE variables for which the path of that
+variables for which the path of that
 variable has a suffix matching
 the given partial path.
 If one node matches exactly, then use that one;
@@ -278,31 +281,6 @@ Additional constraints (4/12/2010):
    shortest path
 4. otherwise complain about ambiguity
 */
-
-static int
-matchsuffix3(NClist* matchpath, NClist* segments)
-{
-    int i;
-    int nsegs = nclistlength(segments);
-    ASSERT(nsegs <= nclistlength(matchpath));
-    for(i=0;i<nsegs;i++) {
-	DCEsegment* seg = (DCEsegment*)nclistget(segments,i);
-	CDFnode* node = (CDFnode*)nclistget(matchpath,i);
-	int match;
-	int rank = seg->rank;
-	/* Do the names match (in oc name space) */
-	if(strcmp(seg->name,node->ocname) != 0) return 0; /* no match */
-	/* Do the ranks match (watch out for sequences) */
-	if(rank == 0) /* matches any set of dimensions */
-	    match = 1;
-	else if(node->nctype == NC_Sequence)
-	    match = (rank == 1?1:0);
-	else /*!NC_Sequence*/
-	    match = (rank == nclistlength(node->array.dimensions0)?1:0);
-	if(!match) return 0;
-   }
-   return 1;
-}
 
 /**
  * Given a path as segments,
@@ -325,13 +303,13 @@ matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
     NClist* matchpath = nclistnew();
 
     /* Locate all nodes with the same name
-       as the last element in the path
+       as the last element in the segment path
     */
     nsegs = nclistlength(segments);
     lastseg = (DCEsegment*)nclistget(segments,nsegs-1);
     for(i=0;i<nclistlength(nodes);i++) {
         CDFnode* node = (CDFnode*)nclistget(nodes,i);
-	if(node->ncbasename == null)
+	if(node->ocname == null)
 	    continue;
 	/* Path names come from oc space */
         if(strcmp(node->ocname,lastseg->name) != 0)
@@ -359,7 +337,10 @@ matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
 	/* Do a suffix match */
         if(matchsuffix3(matchpath,segments)) {
 	    nclistpush(matches,(ncelem)matchnode);
-	    break;
+#ifdef DEBUG
+fprintf(stderr,"matchpartialname: pathmatch: %s :: %s\n",
+matchnode->ncfullname,dumpsegments(segments));
+#endif
 	}
     }
     /* |matches|==0 => no match; |matches|>1 => ambiguity */
@@ -401,9 +382,47 @@ matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
 	    *nodep = minnode;
 	} break;
     }
+#ifdef DEBUG
+fprintf(stderr,"matchpartialname: choice: %s %s for %s\n",
+(nclistlength(matches) > 1?"":"forced"),
+(*nodep)->ncfullname,dumpsegments(segments));
+#endif
 
 done:
     return THROW(ncstat);
+}
+
+static int
+matchsuffix3(NClist* matchpath, NClist* segments)
+{
+    int i,j;
+    int nsegs = nclistlength(segments);
+    int pathlen = nclistlength(matchpath);
+    ASSERT(pathlen >= nsegs);
+    for(i=0;i<pathlen;i++) {
+        int pathmatch = 1;
+	/* Starting at this point in the path, try to match the segment list */
+        for(j=0;j<nsegs && (i+j < pathlen);j++) {
+            int segmatch = 1;
+	    DCEsegment* seg = (DCEsegment*)nclistget(segments,j);
+   	    CDFnode* node = (CDFnode*)nclistget(matchpath,i+j);
+	    int rank = seg->rank;
+	    /* Do the names match (in oc name space) */
+	    if(strcmp(seg->name,node->ocname) != 0) {
+		segmatch = 0;/* no match */
+	    } else
+	    /* Do the ranks match (watch out for sequences) */
+	    if(rank == 0) /* rank == 9 matches any set of dimensions */
+		segmatch = 1;
+	    else if(node->nctype == NC_Sequence)
+	        segmatch = (rank == 1?1:0);
+	    else /*!NC_Sequence*/
+	        segmatch = (rank == nclistlength(node->array.dimensions0)?1:0);
+	    if(!segmatch) pathmatch = 0;
+	}
+	if(pathmatch) return 1;
+   }
+   return 0;
 }
 
 #ifdef IGNORE
@@ -494,7 +513,7 @@ fprintf(stderr,"restriction.before=|%s|\n",
 	NClist* nodeset = NULL;
 	/* Attempt to unify the vars into larger units
 	   (like a complete grid) */
-	nodeset = unifyprojectionnodes3(varlist);	
+	nodeset = compressprojectionnodes3(varlist);	
         for(i=0;i<nclistlength(nodeset);i++) {
 	    DCEprojection* newp;
 	    CDFnode* var = (CDFnode*)nclistget(nodeset,i);
@@ -513,7 +532,7 @@ fprintf(stderr,"restriction.candidate=|%s|\n",var->ncfullname);
 	    for(j=0;j<nclistlength(path);j++) {
 	        CDFnode* node = (CDFnode*)nclistget(path,j);
 	        DCEsegment* newseg = (DCEsegment*)dcecreate(CES_SEGMENT);
-	        newseg->name = nulldup(node->ncbasename);
+	        newseg->name = nulldup(node->ocname);
 	        makewholesegment3(newseg,node);/*treat as simple projections*/
 	        newseg->cdfnode = node;
 	        nclistpush(newp->var->segments,(ncelem)newseg);
@@ -527,22 +546,34 @@ fprintf(stderr,"restriction.candidate=|%s|\n",var->ncfullname);
 	   intersect any of the variables. If not,
 	   then remove from the projection list.
 	*/
+	NClist* suppress = nclistnew();
+	DCEprojection* proj;
 	len = nclistlength(projections);
-	for(i=len-1;i>=0;i--) {/* Walk backward to facilitate removal*/
+	for(i=0;i<len;i++) {
 	    int intersect = 0;
-	    DCEprojection* proj = (DCEprojection*)nclistget(projections,i);
+	    proj = (DCEprojection*)nclistget(projections,i);
 	    if(proj->discrim != CES_VAR) continue;
 	    for(j=0;j<nclistlength(varlist);j++) {
 		CDFnode* var = (CDFnode*)nclistget(varlist,j);
 		/* Note that intersection could go either way */
-		if(treecontains3(var,proj->var->cdfleaf)
-		   || treecontains3(proj->var->cdfleaf,var)) {intersect = 1; break;}
+		if(treecontains3(var,proj->var->cdfleaf)) {
+		    intersect = 1;
+		    break;
+		} else if(treecontains3(proj->var->cdfleaf,var)) {
+		    intersect = 1;
+		    break;
+		}
 	    }	    
 	    if(!intersect) {
 		/* suppress this projection */
-		DCEprojection* p = (DCEprojection*)nclistremove(projections,i);
-		dcefree((DCEnode*)p);
+		nclistpush(suppress,(ncelem)proj);
 	    }
+	}
+	if(nclistlength(suppress) > 0) {
+	    for(i=0;i<nclistlength(suppress);i++) {
+		nclistelemremove(projections,nclistget(suppress,i));
+	    }
+	    nclistfree(suppress);
 	}
 	/* Now looks for containment between projections and only keep
            the more restrictive. Is this algorithm stable against reordering?.
@@ -590,8 +621,10 @@ treecontains3(CDFnode* var, CDFnode* root)
 {
     int i;
 
-    if(root->visible == 0) return 0;
-    if(var == root) return 1;
+    if(root->visible == 0)
+	return 0;
+    if(var == root)
+	return 1;
     for(i=0;i<nclistlength(root->subnodes);i++) {
         CDFnode* subnode = (CDFnode*)nclistget(root->subnodes,i);
 	if(treecontains3(var,subnode)) return 1;
@@ -603,7 +636,7 @@ treecontains3(CDFnode* var, CDFnode* root)
    into larger units.
 */
 static NClist*
-unifyprojectionnodes3(NClist* varlist)
+compressprojectionnodes3(NClist* varlist)
 {
     int i;
     NClist* nodeset = nclistnew();
@@ -667,82 +700,68 @@ unifyprojectionnodes3(NClist* varlist)
 }
 
 /*
-Given two projection lists, merge
-src into dst taking
+Given a projection list, merge
+the projections taking 
 overlapping projections into acct.
 Assume that name qualification has occured.
-Dst will be modified.
+Argument will be modified.
 */
 NCerror
-mergeprojections3(NClist* dst, NClist* src)
+unifyprojections3(NClist* list)
 {
-    int i;
-    NClist* cat = nclistnew();
+    int i,j;
     NCerror ncstat = NC_NOERR;
 
 #ifdef DEBUG
-fprintf(stderr,"mergeprojection: dst = %s\n",dumpprojections(dst));
-fprintf(stderr,"mergeprojection: src = %s\n",dumpprojections(src));
+fprintf(stderr,"unifyprojection: list = %s\n",dumpprojections(list));
 #endif
 
-    ASSERT(dst != NULL);
+    ASSERT(nclistlength(list) != 0);
 
-    /* get dst concat clone(src) */
-    nclistsetalloc(cat,nclistlength(dst)+nclistlength(src));
-    for(i=0;i<nclistlength(dst);i++) {
-	DCEprojection* p = (DCEprojection*)nclistget(dst,i);
-	nclistpush(cat,(ncelem)p);
-    }    
-    if(src != NULL) for(i=0;i<nclistlength(src);i++) {
-	DCEprojection* p = (DCEprojection*)nclistget(src,i);
-	nclistpush(cat,(ncelem)dceclone((DCEnode*)p));
-    }    
-
-    nclistclear(dst);
-
-    /* Repeatedly pull elements from the concat,
+    /* Repeatedly pull elements from the list
        merge with all duplicates, and stick into
-       the dst
+       the result
     */
-    while(nclistlength(cat) > 0) {
-	DCEprojection* target = (DCEprojection*)nclistremove(cat,0);
+    for(i=0;i<nclistlength(list);i++) {
+	DCEprojection* target = (DCEprojection*)nclistget(list,0);
 	if(target == NULL) continue;
-        if(target->discrim != CES_VAR) continue;
-        for(i=0;i<nclistlength(cat);i++) {
-	    DCEprojection* p2 = (DCEprojection*)nclistget(cat,i);
+        if(target->discrim != CES_VAR)
+	    continue; /* dont try to unify functions */
+        for(j=i;j<nclistlength(list);j++) {
+	    DCEprojection* p2 = (DCEprojection*)nclistget(list,j);
 	    if(p2 == NULL) continue;
 	    if(p2->discrim != CES_VAR) continue;
 	    if(target->var->cdfleaf != p2->var->cdfleaf) continue;
 	    /* This entry matches our current target; merge  */
-	    ncstat = mergeprojection31(target,p2);
+	    ncstat = unifyprojection3r(target,p2);
 	    /* null out this merged entry and release it */
-	    nclistset(cat,i,(ncelem)NULL);	    
+	    nclistset(list,j,(ncelem)NULL);	    
 	    dcefree((DCEnode*)p2);	    
 	}		    
-	/* Capture the clone */
-	nclistpush(dst,(ncelem)target);
     }	    
-    nclistfree(cat);
+    /* compress out null entries */
+    for(i=nclistlength(list)-1;i>=0;i--) {
+	if(nclistget(list,i) == (ncelem)NULL)
+	    nclistremove(list,i);
+    }
     return ncstat;
 }
 
 static NCerror
-mergeprojection31(DCEprojection* dst, DCEprojection* src)
+unifyprojection3r(DCEprojection* dst, DCEprojection* src)
 {
     NCerror ncstat = NC_NOERR;
     int i,j;
 
-    /* merge segment by segment;
-       |dst->segments| == |src->segments|
-       by construction
-    */
+    /* merge segment by segment */
     ASSERT((dst->discrim == CES_VAR && src->discrim == CES_VAR));
     ASSERT((nclistlength(dst->var->segments) == nclistlength(src->var->segments)));    
     for(i=0;i<nclistlength(dst->var->segments);i++) {
 	DCEsegment* dstseg = (DCEsegment*)nclistget(dst->var->segments,i);
 	DCEsegment* srcseg = (DCEsegment*)nclistget(src->var->segments,i);
 	ASSERT((dstseg->cdfnode == srcseg->cdfnode)); /* by construction */
-	for(j=0;j<nclistlength(dstseg->slices);j++) {
+	ASSERT((dstseg->rank == srcseg->rank)); /* by construction */
+	for(j=0;j<dstseg->rank;j++) {
 	    dceslicemerge(&dstseg->slices[j],&srcseg->slices[j]);
 	}
     }
@@ -832,7 +851,7 @@ fillsegmentpath(DCEprojection* p, NClist* nodes)
 	CDFnode* node = (CDFnode*)nclistget(path,i);
 	seg->cdfnode = node;
 #ifdef DEBUG
-fprintf(stderr,"reref: %s -> %s\n",seg->name,node->ncbasename);
+fprintf(stderr,"reref: %s -> %s\n",seg->name,node->ocname);
 #endif
     }
     
@@ -921,7 +940,7 @@ buildvaraprojection3(Getvara* getvar,
 	CDFnode* n = (CDFnode*)nclistget(path,i);
 	segment->cdfnode = n;
 	ASSERT((segment->cdfnode != NULL));
-        segment->name = nulldup(n->ncbasename);
+        segment->name = nulldup(n->ocname);
 	segment->slicesdefined = 0; /* temporary */
 	segment->slicesdeclized = 0; /* temporary */
 	nclistpush(segments,(ncelem)segment);
@@ -997,6 +1016,7 @@ iswholesegment(DCEsegment* seg)
     NClist* dimset = NULL;
     unsigned int rank;
     
+    if(seg->rank == 0) return 1;
     if(!seg->slicesdefined) return 0;
     if(seg->cdfnode == NULL) return 0;
     dimset = seg->cdfnode->array.dimensions;

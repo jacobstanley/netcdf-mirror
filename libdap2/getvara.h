@@ -52,4 +52,6 @@ typedef struct Getvara {
     CDFnode* target0;
 } Getvara;
 
+extern int varamergeprojections3(NClist*,DCEprojection*,NClist*,NClist**);
+
 #endif /*GETVARA_H*/

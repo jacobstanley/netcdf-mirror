@@ -29,7 +29,7 @@ NCD4_get_vara(int ncid, int varid,
     CDFnode* cdfvar; /* cdf node mapping to var*/
     NClist* varnodes;
     Getvara* varainfo = NULL;
-    char* constraint = NULL;
+    DCEconstraint* constraint = NULL;
     CDFnode* xtarget = NULL;
     CDFnode* target = NULL;
     DCEprojection* varaprojection = NULL;
@@ -38,6 +38,8 @@ NCD4_get_vara(int ncid, int varid,
     size_t localcount[NC_MAX_VAR_DIMS];
     NClist* ncdims;
     size_t ncrank;
+    int mustmerge;
+    NClist* vars = nclistnew();
 
     LOG((2, "nc_get_vara: ncid 0x%x varid %d", ncid, varid));
 
@@ -128,49 +130,51 @@ fprintf(stderr,"\n");
 			          &varaprojection);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
 
+    /* If the dataset is unconstrainable or it is cached
+       and is wholevariable, then we will need to walk using the
+       merge of the urlconstraint and the vara projection,
+       otherwise fetch using the urlconstraint and walk using only
+       the vara projection.
+    */
+
     if(FLAGSET(dapcomm->controls,NCF_UNCONSTRAINABLE)) {
+	cachenode = dapcomm->cdf.cache->prefetch;	
+	ASSERT((cachenode != NULL));
+	mustmerge = 1;
 #ifdef DEBUG
 fprintf(stderr,"Unconstrained: reusing prefetch\n");
 #endif
-	cachenode = dapcomm->cdf.cache->prefetch;
-	ASSERT((cachenode != NULL));
     } else if(iscached(dapcomm,varaprojection->var->cdfleaf,&cachenode)) {
+        /* If it is cached, then it is a whole variable but may still
+           need to apply constraints */
 #ifdef DEBUG
-fprintf(stderr,"Reusing cached fetch constraint: %s\n",
-	dumpconstraint(cachenode->constraint));
+fprintf(stderr,"Reusing cache\n");
 #endif
-    } else { /* Load with constraints */
-	NClist* vars = nclistnew();
-	DCEconstraint* constraint;
-	nclistpush(vars,(ncelem)varainfo->target);
+	mustmerge = 1;	
+    } else {/* load using constraints */
+	mustmerge = 0;
+    }
 
+    nclistpush(vars,(ncelem)varainfo->target);
+    if(mustmerge) {
 	constraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
         constraint->projections = dceclonelist(dapcomm->oc.dapconstraint->projections);
-        if(!FLAGSET(dapcomm->controls,NCF_CACHE)) {
-	    /* If we are not caching, then merge the getvara projections */
-	    NClist* tmp = nclistnew();
-	    DCEprojection* clone = (DCEprojection*)dceclone((DCEnode*)varaprojection);
-	    nclistpush(tmp,(ncelem)clone);
-            ncstat = mergeprojections3(constraint->projections,tmp);
-	    nclistfree(tmp);
-	    dcefree((DCEnode*)clone);
-            if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-#ifdef DEBUG
-fprintf(stderr,"vara merge: %s\n",
-	dumpprojections(constraint->projections));
-#endif
-        }
-
-        restrictprojection34(vars,constraint->projections);
-        constraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
-
-	/* buildcachenode3 will also fetch the corresponding datadds */
-        ncstat = buildcachenode34(dapcomm,constraint,vars,&cachenode,0);
+	ncstat = varamergeprojections3(constraint,varaprojection);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+        restrictprojection34(vars,constraint->projections);
+	/* there should only be 1 projection */
+	if(nclistlength(constraint->projections) != 1)
+	    PANIC("|vara projections| != 1");
+	varaprojection = (DCEprojection*)nclistget(constraint->projections,0);
+    } else {
+	/* buildcachenode3 will create a new cachenode and
+           will also fetch the corresponding datadds */
+        ncstat = buildcachenode34(dapcomm,constraint,vars,&cachenode,0);
+	if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+    }
 #ifdef DEBUG
 fprintf(stderr,"cache.datadds=%s\n",dumptree(cachenode->datadds));
 #endif
-    }
 
     /* attach DATADDS to DDS */
     unattach34(dapcomm->cdf.ddsroot);

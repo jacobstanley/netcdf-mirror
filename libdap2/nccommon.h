@@ -98,7 +98,7 @@ struct NCTMODEL {
 
 /* Detail information about each cache item */
 typedef struct NCcachenode {
-    int wholevariable; /* Is this cache entry constrained? */
+    int wholevariable; /* does this node only have wholevariables? */
     int prefetch; /* is this the prefetch cache entry? */
     size_t xdrsize;
     DCEconstraint* constraint; /* as used to create this node */
@@ -244,7 +244,7 @@ typedef struct CDFnode {
     NClist*          subnodes;      /* if nctype == grid, sequence, etc. */
     NClist*          attributes;    /*NClist<NCattribute*>*/
     NCDODS           dodsspecial;   /* special attributes like maxStrlen */
-    nc_type          externaltype   /* the type as represented to nc_inq*/
+    nc_type          externaltype;  /* the type as represented to nc_inq*/
     int              ncid;          /* relevant NC id for this object*/
     unsigned long    maxstringlength;
     unsigned long    sequencelimit; /* 0=>unlimited */
@@ -255,7 +255,9 @@ typedef struct CDFnode {
     BOOL	     zerodim;       /* 1 => node has a zero dimension */
     /* These two flags track the effects on grids of constraints */
     BOOL             virtual;       /* node added by regrid */
+#ifdef PROJECTED
     BOOL             projected;     /* node referenced by projection */
+#endif
     struct CDFnode* attachment;     /* DDS<->DATADDS cross link*/
     struct CDFnode* template;       /* temporary field for regridding */
     /* Fields for use by libncdap4 */

@@ -2,11 +2,12 @@
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON=""
 PARMS="[log]"
 
-F="http://motherlode.ucar.edu:8080/dods/dts/test.06"
-CON="ThreeD.amp[0:9][0:9][0:9]"
+F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/synth1"
+#F="file:///home/dmh/mach/minor/ncdap_test/testdata3/1998-6-avhrr.dat"
+#CON="b[1:2:10]"
 
 #PARMS="${PARMS}[netcdf4]"
-#PARMS="${PARMS}[cache]"
+PARMS="${PARMS}[cache]"
 PARMS="${PARMS}[show=fetch]"
 #PARMS="${PARMS}[compile]"
 if test "x$CE" != "x" ; then set PARMS="${PARMS}[ce=${CE}]" ; fi
@@ -15,6 +16,9 @@ PROG="./ncd"
 U="${PARMS}$F"
 if test "x$CON" != "x" ; then U="${PARMS}$F?$CON"; fi
 UALL="${PARMS}$F"
+if test "x$VAR" != "x" ; then
+  ARGS="$ARGS -v ${VAR}"
+fi
 #ARGS="-h $ARGS"
 #ARGS="-w $ARGS"
 #ARGS="-c $ARGS"
@@ -52,5 +56,8 @@ F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/test.PointFile"
 F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/synth1"
 F="http://dods.ndbc.noaa.gov/thredds/dodsC/data/stdmet/46029/46029h9999.nc"
 CON="wind_dir[1:10][0:0][0:0]"
+F="http://nomads.ncep.noaa.gov:9090/dods/gens/gens20111011/gep20_00z"
+CON="ens,time,lat,lon,prmslmsl[0:1:0][0:1:64][0:1:10][0:1:10]"
+
 fi
 

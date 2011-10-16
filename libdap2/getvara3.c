@@ -40,16 +40,20 @@ nc3d_getvarx(int ncid, int varid,
     CDFnode* cdfvar; /* cdf node mapping to var*/
     NClist* varnodes;
     nc_type dsttype;
-    Getvara* varinfo = NULL;
+    Getvara* varainfo = NULL;
     CDFnode* xtarget = NULL; /* target in DATADDS */
     CDFnode* target = NULL; /* target in constrained DDS */
     DCEprojection* varaprojection = NULL;
     NCcachenode* cachenode = NULL;
     NClist* vars = nclistnew();
-    DCEconstraint* constraint = NULL;
     size_t localcount[NC_MAX_VAR_DIMS];
     NClist* ncdims;
     size_t ncrank;
+    DCEconstraint* fetchconstraint = NULL;
+    int constrainfetch; /* 1=>use urlconstraint union varprojection
+                            0=>use no constraint */
+    int constrainwalk; /* 1=>use urlconstraint union varprojection
+                           0=>use no constraint */
 
     ncstat = NC_check_id(ncid, (NC**)&drno); 
     if(ncstat != NC_NOERR) goto fail;
@@ -75,6 +79,20 @@ nc3d_getvarx(int ncid, int varid,
     /* Get the dimension info */
     ncdims = cdfvar->array.dimensions;
     ncrank = nclistlength(ncdims);
+
+#ifdef DEBUG
+ {
+int i;
+fprintf(stderr,"getvarx: %s",cdfvar->ocname);
+for(i=0;i<ncrank;i++)
+  fprintf(stderr,"[%ld:%ld:%ld]",
+	(long)startp[i],
+	(long)countp[i],
+	(long)stridep[i]
+	);
+fprintf(stderr,"\n");
+ }
+#endif
 
     /* Fill in missing arguments */
     if(startp == NULL)
@@ -103,7 +121,8 @@ nc3d_getvarx(int ncid, int varid,
     }	     
 
 #ifdef DEBUG
-{ NClist* dims = cdfvar->array.dimensions;
+ {
+NClist* dims = cdfvar->array.dimensions;
 fprintf(stderr,"getvarx: %s",cdfvar->ncfullname);
 if(nclistlength(dims) > 0) {int i;
 for(i=0;i<nclistlength(dims);i++) 
@@ -119,7 +138,7 @@ fprintf(stderr,"[%lu:%lu:%lu]",
 (unsigned long)(((startp[i]+countp[i])*stridep[i])-1));
 }
 fprintf(stderr,"\n");
-}
+ }
 #endif
 
     dsttype = (dsttype0);
@@ -140,97 +159,154 @@ fprintf(stderr,"\n");
 	}
     }
 
-    ncstat = makegetvar34(dapcomm,cdfvar,data,dsttype,&varinfo);
+    ncstat = makegetvar34(dapcomm,cdfvar,data,dsttype,&varainfo);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
 #ifdef IGNORE
     freegetvara(dapcomm->cdf.vara);
-    dapcomm->cdf.vara = varinfo;
+    dapcomm->cdf.vara = varainfo;
 #endif
 
-    ncstat = buildvaraprojection3(varinfo,startp,countp,stridep,&varaprojection);
+    ncstat = buildvaraprojection3(varainfo,startp,countp,stridep,&varaprojection);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
 
+    /* If the dataset is unconstrainable or it is cached
+       and is wholevariable, then we will need to walk using the
+       merge of the urlconstraint and the vara projection,
+       otherwise we build a new cache node based on
+       the merge of urlconstraint and vara projection
+       and walk using only simple walking.
+    */
+
     if(FLAGSET(dapcomm->controls,NCF_UNCONSTRAINABLE)) {
+	cachenode = dapcomm->cdf.cache->prefetch;	
+	ASSERT((cachenode != NULL));
+	constrainfetch = 0; /* use no constraint */
+	constrainwalk = 1; /* use merge when walking */
 #ifdef DEBUG
 fprintf(stderr,"Unconstrained: reusing prefetch\n");
 #endif
-	cachenode = dapcomm->cdf.cache->prefetch;	
-	ASSERT((cachenode != NULL));
     } else if(iscached(dapcomm,varaprojection->var->cdfleaf,&cachenode)) {
-	/* If it is cached, then it is a whole variable */
+        /* If it is cached, then it is a whole variable but may still
+           need to apply constraints */
 #ifdef DEBUG
 fprintf(stderr,"Reusing cache\n");
 #endif
-    } else { /*not cached: load using constraints */
-	nclistpush(vars,(ncelem)varinfo->target);
-	constraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
-        constraint->projections = dceclonelist(dapcomm->oc.dapconstraint->projections);
-        if(!FLAGSET(dapcomm->controls,NCF_CACHE)) {
-	    /* If we are not caching, then merge the getvara projections */
-	    NClist* tmp = nclistnew();
-	    DCEprojection* clone = (DCEprojection*)dceclone((DCEnode*)varaprojection);
-	    /* We need to modify the clone to remove
-               pseudo dimensions (i.e. string and sequence dimensions)
-               because the server will not recognize them
-	    */
-	    removepseudodims3(clone);
-	    nclistpush(tmp,(ncelem)clone);
-            ncstat = mergeprojections3(constraint->projections,tmp);
-#ifdef DEBUG
-fprintf(stderr,"vara merge: %s\n",
-	dumpprojections(constraint->projections));
-#endif
-	    dcefree((DCEnode*)clone);
-	    nclistfree(tmp);
-            if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-        }
+	ASSERT(cachenode->wholevariable); /* by construction */
+	constrainfetch = 0; 
+	constrainwalk = 1; /* use merge when walking */
+    } else {/* load using constraints */
+	constrainfetch = 1; /* fetch with merged constraints */
+	constrainwalk = 0; /* simple walk */
+    }
 
-        restrictprojection34(vars,constraint->projections);
-        constraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
+    /* We will be focusing on the vara target variable */
+    nclistpush(vars,(ncelem)varainfo->target);
 
-	/* buildcachenode3 will create a new cachenode and
-           will also fetch the corresponding datadds */
-        ncstat = buildcachenode34(dapcomm,constraint,vars,&cachenode,0);
+    if(constrainfetch) { /* merge the constraints for fetch */
+	fetchconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
+
+	ncstat = varamergeprojections3(dapcomm->oc.dapconstraint->projections,
+				       varaprojection,
+				       vars,
+                                       &fetchconstraint->projections);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-	constraint = NULL; /* buildcachenode34 takes control of constraint */
+	fetchconstraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
+    }
 
+    if(cachenode == NULL) {
+        /* buildcachenode3 will create a new cachenode and
+           will also fetch the corresponding datadds */
+        ncstat = buildcachenode34(dapcomm,fetchconstraint,vars,&cachenode,0);
+	if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+    }
 #ifdef DEBUG
 fprintf(stderr,"cache.datadds=%s\n",dumptree(cachenode->datadds));
 #endif
-    }
 
-    /* attach DATADDS to DDS */
+    /* attach DATADDS to (constrained) DDS */
     unattach34(dapcomm->cdf.ddsroot);
     ncstat = attachsubset34(cachenode->datadds,dapcomm->cdf.ddsroot);
     if(ncstat) goto fail;	
 
-    /* Fix up varinfo to use the cache */
-    varinfo->cache = cachenode;
-    /* However use this current vara projection */
-    varinfo->varaprojection = varaprojection;
+    /* Fix up varainfo to use the cache */
+    varainfo->cache = cachenode;
+
+    /* construct the walk constraint */
+    if(constrainwalk) { /* merge the constraints for walk */
+	NClist* tmp = NULL;
+	ncstat = varamergeprojections3(dapcomm->oc.dapconstraint->projections,
+				       varaprojection,
+				       vars,
+                                       &tmp);
+        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+	/* Pull out the single projection for doing the walk */
+        ASSERT(nclistlength(tmp) == 1);
+	dcefree((DCEnode*)varaprojection);
+	varaprojection = (DCEprojection*)nclistget(tmp,0);
+	nclistfree(tmp);
+    }
+
+    varainfo->varaprojection = varaprojection;
     varaprojection = NULL;
 
     /* Now, walk to the relevant instance */
 
     /* Get the var correlate from the datadds */
-    target = varinfo->target;
+    target = varainfo->target;
     xtarget = target->attachment;
     if(xtarget == NULL) 
 	{THROWCHK(ncstat=NC_ENODATA); goto fail;}
 
     /* Switch to datadds tree space*/
-    varinfo->target = xtarget;
-    ncstat = moveto(dapcomm,varinfo,cachenode->datadds,data);
+    varainfo->target = xtarget;
+    ncstat = moveto(dapcomm,varainfo,cachenode->datadds,data);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
     goto ok;
 fail:
-    dcefree((DCEnode*)constraint);
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     dcefree((DCEnode*)varaprojection);
 ok:
     nclistfree(vars);
-    freegetvara(varinfo);
+    freegetvara(varainfo);
     return THROW(ncstat);
+}
+
+int
+varamergeprojections3(NClist* urlprojections, DCEprojection* varaprojection,
+                      NClist* vars, NClist** result)
+{
+    int ncstat = NC_NOERR;
+    NClist* tmp;
+    DCEprojection* varaclone;
+
+    tmp = dceclonelist(urlprojections);
+    varaclone = (DCEprojection*)dceclone((DCEnode*)varaprojection);
+
+   /* We need to modify the clone to remove
+      pseudo dimensions (i.e. string and sequence dimensions)
+      because the server will not recognize them
+    */
+    removepseudodims3(varaclone);
+
+    /* combine the projection sets */
+    nclistpush(tmp,(ncelem)varaclone);
+    /* reduce the projections to minimal */
+    ncstat = unifyprojections3(tmp);
+    if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+
+    restrictprojection34(vars,tmp);
+    /* there should only be 1 projection */
+    if(nclistlength(tmp) != 1)
+        PANIC("|vara projections| != 1");
+    if(result) *result = tmp;
+
+#ifdef DEBUG
+fprintf(stderr,"varamergedconstraint: %s\n",
+	dumpprojections(tmp));
+#endif
+
+done:
+    return ncstat;
 }
 
 static NCerror

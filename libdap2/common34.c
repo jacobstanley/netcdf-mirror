@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+#include "dapdump.h"
 
 extern CDFnode* v4node;
 
@@ -712,16 +713,16 @@ nodematch34(CDFnode* node1, CDFnode* node2)
 	/* Check for Grid->Structure match */
 	if((node1->nctype == NC_Structure && node2->nctype == NC_Grid)
 	   || (node2->nctype == NC_Structure && node1->nctype == NC_Grid)){
-	   if(node1->ncbasename == NULL || node2->ncbasename == NULL
-	      || strcmp(node1->ncbasename,node2->ncbasename) !=0) return 0;	    	
+	   if(node1->ocname == NULL || node2->ocname == NULL
+	      || strcmp(node1->ocname,node2->ocname) !=0) return 0;	    	
 	} else return 0;
     }
     /* Add hack to address the screwed up Columbia server */
     if(node1->nctype == NC_Dataset) return 1;
     if(node1->nctype == NC_Primitive
        && node1->etype != node2->etype) return 0;
-    if(node1->ncbasename != NULL && node2->ncbasename != NULL
-       && strcmp(node1->ncbasename,node2->ncbasename)!=0) return 0;
+    if(node1->ocname != NULL && node2->ocname != NULL
+       && strcmp(node1->ocname,node2->ocname)!=0) return 0;
     if(nclistlength(node1->array.dimensions)
        != nclistlength(node2->array.dimensions)) {/*look closer*/
 	ASSERT((node1->array.dimensions0 != NULL));
@@ -988,6 +989,10 @@ attachsubset34(CDFnode* dstroot, CDFnode* srcroot)
 
     if(srcroot == NULL) {THROWCHK(ncstat=NC_NOERR); goto done;}
     if(!nodematch34(dstroot,srcroot)) {THROWCHK(ncstat=NC_EINVAL); goto done;}
+#ifdef DEBUG
+fprintf(stderr,"attachsubset: dstroot=%s\n",dumptree(dstroot));
+fprintf(stderr,"attachsubset: srcroot=%s\n",dumptree(srcroot));
+#endif
     ncstat = attachsubset34r(dstroot,srcroot);
 done:
     return ncstat;
@@ -1000,6 +1005,11 @@ attachsubset34r(CDFnode* dstnode, CDFnode* srcnode)
     NCerror ncstat = NC_NOERR;
     int fieldindex;
 
+#ifdef DEBUG
+fprintf(stderr,"attachsubsetr: attach: dstnode=%s srcnode=%s\n",
+	dstnode->ocname,srcnode->ocname);
+#endif
+
     ASSERT((nodematch34(dstnode,srcnode)));
     setattach(dstnode,srcnode);
 
@@ -1010,6 +1020,9 @@ attachsubset34r(CDFnode* dstnode, CDFnode* srcnode)
         CDFnode* srcsubnode = (CDFnode*)nclistget(srcnode->subnodes,i);
         CDFnode* dstsubnode = (CDFnode*)nclistget(dstnode->subnodes,fieldindex);
         if(nodematch34(dstsubnode,srcsubnode)) {
+#ifdef DEBUG
+fprintf(stderr,"attachsubsetr: match: %s :: %s\n",dstsubnode->ocname,srcsubnode->ocname);
+#endif
             ncstat = attachsubset34r(dstsubnode,srcsubnode);
    	    if(ncstat) goto done;
 	    fieldindex++;

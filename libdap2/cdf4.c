@@ -95,81 +95,10 @@ fixgrids4(NCDAPCOMMON* nccomm)
 	(void)fixgrid34(nccomm,grid); /* Ignore mal-formed grids */
     }
 
-#ifdef IGNORE
-    /* Rename selected array variables */
-    for(i=0;i<nclistlength(vars);i++) {
-        CDFnode* var = (CDFnode*)nclistget(vars,i);
-	CDFnode* grid = var->container;
-	if(grid == NULL || grid->nctype != NC_Grid) continue;
-	if(strcmp(grid->name,var->name)==0) {
-	    /* shorten the var name */
-	    nullfree(var->ncfullname);
-	    var->ncfullname = nulldup(grid->ncbasename);
-	    MEMCHECK(var->ncfullname,NC_ENOMEM);
-	}
-    }
-#endif
-
-#ifdef IGNORE
-    /* Attempt to hoist the top-level grid arrays and maps */
-    /* Find vars that have the same base name as some other var;
-       and remove corresponding grid container (if any) */
-    for(i=0;i<nclistlength(vars);i++) {
-	int j;
-        CDFnode* var = (CDFnode*)nclistget(vars,i);
-	if(var->container == NULL || var->container->nctype != NC_Grid)
-	    continue;
-        for(j=0;j<nclistlength(vars);j++) {
-            CDFnode* testvar = (CDFnode*)nclistget(vars,j);
-	    if(var == testvar) continue;
-	    if(strcmp(testvar->ncbasename,var->ncbasename)==0) {
-	        nclistdeleteall(topgrids,(ncelem)var->container);
-	        nclistdeleteall(topgrids,(ncelem)testvar->container);
-	    }
-	}
-    }
-
-    /* hoist remaining grids vars */
-    for(i=0;i<nclistlength(vars);i++) {
-        CDFnode* var = (CDFnode*)nclistget(vars,i);
-	if(nclistcontains(topgrids,(ncelem)var->container)) {
-	    nullfree(var->ncfullname);
-	    var->ncfullname = nulldup(var->ncbasename);
-	    MEMCHECK(var,NC_ENOMEM);
-	}
-    }
-#endif
     nclistfree(topgrids);
     return NC_NOERR;
 }
 
-#ifdef IGNORE
-NCerror
-computecdfdimnames4(NCDAPCOMMON* nccomm)
-{
-    int i,j;
-    NClist* topdims = nclistnew();
-    NCerror ncstat = NC_NOERR;
-
-    /* Collect the dimensions that are referenced by
-       top-level variables; these are the only dimensions
-       that need to be defined under the current translation.
-    */    
-    for(i=0;i<nclistlength(nccomm->cdf.varnodes);i++) {
-	CDFnode* var = (CDFnode*)nclistget(nccomm->cdf.varnodes,i);
-	if(nclistlength(var->array.dimensions) == 0) continue;
-	for(j=0;j<nclistlength(var->array.dimensions);j++) {
-	    CDFnode* dim = (CDFnode*)nclistget(var->array.dimensions,j);
-	    if(nclistcontains(topdims,(ncelem)dim)) continue;
-	    nclistpush(topdims,(ncelem)dim);
-	}
-    }
-    ncstat = computecdfdimnames34(nccomm);
-    /* clean up*/
-    nclistfree(topdims);
-    return ncstat;
-}
-#endif
 
 NCerror
 computetypenames4(NCDAPCOMMON* nccomm, CDFnode* tnode)
