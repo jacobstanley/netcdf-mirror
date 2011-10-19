@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#set -x
+set -x
 quiet=0
 leakcheck=0
 timing=0
@@ -42,7 +42,7 @@ CACHE=""
 expected3="${srcdir}/nocacheremote3"
 expected4="${srcdir}/nocacheremote4"
 else
-CACHE="[cache]"
+#CACHE="[cache]"
 expected3="${srcdir}/expectremote3"
 expected4="${srcdir}/expectremote4"
 fi
@@ -65,6 +65,7 @@ test.01 test.02 test.04 test.05 test.06 test.07a test.07 \
 test.21 \
 test.50 test.53 test.55 test.56 test.57 \
 test.66 test.67 test.68 test.69"
+REMOTETESTSS1="test.02"
 
 # Server is failing on some tests ; investigate why
 S1FAIL="test.06a test.22 test.23 test.31"
