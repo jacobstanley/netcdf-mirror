@@ -829,18 +829,18 @@ unattach34(CDFnode* root)
 }
 
 static void
-setattach(CDFnode* target, CDFnode* srcnode)
+setattach(CDFnode* target, CDFnode* template)
 {
-    target->attachment = srcnode;
-    srcnode->attachment = target;
+    target->attachment = template;
+    template->attachment = target;
     /* Transfer important information */
-    target->externaltype = srcnode->externaltype;
-    target->maxstringlength = srcnode->maxstringlength;
-    target->sequencelimit = srcnode->sequencelimit;
-    target->ncid = srcnode->ncid;
+    target->externaltype = template->externaltype;
+    target->maxstringlength = template->maxstringlength;
+    target->sequencelimit = template->sequencelimit;
+    target->ncid = template->ncid;
     /* also transfer libncdap4 info */
-    target->typeid = srcnode->typeid;
-    target->typesize = srcnode->typesize;
+    target->typeid = template->typeid;
+    target->typesize = template->typesize;
 }
 
 static NCerror
@@ -856,7 +856,7 @@ attachdims34(CDFnode* xnode, CDFnode* ddsnode)
 }
 
 #ifdef IGNORE
-/* Attach all dstnodes to all srcnodes; all dstnodes must match */
+/* Attach all dstnodes to all templates; all dstnodes must match */
 static NCerror
 attachall34r(CDFnode* dstnode, CDFnode* srcnode)
 {
@@ -977,53 +977,53 @@ done:
 }
 
 /* 
-Match nodes in src tree to nodes in dst tree;
-src tree is typically a structural subset of dst tree.
+Match nodes in template tree to nodes in target tree;
+template tree is typically a structural superset of target tree.
 WARNING: Dimensions are not attached 
 */
 
 NCerror
-attachsubset34(CDFnode* dstroot, CDFnode* srcroot)
+attachsubset34(CDFnode* target, CDFnode* template)
 {
     NCerror ncstat = NC_NOERR;
 
-    if(srcroot == NULL) {THROWCHK(ncstat=NC_NOERR); goto done;}
-    if(!nodematch34(dstroot,srcroot)) {THROWCHK(ncstat=NC_EINVAL); goto done;}
+    if(template == NULL) {THROWCHK(ncstat=NC_NOERR); goto done;}
+    if(!nodematch34(target,template)) {THROWCHK(ncstat=NC_EINVAL); goto done;}
 #ifdef DEBUG
-fprintf(stderr,"attachsubset: dstroot=%s\n",dumptree(dstroot));
-fprintf(stderr,"attachsubset: srcroot=%s\n",dumptree(srcroot));
+fprintf(stderr,"attachsubset: target=%s\n",dumptree(target));
+fprintf(stderr,"attachsubset: template=%s\n",dumptree(template));
 #endif
-    ncstat = attachsubset34r(dstroot,srcroot);
+    ncstat = attachsubset34r(target,template);
 done:
     return ncstat;
 }
 
 static NCerror
-attachsubset34r(CDFnode* dstnode, CDFnode* srcnode)
+attachsubset34r(CDFnode* target, CDFnode* template)
 {
     unsigned int i;
     NCerror ncstat = NC_NOERR;
     int fieldindex;
 
 #ifdef DEBUG
-fprintf(stderr,"attachsubsetr: attach: dstnode=%s srcnode=%s\n",
-	dstnode->ocname,srcnode->ocname);
+fprintf(stderr,"attachsubsetr: attach: target=%s template=%s\n",
+	target->ocname,template->ocname);
 #endif
 
-    ASSERT((nodematch34(dstnode,srcnode)));
-    setattach(dstnode,srcnode);
+    ASSERT((nodematch34(target,template)));
+    setattach(target,template);
 
-    /* Try to match dstnode subnodes against srcnode subnodes */
+    /* Try to match target subnodes against template subnodes */
 
     fieldindex = 0;
-    for(fieldindex=0,i=0;i<nclistlength(srcnode->subnodes) && fieldindex<nclistlength(dstnode->subnodes);i++) {
-        CDFnode* srcsubnode = (CDFnode*)nclistget(srcnode->subnodes,i);
-        CDFnode* dstsubnode = (CDFnode*)nclistget(dstnode->subnodes,fieldindex);
-        if(nodematch34(dstsubnode,srcsubnode)) {
+    for(fieldindex=0,i=0;i<nclistlength(template->subnodes) && fieldindex<nclistlength(target->subnodes);i++) {
+        CDFnode* templatesubnode = (CDFnode*)nclistget(template->subnodes,i);
+        CDFnode* targetsubnode = (CDFnode*)nclistget(target->subnodes,fieldindex);
+        if(nodematch34(targetsubnode,templatesubnode)) {
 #ifdef DEBUG
-fprintf(stderr,"attachsubsetr: match: %s :: %s\n",dstsubnode->ocname,srcsubnode->ocname);
+fprintf(stderr,"attachsubsetr: match: %s :: %s\n",targetsubnode->ocname,templatesubnode->ocname);
 #endif
-            ncstat = attachsubset34r(dstsubnode,srcsubnode);
+            ncstat = attachsubset34r(targetsubnode,templatesubnode);
    	    if(ncstat) goto done;
 	    fieldindex++;
 	}

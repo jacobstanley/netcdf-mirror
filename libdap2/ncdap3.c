@@ -151,10 +151,16 @@ NCD3_open(const char * path, int mode,
         /* Parse constraints to make sure that they are syntactically correct */
         ncstat = parsedapconstraints(dapcomm,dapcomm->oc.uri->constraint,dapcomm->oc.dapconstraint);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+	/* Canonicalize the constraint */
+	ncstat = fixprojections(dapcomm->oc.dapconstraint->projections);
+        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+	/* using the modified constraint, rebuild the constraint string */
+        ocurisetconstraints(dapcomm->oc.uri,
+			   buildconstraintstring3(dapcomm->oc.dapconstraint));
+	dapcomm->oc.urltext = ocuribuild(dapcomm->oc.uri,NULL,NULL,OCURICONSTRAINTS);
     }
 #ifdef DEBUG
-fprintf(stderr,"parsed constraint: %s\n",
-	dumpconstraint(dapcomm->oc.dapconstraint));
+fprintf(stderr,"ncdap3: final constraint: %s\n",dapcomm->oc.uri->constraint);
 #endif
 
     /* Pass to OC */

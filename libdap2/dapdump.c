@@ -332,7 +332,18 @@ dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible)
     default: break;    
     }
 
-    if(nclistlength(root->array.dimensions) > 0) {
+    if(root->nctype == NC_Sequence && root->array.seqdim != NULL) {
+        CDFnode* dim = root->array.seqdim;
+	char tmp[64];
+	ncbytescat(buf,"[");
+	if(dim->ncbasename != NULL) {
+	    ncbytescat(buf,dim->ncbasename);
+	    ncbytescat(buf,"=");
+	}
+	snprintf(tmp,sizeof(tmp),"%lu",(unsigned long)dim->dim.declsize);
+	ncbytescat(buf,tmp);
+	ncbytescat(buf,"]");
+    } else if(nclistlength(root->array.dimensions0) > 0) {
 	for(i=0;i<nclistlength(root->array.dimensions);i++) {
 	    CDFnode* dim = (CDFnode*)nclistget(root->array.dimensions,i);
 	    char tmp[64];

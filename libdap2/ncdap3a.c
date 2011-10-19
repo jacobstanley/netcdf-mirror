@@ -213,7 +213,7 @@ defseqdims(NCDAPCOMMON* dapcomm)
 	if(seqdims) {
 	    ncstat = getseqdimsize(dapcomm,seq,&seqsize);
 	    if(ncstat != NC_NOERR) {
-                /* Cannot get DATADDDS; convert to unlimited */
+                /* Cannot read sequence; convert to unlimited */
 		sqdim = unlimited;
 	    }
 	} else { /* !seqdims default to size = 1 */
@@ -450,6 +450,8 @@ ask for a single instance of that variable to minimize the
 amount of data we retrieve. However, we want to avoid passing
 through any nested sequence. This is possible because of the way
 that sequencecheck() works.
+TODO: some servers will not accept an unconstrained fetch, so
+make sure we always have a constraint.
 */
 static NCerror
 computeminconstraints3(NCDAPCOMMON* dapcomm, CDFnode* seq, NCbytes* minconstraints)
@@ -462,8 +464,8 @@ computeminconstraints3(NCDAPCOMMON* dapcomm, CDFnode* seq, NCbytes* minconstrain
 
     /* Locate a variable that is inside this sequence */
     /* Preferably one that is a numeric type*/
-    for(candidate=NULL,var=NULL,i=0;i<nclistlength(dapcomm->cdf.varnodes);i++) {
-	CDFnode* node = (CDFnode*)nclistget(dapcomm->cdf.varnodes,i);
+    for(candidate=NULL,var=NULL,i=0;i<nclistlength(dapcomm->cdf.varnodes);i++){
+        CDFnode* node = (CDFnode*)nclistget(dapcomm->cdf.varnodes,i);
 	if(node->array.sequence == seq) {
 	    if(node->nctype == NC_Primitive) {
 		switch(node->etype) {
@@ -734,15 +736,15 @@ suppressunusablevars3(NCDAPCOMMON* dapcomm)
 		if(node->nctype == NC_Sequence
 		   && !node->usesequence) {
 #ifdef DEBUG
-fprintf(stderr,"suppressing sequence var: %s\n",node->ncfullname);
+fprintf(stderr,"suppressing var in unusable sequence: %s\n",node->ncfullname);
 #endif
-		    nclistremove(dapcomm->cdf.varnodes,i);
 		    found = 1;
 		    break;
 		}
 	    }
 	    if(found) break;
 	}
+        if(found) nclistremove(dapcomm->cdf.varnodes,i);
     }
     nclistfree(path);
     return NC_NOERR;

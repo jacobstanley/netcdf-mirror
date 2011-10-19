@@ -161,7 +161,7 @@ fprintf(stderr,"Reusing cache\n");
         constraint->projections = dceclonelist(dapcomm->oc.dapconstraint->projections);
 	ncstat = varamergeprojections3(constraint,varaprojection);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-        restrictprojection34(vars,constraint->projections);
+        canonicalprojection34(vars,constraint->projections);
 	/* there should only be 1 projection */
 	if(nclistlength(constraint->projections) != 1)
 	    PANIC("|vara projections| != 1");

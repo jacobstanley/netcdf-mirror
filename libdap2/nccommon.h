@@ -197,8 +197,8 @@ typedef struct CDFarray {
     NClist*  dimensions; /* inherited+originals */
     NClist*  dimensions0; /* Complete set of dimensions for this var */
     struct CDFnode* stringdim;
-    /* Track sequence containment information */
-    struct CDFnode* seqdim;
+    /* Track sequence related information */
+    struct CDFnode* seqdim; /* if this node is a sequence */
     /* note: unlike string dim; seqdim is also stored in dimensions vector */
     struct CDFnode* sequence; /* containing usable sequence, if any */
     struct CDFnode* basevar; /* for duplicate grid variables*/
@@ -309,7 +309,10 @@ extern CDFnode* findxnode34(CDFnode* target, CDFnode* xroot);
 extern int constrainable34(OCURI*);
 extern char* makeconstraintstring34(DCEconstraint*);
 extern size_t estimatedataddssize34(CDFnode* datadds);
-extern void restrictprojection34(NClist*, NClist*);
+extern void canonicalprojection34(NClist*, NClist*);
+
+/* From constraints.c */
+
 
 /* From cache.c */
 extern int iscached(NCDAPCOMMON*, CDFnode* target, NCcachenode** cachenodep);

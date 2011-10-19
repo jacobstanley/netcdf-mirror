@@ -114,7 +114,7 @@ prefetchdata4(NCDAPCOMMON* nccomm)
     newconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
     /* Initially, the constraints are same as the merged constraints */
     newconstraint = dceclone((DCEnode*)constraint);
-    restrictprojection34(vars,newconstraint->projections);
+    canonicalprojection34(vars,newconstraint->projections);
     /* similar for selections */
     newconstraint->selections = dceclonelist(constraint->selections);
  

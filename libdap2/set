@@ -2,7 +2,7 @@
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON=""
 PARMS="[log]"
 
-F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/synth1"
+F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/b31a"
 #F="file:///home/dmh/mach/minor/ncdap_test/testdata3/1998-6-avhrr.dat"
 #CON="b[1:2:10]"
 

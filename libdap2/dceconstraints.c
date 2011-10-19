@@ -26,7 +26,6 @@
 
 static char* opstrings[] = OPSTRINGS ;
 
-static int mergeprojection(DCEprojection* dst, DCEprojection* src);
 static void ceallnodesr(DCEnode* node, NClist* allnodes, CEsort which);
 
 /* Parse incoming url constraints, if any,
@@ -152,7 +151,7 @@ src into dst taking
 overlapping projections into acct.
 */
 int
-dapmergeprojections(NClist* dst, NClist* src)
+dcemergeprojectionlists(NClist* dst, NClist* src)
 {
     int i;
     NClist* cat = nclistnew();
@@ -191,7 +190,7 @@ fprintf(stderr,"dapmergeprojection: src = %s\n",dcetostring((DCEnode*)src));
 	    if(dcesamepath(target->var->segments,
 			   p2->var->segments)!=0) continue;
 	    /* This entry matches our current target; merge  */
-	    ncstat = mergeprojection(target,p2);
+	    ncstat = dcemergeprojections(target,p2);
 	    /* null out this merged entry and release it */
 	    nclistset(cat,i,(ncelem)NULL);	    
 	    dcefree((DCEnode*)p2);	    
@@ -203,8 +202,8 @@ fprintf(stderr,"dapmergeprojection: src = %s\n",dcetostring((DCEnode*)src));
     return ncstat;
 }
 
-static int
-mergeprojection(DCEprojection* dst, DCEprojection* src)
+int
+dcemergeprojections(DCEprojection* dst, DCEprojection* src)
 {
     int ncstat = NC_NOERR;
     int i,j;

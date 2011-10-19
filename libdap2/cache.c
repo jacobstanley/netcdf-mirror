@@ -88,24 +88,29 @@ prefetchdata3(NCDAPCOMMON* nccomm)
     int i,j;
     NCerror ncstat = NC_NOERR;
     NClist* allvars = nccomm->cdf.varnodes;
-    DCEconstraint* constraint = nccomm->oc.dapconstraint;
+    DCEconstraint* urlconstraint = nccomm->oc.dapconstraint;
     NClist* vars = nclistnew();
     NCcachenode* cache = NULL;
     DCEconstraint* newconstraint = NULL;
     int isnc4 = FLAGSET(nccomm->controls,NCF_NC4);
 
-    /* Check if we can do constraints */
-    if(FLAGSET(nccomm->controls,NCF_UNCONSTRAINABLE)) { /*cannot constrain*/
-        /* If we cannot constrain, then pull in everything */
-	for(i=0;i<nclistlength(allvars);i++) {
-	    nclistpush(vars,nclistget(allvars,i));
+    if(FLAGSET(nccomm->controls,NCF_UNCONSTRAINABLE)) {
+        /* If we cannot constrain and caching is enabled,
+           then pull in everything */
+        if(FLAGSET(nccomm->controls,NCF_CACHE)) {
+	    for(i=0;i<nclistlength(allvars);i++) {
+	        nclistpush(vars,nclistget(allvars,i));
+	    }
+	} else { /* do no prefetching */
+    	    nccomm->cdf.cache->prefetch = NULL;
+	    goto done;
 	}
     } else { /* can do constraints */
 	/* pull in those variables of sufficiently small size */
         for(i=0;i<nclistlength(allvars);i++) {
             CDFnode* var = (CDFnode*)nclistget(allvars,i);
             size_t nelems = 1;
-    
+
             if(!isnc4) {
 	        /* If netcdf 3 and var is a sequence or under a sequence, then never prefetch */
 	        if(var->nctype == NC_Sequence || dapinsequence(var)) continue;
@@ -131,10 +136,25 @@ fprintf(stderr,"prefetch: %s\n",var->ncfullname);
 	goto done;
     }
 
-    newconstraint = (DCEconstraint*)dceclone((DCEnode*)constraint);
-    /* Construct the projections for this set of vars */
-    /* Initially, the constraints are same as the merged constraints */
-    restrictprojection34(vars,newconstraint->projections);
+    /* Create a single constraint consisting of the projections for the variables;
+       each projection is whole variable merged with any reference in the url constraint */
+
+    newconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
+    newconstraint->projections = nclistnew();
+    newconstraint->selections = dceclonelist(urlconstraint->selections);
+
+    for(i=0;i<nclistlength(vars);i++) {
+	CDFnode* var = (CDFnode*)nclistget(vars,i);
+	DCEprojection* varprojection;
+	DCEprojection* mergedprojection;
+	/* convert var to a projection */
+	ncstat = dapvar2projection(var,&varprojection);
+	if(ncstat != NC_NOERR) {THROW(ncstat); goto done;}
+	/* merge with url constraint projections */
+	ncstat = daprestrictprojection1(urlconstraint->projections,varprojection,&mergedprojection);
+	if(ncstat != NC_NOERR) {THROW(ncstat); goto done;}
+	nclistpush(newconstraint->projections,(ncelem)mergedprojection);	
+    }
 
     ncstat = buildcachenode34(nccomm,newconstraint,vars,&cache,!isnc4);
     if(ncstat) goto done;
@@ -148,7 +168,7 @@ nclog(NCLOGNOTE,"prefetch.");
 }
 
 #ifdef DEBUG
-{
+ {
 /* Log the set of prefetch variables */
 NCbytes* buf = ncbytesnew();
 ncbytescat(buf,"prefetch.vars: ");
@@ -160,7 +180,7 @@ ncbytescat(buf,makesimplepathstring3(var));
 ncbytescat(buf,"\n");
 nclog(NCLOGNOTE,"%s",ncbytescontents(buf));
 ncbytesfree(buf);
-}
+ }
 #endif
 
 done:

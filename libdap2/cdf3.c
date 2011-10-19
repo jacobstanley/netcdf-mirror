@@ -294,7 +294,13 @@ if(var==v4node && var->ncfullname[0] != 'Q')dappanic("");
 }
 #endif
 
-/* locate and connect usable sequences and vars*/
+/* locate and connect usable sequences and vars.
+A sequence is usable iff:
+1. it has a path from one of its subnodes to a leaf and that
+   path does not contain a sequence.
+2. No parent container has dimensions.
+*/
+
 NCerror
 sequencecheck3(NCDAPCOMMON* nccomm)
 {
@@ -310,26 +316,32 @@ sequencecheck3r(CDFnode* node, NClist* vars, CDFnode* topseq)
     NCerror err = NC_NOERR;
     int ok = 0;
     if(topseq == NULL && nclistlength(node->array.dimensions) > 0) {
-	err = NC_EINVAL;
+	err = NC_EINVAL; /* This container has dimensions, so no sequence within it
+                            can be usable */
     } else if(node->nctype == NC_Sequence) {
-	/* recursively compute usability */
+	/* Recursively walk the path for each subnode of this sequence node
+           looking for a path without any sequence */
 	for(i=0;i<nclistlength(node->subnodes);i++) {
 	    CDFnode* sub = (CDFnode*)nclistget(node->subnodes,i);
 	    err = sequencecheck3r(sub,vars,node);
 	    if(err == NC_NOERR) ok = 1; /* there is at least 1 usable var below */
 	}
 	if(topseq == NULL && ok == 1) {
-	    /* this sequence is usable */
+	    /* this sequence is usable because it has not dimensioned container
+               (by construction) and has a path to a leaf without an intermediate
+               sequence. */
 	    err = NC_NOERR;
 	    node->usesequence = 1;
 	} else {
-	    /* this sequence is unusable */
+	    /* this sequence is unusable because it has no path
+               to a leaf without an intermediate sequence. */
 	    node->usesequence = 0;
 	    err = NC_EINVAL;
 	}
     } else if(nclistcontains(vars,(ncelem)node)) {
+	/* If we reach a leaf, then topseq is usable, so save it */
 	node->array.sequence = topseq;
-    } else {
+    } else { /* Some kind of non-sequence container node with no dimensions */
 	/* recursively compute usability */
 	for(i=0;i<nclistlength(node->subnodes);i++) {
 	    CDFnode* sub = (CDFnode*)nclistget(node->subnodes,i);
@@ -342,26 +354,19 @@ sequencecheck3r(CDFnode* node, NClist* vars, CDFnode* topseq)
 }
 
 /*
-OPeNDAP is in the process
-of changing servers so that partial
-grids are converted to structures.
-However, not all servers do this:
-some elide the grid altogether,
-which can lead to ambiguities.
-Handle this last case by attempting
-to convert the elided case to look
-like the newer structure case.
-[for some reason, this code has
- been difficult to get right; I
- have rewritten 6 times and it
- probably is still not right.]
+OPeNDAP is in the process of changing servers so that
+partial grids are converted to structures.  However, not all
+servers do this: some elide the grid altogether, which can
+lead to ambiguities.  Handle this last case by attempting to
+convert the elided case to look like the newer structure
+case.  [for some reason, this code has been difficult to get
+right; I have rewritten 6 times and it probably is still not
+right.]
 
-Input is (1) the root of the dds
-that needs to be re-gridded
-(2) the full datadds tree
-that defines where the grids are.
-(3) the projections that were used
-to produce (1) from (2).
+Input is
+(1) the root of the dds that needs to be re-gridded
+(2) the full datadds tree that defines where the grids are.
+(3) the projections that were used to produce (1) from (2).
 */
 
 NCerror

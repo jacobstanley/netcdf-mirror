@@ -21,7 +21,6 @@ static NCerror movetor(NCDAPCOMMON*, OCdata currentcontent,
 static int findfield(CDFnode* node, CDFnode* subnode);
 static NCerror slicestring(OCconnection, OCdata, size_t, DCEslice*, struct NCMEMORY*);
 static int wholeslicepoint(Dapodometer* odom);
-static void removepseudodims3(DCEprojection* clone);
 
 NCerror
 nc3d_getvarx(int ncid, int varid,
@@ -49,6 +48,7 @@ nc3d_getvarx(int ncid, int varid,
     size_t localcount[NC_MAX_VAR_DIMS];
     NClist* ncdims;
     size_t ncrank;
+    DCEprojection* merge = NULL;
     DCEconstraint* fetchconstraint = NULL;
     int constrainfetch; /* 1=>use urlconstraint union varprojection
                             0=>use no constraint */
@@ -185,7 +185,11 @@ fprintf(stderr,"\n");
 #ifdef DEBUG
 fprintf(stderr,"Unconstrained: reusing prefetch\n");
 #endif
+#ifdef IGNORE
     } else if(iscached(dapcomm,varaprojection->var->cdfleaf,&cachenode)) {
+#else
+    } else if(iscached(dapcomm,varaprojection->var->cdfvar,&cachenode)) {
+#endif
         /* If it is cached, then it is a whole variable but may still
            need to apply constraints */
 #ifdef DEBUG
@@ -199,18 +203,27 @@ fprintf(stderr,"Reusing cache\n");
 	constrainwalk = 0; /* simple walk */
     }
 
-    /* We will be focusing on the vara target variable */
-    nclistpush(vars,(ncelem)varainfo->target);
-
-    if(constrainfetch) { /* merge the constraints for fetch */
-	fetchconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
-
-	ncstat = varamergeprojections3(dapcomm->oc.dapconstraint->projections,
-				       varaprojection,
-				       vars,
-                                       &fetchconstraint->projections);
+    /* If we are constraining the fetch or the walk,
+       then we need to construct the single projection
+       as the merge of the url projections and the vara projection.
+    */
+    if(constrainfetch || constrainwalk) { /* merge the constraints */
+	merge = NULL;
+	/* Create a merge of the url projections and the vara projection */
+	ncstat = daprestrictprojection1(dapcomm->oc.dapconstraint->projections,
+					varaprojection,&merge);	
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+	if(merge == NULL) {
+            PANIC("Cannot create vara projection");
+	}	
+    }
+
+    if(constrainfetch) {
+	fetchconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
+	/* merged constraint just uses the url constraint selection */
 	fetchconstraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
+	fetchconstraint->projections = nclistnew();
+	nclistpush(fetchconstraint->projections,(ncelem)merge);
     }
 
     if(cachenode == NULL) {
@@ -231,22 +244,7 @@ fprintf(stderr,"cache.datadds=%s\n",dumptree(cachenode->datadds));
     /* Fix up varainfo to use the cache */
     varainfo->cache = cachenode;
 
-    /* construct the walk constraint */
-    if(constrainwalk) { /* merge the constraints for walk */
-	NClist* tmp = NULL;
-	ncstat = varamergeprojections3(dapcomm->oc.dapconstraint->projections,
-				       varaprojection,
-				       vars,
-                                       &tmp);
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-	/* Pull out the single projection for doing the walk */
-        ASSERT(nclistlength(tmp) == 1);
-	dcefree((DCEnode*)varaprojection);
-	varaprojection = (DCEprojection*)nclistget(tmp,0);
-	nclistfree(tmp);
-    }
-
-    varainfo->varaprojection = varaprojection;
+    varainfo->varaprojection = merge;
     varaprojection = NULL;
 
     /* Now, walk to the relevant instance */
@@ -271,43 +269,6 @@ ok:
     return THROW(ncstat);
 }
 
-int
-varamergeprojections3(NClist* urlprojections, DCEprojection* varaprojection,
-                      NClist* vars, NClist** result)
-{
-    int ncstat = NC_NOERR;
-    NClist* tmp;
-    DCEprojection* varaclone;
-
-    tmp = dceclonelist(urlprojections);
-    varaclone = (DCEprojection*)dceclone((DCEnode*)varaprojection);
-
-   /* We need to modify the clone to remove
-      pseudo dimensions (i.e. string and sequence dimensions)
-      because the server will not recognize them
-    */
-    removepseudodims3(varaclone);
-
-    /* combine the projection sets */
-    nclistpush(tmp,(ncelem)varaclone);
-    /* reduce the projections to minimal */
-    ncstat = unifyprojections3(tmp);
-    if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
-
-    restrictprojection34(vars,tmp);
-    /* there should only be 1 projection */
-    if(nclistlength(tmp) != 1)
-        PANIC("|vara projections| != 1");
-    if(result) *result = tmp;
-
-#ifdef DEBUG
-fprintf(stderr,"varamergedconstraint: %s\n",
-	dumpprojections(tmp));
-#endif
-
-done:
-    return ncstat;
-}
 
 static NCerror
 moveto(NCDAPCOMMON* nccomm, Getvara* xgetvar, CDFnode* xrootnode, void* memory)
@@ -344,8 +305,10 @@ fail:
 static NCerror
 movetor(NCDAPCOMMON* nccomm,
 	OCdata currentcontent,
-	NClist* path, int depth, /* depth is position in segment list*/
-	Getvara* xgetvar, int dimindex, /* dimindex is position in xgetvar->slices*/
+	NClist* path,
+        int depth, /* depth is position in segment list*/
+	Getvara* xgetvar,
+        int dimindex, /* dimindex is position in xgetvar->slices*/
 	struct NCMEMORY* memory,
 	NClist* segments)
 {
@@ -377,8 +340,13 @@ movetor(NCDAPCOMMON* nccomm,
     /* Note that we use depth-1 because the path contains the DATASET
        but the segment list does not */
     segment = (DCEsegment*)nclistget(segments,depth-1); /*may be NULL*/
-
     if(xnode->etype == NC_STRING || xnode->etype == NC_URL) hasstringdim = 1;
+
+#ifdef DEBUG
+fprintf(stderr,"moveto: depth=%d dimindex=%d",depth,dimindex);
+fprintf(stderr," segment=%s hasstringdim=%d\n",
+		dcetostring((DCEnode*)segment),hasstringdim);
+#endif
 
     ocstat = oc_data_mode(conn,currentcontent,&currentmode);
 
@@ -653,6 +621,9 @@ slicestring(OCconnection conn, OCdata content, size_t dimoffset,
     */
     dapexpandescapes(stringmem); 
     stringlen = strlen(stringmem);
+#ifdef DEBUG
+fprintf(stderr,"moveto: slicestring: string=%s\n",stringmem);
+#endif
 
 /*
 fprintf(stderr,"stringslice: %d string=|%s|\n",stringlen,stringmem);
@@ -729,35 +700,6 @@ findfield(CDFnode* node, CDFnode* field)
     return -1;
 }
 
-static void
-removepseudodims3(DCEprojection* clone)
-{
-    int i;
-    int nsegs;
-    DCEsegment* seg;
-
-    ASSERT((clone != NULL));
-    nsegs = nclistlength(clone->var->segments);
-
-    /* 1. scan for sequences and remove
-	  any index projections. */
-    for(i=0;i<nsegs;i++) {
-	seg = (DCEsegment*)nclistget(clone->var->segments,i);
-	if(seg->cdfnode->nctype != NC_Sequence) continue; /* not a sequence */
-	seg->rank = 0;
-    }
-
-    /* 2. Check the terminal segment to see if it is a String primitive,
-          and if so, then remove the string dimension */
-    ASSERT((nsegs > 0));
-    seg = (DCEsegment*)nclistget(clone->var->segments,nsegs-1);
-    /* See if the node has a string dimension */
-    if(seg->cdfnode->nctype == NC_Primitive
-       && seg->cdfnode->array.stringdim != NULL) {
-	/* Remove the string dimension projection from the segment */
-	seg->rank--;
-    }
-}
 
 int
 nc3d_getvarmx(int ncid, int varid,
