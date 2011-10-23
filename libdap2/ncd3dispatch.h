@@ -54,15 +54,11 @@ NCD3_open(const char *path, int mode,
          struct NC_Dispatch* dispatch, NC** ncp);
 
 EXTERNL int
-NCD3_close(int ncid);
+NCD3_abort(int ncid);
 
 /* End _var */
 
 extern int NCD3_initialize(void);
-
-extern ptrdiff_t dapsinglestride3[NC_MAX_VAR_DIMS];
-extern size_t dapzerostart3[NC_MAX_VAR_DIMS];
-extern size_t dapsinglecount3[NC_MAX_VAR_DIMS];
 
 #if defined(__cplusplus)
 }

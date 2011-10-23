@@ -97,22 +97,15 @@ The default,
 without this option and in the absence of the \fB-c\fP or \fB-h\fP
 options, is to include data values for \fIall\fP variables in the output.
 .IP "\fB-g\fP \fIgrp1,...,grpn\fP"
-For netCDF-4 files, the output will include the
-specified groups, in addition to declarations of any needed
-dimensions inherited from parent groups or any types defined in other
-groups.  One or more groups must be specified by name in the
+For netCDF-4 files, the output will include data values only for the
+specified groups.  One or more groups must be specified by name in the
 comma-delimited list following this option. The list must be a single
-argument to the command. The named groups must be valid netCDF groups in the
-input-file. The default, without this option and in the absence of
-the '-c' or '-h' options, is to include groupss
-in the output.
-A group in a netCDF-4 file may be specified with an absolute
-path name, such as `/grpa/grpa2'.  Use of a relative path name
-such as `grpx' or `grpx/grpy' specifies all matching
-group names in the file.
-The default,
-without this option and in the absence of the \fB-c\fP or \fB-h\fP
-options, is to include data values for \fIall\fP groups in the output.
+argument to the command. The named groups must be valid netCDF groups
+in the input-file.  A group in a netCDF-4 file may be specified with
+an absolute or relative path name.  Use of a relative path name
+specifies all matching group names in the file.  The default, without
+this option and in the absence of the \fB-c\fP or \fB-h\fP options, is
+to include data values for \fIall\fP groups in the output.
 .IP "\fB-b\fP \fIlang\fP"
 A brief annotation in the form of a CDL comment (text beginning with the
 characters ``//'') will be included in the data section of the output for
@@ -218,10 +211,14 @@ variable's data is stored.
 .IP "\fB-t\fP"
 Controls display of time data, if stored in a variable that uses
 a udunits compliant time representation such as `days since
-1970-01-01' or `seconds since 2009-03-15 12:01:17'.  If this option is
-specified, time values are displayed as human-readable date-time
+1970-01-01' or `seconds since 2009-03-15 12:01:17', a variable
+identified in a "bounds" attribute of such a time variable, or a numeric
+attribute of a time variable.  If this option is
+specified, time data values are displayed as human-readable date-time
 strings rather than numerical values, interpreted in terms of a 
-`calendar' variable attribute, if specified.  Calendar attribute
+`calendar' variable attribute, if specified.  For numeric attributes
+of time variables, the human-readable time value is displayed after the
+actual value, in an associated CDL comment.  Calendar attribute
 values interpreted with this option include the CF Conventions values
 `gregorian' or `standard', `proleptic_gregorian', `noleap' or `365_day',
 `all_leap' or `366_day', `360_day', and `julian'.

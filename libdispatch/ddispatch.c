@@ -1,7 +1,16 @@
 #include "ncdispatch.h"
 #include "nc_uri.h"
 
+extern int NCSUBSTRATE_intialize(void);
+
+#ifdef NOTUSED
 #define INITCOORD1 if(coord_one[0] != 1) {int i; for(i=0;i<NC_MAX_VAR_DIMS;i++) coord_one[i] = 1;}
+#endif
+
+/* Define vectors of zeros and ones for use with various nc_get_varX function*/
+size_t nc_sizevector0[NC_MAX_DIMS];
+size_t nc_sizevector1[NC_MAX_DIMS];
+ptrdiff_t nc_ptrdiffvector1[NC_MAX_DIMS];
 
 /* Define the known protocols and their manipulations */
 static struct NCPROTOCOLLIST {
@@ -26,24 +35,20 @@ static nc_type longtype = (sizeof(long) == sizeof(int)?NC_INT:NC_INT64);
 static nc_type ulongtype = (sizeof(unsigned long) == sizeof(unsigned int)?NC_UINT:NC_UINT64);
 */
 
-NC_Dispatch* NC3_dispatch_table = NULL;
-NC_Dispatch* NCD_dispatch_table = NULL;
-
-#ifdef USE_NETCDF4
-NC_Dispatch* NC4_dispatch_table = NULL;
-#endif
-
-#ifdef USE_DAP
-NC_Dispatch* NCD3_dispatch_table = NULL;
-#endif
-
-#if defined(USE_DAP) && defined(USE_NETCDF4)
-NC_Dispatch* NCD4_dispatch_table = NULL;
-#endif
-
-#if defined(USE_CDMREMOTE) && defined(USE_NETCDF4)
-NC_Dispatch* NCCR_dispatch_table = NULL;
-#endif
+/* Allow dispatch to do initialization */
+int
+NCDISPATCH_initialize(void)
+{
+    extern int NCSUBSTRATE_initialize(void);
+    int i;
+    NCSUBSTRATE_initialize();
+    for(i=0;i<NC_MAX_VAR_DIMS;i++) {
+	nc_sizevector0[i] = 0;
+        nc_sizevector1[i] = 1;
+        nc_ptrdiffvector1[i] = 1;
+    }
+    return NC_NOERR;
+}
 
 /* return 1 if path looks like a url; 0 otherwise */
 int

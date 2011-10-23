@@ -57,10 +57,12 @@ typedef struct NCCDMR {
 
 typedef struct NCCURLSTATE NCCURLSTATE;
 
+#ifdef NOTUSED
 typedef struct NCCR {
     NC_FILE_INFO_T info;
     NCCDMR*	   cdmr;
 } NCCR;
+#endif
 
 /**************************************************/
 /* Define various flags (powers of 2)*/
@@ -80,8 +82,6 @@ struct Header;
 struct NClist;
 
 extern int nccrceparse(char*, int, struct NClist**, struct NClist**, char**);
-
-extern int crbuildnc(NCCR*, struct Header*);
 
 /**********************************************************/
 #endif /*NCCR_H*/

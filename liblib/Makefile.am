@@ -16,6 +16,7 @@ lib_LTLIBRARIES = libnetcdf.la
 libnetcdf_la_LDFLAGS = -version-number 7:1:1 
 libnetcdf_la_CPPFLAGS = ${AM_CPPFLAGS}
 libnetcdf_la_LIBADD = 
+CLEANFILES = 
 
 # Turn on some extra stuff when building a DLL for windows.
 if BUILD_DLL
@@ -29,7 +30,7 @@ libnetcdf_la_LIBADD += ${top_builddir}/libdispatch/libnetcdf2.la
 endif # BUILD_V2
 
 # The output library will always include netcdf3 and dispatch
-# libraries.
+# libraries
 libnetcdf_la_LIBADD += ${top_builddir}/libdispatch/libdispatch.la	\
 ${top_builddir}/libsrc/libnetcdf3.la					
 
@@ -44,8 +45,10 @@ endif # USE_DAP
 if USE_NETCDF4
 
 AM_CPPFLAGS += -I${top_srcdir}/libsrc4
-libnetcdf_la_LIBADD += ${top_builddir}/libdiskless/libdiskless.la	\
-${top_builddir}/libsrc4/libnetcdf4.la
+
+libnetcdf_la_LIBADD += ${top_builddir}/libsrc4/libnetcdf4.la
+
+libnetcdf_la_LIBADD += ${top_builddir}/libdiskless/libdiskless.la
 
 # netcdf4+cdmremote
 if BUILD_CDMREMOTE

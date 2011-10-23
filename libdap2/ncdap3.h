@@ -84,10 +84,12 @@ struct NCsegment;
 /**************************************************/
 /* The NCDAP3 structure is an extension of the NC structure (libsrc/nc.h) */
 
+#ifdef NOTUSED
 typedef struct NCDAP3 {
     NC nc; /* Used to store meta-data */
     NCDAPCOMMON dap;
 } NCDAP3;
+#endif
 
 /**************************************************/
 
@@ -142,23 +144,22 @@ extern NCerror nc3d_open(const char* path, int mode, int* ncidp);
 extern int nc3d_close(int ncid);
 extern int nc3dinitialize(void);
 extern NCerror regrid3(CDFnode* ddsroot, CDFnode* template, NClist*);
-extern NCerror imprint3(CDFnode* dstroot, CDFnode* srcroot);
-extern void unimprint3(CDFnode* root);
-extern NCerror imprintself3(CDFnode* root);
 extern void setvisible(CDFnode* root, int visible);
+extern NCerror mapnodes3(CDFnode* dstroot, CDFnode* srcroot);
+extern void unmap3(CDFnode* root);
 
 /* From: ncdap3a.c*/
 extern NCerror fetchtemplatemetadata3(NCDAPCOMMON* nccomm);
 extern NCerror fetchconstrainedmetadata3(NCDAPCOMMON* nccomm);
 extern void applyclientparamcontrols3(NCDAPCOMMON*);
 extern NCerror suppressunusablevars3(NCDAPCOMMON*);
-extern NCerror addstringdims(NCDAP3* drno);
-extern NCerror defseqdims(NCDAP3* drno);
+extern NCerror addstringdims(NCDAPCOMMON* drno);
+extern NCerror defseqdims(NCDAPCOMMON* drno);
 extern NCerror fixzerodims3(NCDAPCOMMON*);
 extern void estimatevarsizes3(NCDAPCOMMON*);
-extern NCerror defrecorddim3(NCDAP3*);
+extern NCerror defrecorddim3(NCDAPCOMMON*);
 extern NClist* getalldims3(NClist* vars, int visibleonly);
-extern NCerror showprojection3(NCDAP3*, CDFnode* var);
+extern NCerror showprojection3(NCDAPCOMMON*, CDFnode* var);
 
 
 /* From: dapcvt.c*/
@@ -171,9 +172,5 @@ extern int NCDAP_urlparse(const char* s, void** dapurl);
 extern void NCDAP_urlfree(void* dapurl);
 extern const char* NCDAP_urllookup(void* dapurl, const char* param);
 #endif
-
-extern size_t dapzerostart3[NC_MAX_VAR_DIMS];
-extern size_t dapsinglecount3[NC_MAX_VAR_DIMS];
-extern ptrdiff_t dapsinglestride3[NC_MAX_VAR_DIMS];
 
 #endif /*NCDAP3_H*/

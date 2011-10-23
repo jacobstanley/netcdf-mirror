@@ -2,8 +2,39 @@
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON=""
 PARMS="[log]"
 
-F="http://ferret.pmel.noaa.gov/geoide/dodsC/ct_flux"
+F="http://localhost:8080/thredds/dodsC/testCdmUnitTest/normal/NAM_Alaska_22km_20100504_0000.grib1"
+CON="time,time1_bounds,time1,Polar_Stereographic,y,x,height_above_ground,height_above_ground1,layer_between_two_heights_above_ground,layer_between_two_heights_above_ground_bounds,layer_between_two_isobaric,layer_between_two_isobaric_bounds,layer_between_two_pressure_difference_from_ground,layer_between_two_pressure_difference_from_ground_bounds,layer_between_two_pressure_difference_from_ground1,layer_between_two_pressure_difference_from_ground1_bounds"
+#CON="Unknown-C7-S0-V2:34_layer_between_two_pressure_difference_from_ground[0:1:20][0:1:0][0:1:212][0:1:276]"
+
+
+PARMS="${PARMS}[netcdf4]"
+#PARMS="${PARMS}[cache]"
+PARMS="${PARMS}[show=fetch]"
+#PARMS="${PARMS}[compile]"
+if test "x$CE" != "x" ; then set PARMS="${PARMS}[ce=${CE}]" ; fi
+PROG="./ncd"
+#PROG="../ncdump/ncdump"
+U="${PARMS}$F"
+if test "x$CON" != "x" ; then U="${PARMS}$F?$CON"; fi
+UALL="${PARMS}$F"
+#ARGS="-h $ARGS"
+#ARGS="-w $ARGS"
+#ARGS="-c $ARGS"
+VARGS="--leak-check=full"
+alias qq="gdb --args $PROG $ARGS '$U'"
+alias qv="valgrind $VARGS PROG $ARGS '$U'"
+alias q0="$PROG $ARGS '$U'"
+alias qh="$PROG -h $ARGS '$U'"
+alias qqh="gdb --args $PROG -h $ARGS '$U'"
+alias qall="$PROG -h $ARGS '${UALL}'"
+alias qv="valgrind $VARGS $PROG $ARGS '$U'"
+
+
 if test 1 = 0; then
+F="http://nomads.ncep.noaa.gov:9090/dods/gfs_hd/gfs_hd20110908/gfs_hd_00z"
+CON="absvprs[0:10][6:6][0:10][0:10]" 
+CON="absvprs[0:1:64][6:1:6][0:1:360][0:1:719]" 
+F="http://ferret.pmel.noaa.gov/geoide/dodsC/ct_flux"
 F="http://motherlode.ucar.edu:9080/thredds/dodsC/fmrc/NCEP/GFS/Alaska_191km/NCEP-GFS-Alaska_191km_fmrc.ncx"
 F="file:///home/dmh/nc/oc/dataset-duacs-nrt-over30d-global-merged-madt-h"
 F="http://oceanwatch.pfeg.noaa.gov/opendap/GLOBEC/GLOBEC_cetaceans"
@@ -25,24 +56,3 @@ F="http://dods.ndbc.noaa.gov/thredds/dodsC/data/stdmet/46029/46029h9999.nc"
 CON="wind_dir[1:10][0:0][0:0]"
 fi
 
-#PARMS="${PARMS}[netcdf4]"
-#PARMS="${PARMS}[cache]"
-PARMS="${PARMS}[show=fetch]"
-#PARMS="${PARMS}[compile]"
-if test "x$CE" != "x" ; then set PARMS="${PARMS}[ce=${CE}]" ; fi
-PROG="./ncd"
-#PROG="../ncdump/ncdump"
-U="${PARMS}$F"
-if test "x$CON" != "x" ; then U="${PARMS}$F?$CON"; fi
-UALL="${PARMS}$F"
-#ARGS="-h $ARGS"
-#ARGS="-w $ARGS"
-#ARGS="-c $ARGS"
-VARGS="--leak-check=full"
-alias qq="gdb --args $PROG $ARGS '$U'"
-alias qv="valgrind $VARGS PROG $ARGS '$U'"
-alias q0="$PROG $ARGS '$U'"
-alias qh="$PROG -h $ARGS '$U'"
-alias qqh="gdb --args $PROG -h $ARGS '$U'"
-alias qall="$PROG -h $ARGS '${UALL}'"
-alias qv="valgrind $VARGS $PROG $ARGS '$U'"
