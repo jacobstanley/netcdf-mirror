@@ -67,7 +67,7 @@ NCD4_open(const char * path, int mode,
 {
     NCerror ncstat = NC_NOERR;
     OCerror ocstat = OC_NOERR;
-    OCURI* tmpurl;
+    NC_URI* tmpurl;
     NC* drno = NULL;
     NCDAPCOMMON* dapcomm = NULL;
     int ncid = -1;
@@ -79,8 +79,8 @@ NCD4_open(const char * path, int mode,
 
     if(!nc4dinitialized) nc4dinitialize();
 
-    if(!ocuriparse(path,&tmpurl)) PANIC("libncdap4: non-url path");
-    ocurifree(tmpurl); /* no longer needed */
+    if(!nc_uriparse(path,&tmpurl)) PANIC("libncdap4: non-url path");
+    nc_urifree(tmpurl); /* no longer needed */
 
     /* Check for legal mode flags */
     if((mode & NC_WRITE) != 0) ncstat = NC_EINVAL;
@@ -92,10 +92,10 @@ NCD4_open(const char * path, int mode,
     mode |= (NC_WRITE|NC_CLOBBER);
 
 #ifdef DEBUG
-{
+ {
 extern int ocdebug;
 ocdebug = 1;
-}
+ }
 #endif
 
 #ifdef OCCOMPILEBYDEFAULT
@@ -124,7 +124,7 @@ ocdebug = 1;
     dapcomm->controller = (NC*)drno;
     dapcomm->cdf.separator = ".";
     dapcomm->oc.urltext = modifiedpath;
-    ocuriparse(dapcomm->oc.urltext,&dapcomm->oc.uri);
+    nc_uriparse(dapcomm->oc.urltext,&dapcomm->oc.uri);
     if(!constrainable34(dapcomm->oc.uri))
 	SETFLAG(dapcomm->controls,NCF_UNCONSTRAINABLE);
     dapcomm->cdf.smallsizelimit = DFALTSMALLLIMIT;
@@ -184,8 +184,7 @@ ocdebug = 1;
 	SETFLAG(dapcomm->controls,NCF_SHOWFETCH);
 
     /* Turn on logging */
-    value = oc_clientparam_get(dapcomm->oc.conn,"log");
-    if(value != NULL) {
+    if((value = paramvalue34(dapcomm,"log")) != NULL) {
 	ncloginit();
         ncsetlogging(1);
         nclogopen(value);
@@ -789,17 +788,11 @@ cvtunlimiteddim(NCDAPCOMMON* dapcomm, CDFnode* dim)
 static void
 applyclientparamcontrols4(NCDAPCOMMON* dapcomm)
 {
-    OCURI* uri = dapcomm->oc.uri;
-    const char* value;
-
     /* enable/disable caching */
-    value = ocurilookup(uri,"cache");    
-    if(value == NULL)
+    if(paramcheck34(dapcomm,"cache",NULL))
+	SETFLAG(dapcomm->controls,NCF_CACHE);
+    else
 	SETFLAG(dapcomm->controls,DFALTCACHEFLAG);
-    else if(strlen(value) == 0)
-	SETFLAG(dapcomm->controls,NCF_CACHE);
-    else if(strcmp(value,"1")==0 || value[0] == 'y')
-	SETFLAG(dapcomm->controls,NCF_CACHE);
 
     /* Set the translation base  */
     SETFLAG(dapcomm->controls,NCF_NC4);

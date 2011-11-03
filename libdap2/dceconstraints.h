@@ -119,7 +119,10 @@ extern void dcemakewholeslice(DCEslice* slice, size_t declsize);
 extern int dceiswholesegment(DCEsegment*);
 extern int dceiswholeslice(DCEslice*);
 extern int dceiswholeseglist(NClist*);
+extern int dceiswholeprojection(DCEprojection*);
 extern int dcesamepath(NClist* list1, NClist* list2);
 extern int dcemergeprojections(DCEprojection* dst, DCEprojection* src);
+
+extern int dceverbose;
 
 #endif /*DCECONSTRAINTS_H*/

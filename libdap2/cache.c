@@ -80,7 +80,9 @@ else
 
 /* Compute the set of prefetched data;
    note that even if caching is off, we will
-   still prefetch the small variables
+   still prefetch the small variables.
+   Note also that all prefetches are whole
+   variable fetches.
 */
 NCerror
 prefetchdata3(NCDAPCOMMON* nccomm)
@@ -117,13 +119,13 @@ prefetchdata3(NCDAPCOMMON* nccomm)
 	    }
 
             /* Compute the # of elements in the variable */
-            for(j=0;j<nclistlength(var->array.dimensions);j++) {
-                CDFnode* dim = (CDFnode*)nclistget(var->array.dimensions,j);
+            for(j=0;j<nclistlength(var->array.dimset0);j++) {
+                CDFnode* dim = (CDFnode*)nclistget(var->array.dimset0,j);
                 nelems *= dim->dim.declsize;
 	    }
 	    if(nelems <= nccomm->cdf.smallsizelimit) {
 	        nclistpush(vars,(ncelem)var);
-#ifdef DEBUG
+#ifdef DEBUG1
 fprintf(stderr,"prefetch: %s\n",var->ncfullname);
 #endif
 	    }
@@ -137,7 +139,8 @@ fprintf(stderr,"prefetch: %s\n",var->ncfullname);
     }
 
     /* Create a single constraint consisting of the projections for the variables;
-       each projection is whole variable merged with any reference in the url constraint */
+       each projection is whole variable. The selections are passed on as is.
+    */
 
     newconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
     newconstraint->projections = nclistnew();
@@ -146,15 +149,14 @@ fprintf(stderr,"prefetch: %s\n",var->ncfullname);
     for(i=0;i<nclistlength(vars);i++) {
 	CDFnode* var = (CDFnode*)nclistget(vars,i);
 	DCEprojection* varprojection;
-	DCEprojection* mergedprojection;
 	/* convert var to a projection */
 	ncstat = dapvar2projection(var,&varprojection);
-	if(ncstat != NC_NOERR) {THROW(ncstat); goto done;}
-	/* merge with url constraint projections */
-	ncstat = daprestrictprojection1(urlconstraint->projections,varprojection,&mergedprojection);
-	if(ncstat != NC_NOERR) {THROW(ncstat); goto done;}
-	nclistpush(newconstraint->projections,(ncelem)mergedprojection);	
+	if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+	nclistpush(newconstraint->projections,(ncelem)varprojection);
     }
+#ifdef DEBUG
+fprintf(stderr,"prefetch.final: %s\n",dumpprojections(newconstraint->projections));
+#endif
 
     ncstat = buildcachenode34(nccomm,newconstraint,vars,&cache,!isnc4);
     if(ncstat) goto done;
@@ -192,7 +194,7 @@ done:
 
 NCerror
 buildcachenode34(NCDAPCOMMON* nccomm,
-	        DCEconstraint* constraint,
+	        DCEconstraint* constraint0,
 		NClist* varlist,
 		NCcachenode** cachep,
 		int isprefetch)
@@ -204,18 +206,19 @@ buildcachenode34(NCDAPCOMMON* nccomm,
     CDFnode* dxdroot = NULL;
     NCcachenode* cachenode = NULL;
     char* ce = NULL;
+    DCEconstraint* constraint = NULL;
 
-    if(FLAGSET(nccomm->controls,NCF_UNCONSTRAINABLE))
+    constraint = (DCEconstraint*)dceclone((DCEnode*)constraint0);
+
+    if(FLAGSET(nccomm->controls,NCF_UNCONSTRAINABLE)) {
         ce = NULL;
-    else {
-        if(FLAGSET(nccomm->controls,NCF_CACHE)) {
+    } else if(FLAGSET(nccomm->controls,NCF_CACHE)) {
             /* If the cache flag is on, then cache 
-               forcing whole variable projections */
-	    DCEconstraint* wholeconstraint = (DCEconstraint*)dceclone((DCEnode*)constraint);
+               forces whole variable projections */
    	    int i,j;
             /* Remove the slicing (if any) */
-	    for(i=0;i<nclistlength(wholeconstraint->projections);i++) {
-	        DCEprojection* p = (DCEprojection*)nclistget(wholeconstraint->projections,i);
+	    for(i=0;i<nclistlength(constraint->projections);i++) {
+	        DCEprojection* p = (DCEprojection*)nclistget(constraint->projections,i);
 	        if(p->discrim != CES_VAR || p->var == NULL || p->var->segments == NULL)
 		    continue;
 	        for(j=0;j<nclistlength(p->var->segments);j++) {
@@ -223,12 +226,11 @@ buildcachenode34(NCDAPCOMMON* nccomm,
 		    seg->rank = 0;
   	        }
   	    }	
-	    constraint = wholeconstraint;
-        }
+            ce = buildconstraintstring3(constraint);
+    } else
         ce = buildconstraintstring3(constraint);
-    }
 
-    ocstat = dap_oc_fetch(nccomm,conn,ce,OCDATADDS,&ocroot);
+    ocstat = dap_fetch(nccomm,conn,ce,OCDATADDS,&ocroot);
     nullfree(ce);
     if(ocstat) {THROWCHK(ocerrtoncerr(ocstat)); goto done;}
 
@@ -246,7 +248,9 @@ buildcachenode34(NCDAPCOMMON* nccomm,
     cachenode->prefetch = isprefetch;
     cachenode->vars = nclistclone(varlist);
     cachenode->datadds = dxdroot;
+    /* Give the constraint over to the cachenode */
     cachenode->constraint = constraint;
+    constraint = NULL;
     cachenode->wholevariable = iscacheableconstraint(cachenode->constraint);
 
     /* save the root content*/
@@ -300,6 +304,7 @@ fprintf(stderr,"buildcachenode: %s\n",dumpcachenode(cachenode));
 #endif
 
 done:
+    if(constraint != NULL) dcefree((DCEnode*)constraint);
     if(cachep) *cachep = cachenode;
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     if(ncstat) {
@@ -378,4 +383,3 @@ iscacheableconstraint(DCEconstraint* con)
     }
     return 1;
 }
-

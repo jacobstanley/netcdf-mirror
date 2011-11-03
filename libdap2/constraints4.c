@@ -134,7 +134,7 @@ ncbytescat(buf," ");
 ncbytescat(buf,makesimplepathstring3(var));
 }
 ncbytescat(buf,"\n");
-oc_log(OCLOGNOTE,ncbytescontents(buf));
+nclog(NCLOGNOTE,ncbytescontents(buf));
 ncbytesfree(buf);
 }
 

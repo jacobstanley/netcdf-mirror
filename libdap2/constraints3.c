@@ -10,7 +10,6 @@
 #include "dapdump.h"
 #include "dceparselex.h"
 
-static NCerror qualifyconstraints3(DCEconstraint* constraint);
 static void completesegments3(NClist* fullpath, NClist* segments);
 static NCerror qualifyprojectionnames3(DCEprojection* proj);
 static NCerror qualifyprojectionsizes3(DCEprojection* proj);
@@ -20,7 +19,6 @@ static int matchsuffix3(NClist* matchpath, NClist* segments);
 static int iscontainer(CDFnode* node);
 static DCEprojection* projectify(CDFnode* field, DCEprojection* container);
 static int slicematch(NClist* seglist1, NClist* seglist2);
-static void removepseudodims3(DCEprojection* clone);
 
 /* Parse incoming url constraints, if any,
    to check for syntactic correctness */ 
@@ -58,8 +56,9 @@ fprintf(stderr,"constraint: %s",dumpconstraint(dceconstraint));
     return ncstat;
 }
 
-/* Map constraint paths to CDFnode paths in specified tree; the difficulty
-   is that suffix paths are legal.
+/* Map constraint paths to CDFnode paths in specified tree and fill
+   in the declsizes.
+   The difficulty is that suffix paths are legal.
 */
 
 NCerror
@@ -117,9 +116,6 @@ mapconstraints3(DCEconstraint* constraint,
 	    if(ncstat) goto done;
 	}
     }
-    /* Fill in segment information */
-    ncstat = qualifyconstraints3(constraint);
-    if(ncstat != NC_NOERR) goto done;
 
 #ifdef DEBUG
 fprintf(stderr,"mapconstraint.projections: %s\n",
@@ -138,11 +134,15 @@ done:
     2. projection segment slices declsize
     3. selection path
 */
-static NCerror
+NCerror
 qualifyconstraints3(DCEconstraint* constraint)
 {
     NCerror ncstat = NC_NOERR;
     int i;
+#ifdef DEBUG
+fprintf(stderr,"qualifyconstraints.before: %s\n",
+		dumpconstraint(constraint));
+#endif
     if(constraint != NULL) {
         for(i=0;i<nclistlength(constraint->projections);i++) {  
             DCEprojection* p = (DCEprojection*)nclistget(constraint->projections,i);
@@ -154,44 +154,15 @@ qualifyconstraints3(DCEconstraint* constraint)
             ncstat = qualifyselectionnames3(s);
         }
     }
+#ifdef DEBUG
+fprintf(stderr,"qualifyconstraints.after: %s\n",
+		dumpconstraint(constraint));
+#endif
     return ncstat;
 }
 
-static void
-completesegments3(NClist* fullpath, NClist* segments)
-{
-    int i,delta;
-    /* add path nodes to create full path */
-    delta = (nclistlength(fullpath) - nclistlength(segments));
-    ASSERT((delta >= 0));
-    for(i=0;i<delta;i++) {
-	int j;
-        DCEsegment* seg = (DCEsegment*)dcecreate(CES_SEGMENT);
-        CDFnode* node = (CDFnode*)nclistget(fullpath,i);
-        seg->name = nulldup(node->ocname);
-        seg->cdfnode = node;
-	seg->rank = nclistlength(node->array.dimensions);
-	for(j=0;j<seg->rank;j++) {
-            CDFnode* dim = (CDFnode*)nclistget(node->array.dimensions0,j);
-            dcemakewholeslice(seg->slices+j,dim->dim.declsize);
-        }
-        nclistinsert(segments,j,(ncelem)seg);
-    }
-    /* Now modify the segments to point to the appropriate node
-       and fill in the slices.
-    */
-    for(i=delta;i<nclistlength(segments);i++) {
-        DCEsegment* seg = (DCEsegment*)nclistget(segments,i);
-        CDFnode* node = (CDFnode*)nclistget(fullpath,i);
-	seg->cdfnode = node;
-        if(!seg->slicesdefined) {
-	    makewholesegment3(seg,node);
-	}
-    }
-}
-
 /* convert all names in projections in paths to be fully qualified
-   by adding prefix segment objects. Also verify ranks
+   by adding prefix segment objects.
 */
 static NCerror
 qualifyprojectionnames3(DCEprojection* proj)
@@ -230,22 +201,34 @@ qualifyprojectionsizes3(DCEprojection* proj)
 {
     int i,j;
     ASSERT(proj->discrim == CES_VAR);
+#ifdef DEBUG
+fprintf(stderr,"qualifyprojectionsizes.before: %s\n",
+		dumpprojection(proj));
+#endif
     for(i=0;i<nclistlength(proj->var->segments);i++) {
         DCEsegment* seg = (DCEsegment*)nclistget(proj->var->segments,i);
 	NClist* dimset = NULL;
-	int rank;
 	ASSERT(seg->cdfnode != NULL);
-	/* Must use dimensions0 of the template because
-           the segments are wrt the underlying dce DDS */
-        dimset = seg->cdfnode->array.dimensions0;
-        rank = nclistlength(dimset);
-        for(j=0;j<rank;j++) {
+        dimset = seg->cdfnode->array.dimsetplus;
+        seg->rank = nclistlength(dimset);
+	/* For this, we do not want any string dimensions */
+	if(seg->cdfnode->array.stringdim != NULL) seg->rank--;
+        for(j=0;j<seg->rank;j++) {
 	    CDFnode* dim = (CDFnode*)nclistget(dimset,j);
-	    dim = dim->basenode;
-            assert(dim != null);
-            seg->slices[j].declsize = dim->dim.declsize;	    
+	    if(dim->dim.basedim != NULL) dim = dim->dim.basedim;
+            ASSERT(dim != null);
+	    if(seg->slicesdefined)
+	        seg->slices[j].declsize = dim->dim.declsize;
+	    else
+	        dcemakewholeslice(seg->slices+j,dim->dim.declsize);
 	}
+        seg->slicesdefined = 1;
+        seg->slicesdeclized = 1;
     }
+#ifdef DEBUG
+fprintf(stderr,"qualifyprojectionsizes.after: %s\n",
+		dumpprojection(proj));
+#endif
     return NC_NOERR;
 }
 
@@ -285,6 +268,42 @@ fprintf(stderr,"qualify.sel: %s -> ",
     nclistfree(segments);
     nclistfree(fullpath);
     return THROW(ncstat);
+}
+
+static void
+completesegments3(NClist* fullpath, NClist* segments)
+{
+    int i,delta;
+    /* add path nodes to segments to create full path */
+    delta = (nclistlength(fullpath) - nclistlength(segments));
+    ASSERT((delta >= 0));
+    for(i=0;i<delta;i++) {
+        DCEsegment* seg = (DCEsegment*)dcecreate(CES_SEGMENT);
+        CDFnode* node = (CDFnode*)nclistget(fullpath,i);
+        seg->name = nulldup(node->ocname);
+        seg->cdfnode = node;
+	seg->rank = nclistlength(node->array.dimset0);
+#ifdef IGNORE
+	for(j=0;j<seg->rank;j++) {
+            CDFnode* dim = (CDFnode*)nclistget(node->array.dimset0,j);
+            dcemakewholeslice(seg->slices+j,dim->dim.declsize);
+        }
+#endif
+        nclistinsert(segments,i,(ncelem)seg);
+    }
+    /* Now modify the segments to point to the appropriate node
+       and fill in the slices.
+    */
+    for(i=delta;i<nclistlength(segments);i++) {
+        DCEsegment* seg = (DCEsegment*)nclistget(segments,i);
+        CDFnode* node = (CDFnode*)nclistget(fullpath,i);
+	seg->cdfnode = node;
+#ifdef IGNORE
+        if(!seg->slicesdefined) {
+	    makewholesegment3(seg,node);
+	}
+#endif
+    }
 }
 
 /*
@@ -445,7 +464,7 @@ matchsuffix3(NClist* matchpath, NClist* segments)
 	    else if(node->nctype == NC_Sequence)
 	        segmatch = (rank == 1?1:0);
 	    else /*!NC_Sequence*/
-	        segmatch = (rank == nclistlength(node->array.dimensions0)?1:0);
+	        segmatch = (rank == nclistlength(node->array.dimset0)?1:0);
 	    if(!segmatch) pathmatch = 0;
 	}
 	if(pathmatch) return 1;
@@ -492,7 +511,7 @@ buildconstraintstring3(DCEconstraint* constraints)
 }
 
 
-/* Given the arguments to vara,
+/* Given the arguments to vara
    construct a corresponding projection
    with any pseudo dimensions removed
 */
@@ -502,7 +521,6 @@ buildvaraprojection3(Getvara* getvar,
 		     DCEprojection** projectionp)
 {
     int i,j;
-    int ncrank = 0;
     NCerror ncstat = NC_NOERR;
     CDFnode* var = getvar->target;
     DCEprojection* projection = NULL;
@@ -511,13 +529,15 @@ buildvaraprojection3(Getvara* getvar,
     int dimindex;
 
     ncstat = dapvar2projection(var,&projection);
+#ifdef DEBUG
+fprintf(stderr,"buildvaraprojection: %s\n",dumpprojection(projection));
+#endif
 
     /* We need to assign the start/count/stride info to each segment;
        declsize will have been set
     */
-    dimindex = 0; /* point to next subset of slices */
     segments = projection->var->segments;
-    ncrank = nclistlength(var->array.dimensions);
+    dimindex = 0;
     for(i=0;i<nclistlength(segments);i++) {
 	DCEsegment* segment = (DCEsegment*)nclistget(segments,i);
         for(j=0;j<segment->rank;j++) {
@@ -535,12 +555,13 @@ buildvaraprojection3(Getvara* getvar,
 		slice->stop = slice->declsize;
 	}
 	dimindex += segment->rank;
-	ASSERT((dimindex <= ncrank));
     }
-
-    ASSERT((dimindex == ncrank));
-
+#ifdef DEBUG
+fprintf(stderr,"buildvaraprojection.final: %s\n",dumpprojection(projection));
+#endif
+#ifdef IGNORE
     removepseudodims3(projection);
+#endif
 
 #ifdef DEBUG
 fprintf(stderr,"buildvaraprojection3: projection=%s\n",
@@ -554,6 +575,7 @@ fprintf(stderr,"buildvaraprojection3: projection=%s\n",
     return ncstat;
 }
 
+#ifdef IGNORE
 static void
 removepseudodims3(DCEprojection* clone)
 {
@@ -564,8 +586,8 @@ removepseudodims3(DCEprojection* clone)
     ASSERT((clone != NULL));
     nsegs = nclistlength(clone->var->segments);
 
-    /* 1. scan for sequences and remove
-	  any index projections. */
+    /* 1. scan for sequences and remove any index projections. */
+
     for(i=0;i<nsegs;i++) {
 	seg = (DCEsegment*)nclistget(clone->var->segments,i);
 	if(seg->cdfnode->nctype != NC_Sequence) continue; /* not a sequence */
@@ -573,16 +595,19 @@ removepseudodims3(DCEprojection* clone)
     }
 
     /* 2. Check the terminal segment to see if it is a String primitive,
-          and if so, then remove the string dimension */
-    ASSERT((nsegs > 0));
-    seg = (DCEsegment*)nclistget(clone->var->segments,nsegs-1);
-    /* See if the node has a string dimension */
-    if(seg->cdfnode->nctype == NC_Primitive
-       && seg->cdfnode->array.stringdim != NULL) {
-	/* Remove the string dimension projection from the segment */
-	seg->rank--;
+          and if so, then remove the string dimension
+    */
+    if(nsegs > 0) {
+        seg = (DCEsegment*)nclistget(clone->var->segments,nsegs-1);
+        /* See if the node has a string dimension */
+        if(seg->cdfnode->nctype == NC_Primitive
+           && seg->cdfnode->array.stringdim != NULL) {
+	    /* Remove the string dimension projection from the segment */
+  	    seg->rank--;
+	}
     }
 }
+#endif
 
 int
 iswholeslice(DCEslice* slice, CDFnode* dim)
@@ -607,7 +632,7 @@ iswholesegment(DCEsegment* seg)
     if(seg->rank == 0) return 1;
     if(!seg->slicesdefined) return 0;
     if(seg->cdfnode == NULL) return 0;
-    dimset = seg->cdfnode->array.dimensions;
+    dimset = seg->cdfnode->array.dimset0;
     rank = nclistlength(dimset);
     whole = 1; /* assume so */
     for(i=0;i<rank;i++) {
@@ -648,6 +673,7 @@ iswholeconstraint(DCEconstraint* con)
     return 1;
 }
 
+#ifdef IGNORE
 void
 makewholesegment3(DCEsegment* seg, CDFnode* node)
 {
@@ -655,7 +681,7 @@ makewholesegment3(DCEsegment* seg, CDFnode* node)
     NClist* dimset = NULL;
     unsigned int rank;
 
-    dimset = node->array.dimensions;
+    dimset = node->array.dimset0;
     rank = nclistlength(dimset);
 
     seg->rank = rank;
@@ -666,7 +692,7 @@ makewholesegment3(DCEsegment* seg, CDFnode* node)
     seg->slicesdefined  = 1;
     seg->slicesdeclized = 1;
 }
-
+#endif
 
 /*
 Given a set of projections, we need to produce
@@ -689,7 +715,7 @@ fixprojections(NClist* list)
     NClist* tmp = nclistnew(); /* misc. uses */
 
 #ifdef DEBUG
-fprintf(stderr,"unifyprojection: list = %s\n",dumpprojections(list));
+fprintf(stderr,"fixprojection: list = %s\n",dumpprojections(list));
 #endif
 
     if(nclistlength(list) == 0) goto done;
@@ -702,6 +728,7 @@ fprintf(stderr,"unifyprojection: list = %s\n",dumpprojections(list));
         for(j=i;j<nclistlength(list);j++) {
 	    DCEprojection* p2 = (DCEprojection*)nclistget(list,j);
 	    if(p2 == NULL) continue;
+	    if(p1 == p2) continue;
 	    if(p2->discrim != CES_VAR) continue;
 #ifdef IGNORE
 	    if(p1->var->cdfleaf != p2->var->cdfleaf) continue;
@@ -724,11 +751,7 @@ fprintf(stderr,"unifyprojection: list = %s\n",dumpprojections(list));
 	DCEprojection* p1 = (DCEprojection*)nclistget(list,i);
 	if(p1 == NULL) continue;
         if(p1->discrim != CES_VAR) continue; /* dont try to unify functions */
-#ifdef IGNORE
-	if(!iscontainer(p1->var->cdfleaf))
-#else
 	if(!iscontainer(p1->var->cdfvar))
-#endif
 	    continue;
         for(j=i;j<nclistlength(list);j++) {
 	    DCEprojection* p2 = (DCEprojection*)nclistget(list,j);
@@ -806,7 +829,7 @@ next:   continue;
 
 done:
 #ifdef DEBUG
-fprintf(stderr,"unifyprojection: exploded = %s\n",dumpprojections(list));
+fprintf(stderr,"fixprojection: exploded = %s\n",dumpprojections(list));
 #endif
     return ncstat;
 }
@@ -865,7 +888,7 @@ slicematch(NClist* seglist1, NClist* seglist2)
 }
 
 /* Convert a CDFnode var to a projection; include
-   pseudodimensions
+   pseudodimensions; always whole variable.
 */
 int
 dapvar2projection(CDFnode* var, DCEprojection** projectionp)
@@ -873,16 +896,12 @@ dapvar2projection(CDFnode* var, DCEprojection** projectionp)
     int i,j;
     int ncstat = NC_NOERR;
     NClist* path = nclistnew();
-    NClist* dimset = NULL;
-    int ncrank, dimindex;
     NClist* segments;
     DCEprojection* projection = NULL;
+    int dimindex;
 
     /* Collect the nodes needed to construct the projection segment */    
     collectnodepath3(var,path,!WITHDATASET);
-
-    dimset = var->array.dimensions;
-    ncrank = nclistlength(dimset);
 
     segments = nclistnew();
     dimindex = 0; /* point to next subset of slices */
@@ -891,30 +910,27 @@ dapvar2projection(CDFnode* var, DCEprojection** projectionp)
 	DCEsegment* segment = (DCEsegment*)dcecreate(CES_SEGMENT);
 	CDFnode* n = (CDFnode*)nclistget(path,i);
 	int localrank;
+        NClist* dimset;
+
 	segment->cdfnode = n;
-	ASSERT((segment->cdfnode != NULL));
         segment->name = nulldup(n->ocname);
         /* We need to assign whole slices to each segment */
-	localrank = nclistlength(segment->cdfnode->array.dimensions0);
-        if(segment->cdfnode->array.stringdim != NULL) localrank++;
-        if(segment->cdfnode->array.seqdim != NULL)
-	    localrank++;
+	localrank = nclistlength(segment->cdfnode->array.dimsetplus);
         segment->rank = localrank;
+	dimset = segment->cdfnode->array.dimsetplus;
         for(j=0;j<localrank;j++) {
 	    DCEslice* slice;
 	    CDFnode* dim;
-	    ASSERT((dimindex+j) < ncrank);
 	    slice = &segment->slices[j];
-	    dim = (CDFnode*)nclistget(dimset,dimindex+j);
-	    dcemakewholeslice(slice,dim->dim.declsize);
+	    dim = (CDFnode*)nclistget(dimset,j);
+	    ASSERT(dim->dim.declsize0 > 0);
+	    dcemakewholeslice(slice,dim->dim.declsize0);
 	}
 	segment->slicesdefined = 1;
 	segment->slicesdeclized = 1;
 	dimindex += localrank;
-	ASSERT((dimindex <= ncrank));
 	nclistpush(segments,(ncelem)segment);
     }
-    ASSERT((dimindex == ncrank));
     
     projection = (DCEprojection*)dcecreate(CES_PROJECT);
     projection->discrim = CES_VAR;
@@ -926,7 +942,7 @@ dapvar2projection(CDFnode* var, DCEprojection** projectionp)
 #endif
     projection->var->segments = segments;
 
-#ifdef DEBUG
+#ifdef DEBUG1
 fprintf(stderr,"dapvar2projection: projection=%s\n",
         dumpprojection(projection));
 #endif
@@ -941,16 +957,16 @@ fprintf(stderr,"dapvar2projection: projection=%s\n",
 Given a set of projections and a projection
 representing a variable (from, say vara or prefetch)
 construct a single projection for fetching that variable
-with the proper constraints
+with the proper constraints.
 */
 int
-daprestrictprojection1(NClist* projections, DCEprojection* var, DCEprojection** resultp)
+daprestrictprojection(NClist* projections, DCEprojection* var, DCEprojection** resultp)
 {
     int ncstat = NC_NOERR;
     int i;
     DCEprojection* result = NULL;
-#ifdef DEBUG
-fprintf(stderr,"restrictprojection.before: constraints=|%s| var=|%s|\n",
+#ifdef DEBUG1
+fprintf(stderr,"restrictprojection.before: constraints=|%s| vara=|%s|\n",
 		dumpprojections(projections),
 		dumpprojection(var));
 #endif
@@ -990,3 +1006,43 @@ fprintf(stderr,"restrictprojection.after=|%s|\n",
     return ncstat;
 }
 
+/* Shift the slice so it runs from 0..count by step 1 */
+static void
+dapshiftslice(DCEslice* slice)
+{
+    size_t first = slice->first;
+    size_t stride = slice->stride;
+    if(first == 0 && stride == 1) return; /* no need to do anything */
+    slice->first = 0;
+    slice->stride = 1;
+    slice->length = slice->count;
+    slice->stop = slice->count;
+}
+
+int
+dapshiftprojection(DCEprojection* projection)
+{
+    int ncstat = NC_NOERR;
+    int i,j;
+    NClist* segments;
+
+#ifdef DEBUG1
+fprintf(stderr,"dapwalkprojection.before: %s\n",dumpprojection(projection));
+#endif
+
+    ASSERT(projection->discrim == CES_VAR);
+    segments = projection->var->segments;
+    for(i=0;i<nclistlength(segments);i++) {
+	DCEsegment* seg = (DCEsegment*)nclistget(segments,i);
+        for(j=0;j<seg->rank;j++) {
+	    DCEslice* slice = seg->slices+j;
+	    dapshiftslice(slice);
+	}
+    }
+
+#ifdef DEBUG1
+fprintf(stderr,"dapwalkprojection.after: %s\n",dumpprojection(projection));
+#endif
+
+    return ncstat;
+}

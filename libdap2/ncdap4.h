@@ -17,15 +17,13 @@
 #include "nclist.h"
 #include "nchashmap.h"
 #include "nclog.h"
+#include "nc_uri.h"
 #include "dceconstraints.h"
 
 #include "netcdf.h"
 #include "ncdispatch.h"
 #include "nc4internal.h"
 #include "nc.h"
-
-#include "oc.h"
-#include "ocuri.h"
 
 #include "nccommon.h"
 #include "ncdap3.h"

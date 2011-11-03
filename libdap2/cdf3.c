@@ -27,7 +27,7 @@ static CDFnode* makenewgrid3(CDFnode* node, CDFnode* template);
 static NCerror regridinsert(CDFnode* newgrid, CDFnode* node);
 static NCerror regridremove(CDFnode* newgrid, CDFnode* node);
 static NCerror mapnodes3r(CDFnode*, CDFnode*, int depth);
-static NCerror mapdims3(CDFnode*, CDFnode*);
+static NCerror mapfcn(CDFnode* dstnode, CDFnode* srcnode);
 
 /* Accumulate useful node sets  */
 NCerror
@@ -156,14 +156,17 @@ computecdfvarnames3(NCDAPCOMMON* nccomm, CDFnode* root, NClist* varnodes)
 	    node->elided = 1;
     }
 
-    /* ensure all variables have an initial full name defined;
-    */
+    /* ensure all variables have an initial full name defined */
     for(i=0;i<nclistlength(varnodes);i++) {
 	CDFnode* var = (CDFnode*)nclistget(varnodes,i);
 	nullfree(var->ncfullname);
 	var->ncfullname = makecdfpathstring3(var,nccomm->cdf.separator);
     }
-    /*  unify all variables with same fullname and dimensions. */
+
+    /*  unify all variables with same fullname and dimensions
+	basevar fields says: "for duplicate grid variables";
+        when does this happen?
+    */
     if(FLAGSET(nccomm->controls,NCF_NC3)) {
         for(i=0;i<nclistlength(varnodes);i++) {
 	    int match;
@@ -175,12 +178,12 @@ computecdfvarnames3(NCDAPCOMMON* nccomm, CDFnode* root, NClist* varnodes)
 		    continue; /* already processed */
 	        if(strcmp(var->ncfullname,testnode->ncfullname) != 0)
 		    match = 0;
-		else if(nclistlength(testnode->array.dimensions)
-			!= nclistlength(var->array.dimensions))
+		else if(nclistlength(testnode->array.dimsetall)
+			!= nclistlength(var->array.dimsetall))
 		    match = 0;
-	        else for(d=0;d<nclistlength(testnode->array.dimensions);d++) {
-		    CDFnode* vdim = (CDFnode*)nclistget(var->array.dimensions,d);
-		    CDFnode* tdim = (CDFnode*)nclistget(testnode->array.dimensions,d);
+	        else for(d=0;d<nclistlength(testnode->array.dimsetall);d++) {
+		    CDFnode* vdim = (CDFnode*)nclistget(var->array.dimsetall,d);
+		    CDFnode* tdim = (CDFnode*)nclistget(testnode->array.dimsetall,d);
 	            if(vdim->dim.declsize != tdim->dim.declsize) {
 		        match = 0;
 			break;
@@ -188,6 +191,7 @@ computecdfvarnames3(NCDAPCOMMON* nccomm, CDFnode* root, NClist* varnodes)
 		}
 		if(match) {
 		    testnode->array.basevar = var;
+fprintf(stderr,"basevar invoked: %s\n",var->ncfullname);
 		}
 	    }
 	}
@@ -315,7 +319,7 @@ sequencecheck3r(CDFnode* node, NClist* vars, CDFnode* topseq)
     unsigned int i;
     NCerror err = NC_NOERR;
     int ok = 0;
-    if(topseq == NULL && nclistlength(node->array.dimensions) > 0) {
+    if(topseq == NULL && nclistlength(node->array.dimset0) > 0) {
 	err = NC_EINVAL; /* This container has dimensions, so no sequence within it
                             can be usable */
     } else if(node->nctype == NC_Sequence) {
@@ -327,7 +331,7 @@ sequencecheck3r(CDFnode* node, NClist* vars, CDFnode* topseq)
 	    if(err == NC_NOERR) ok = 1; /* there is at least 1 usable var below */
 	}
 	if(topseq == NULL && ok == 1) {
-	    /* this sequence is usable because it has not dimensioned container
+	    /* this sequence is usable because it has scalar container
                (by construction) and has a path to a leaf without an intermediate
                sequence. */
 	    err = NC_NOERR;
@@ -667,7 +671,7 @@ findddsnode0(CDFnode* node)
 
 Make the constrained dds nodes (root)
 point to the corresponding unconstrained
-dds nodes (fullroot)
+dds nodes (fullroot).
  */
 
 NCerror
@@ -692,19 +696,15 @@ mapnodes3r(CDFnode* connode, CDFnode* fullnode, int depth)
 
     ASSERT((simplenodematch34(connode,fullnode)));
     
-    /* Map node */
-    connode->basenode = fullnode;
-    connode->visible = 1;
 #ifdef DEBUG
-fprintf(stderr,"mapnode: %s\n",makecdfpathstring3(connode,"."));
+fprintf(stderr,"mapnode: %s->%s\n",
+        makecdfpathstring3(fullnode,"."),
+	makecdfpathstring3(connode,".")
+	);
 #endif
 
-    /* Do dimension imprinting */
-    ASSERT((nclistlength(connode->array.dimensions) == nclistlength(fullnode->array.dimensions)));
-    if(nclistlength(connode->array.dimensions) > 0) {
-	ncstat = mapdims3(connode,fullnode);
-	if(ncstat) goto done;
-    }
+    /* Map node */
+    mapfcn(connode,fullnode);
 
     /* Try to match connode subnodes against fullnode subnodes */
     ASSERT(nclistlength(connode->subnodes) <= nclistlength(fullnode->subnodes));
@@ -724,6 +724,41 @@ done:
     return THROW(ncstat);
 }
 
+
+/* The specific actions of a map are defined
+   by this function.
+*/
+static NCerror
+mapfcn(CDFnode* dstnode, CDFnode* srcnode)
+{
+    /* Mark node as having been mapped */
+    dstnode->visible = 1;
+    dstnode->basenode = srcnode;
+#ifdef IGNORE
+    /* Do dimension imprinting */
+    ASSERT((nclistlength(dstnode->array.dimsetplus) == nclistlength(srcnode->array.dimsetplus)));
+#ifdef DEBUG
+fprintf(stderr,"mapfcn: %s(%d)\n",
+	makecdfpathstring3(srcnode,"."),
+	nclistlength(srcnode->array.dimsetplus));
+#endif
+    if(nclistlength(dstnode->array.dimset0) > 0) {
+        unsigned int i;
+        for(i=0;i<nclistlength(dstnode->array.dimset0);i++) {
+	    CDFnode* ddim = (CDFnode*)nclistget(dstnode->array.dimset0,i);
+	    CDFnode* sdim = (CDFnode*)nclistget(srcnode->array.dimset0,i);
+	    ddim->basenode = sdim;
+	    ddim->visible = 1;
+	    ddim->dim.declsize0 = sdim->dim.declsize;	
+#ifdef DEBUG
+fprintf(stderr,"mapfcn: %d: %lu -> %lu\n",i,sdim->dim.declsize,ddim->dim.declsize0);
+#endif
+        }
+    }
+#endif /*IGNORE*/
+    return NC_NOERR;
+}
+
 void
 unmap3(CDFnode* root)
 {
@@ -736,109 +771,49 @@ unmap3(CDFnode* root)
     }
 }
 
-static NCerror
-mapdims3(CDFnode* connode, CDFnode* fullnode)
-{
-    unsigned int i;
-    for(i=0;i<nclistlength(connode->array.dimensions);i++) {
-	CDFnode* cdim = (CDFnode*)nclistget(connode->array.dimensions,i);
-	CDFnode* fdim = (CDFnode*)nclistget(fullnode->array.dimensions,i);
-	cdim->basenode = fdim;
-        cdim->visible = 1;
-    }
-    return NC_NOERR;
-}
-
-#ifdef NOTUSED
-
 /* 
-Move data from nodes in src tree to nodes in dst tree where
-the nodes match.  Src tree is typically a structural subset
-of dst tree.
+Move data from basenodes to nodes
 */
 
 NCerror
-imprint3(CDFnode* dstroot, CDFnode* srcroot)
+imprint3(NCDAPCOMMON* nccomm)
 {
     NCerror ncstat = NC_NOERR;
+    NClist* allnodes;
+    int i,j;
+    CDFnode* basenode;
 
-    if(srcroot == NULL) {THROWCHK(ncstat=NC_NOERR); goto done;}
-    if(!simplenodematch34(dstroot,srcroot))
-	{THROWCHK(ncstat=NC_EINVAL); goto done;}
-    /* clear out old imprinting */
-    unimprint3(dstroot);
-    ncstat = imprint3r(dstroot,srcroot,0);
-done:
+    allnodes = nccomm->cdf.ddsroot->tree->nodes;
+    for(i=0;i<nclistlength(allnodes);i++) {
+	CDFnode* node = (CDFnode*)nclistget(allnodes,i);
+	int noderank, baserank;
+        /* Do dimension imprinting */
+	basenode = node->basenode;
+	if(basenode == NULL) continue;
+	noderank = nclistlength(node->array.dimset0);
+	baserank = nclistlength(basenode->array.dimset0);
+	if(noderank == 0) continue;
+        ASSERT(noderank == baserank);
+#ifdef DEBUG
+fprintf(stderr,"imprint %s/%d -> %s/%d\n",
+	makecdfpathstring3(basenode,"."),
+	noderank,
+	makecdfpathstring3(node,"."),
+	baserank);
+#endif
+        for(j=0;j<noderank;j++) {
+	    CDFnode* dim = (CDFnode*)nclistget(node->array.dimset0,j);
+	    CDFnode* basedim = (CDFnode*)nclistget(basenode->array.dimset0,j);
+	    dim->dim.declsize0 = basedim->dim.declsize;	
+#ifdef DEBUG
+fprintf(stderr,"imprintfcn: %d: %lu -> %lu\n",i,basedim->dim.declsize,dim->dim.declsize0);
+#endif
+        }
+    }
     return ncstat;
 }
 
-static NCerror
-imprint3r(CDFnode* dstnode, CDFnode* srcnode, int depth)
-{
-    unsigned int i,j;
-    NCerror ncstat = NC_NOERR;
-
-    ASSERT((simplenodematch34(dstnode,srcnode)));
-    
-    /* Mark node as having been imprinted */
-    dstnode->visible = 1;
-#ifdef DEBUG
-fprintf(stderr,"imprinting: %s\n",makecdfpathstring3(dstnode,"."));
-#endif
-
-    /* Do dimension imprinting */
-    ASSERT((nclistlength(dstnode->array.dimensions) == nclistlength(srcnode->array.dimensions)));
-    if(nclistlength(dstnode->array.dimensions) > 0) {
-	ncstat = imprintdims3(dstnode,srcnode);
-	if(ncstat) goto done;
-    }
-
-    /* Try to match dstnode subnodes against srcnode subnodes */
-    ASSERT(nclistlength(dstnode->subnodes) >= nclistlength(srcnode->subnodes));
-
-    for(i=0;i<nclistlength(srcnode->subnodes);i++) {
-        CDFnode* srcsubnode = (CDFnode*)nclistget(srcnode->subnodes,i);
-	/* Search dst subnodes for a matching subnode from src */
-        for(j=0;j<nclistlength(dstnode->subnodes);j++) {
-            CDFnode* dstsubnode = (CDFnode*)nclistget(dstnode->subnodes,j);
-            if(simplenodematch34(dstsubnode,srcsubnode)) {
-                ncstat = imprint3r(dstsubnode,srcsubnode,depth+1);
-   	        if(ncstat) goto done;
-	    }
-	}
-    }
-done:
-    return THROW(ncstat);
-}
-
-static NCerror
-imprintdims3(CDFnode* dstnode, CDFnode* srcnode)
-{
-    unsigned int i;
-    for(i=0;i<nclistlength(dstnode->array.dimensions);i++) {
-	CDFnode* ddim = (CDFnode*)nclistget(dstnode->array.dimensions,i);
-	CDFnode* sdim = (CDFnode*)nclistget(srcnode->array.dimensions,i);
-	ddim->dim.declsize = sdim->dim.declsize0;	
-    }
-    return NC_NOERR;
-}
-
-void
-unimprint3(CDFnode* root)
-{
-    unsigned int i,j;
-    CDFtree* tree = root->tree;
-    for(i=0;i<nclistlength(tree->nodes);i++) {
-	CDFnode* node = (CDFnode*)nclistget(tree->nodes,i);
-	node->visible = 0;
-        for(j=0;j<nclistlength(node->array.dimensions);j++) {
-	    CDFnode* dim = (CDFnode*)nclistget(node->array.dimensions,j);
-	    dim->dim.declsize = dim->dim.declsize0;
-	}
-    }
-}
-#endif /*NOTUSED*/
-
+#ifdef IGNORE
 void
 setvisible(CDFnode* root, int visible)
 {
@@ -856,3 +831,4 @@ imprintself3(CDFnode* root)
     setvisible(root,1);
     return NC_NOERR;
 }
+#endif

@@ -361,7 +361,7 @@ dodsextra3(NCDAPCOMMON* nccomm, CDFnode* root, NClist* dodsextra)
 	    OCHECK(oc_inq_dasattr_nvalues(conn,extranode,&ocnvalues));
 	    if(strcmp(dodsname,"Unlimited_Dimension")==0 && ocnvalues > 0) {
 	        OCHECK(oc_inq_dasattr(conn,extranode,0,NULL,&stringval));
-		nccomm->cdf.recorddim = stringval;
+		nccomm->cdf.recorddimname = stringval;
 	    }
 	    nullfree(dodsname);
 	}

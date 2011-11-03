@@ -13,6 +13,8 @@
 
 #define CHECK(n) if((n) != NC_NOERR) {return (n);} else {}
 
+static void dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible);
+
 int
 dumpmetadata(int ncid, NChdr** hdrp)
 {
@@ -197,13 +199,23 @@ dumpdata1(nc_type nctype, size_t index, char* data)
 char*
 dumpprojections(NClist* projections)
 {
-    return dcelisttostring(projections,",");
+    char* tmp;
+    int v = dceverbose;
+    dceverbose = 1;
+    tmp = dcelisttostring(projections,",");
+    dceverbose = v;
+    return tmp;
 }
 
 char*
 dumpprojection(DCEprojection* proj)
 {
-    return dcetostring((DCEnode*)proj);
+    char* tmp;
+    int v = dceverbose;
+    dceverbose = 1;
+    tmp = dcetostring((DCEnode*)proj);
+    dceverbose = v;
+    return tmp;
 }
 
 char*
@@ -221,7 +233,12 @@ dumpselection(DCEselection* sel)
 char*
 dumpconstraint(DCEconstraint* con)
 {
-    return dcetostring((DCEnode*)con);
+    char* tmp;
+    int v = dceverbose;
+    dceverbose = 1;
+    tmp = dcetostring((DCEnode*)con);
+    dceverbose = v;
+    return tmp;
 }
 
 char*
@@ -259,8 +276,6 @@ dumpindent(int indent, NCbytes* buf)
     for(i=0;i<indent;i++) ncbytescat(buf,indentstr);
 }
 
-static void dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible);
-
 static void
 dumptreer1(CDFnode* root, NCbytes* buf, int indent, char* tag, int visible)
 {
@@ -294,6 +309,8 @@ dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible)
 {
     int i;
     char* primtype = NULL;
+    NClist* dimset = NULL;
+
     if(visible && !root->visible) return;
     switch (root->nctype) {
     case NC_Dataset:
@@ -332,6 +349,7 @@ dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible)
     default: break;    
     }
 
+#ifdef IGNORE
     if(root->nctype == NC_Sequence && root->array.seqdim != NULL) {
         CDFnode* dim = root->array.seqdim;
 	char tmp[64];
@@ -343,9 +361,13 @@ dumptreer(CDFnode* root, NCbytes* buf, int indent, int visible)
 	snprintf(tmp,sizeof(tmp),"%lu",(unsigned long)dim->dim.declsize);
 	ncbytescat(buf,tmp);
 	ncbytescat(buf,"]");
-    } else if(nclistlength(root->array.dimensions0) > 0) {
-	for(i=0;i<nclistlength(root->array.dimensions);i++) {
-	    CDFnode* dim = (CDFnode*)nclistget(root->array.dimensions,i);
+    } else
+#endif
+    if(nclistlength(root->array.dimsetplus) > 0) dimset = root->array.dimsetplus;
+    else if(nclistlength(root->array.dimset0) > 0) dimset = root->array.dimset0;
+    if(dimset != NULL) {
+	for(i=0;i<nclistlength(dimset);i++) {
+	    CDFnode* dim = (CDFnode*)nclistget(dimset,i);
 	    char tmp[64];
 	    ncbytescat(buf,"[");
 	    if(dim->ncbasename != NULL) {
@@ -451,10 +473,10 @@ dumpnode(CDFnode* node)
     snprintf(tmp,sizeof(tmp),"attachment=%s\n",
 		(node->attachment?node->attachment->ocname:"null"));
     ncbytescat(buf,tmp);
-    snprintf(tmp,sizeof(tmp),"rank=%u\n",nclistlength(node->array.dimensions));
+    snprintf(tmp,sizeof(tmp),"rank=%u\n",nclistlength(node->array.dimset0));
     ncbytescat(buf,tmp);
-    for(i=0;i<nclistlength(node->array.dimensions);i++) {
-	CDFnode* dim = (CDFnode*)nclistget(node->array.dimensions,i);
+    for(i=0;i<nclistlength(node->array.dimset0);i++) {
+	CDFnode* dim = (CDFnode*)nclistget(node->array.dimset0,i);
         snprintf(tmp,sizeof(tmp),"dims[%d]={\n",i);
         ncbytescat(buf,tmp);
 	snprintf(tmp,sizeof(tmp),"    ocname=%s\n",dim->ocname);
@@ -467,9 +489,11 @@ dumpnode(CDFnode* node)
 	snprintf(tmp,sizeof(tmp),"    declsize=%lu\n",
 		    (unsigned long)dim->dim.declsize);
         ncbytescat(buf,tmp);
+#ifdef IGNORE
 	snprintf(tmp,sizeof(tmp),"    declsize0=%lu\n",
 		    (unsigned long)dim->dim.declsize0);
         ncbytescat(buf,tmp);
+#endif
         snprintf(tmp,sizeof(tmp),"    }\n");
         ncbytescat(buf,tmp);
     }
@@ -561,7 +585,27 @@ dumpcache(NCcache* cache)
 char*
 dumpslice(DCEslice* slice)
 {
-    return dcetostring((DCEnode*)slice);
+	char buf[8192];
+	char tmp[8192];
+        size_t last = (slice->first+slice->length)-1;
+	buf[0] = '\0';
+	if(last > slice->declsize && slice->declsize > 0)
+	    last = slice->declsize - 1;
+        if(slice->count == 1) {
+            snprintf(tmp,sizeof(tmp),"[%lu]",
+	        (unsigned long)slice->first);
+        } else if(slice->stride == 1) {
+            snprintf(tmp,sizeof(tmp),"[%lu:%lu]",
+	            (unsigned long)slice->first,
+	            (unsigned long)last);
+        } else {
+	   snprintf(tmp,sizeof(tmp),"[%lu:%lu:%lu]",
+		    (unsigned long)slice->first,
+		    (unsigned long)slice->stride,
+		    (unsigned long)last);
+        }
+	strcat(buf,tmp);
+	return strdup(tmp);
 }
 
 char*
@@ -579,3 +623,4 @@ dumpslices(DCEslice* slice, unsigned int rank)
     ncbytesfree(buf);
     return result;
 }
+

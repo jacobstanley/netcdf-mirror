@@ -30,6 +30,8 @@ extern void clonenodenamepath3(struct CDFnode*, NClist*, int);
 
 extern char* cdflegalname3(char* dapname);
 
+/* Given a param string; return its value or null if not found*/
+extern const char* paramvalue34(struct NCDAPCOMMON* drno, const char* param);
 /* Given a param string; check for a given substring */
 extern int paramcheck34(struct NCDAPCOMMON* drno, const char* param, const char* substring);
 
@@ -70,7 +72,7 @@ extern size_t dimproduct3(NClist* dimensions);
 extern int nc__testurl(const char* path, char** basename);
 
 /* Provide a wrapper for oc_fetch so we can log what it does */
-extern OCerror dap_oc_fetch(struct NCDAPCOMMON*,OCconnection,const char*,OCdxd,OCobject*);
+extern OCerror dap_fetch(struct NCDAPCOMMON*,OCconnection,const char*,OCdxd,OCobject*);
 
 extern int dap_badname(char* name);
 

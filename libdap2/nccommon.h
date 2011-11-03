@@ -78,7 +78,6 @@ typedef unsigned int NCFLAGS;
 #define NCF_CACHE    (0x20) /* Cache enabled/disabled */
 
 /*  Misc control flags */
-#define NCF_NOUNLIM         (0x40) /* suppress bad sequences  */
 #define NCF_UPGRADE         (0x80) /* Do proper type upgrades */
 #define NCF_UNCONSTRAINABLE (0x100) /* Not a constrainable URL */
 #define NCF_SHOWFETCH       (0x200) /* show fetch calls */
@@ -121,8 +120,9 @@ typedef struct NCcache {
 /* The DAP packet info from OC */
 typedef struct NCOC {
     OCconnection conn;
-    char* urltext; /* as given to nc3d_open*/
-    OCURI* uri; /* as given to nc3d_open and parsed*/
+    char* rawurltext; /* as given to nc3d_open */
+    char* urltext;    /* as modified by nc3d_open */
+    NC_URI* url;      /* parse of rawuritext */
     OCobject ocdasroot;
     DCEconstraint* dapconstraint; /* from url */
 } NCOC;
@@ -134,6 +134,7 @@ typedef struct NCCDF {
     NClist*  varnodes; /* nodes which can represent netcdf variables */
     NClist*  seqnodes; /* sequence nodes; */
     NClist*  gridnodes; /* grid nodes */
+    NClist*  dimnodes; /* (base) dimension nodes */
     unsigned int defaultstringlength;
     unsigned int defaultsequencelimit; /* global sequence limit;0=>no limit */
     struct NCcache* cache;
@@ -141,9 +142,10 @@ typedef struct NCCDF {
     size_t smallsizelimit; /* what constitutes a small object? */
     size_t totalestimatedsize;
     const char* separator; /* constant; do not free */
-    /* unlimited dimension */
-    struct CDFnode* unlimited;
-    char* recorddim; /* From DODS_EXTRA */
+    /* global string dimension */
+    struct CDFnode* globalstringdim;
+    char* recorddimname; /* From DODS_EXTRA */
+    struct CDFnode* recorddim;
     /* libncdap4 only */
     NClist*  usertypes; /* nodes which will represent netcdf types */
 } NCCDF;
@@ -153,7 +155,7 @@ typedef struct NCCDF {
 typedef struct NCDAPCOMMON {
     NC*   controller; /* Parent instance of NCDAPCOMMON */
     NCCDF cdf;
-    NCOC  oc;
+    NCOC oc;
     NCCONTROLS controls; /* Control flags and parameters */
 } NCDAPCOMMON;
 
@@ -177,8 +179,6 @@ typedef int CDFdimflags;
 #define CDFDIMSEQ	0x1
 #define CDFDIMSTRING	0x2
 #define CDFDIMCLONE	0x4
-#define CDFDIMUNLIM	0x8
-#define CDFDIMANON	0x10
 #define CDFDIMRECORD	0x20
 
 #define DIMFLAG(d,flag) ((d)->dim.dimflags & (flag))
@@ -188,14 +188,23 @@ typedef int CDFdimflags;
 typedef struct CDFdim {
     CDFdimflags    dimflags;
     struct CDFnode* basedim; /* for duplicate dimensions*/
+#ifdef IGNORE
+    struct CDFnode* srcdim; /* for cloned dimensions*/
+#endif
     struct CDFnode* array; /* parent array node */
     size_t declsize;	    /* from constrained DDS*/
     size_t declsize0;	    /* from unconstrained DDS*/
+    int    index1;          /* dimension name index +1; 0=>no index */
 } CDFdim;
 
 typedef struct CDFarray {
+    NClist*  dimsetall; /* inherited+originals+pseudo */
+    NClist*  dimsetplus; /* originals+pseudo */
+    NClist*  dimset0; /* original dims from the dds */
+#ifdef IGNORE
     NClist*  dimensions; /* inherited+originals */
     NClist*  dimensions0; /* Complete set of dimensions for this var */
+#endif
     struct CDFnode* stringdim;
     /* Track sequence related information */
     struct CDFnode* seqdim; /* if this node is a sequence */
@@ -289,7 +298,7 @@ extern NCerror fixgrid34(struct NCDAPCOMMON* drno, CDFnode* grid);
 extern NCerror computecdfinfo34(struct NCDAPCOMMON*, NClist*);
 extern char* cdfname34(char* basename);
 extern NCerror augmentddstree34(struct NCDAPCOMMON*, NClist*);
-extern NCerror clonecdfdims34(struct NCDAPCOMMON*);
+extern NCerror definedimsets34(struct NCDAPCOMMON*);
 extern NCerror computecdfdimnames34(struct NCDAPCOMMON*);
 extern NCerror buildcdftree34(struct NCDAPCOMMON*, OCobject, OCdxd, CDFnode**);
 extern CDFnode* makecdfnode34(struct NCDAPCOMMON*, char* nm, OCtype,
@@ -306,13 +315,14 @@ extern void unattach34(CDFnode*);
 extern int nodematch34(CDFnode* node1, CDFnode* node2);
 extern int simplenodematch34(CDFnode* node1, CDFnode* node2);
 extern CDFnode* findxnode34(CDFnode* target, CDFnode* xroot);
-extern int constrainable34(OCURI*);
+extern int constrainable34(NC_URI*);
 extern char* makeconstraintstring34(DCEconstraint*);
 extern size_t estimatedataddssize34(CDFnode* datadds);
 extern void canonicalprojection34(NClist*, NClist*);
+extern NClist* getalldims34(NCDAPCOMMON* nccomm, int visibleonly);
 
-/* From constraints.c */
-
+/* From cdf3.c */
+extern NCerror imprint3(NCDAPCOMMON*);
 
 /* From cache.c */
 extern int iscached(NCDAPCOMMON*, CDFnode* target, NCcachenode** cachenodep);

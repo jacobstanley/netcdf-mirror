@@ -28,8 +28,8 @@ static char* makepathstring3(CDFnode* var, const char* separator, int ocify);
 int
 nc__testurl(const char* path, char** basenamep)
 {
-    OCURI* uri;
-    int ok = ocuriparse(path,&uri);
+    NC_URI* uri;
+    int ok = nc_uriparse(path,&uri);
     if(ok) {
 	char* slash = strrchr(uri->file, '/');
 	char* dot;
@@ -38,7 +38,7 @@ nc__testurl(const char* path, char** basenamep)
 	dot = strrchr(slash, '.');
         if(dot != NULL &&  dot != slash) *dot = '\0';
 	if(basenamep) *basenamep=slash ; else free(slash);
-        ocurifree(uri);
+        nc_urifree(uri);
     }
     return ok;
 }
@@ -393,35 +393,39 @@ dimproduct3(NClist* dimensions)
     return size;
 }
 
-static char* checkseps = "+,:;";
+
+/* Return vallue of param or NULL if not found */
+const char*
+paramvalue34(NCDAPCOMMON* nccomm, const char* key)
+{
+    const char* value;
+
+    if(nccomm == NULL || key == NULL) return 0;
+    if(!nc_urilookup(nccomm->oc.url,key,&value))
+	return NULL;
+    return value;
+}
+
+static const char* checkseps = "+,:;";
 
 /* Search for substring in value of param. If substring == NULL; then just
    check if param is defined.
 */
 int
-paramcheck34(NCDAPCOMMON* nccomm, const char* param, const char* substring)
+paramcheck34(NCDAPCOMMON* nccomm, const char* key, const char* subkey)
 {
     const char* value;
-    const char* sh;
-    unsigned int splen;
-    if(nccomm == NULL || param == NULL) return 0;
-    value = oc_clientparam_get(nccomm->oc.conn,param);
-    if(value == NULL) return 0;
-    if(substring == NULL) return 1;
-    splen = strlen(substring);
-    for(sh=value;*sh;sh++) {
-	if(strncmp(sh,substring,splen)==0) {
-	    char cpost = sh[splen];
-	    char cpre;
-	    int match = 0;
-	    cpre = (sh==value?*sh:*(sh-1));
-	    /* Check for legal separators */
-	    if(sh == value || strchr(checkseps,cpre) != NULL) match++;
-	    if(cpost == '\0' || strchr(checkseps,cpost) != NULL) match++;
-	    if(match == 2) return 1;
-	}
-    }
-    return 0;
+    char* p;
+
+    if(nccomm == NULL || key == NULL) return 0;
+    if(!nc_urilookup(nccomm->oc.url,key,&value))
+	return 0;
+    if(subkey == NULL) return 1;
+    p = strstr(value,subkey);
+    if(p == NULL) return 0;
+    p += strlen(subkey);
+    if(*p != '\0' && strchr(checkseps,*p) == NULL) return 0;
+    return 1;
 }
 
 
@@ -982,7 +986,7 @@ deltatime()
 
 /* Provide a wrapper for oc_fetch so we can log what it does */
 OCerror
-dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
+dap_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
              OCdxd dxd, OCobject* rootp)
 {
     OCerror ocstat;
@@ -993,12 +997,12 @@ dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
     if(ce != NULL && strlen(ce) == 0) ce = NULL;
     if(FLAGSET(nccomm->controls,NCF_SHOWFETCH)) {
 	/* Build uri string minus the constraint */
-	char* baseuri = ocuribuild(nccomm->oc.uri,NULL,ext,0);
+	char* baseurl = nc_uribuild(nccomm->oc.url,NULL,ext,0);
 	if(ce == NULL)
-            nclog(NCLOGNOTE,"fetch: %s",baseuri);
+            nclog(NCLOGNOTE,"fetch: %s",baseurl);
 	else	
-            nclog(NCLOGNOTE,"fetch: %s?%s",baseuri,ce);
-	nullfree(baseuri);
+            nclog(NCLOGNOTE,"fetch: %s?%s",baseurl,ce);
+	nullfree(baseurl);
 #ifdef HAVE_GETTIMEOFDAY
 	gettimeofday(&time0,NULL);
 #endif
@@ -1014,6 +1018,10 @@ dap_oc_fetch(NCDAPCOMMON* nccomm, OCconnection conn, const char* ce,
 	nclog(NCLOGNOTE,"fetch complete.");
 #endif
     }
+#ifdef DEBUG2
+fprintf(stderr,"fetch: dds:\n");
+oc_dumpnode(conn,*rootp);
+#endif
     return ocstat;
 }
 

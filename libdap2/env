@@ -2,9 +2,10 @@
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON=""
 PARMS="[log]"
 
-F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/b31a"
-#F="file:///home/dmh/mach/minor/ncdap_test/testdata3/1998-6-avhrr.dat"
-#CON="b[1:2:10]"
+#F="file:///home/dmh/nc/netcdf-3/ncdap_test/testdata3/in.nc"
+F="http://motherlode.ucar.edu:8080/dts/test.07"
+CON="person"
+VAR="person.name"
 
 #PARMS="${PARMS}[netcdf4]"
 PARMS="${PARMS}[cache]"
@@ -16,7 +17,7 @@ PROG="./ncd"
 U="${PARMS}$F"
 if test "x$CON" != "x" ; then U="${PARMS}$F?$CON"; fi
 UALL="${PARMS}$F"
-if test "x$VAR" != "x" ; then
+if test "x${VAR}" != "x" ; then
   ARGS="$ARGS -v ${VAR}"
 fi
 #ARGS="-h $ARGS"
@@ -60,4 +61,3 @@ F="http://nomads.ncep.noaa.gov:9090/dods/gens/gens20111011/gep20_00z"
 CON="ens,time,lat,lon,prmslmsl[0:1:0][0:1:64][0:1:10][0:1:10]"
 
 fi
-
