@@ -298,7 +298,6 @@ extern NCerror fixgrid34(struct NCDAPCOMMON* drno, CDFnode* grid);
 extern NCerror computecdfinfo34(struct NCDAPCOMMON*, NClist*);
 extern char* cdfname34(char* basename);
 extern NCerror augmentddstree34(struct NCDAPCOMMON*, NClist*);
-extern NCerror definedimsets34(struct NCDAPCOMMON*);
 extern NCerror computecdfdimnames34(struct NCDAPCOMMON*);
 extern NCerror buildcdftree34(struct NCDAPCOMMON*, OCobject, OCdxd, CDFnode**);
 extern CDFnode* makecdfnode34(struct NCDAPCOMMON*, char* nm, OCtype,
@@ -323,6 +322,10 @@ extern NClist* getalldims34(NCDAPCOMMON* nccomm, int visibleonly);
 
 /* From cdf3.c */
 extern NCerror imprint3(NCDAPCOMMON*);
+extern NCerror definedimsets3(struct NCDAPCOMMON*);
+
+/* From cdf4.c */
+extern NCerror definedimsets4(struct NCDAPCOMMON*);
 
 /* From cache.c */
 extern int iscached(NCDAPCOMMON*, CDFnode* target, NCcachenode** cachenodep);

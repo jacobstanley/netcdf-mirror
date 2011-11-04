@@ -673,26 +673,6 @@ iswholeconstraint(DCEconstraint* con)
     return 1;
 }
 
-#ifdef IGNORE
-void
-makewholesegment3(DCEsegment* seg, CDFnode* node)
-{
-    int i;
-    NClist* dimset = NULL;
-    unsigned int rank;
-
-    dimset = node->array.dimset0;
-    rank = nclistlength(dimset);
-
-    seg->rank = rank;
-    for(i=0;i<rank;i++) {
-	CDFnode* dim = (CDFnode*)nclistget(dimset,i);
-	dcemakewholeslice(&seg->slices[i],dim->dim.declsize);
-    }
-    seg->slicesdefined  = 1;
-    seg->slicesdeclized = 1;
-}
-#endif
 
 /*
 Given a set of projections, we need to produce

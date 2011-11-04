@@ -4,8 +4,6 @@
  *   $Header: /upc/share/CVS/netcdf-3/libncdap3/common34.c,v 1.29 2010/05/25 13:53:02 ed Exp $
  *********************************************************************/
 
-#define NOCLONE
-
 #include "ncdap3.h"
 
 #ifdef HAVE_GETRLIMIT
@@ -155,22 +153,8 @@ invalid:
     return NC_EINVAL; /* mal-formed grid */
 }
 
-static CDFnode*
-clonedim(NCDAPCOMMON* nccomm, CDFnode* dim, CDFnode* var)
-{
-    CDFnode* clone;
-    clone = makecdfnode34(nccomm,dim->ocname,OC_Dimension,
-			  OCNULL,dim->container);
-    /* Record its existence */
-    nclistpush(dim->container->root->tree->nodes,(ncelem)clone);
-    clone->dim = dim->dim; /* copy most everything */
-    clone->dim.dimflags |= CDFDIMCLONE;
-    clone->dim.array = var;
-    return clone;
-}
 
-
-#ifndef NOCLONE
+#ifdef IGNORE
 static void
 cloneseqdims(NCDAPCOMMON* nccomm, NClist* dimset, CDFnode* var)
 {
@@ -183,111 +167,6 @@ cloneseqdims(NCDAPCOMMON* nccomm, NClist* dimset, CDFnode* var)
 }
 #endif
 
-static NClist*
-clonedimset(NCDAPCOMMON* nccomm, NClist* dimset, CDFnode* var)
-{
-    NClist* result = nclistnew();
-    int i;
-    for(i=0;i<nclistlength(dimset);i++) {
-	CDFnode* dim = (CDFnode*)nclistget(dimset,i);
-	nclistpush(result,(ncelem)clonedim(nccomm,dim,var));
-    }
-    return result;
-}
-
-
-/* Define the dimsetplus list for a node */
-NCerror
-definedimsetplus34(NCDAPCOMMON* nccomm, CDFnode* node)
-{
-    int ncstat = NC_NOERR;
-    NClist* dimset;
-    CDFnode* clone;
-
-    ASSERT(node->array.dimsetplus == NULL);
-    if(node->array.dimset0 == NULL)
-	dimset = nclistnew();
-    else { /* copy the dimset0 into dimset */
-        dimset = nclistclone(node->array.dimset0);
-    }
-    /* Insert the sequence or string dims */
-    if(node->array.stringdim != NULL) {
-	clone = node->array.stringdim;
-        nclistpush(dimset,(ncelem)clone);
-    }
-    if(node->array.seqdim != NULL) {
-	clone = node->array.seqdim;
-        nclistpush(dimset,(ncelem)clone);
-    }
-    node->array.dimsetplus = dimset;
-    return ncstat;
-}
-
-/* Define the dimsetall list for a node */
-NCerror
-definedimsetall34(NCDAPCOMMON* nccomm, CDFnode* node)
-{
-    int i;
-    int ncstat = NC_NOERR;
-    NClist* dimsetall;
-
-    ASSERT(node->array.dimsetall == NULL);
-    if(node->container != NULL) {
-        if(node->container->array.dimsetall == NULL) {
-#ifdef DEBUG1
-fprintf(stderr,"dimsetall: recurse %s\n",node->container->ocname);
-#endif
-	    ncstat = definedimsetall34(nccomm,node->container);
-	    if(ncstat != NC_NOERR) return ncstat;
-        }
-	/* We need to clone the parent dimensions because we will be assigning
-           indices vis-a-vis this variable */
-        dimsetall = clonedimset(nccomm,node->container->array.dimsetall,node);
-    } else
-	dimsetall = nclistnew();
-    // concat parentall and dimset;
-    for(i=0;i<nclistlength(node->array.dimsetplus);i++) {
-#ifdef NOCLONE
-	CDFnode* clone = (CDFnode*)nclistget(node->array.dimsetplus,i);
-#else
-	CDFnode* clone = clonedim(nccomm,(CDFnode*)nclistget(node->array.dimsetplus,i),node);
-#endif
-	nclistpush(dimsetall,(ncelem)clone);
-    }
-    node->array.dimsetall = dimsetall;
-#ifdef DEBUG1
-fprintf(stderr,"dimsetall: |%s|=%d\n",node->ocname,nclistlength(dimsetall));
-#endif
-    return ncstat;
-}
-
-/* Define the dimsetplus and dimsetall lists for
-   all nodes with dimensions
-*/
-NCerror
-definedimsets34(NCDAPCOMMON* nccomm)
-{
-    int i;
-    int ncstat = NC_NOERR;
-    NClist* allnodes = nccomm->cdf.ddsroot->tree->nodes;
-
-    for(i=0;i<nclistlength(allnodes);i++) {
-	CDFnode* rankednode = (CDFnode*)nclistget(allnodes,i);
-	if(rankednode->nctype == NC_Dimension) continue; //ignore
-	ASSERT((rankednode->array.dimsetplus == NULL));
-	ncstat = definedimsetplus34(nccomm,rankednode);
-	if(ncstat != NC_NOERR) return ncstat;
-    }
-    for(i=0;i<nclistlength(allnodes);i++) {
-	CDFnode* rankednode = (CDFnode*)nclistget(allnodes,i);
-	if(rankednode->nctype == NC_Dimension) continue; //ignore
-	ASSERT((rankednode->array.dimsetall == NULL));
-	ASSERT((rankednode->array.dimsetplus != NULL));
-	ncstat = definedimsetall34(nccomm,rankednode);
-	if(ncstat != NC_NOERR) return ncstat;
-    }     
-    return NC_NOERR;
-}
 
 #ifdef IGNORE
 /* Compute the dimsetall for the given node; do not assume

@@ -20,10 +20,12 @@
 #include "nc_uri.h"
 #include "dceconstraints.h"
 
+#include "oc.h"
+
+#include "nc.h"
 #include "netcdf.h"
 #include "ncdispatch.h"
 #include "nc4internal.h"
-#include "nc.h"
 
 #include "nccommon.h"
 #include "ncdap3.h"

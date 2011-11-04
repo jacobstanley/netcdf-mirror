@@ -207,10 +207,6 @@ fprintf(stderr,"\n");
 
     ncstat = makegetvar34(dapcomm,cdfvar,data,dsttype,&varainfo);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-#ifdef IGNORE
-    freegetvara(dapcomm->cdf.vara);
-    dapcomm->cdf.vara = varainfo;
-#endif
 
     state = 0;
     if(FLAGSET(dapcomm->controls,NCF_UNCONSTRAINABLE)) {
@@ -342,6 +338,7 @@ fprintf(stderr,"getvarx: walkprojection: %s\n",dumpprojection(walkprojection));
     ncstat = moveto(dapcomm,varainfo,cachenode->datadds,data);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
     goto ok;
+
 fail:
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     dcefree((DCEnode*)varaprojection);

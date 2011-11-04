@@ -41,12 +41,11 @@ buildvaraprojection4(Getvara* getvar,
     projection = (DCEprojection*)dcecreate(CES_PROJECT);
     projection->discrim = CES_VAR;
     projection->var = (DCEvar*)dcecreate(CES_VAR);
-    projection->var->cdfleaf = var;
     projection->var->segments = segments;
 
     /* All slices are assigned to the first (and only segment) */
-    dimset = var->array.dimensions;
-    segment->rank = nclistlength(var->array.dimensions);
+    dimset = var->array.dimset0;
+    segment->rank = nclistlength(var->array.dimset0);
     for(i=0;i<segment->rank;i++) { 
         DCEslice* slice = &segment->slices[i];
 	CDFnode* dim = (CDFnode*)nclistget(dimset,i);

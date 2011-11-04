@@ -5,6 +5,12 @@
  *********************************************************************/
 
 #include "ncdap3.h"
+
+#ifdef HAVE_GETRLIMIT
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
+
 #include "nc3dispatch.h"
 #include "ncd3dispatch.h"
 #include "dapalign.h"
@@ -75,11 +81,12 @@ NCD3_open(const char * path, int mode,
 
     if(path == NULL)
 	return NC_EDAPURL;
-    if(dispatch == NULL) PANIC("nc3d_open: no dispatch table");
+    if(dispatch == NULL) PANIC("NC3D_open: no dispatch table");
 
     /* Setup our NC and NCDAPCOMMON state*/
     drno = (NC*)calloc(1,sizeof(NC));
     if(drno == NULL) {ncstat = NC_ENOMEM; goto done;}
+
     /* compute an ncid */
     ncstat = add_to_NCList(drno);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
@@ -90,8 +97,19 @@ NCD3_open(const char * path, int mode,
 
     drno->dispatch = dispatch;
     drno->dispatchdata = dapcomm;
-
     dapcomm->controller = (NC*)drno;
+
+    dapcomm->cdf.separator = ".";
+    dapcomm->cdf.smallsizelimit = DFALTSMALLLIMIT;
+    dapcomm->cdf.cache = createnccache();
+
+#ifdef HAVE_GETRLIMIT
+    { struct rlimit rl;
+      if(getrlimit(RLIMIT_NOFILE, &rl) >= 0) {
+	dapcomm->cdf.cache->cachecount = (size_t)(rl.rlim_cur / 2);
+      }
+    }
+#endif
 
 #ifdef OCCOMPILEBYDEFAULT
     /* set the compile flag by default */
@@ -107,10 +125,6 @@ NCD3_open(const char * path, int mode,
     /* parse the client parameters */
     nc_uridecodeparams(dapcomm->oc.url);
 
-    dapcomm->cdf.separator = ".";
-    dapcomm->cdf.smallsizelimit = DFALTSMALLLIMIT;
-    dapcomm->cdf.cache = createnccache();
-
     if(!constrainable34(dapcomm->oc.url))
 	SETFLAG(dapcomm->controls,NCF_UNCONSTRAINABLE);
 
@@ -122,18 +136,13 @@ NCD3_open(const char * path, int mode,
     else
 	ncstat = nc_create(tmpname,NC_CLOBBER|NC_64BIT_OFFSET,&drno->substrate);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+
     /* free the filename so it will automatically go away*/
-#ifdef NOTUSED
-    {
-        /* break the abstraction to get the fd */
-	NC* nc;
-        ncstat = NC_check_id(drno->substrate, &nc);
-	close(nc->int_ncid);
-    }
-#endif
-    /* unlink the temp file so it will automatically be reclaimed */
     unlink(tmpname);
     nullfree(tmpname);
+
+    /* Avoid fill */
+    nc_set_fill(drno->substrate,NC_NOFILL,NULL);
 
     dapcomm->oc.dapconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
     dapcomm->oc.dapconstraint->projections = nclistnew();
@@ -143,7 +152,7 @@ NCD3_open(const char * path, int mode,
     ncstat = parsedapconstraints(dapcomm,dapcomm->oc.url->constraint,dapcomm->oc.dapconstraint);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
 
-    /* Check to see if we are unconstrainable */
+    /* Complain if we are unconstrainable but have constraints */
     if(FLAGSET(dapcomm->controls,NCF_UNCONSTRAINABLE)) {
 	if(dapcomm->oc.url->constraint != NULL
 	   && strlen(dapcomm->oc.url->constraint) > 0) {
@@ -152,15 +161,14 @@ NCD3_open(const char * path, int mode,
 	}
     }
 
-    /* Avoid fill */
-    nc_set_fill(drno->substrate,NC_NOFILL,NULL);
-
     /* Construct a url for oc minus any parameters */
     dapcomm->oc.urltext = nc_uribuild(dapcomm->oc.url,NULL,NULL,
-				(NC_URIALL & ~NC_URICONSTRAINTS));
+				(NC_URIALL ^ NC_URICONSTRAINTS));
+
     /* Pass to OC */
     ocstat = oc_open(dapcomm->oc.urltext,&dapcomm->oc.conn);
     if(ocstat != OC_NOERR) {THROWCHK(ocstat); goto done;}
+
     nullfree(dapcomm->oc.urltext); /* clean up */
     dapcomm->oc.urltext = NULL;
 
@@ -204,7 +212,7 @@ NCD3_open(const char * path, int mode,
     ncstat = suppressunusablevars3(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto done;}
 
-    /* apply client parameters (after computcdfinfo and computecdfvars)*/
+    /* apply client parameters */
     ncstat = applyclientparams34(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto done;}
 
@@ -219,7 +227,7 @@ NCD3_open(const char * path, int mode,
     }
 
     /* Define the dimsetplus and dimsetall lists */
-    ncstat = definedimsets34(dapcomm);
+    ncstat = definedimsets3(dapcomm);
     if(ncstat) {THROWCHK(ncstat); goto done;}
 
     /* Re-compute the dimension names*/
@@ -239,7 +247,7 @@ NCD3_open(const char * path, int mode,
         */
         ncstat = defrecorddim3(dapcomm);
         if(ncstat) {THROWCHK(ncstat); goto done;}
-   }
+    }
 
     /* Re-compute the var names*/
     ncstat = computecdfvarnames3(dapcomm,dapcomm->cdf.ddsroot,dapcomm->cdf.varnodes);
@@ -281,10 +289,7 @@ fprintf(stderr,"ncdap3: final constraint: %s\n",dapcomm->oc.url->constraint);
 
     /* Build the meta data */
     ncstat = buildncstructures3(dapcomm);
-
-    if(ncstat != NC_NOERR) {
-	{THROWCHK(ncstat); goto done;}
-    }
+    if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
 
     /* Do any necessary data prefetch */
     ncstat = prefetchdata3(dapcomm);
@@ -369,9 +374,6 @@ builddims(NCDAPCOMMON* dapcomm)
     NC* drno = dapcomm->controller;
     NC* ncsub;
 
-    ncstat = NC_check_id(drno->substrate,&ncsub);
-    if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
-
     /* collect all dimensions from variables */
     dimset = dapcomm->cdf.dimnodes;
 
@@ -400,6 +402,11 @@ builddims(NCDAPCOMMON* dapcomm)
 			NC_UNLIMITED,
 			&unlimited->ncid);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+
+        /* get the id for the substrate */
+        ncstat = NC_check_id(drno->substrate,&ncsub);
+        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+
         /* Set the effective size of UNLIMITED;
            note that this cannot be done thru the normal API.*/
         NC_set_numrecs(ncsub,unlimited->dim.declsize);
@@ -410,8 +417,7 @@ builddims(NCDAPCOMMON* dapcomm)
         if(dim->dim.basedim != NULL) continue; /* handle below */
 	if(DIMFLAG(dim,CDFDIMRECORD)) continue; /* defined above */
 #ifdef DEBUG1
-fprintf(stderr,"define: dim: %s=%ld\n",
-		dim->ncfullname,(long)dim->dim.declsize);
+fprintf(stderr,"define: dim: %s=%ld\n",dim->ncfullname,(long)dim->dim.declsize);
 #endif
         ncstat = nc_def_dim(drno->substrate,dim->ncfullname,dim->dim.declsize,&dimid);
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}

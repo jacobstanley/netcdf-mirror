@@ -51,7 +51,6 @@ computecdfnodesets4(NCDAPCOMMON* nccomm)
 }
 
 /*
-
 The variables for a DAP->netcdf-4 translation are defined by
 the top-level objects in the DAP tree.
 Grids and Structures are converted to netcdf-4
@@ -199,7 +198,7 @@ fprintf(stderr,"\t\tfield: %s\n",dumpalign(&field->typesize.field));
 	/* The field size is instance size * # array elements */
 	tnode->typesize.field = tnode->typesize.instance;
         tnode->typesize.field.size = tnode->typesize.instance.size
-			    * cdftotalsize(tnode->array.dimensions);
+			    * cdftotalsize(tnode->array.dimset0);
 #ifdef ALIGNCHECK
 fprintf(stderr,"computesize.final: struct (%s):\n",tnode->name);
 fprintf(stderr,"\tinstance: %s\n",dumpalign(&tnode->typesize.instance));
@@ -254,7 +253,7 @@ fprintf(stderr,"\n");
 	tnode->typesize.instance.offset = 0;
 	tnode->typesize.field = tnode->typesize.instance; /* except for... */
         tnode->typesize.field.size = tnode->typesize.instance.size
-                            * cdftotalsize(tnode->array.dimensions);
+                            * cdftotalsize(tnode->array.dimset0);
 	break;
 
     default: PANIC1("unexpected nctype: %d",tnode->nctype);
@@ -366,7 +365,7 @@ getsingletonfield(NClist* list)
 	CDFnode* field = (CDFnode*)nclistget(list,i);
 	if(!field->visible) continue;
         fieldcount++;
-	if(field->nctype == NC_Primitive && nclistlength(field->array.dimensions) == 0)
+	if(field->nctype == NC_Primitive && nclistlength(field->array.dimset0) == 0)
 	    thefield = field;
     }
     if(fieldcount != 1) thefield = NULL; /* not the right type of field */
@@ -491,4 +490,26 @@ shortentypenames4(NCDAPCOMMON* nccomm)
     nclistfree(unique);
     ncbytesfree(name);
     return NC_NOERR;
+}
+
+/* Define the dimsetplus and dimsetall lists for
+   all nodes with dimensions
+*/
+NCerror
+definedimsets4(NCDAPCOMMON* nccomm)
+{
+    int i;
+    int ncstat = NC_NOERR;
+    NClist* allnodes = nccomm->cdf.ddsroot->tree->nodes;
+
+    for(i=0;i<nclistlength(allnodes);i++) {
+	CDFnode* rankednode = (CDFnode*)nclistget(allnodes,i);
+	if(rankednode->nctype == NC_Dimension) continue; //ignore
+	ASSERT((rankednode->array.dimsetplus == NULL));
+	ASSERT((rankednode->array.dimsetall == NULL));
+	/* Make dimsetplus and dimsetall == dimset0 */
+	rankednode->array.dimsetplus = nclistclone(rankednode->array.dimset0);
+	rankednode->array.dimsetall = nclistclone(rankednode->array.dimset0);
+    }
+    return ncstat;
 }

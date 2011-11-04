@@ -785,6 +785,12 @@ AC_SUBST(HAS_SZLIB,[$nc_has_szlib])
 # Access netcdf specific version of config.h
 AH_BOTTOM([#include "ncconfigure.h"])
 
+# Temporary Automake Conditionals to control
+# testing in ncdap_test
+
+AM_CONDITIONAL(DODAP3, [test "1" = "1"])
+AM_CONDITIONAL(DODAP4, [test "1" = "0"])
+
 ##################################################
 # Uncomment this to keep a copy of autoconf defines at this point, for
 # debugging purposes.
@@ -817,16 +823,14 @@ AC_CONFIG_FILES([Makefile
                   libdispatch/Makefile
                   liblib/Makefile
                   ncdump/cdl4/Makefile
-                  ncdump/expected4/Makefile],
-                 [test -f  nc-config && chmod 755 nc-config ])
-
-# Temporarily shut down remote testing
-#                  ncdap_test/Makefile
-#                  ncdap_test/testdata3/Makefile
-#                  ncdap_test/expected3/Makefile
-#                  ncdap_test/expected4/Makefile
-#                  ncdap_test/expectremote3/Makefile
-#                  ncdap_test/expectremote4/Makefile
-
+                  ncdump/expected4/Makefile
+                  ncdap_test/Makefile
+                  ncdap_test/testdata3/Makefile
+                  ncdap_test/expected3/Makefile
+                  ncdap_test/expected4/Makefile
+                  ncdap_test/expectremote3/Makefile
+                  ncdap_test/expectremote4/Makefile
+		  ],
+                  [test -f  nc-config && chmod 755 nc-config])
 AC_OUTPUT()
 
