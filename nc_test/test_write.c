@@ -537,6 +537,7 @@ test_nc_def_dim(void)
 	IF (err != NC_EBADNAME)
 	    error("bad name: status = %d", err);
 	/* Fix: dmh 11/4/2011: works only if sizeof(long) > 4 */
+printf("x1: %d\n",sizeof(long));
 	if(sizeof(long) > 4) {
             err = nc_def_dim(ncid, dim_name[i], NC_UNLIMITED-1, &dimid);
     	    IF (err != NC_EDIMSIZE)
