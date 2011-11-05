@@ -20,6 +20,8 @@ test.05 test.06a test.07a \
 test.07 test.21 test.22 \
 test.23 test.31 \
 test.50 test.53 test.55 \
+"
+X="\
 test.56 test.57 \
 test.66 test.67 test.68 test.69 \
 test.an1 \
@@ -43,7 +45,7 @@ test.nc text.nc"
 XFAILTESTS=""
 
 #FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1} ${ACTUALDATA2}"
-FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1}"
+FILETESTS="${ACTUALDATA1}"
 
 ##################################################
 # Remote test info
