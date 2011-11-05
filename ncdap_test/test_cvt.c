@@ -108,9 +108,7 @@ static char string3[DIMSIZE][STRLEN];
 int main()
 {
     int ncid, varid;
-#ifdef GENERATE
     int i,j;
-#endif
     int ncstat = NC_NOERR;
     char* url;
     char* topsrcdir;
