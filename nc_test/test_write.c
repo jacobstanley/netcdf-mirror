@@ -536,9 +536,12 @@ test_nc_def_dim(void)
 	err = nc_def_dim(ncid, BAD_NAME, dim_len[i], &dimid);
 	IF (err != NC_EBADNAME)
 	    error("bad name: status = %d", err);
-        err = nc_def_dim(ncid, dim_name[i], NC_UNLIMITED-1, &dimid);
-	IF (err != NC_EDIMSIZE)
-	    error("bad size: status = %d", err);
+	/* Fix: dmh 11/4/2011: works only if sizeof(long) > 4 */
+	if(sizeof(long) > 4) {
+            err = nc_def_dim(ncid, dim_name[i], NC_UNLIMITED-1, &dimid);
+    	    IF (err != NC_EDIMSIZE)
+	        error("bad size: status = %d", err);
+	}
         err = nc_def_dim(ncid, dim_name[i], dim_len[i], &dimid);
         IF (err) 
 	    error("nc_def_dim: %s", nc_strerror(err));
