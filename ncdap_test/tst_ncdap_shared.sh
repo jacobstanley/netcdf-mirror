@@ -42,7 +42,8 @@ test.nc text.nc"
 # only to detect which are considered XFAIL tests.
 XFAILTESTS=""
 
-FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1} ${ACTUALDATA2}"
+#FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1} ${ACTUALDATA2}"
+FILETESTS="${SYNTHETICDATA} ${ACTUALDATA1}"
 
 ##################################################
 # Remote test info
