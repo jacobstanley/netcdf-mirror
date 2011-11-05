@@ -22,7 +22,7 @@ TESTS += tst_ncdap3.sh
 # because the server may be down or inaccessible
 
 if ENABLE_DAP_REMOTE_TESTS
-TESTS += tst_remote3.sh
+#TESTS += tst_remote3.sh
 
 if ENABLE_DAP_LONG_TESTS
 # TESTS += tst_longremote3.sh
