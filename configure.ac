@@ -221,7 +221,7 @@ AC_ARG_ENABLE([dap],
                  [AS_HELP_STRING([--disable-dap],
                                  [build without DAP client support.])])
 #test "x$enable_dap" = xno || enable_dap=yes
-test "x$enable_dap" = xyes || enable_dap=no
+enable_dap=no
 AC_MSG_RESULT($enable_dap)
 
 # Capture the state of the --enable-rpc flag
