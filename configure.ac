@@ -220,7 +220,7 @@ AC_MSG_CHECKING([whether DAP client is to be built])
 AC_ARG_ENABLE([dap],
                  [AS_HELP_STRING([--disable-dap],
                                  [build without DAP client support.])])
-#test "x$enable_dap" = xno || enable_dap=yes
+test "x$enable_dap" = xno || enable_dap=yes
 enable_dap=no
 AC_MSG_RESULT($enable_dap)
 
