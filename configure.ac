@@ -221,7 +221,6 @@ AC_ARG_ENABLE([dap],
                  [AS_HELP_STRING([--disable-dap],
                                  [build without DAP client support.])])
 test "x$enable_dap" = xno || enable_dap=yes
-enable_dap=no
 AC_MSG_RESULT($enable_dap)
 
 # Capture the state of the --enable-rpc flag
@@ -789,7 +788,7 @@ AH_BOTTOM([#include "ncconfigure.h"])
 # Temporary Automake Conditionals to control
 # testing in ncdap_test
 
-AM_CONDITIONAL(DODAP3, [test "1" = "0"])
+AM_CONDITIONAL(DODAP3, [test "1" = "1"])
 AM_CONDITIONAL(DODAP4, [test "1" = "0"])
 
 ##################################################
