@@ -788,7 +788,7 @@ AH_BOTTOM([#include "ncconfigure.h"])
 # Temporary Automake Conditionals to control
 # testing in ncdap_test
 
-AM_CONDITIONAL(DODAP3, [test "1" = "1"])
+AM_CONDITIONAL(DODAP3, [test "1" = "0"])
 AM_CONDITIONAL(DODAP4, [test "1" = "0"])
 
 ##################################################
