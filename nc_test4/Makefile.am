@@ -25,19 +25,7 @@ tst_converts \
 tst_converts2 \
 tst_grps \
 tst_grps2 \
-tst_compounds \
-tst_compounds2 \
-tst_compounds3 \
-tst_opaques \
-tst_strings \
-tst_strings2 \
-tst_interops \
-tst_interops4 \
-tst_interops5 \
-tst_interops6 \
-tst_enums \
-tst_coords \
-tst_coords2
+tst_compounds
 
 check_PROGRAMS = $(NC4_TESTS)
 
