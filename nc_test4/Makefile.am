@@ -17,19 +17,16 @@ tst_varms tst_unlim_vars tst_converts tst_converts2 tst_grps tst_grps2	\
 tst_compounds tst_compounds2 tst_compounds3 tst_opaques tst_strings	\
 tst_strings2 tst_interops tst_interops4 tst_interops5 tst_interops6	\
 tst_enums tst_coords tst_coords2 tst_coords3 tst_vars3 tst_vars4	\
-tst_utf8 tst_fills tst_fills2 tst_fillbug	                        \
+tst_chunks tst_chunks2 tst_utf8 tst_fills tst_fills2 tst_fillbug	\
 tst_xplatform tst_xplatform2 tst_h_atts2 tst_endian_fill tst_atts	\
 t_type cdm_sea_soundings tst_camrun tst_vl tst_atts1 tst_atts2		\
-tst_vars2 tst_files5 tst_files6 tst_sync tst_diskless                   
-
-#tst_chunks tst_chunks2 
-
+tst_vars2 tst_files5 tst_files6 tst_sync tst_diskless 
 
 check_PROGRAMS = $(NC4_TESTS)
 
 # Add these if large file tests are turned on.
 if LARGE_FILE_TESTS
-check_PROGRAMS += tst_large tst_large2
+#check_PROGRAMS += tst_large tst_large2
 endif
 
 TESTS = $(NC4_TESTS)
@@ -41,47 +38,34 @@ TESTS += tst_v2
 endif # BUILD_V2
 
 if LARGE_FILE_TESTS
-check_PROGRAMS += tst_large
-TESTS += tst_large
+#check_PROGRAMS += tst_large
+#TESTS += tst_large
 endif # LARGE_FILE_TESTS
 
 # If benchmarks were turned on, build and run a bunch more tests.
 if BUILD_BENCHMARKS
-check_PROGRAMS += tst_create_files bm_file tst_ar4	\
+check_PROGRAMS += tst_create_files bm_file tst_chunks3 tst_ar4	\
 tst_ar4_3d tst_ar4_4d bm_many_objs tst_h_many_atts bm_many_atts	\
 tst_files2 tst_files3 tst_ar5 tst_h_files3 tst_mem tst_knmi	\
 bm_netcdf4_recs
 
-#tst_chunks3 
-
-bm_netcdf4_recs_SOURCES = bm_netcdf4_recs.c tst_utils.c
-bm_many_atts_SOURCES = bm_many_atts.c tst_utils.c
-bm_many_objs_SOURCES = bm_many_objs.c tst_utils.c
 tst_ar4_3d_SOURCES = tst_ar4_3d.c tst_utils.c
 tst_ar4_4d_SOURCES = tst_ar4_4d.c tst_utils.c
 tst_files2_SOURCES = tst_files2.c tst_utils.c
 tst_ar4_SOURCES = tst_ar4.c tst_utils.c
 tst_h_many_atts_SOURCES = tst_h_many_atts.c tst_utils.c
-bm_file_SOURCES = bm_file.c tst_utils.c
 tst_knmi_SOURCES = tst_knmi.c tst_utils.c
-TESTS += tst_ar4_3d tst_create_files run_bm_test1.sh run_bm_elena.sh	\
-run_bm_test2.sh run_bm_ar4.sh tst_files2 tst_files3	\
+TESTS += tst_ar4_3d tst_create_files \
+run_tst_chunks.sh tst_files2 tst_files3	\
 tst_ar5 tst_h_files3 tst_mem tst_knmi
-
-#run_tst_chunks.sh 
 
 # This will run a parallel I/O benchmark for parallel builds.
 if TEST_PARALLEL
-TESTS += run_par_bm_test.sh
+#TESTS += run_par_bm_test.sh
 endif # TEST_PARALLEL
 
 benchmarks: check
-	./run_bm_radar_2D.sh	
-	./run_bm_radar_2D_compression1.sh	
-	./run_bm.sh
-	./run_bm_ar4.sh
 endif # BUILD_BENCHMARKS
-#	./run_tst_chunks.sh
 
 # These are the tests for HDF4.
 if USE_HDF4
