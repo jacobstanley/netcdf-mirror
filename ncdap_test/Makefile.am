@@ -20,23 +20,23 @@ TESTS += tst_ncdap3.sh
 # because the server may be down or inaccessible
 
 if ENABLE_DAP_REMOTE_TESTS
-#TESTS += tst_remote3.sh
+TESTS += tst_remote3.sh
 
 if ENABLE_DAP_LONG_TESTS
-# TESTS += tst_longremote3.sh
+ TESTS += tst_longremote3.sh
 endif
 
-#test_cvt3_SOURCES = test_cvt.c
-#test_vara_SOURCES = test_vara.c
-#check_PROGRAMS += t_dap3a test_cvt3 test_vara
-#TESTS += t_dap3a test_cvt3 test_vara
-#test_varm3_SOURCES = test_varm3.c
-#TESTS += test_varm3
-#check_PROGRAMS += test_varm3
+test_cvt3_SOURCES = test_cvt.c
+test_vara_SOURCES = test_vara.c
+check_PROGRAMS += t_dap3a test_cvt3 test_vara
+TESTS += t_dap3a test_cvt3 test_vara
+test_varm3_SOURCES = test_varm3.c
+TESTS += test_varm3
+check_PROGRAMS += test_varm3
 
-#t_dap3a_SOURCES = t_dap3a.c
-#check_PROGRAMS += t_dap3a
-#TESTS += t_dap3a
+t_dap3a_SOURCES = t_dap3a.c
+check_PROGRAMS += t_dap3a
+TESTS += t_dap3a
 
 endif #ENABLE_DAP_REMOTE_TESTS
 

@@ -19,7 +19,7 @@ pkgconfig_DATA = netcdf.pc
 
 # Does the user want to build the V2 API?
 if BUILD_V2
-#V2_TEST = nctest
+V2_TEST = nctest
 endif
 
 # Does the user want to build ncgen/ncdump?
@@ -36,9 +36,9 @@ endif
 
 # Is the user building netCDF-4?
 if USE_NETCDF4
-#H5_TEST_DIR = h5_test
+H5_TEST_DIR = h5_test
 LIBSRC4_DIR = libsrc4
-#NC_TEST4 = nc_test4
+NC_TEST4 = nc_test4
 LIBDISKLESS = libdiskless
 endif
 
@@ -68,7 +68,7 @@ endif
 # depend on it. 
 SUBDIRS = include $(H5_TEST_DIR) libdispatch $(OCLIB) libsrc		\
 $(LIBDISKLESS) $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBRPC) liblib $(V2_TEST) \
-$(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
+nc_test $(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
 $(EXAMPLES)
 
 # Remove these generated files, for a distclean.
