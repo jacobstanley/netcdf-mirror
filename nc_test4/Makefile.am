@@ -13,8 +13,9 @@ AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la
 
 # These are netCDF-4 test programs.
 NC4_TESTS = \
-tst_dims \
-tst_dims2 \
+tst_dims
+
+X=tst_dims2 \
 tst_dims3 \
 tst_files \
 tst_files4 \
