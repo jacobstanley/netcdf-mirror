@@ -14,8 +14,6 @@ check_PROGRAMS =
 TESTS = 
 TESTS_ENVIRONMENT=TOPSRCDIR=${abs_top_srcdir}
 
-if DODAP3
-
 TESTS += tst_ncdap3.sh
 
 # remote tests are optional
@@ -42,11 +40,8 @@ endif
 
 endif #ENABLE_DAP_REMOTE_TESTS
 
-endif #DODAP3
 
 if USE_NETCDF4
-
-if DODAP4
 
 TESTS += tst_ncdap4.sh
 
@@ -66,8 +61,6 @@ check_PROGRAMS += test_cvt4 t_dap4
 TESTS += test_cvt4 t_dap4
 
 endif ENABLE_DAP_REMOTE_TESTS
-
-endif #DODAP4
 
 endif #USE_NETCDF4
 
