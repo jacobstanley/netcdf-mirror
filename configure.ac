@@ -808,8 +808,6 @@ AC_CONFIG_FILES([Makefile
                  libdiskless/Makefile
                  libsrc4/Makefile
                  nctest/Makefile
-                 nc_test4/Makefile
-                 nc_test/Makefile
                  ncdump/Makefile
                  ncgen3/Makefile
                  ncgen/Makefile
@@ -824,12 +822,6 @@ AC_CONFIG_FILES([Makefile
                   liblib/Makefile
                   ncdump/cdl4/Makefile
                   ncdump/expected4/Makefile
-                  ncdap_test/Makefile
-                  ncdap_test/testdata3/Makefile
-                  ncdap_test/expected3/Makefile
-                  ncdap_test/expected4/Makefile
-                  ncdap_test/expectremote3/Makefile
-                  ncdap_test/expectremote4/Makefile
 		  ],
                   [test -f  nc-config && chmod 755 nc-config])
 AC_OUTPUT()
