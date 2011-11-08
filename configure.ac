@@ -801,13 +801,11 @@ AC_CONFIG_FILES([Makefile
                  nc-config
                  netcdf.pc
                  include/Makefile
-                 h5_test/Makefile
                  man4/Makefile
                  man4/images/Makefile
                  libsrc/Makefile
                  libdiskless/Makefile
                  libsrc4/Makefile
-                 nctest/Makefile
                  ncdump/Makefile
                  ncgen3/Makefile
                  ncgen/Makefile
