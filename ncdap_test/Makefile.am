@@ -43,22 +43,22 @@ endif #ENABLE_DAP_REMOTE_TESTS
 
 if USE_NETCDF4
 
-TESTS += tst_ncdap4.sh
+#TESTS += tst_ncdap4.sh
 
 if ENABLE_DAP_REMOTE_TESTS
 
-TESTS += tst_remote4.sh
+#TESTS += tst_remote4.sh
 
 if ENABLE_DAP_LONG_TESTS
-TESTS += tst_longremote4.sh
+#TESTS += tst_longremote4.sh
 endif
 
 # Conversion tests
 
-test_cvt4_SOURCES = test_cvt.c
-t_dap4_SOURCES = t_dap4.c
-check_PROGRAMS += test_cvt4 t_dap4
-TESTS += test_cvt4 t_dap4
+#test_cvt4_SOURCES = test_cvt.c
+#t_dap4_SOURCES = t_dap4.c
+#check_PROGRAMS += test_cvt4 t_dap4
+#TESTS += test_cvt4 t_dap4
 
 endif ENABLE_DAP_REMOTE_TESTS
 
