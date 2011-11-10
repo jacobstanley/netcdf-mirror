@@ -108,6 +108,9 @@ create_file(char *file_name, int fill_mode, size_t* sizehintp)
     * nc__create() instead of calling nc_create() and getting the
     * block size reported by fstat */
    stat = nc__create(file_name, NC_CLOBBER, default_initialsize, sizehintp, &ncid);
+   if(stat) {
+	system("df -h");
+   }
    check_err(stat,__LINE__,__FILE__);
    stat = nc_set_fill(ncid, fill_mode, &old_fill_mode);
    check_err(stat,__LINE__,__FILE__);
