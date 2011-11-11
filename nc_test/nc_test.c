@@ -93,6 +93,11 @@ main(int argc, char *argv[])
      */
     (void) signal(SIGFPE, SIG_IGN);
 
+fprintf(stderr,"xxxxx\n");
+system("df -h");
+fflush(stderr);
+fflush(stdout);
+
     verbose = 0;
     max_nmpt = 8;
 

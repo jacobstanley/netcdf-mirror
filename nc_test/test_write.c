@@ -527,12 +527,7 @@ test_nc_def_dim(void)
     err = nc_def_dim(ncid, "abc", NC_UNLIMITED, &dimid);
     IF (err != NC_EUNLIMIT)
         error("2nd unlimited dimension: status = %d", err);
-
-fprintf(stderr,"xxxxx\n");
-system("df -h");
-fflush(stderr);
-fflush(stdout);
-        /* define-mode tests: remaining dims */
+    /* define-mode tests: remaining dims */
     for (i = 1; i < NDIMS; i++) {
         err = nc_def_dim(ncid, dim_name[i-1], dim_len[i], &dimid);
 	IF (err != NC_ENAMEINUSE)
