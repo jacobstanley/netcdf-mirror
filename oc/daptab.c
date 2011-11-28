@@ -2131,7 +2131,7 @@ yyreduce:
 
 /* Line 1806 of yacc.c  */
 #line 246 "dap.y"
-    {(yyval)=((yyvsp[(1) - (1)]));}
+    {(yyval)=dapdecode(parsestate->lexstate,(yyvsp[(1) - (1)]));}
     break;
 
   case 84:
