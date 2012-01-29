@@ -12,7 +12,7 @@ AM_CPPFLAGS =  -I$(top_srcdir) -I$(top_srcdir)/include
 
 # OC Sources
 SRC= curlfunctions.c dapparse.c daplex.c ocuri.c http.c ocbytes.c	\
-oc.c occontent.c ocdata.c ocdebug.c ocdrno.c ocdump.c	\
+oc.c occontent.c ocdebug.c ocdrno.c ocdump.c	\
 ocinternal.c oclist.c oclog.c ocnode.c ocutil.c occlientparams.c	\
 rc.c read.c xxdr.c
 
