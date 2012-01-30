@@ -11,8 +11,6 @@
 
 /* Provide a universal cast type containing common fields */
 
-struct CDFnode; /* Forward */
-
 /* Define the common "supertype */
 typedef struct DCEnode {
     CEsort sort;    
@@ -36,7 +34,7 @@ typedef struct DCEsegment {
     int slicesdeclized; /*1=>slice declsize defined */
     size_t rank;
     DCEslice slices[NC_MAX_VAR_DIMS];    
-    struct CDFnode* cdfnode;
+    void* annotation;
 } DCEsegment;
 
 typedef struct DCEfcn {
@@ -48,8 +46,7 @@ typedef struct DCEfcn {
 typedef struct DCEvar {
     DCEnode node;
     NClist* segments;
-    struct CDFnode* cdfnode;
-    struct CDFnode* cdfleaf;
+    void* annotation;
 } DCEvar;
 
 typedef struct DCEconstant {
@@ -93,11 +90,7 @@ typedef struct DCEconstraint {
 
 extern int dceparseconstraints(char* constraints, DCEconstraint* DCEonstraint);
 extern int dceslicemerge(DCEslice* dst, DCEslice* src);
-extern int dcemergeprojections(NClist* dst, NClist* src);
-
-extern char* dcebuildprojectionstring(NClist* projections);
-extern char* dcebuildselectionstring(NClist* selections);
-extern char* dcebuildconstraintstring(DCEconstraint* constraints);
+extern int dcemergeprojectionlists(NClist* dst, NClist* src);
 
 extern DCEnode* dceclone(DCEnode* node);
 extern NClist* dceclonelist(NClist* list);
@@ -115,10 +108,15 @@ extern NClist* dceallnodes(DCEnode* node, CEsort which);
 extern DCEnode* dcecreate(CEsort sort);
 
 extern void dcemakewholeslice(DCEslice* slice, size_t declsize);
+extern void dcemakewholeprojection(DCEprojection*);
 
 extern int dceiswholesegment(DCEsegment*);
 extern int dceiswholeslice(DCEslice*);
 extern int dceiswholeseglist(NClist*);
+extern int dceiswholeprojection(DCEprojection*);
 extern int dcesamepath(NClist* list1, NClist* list2);
+extern int dcemergeprojections(DCEprojection* dst, DCEprojection* src);
+
+extern int dceverbose;
 
 #endif /*DCECONSTRAINTS_H*/

@@ -12,7 +12,8 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = README COPYRIGHT RELEASE_NOTES test_prog.c lib_flags.am
 
 # Doxygen doesn't build nicely in vpath builds.
-DISTCHECK_CONFIGURE_FLAGS = --disable-doxygen 
+# Don't do this; it wipes out any exported values
+#DISTCHECK_CONFIGURE_FLAGS = --disable-doxygen
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = netcdf.pc
@@ -39,17 +40,15 @@ if USE_NETCDF4
 H5_TEST_DIR = h5_test
 LIBSRC4_DIR = libsrc4
 NC_TEST4 = nc_test4
-LIBDISKLESS = libdiskless
+# LIBDISKLESS = libdiskless
 endif
 
 # Build the opendap client?
 if BUILD_DAP
 OCLIB = oc
-NCDAP3 = libncdap3
-NCDAP4 = libncdap4
 DAP2 = libdap2
 #if BUILD_UTILITIES
-#NCDAPTESTDIR = ncdap_test
+NCDAPTESTDIR = ncdap_test
 #endif # BUILD_UTILITIES
 endif
 
@@ -63,13 +62,15 @@ if BUILD_RPC
 LIBRPC = librpc
 endif
 
+WIN32=win32
+
 # This is the list of subdirs for which Makefiles will be constructed
 # and run. ncgen must come before ncdump, because their tests
 # depend on it. 
 SUBDIRS = include $(H5_TEST_DIR) libdispatch $(OCLIB) libsrc		\
 $(LIBDISKLESS) $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBRPC) liblib $(V2_TEST) \
 nc_test $(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
-$(EXAMPLES)
+$(EXAMPLES) $(WIN32)
 
 # Remove these generated files, for a distclean.
 DISTCLEANFILES = VERSION comps.txt test_prog

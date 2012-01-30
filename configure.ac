@@ -15,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.2-beta1], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.2-rc2], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -36,7 +36,7 @@ AC_CANONICAL_TARGET
 AC_CONFIG_HEADERS([config.h])
 
 # This call is required by automake.
-AM_INIT_AUTOMAKE([foreign dist-tarZ subdir-objects])
+AM_INIT_AUTOMAKE([foreign dist-zip subdir-objects])
 
 # Check for the existance of this file before proceeding.
 AC_CONFIG_SRCDIR([libsrc/nc.c])
@@ -94,8 +94,6 @@ if test "x$enable_netcdf_4" = "x" ; then
   AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--enable-netcdf4],
               [build with netcdf-4 (HDF5 and zlib required)])])
   enable_netcdf_4="$enable_netcdf4"
-else
-  enable_netcdf4="$enable_netcdf_4"
 fi
 
 # Does the user want to turn on HDF4 read ability?
@@ -269,6 +267,21 @@ if test "x$enable_dap" = "xno" ; then
   enable_dap_remote_tests=no
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
+
+# Control if groups are supported in [netcdf4]dap2 code
+AC_MSG_CHECKING([whether [netcdf4] group names should be enabled (default on)])
+AC_ARG_ENABLE([dap-groups],
+              [AS_HELP_STRING([--disable-dap-groups],
+                                 [disable [netcdf4] dap group names])])
+test "x$enable_groups" = xno || enable_dap_groups=yes
+if test "x$enable_dap" = "xno" -o "x$enable_enable_netcdf_4" = "xno" ; then
+  AC_MSG_NOTICE([dap groups disabled because dap disabled or netcdf-4 disabled])
+  enable_dap_groups=no
+fi
+AC_MSG_RESULT($enable_dap_groups)
+if test "x$enable_dap_groups" = xyes; then
+AC_DEFINE([ENABLE_DAP_GROUPS], [1], [if true, enable DAP group names])
+fi
 
 # Set the config.h flags
 if test "x$enable_dap" = xyes; then
@@ -553,8 +566,10 @@ AC_FUNC_VPRINTF
 AC_HEADER_STDBOOL
 
 # Check for these functions...
-AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr mktemp strcat strcpy strdup \
-			strcasecmp strtod strtoll strtoull getrlimit gettimeofday fsync MPI_Comm_f2c])
+AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr strcat strcpy \
+                strdup strcasecmp strtod strtoll strtoull strstr \
+		mkstemp getpid \
+		getrlimit gettimeofday fsync MPI_Comm_f2c])
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
 AC_STRUCT_ST_BLKSIZE
@@ -583,12 +598,14 @@ AC_CHECK_LIB([m], [floor], [],
 [AC_MSG_ERROR([Can't find or link to the math library.])])
 
 if test "x$enable_netcdf_4" = xyes; then
+
    AC_DEFINE([USE_NETCDF4], [1], [if true, build netCDF-4])
    AC_DEFINE([H5_USE_16_API], [1], [use HDF5 1.6 API])
 
    AC_SEARCH_LIBS([SZ_Compress], [szip sz], [], [])
 
    # Check for the main hdf5 and hdf5_hl library.
+
    AC_SEARCH_LIBS([H5Fflush], [hdf5dll hdf5], [], 
    [AC_MSG_ERROR([Can't find or link to the hdf5 library. Use --disable-netcdf-4, or see config.log for errors.])])
    AC_SEARCH_LIBS([H5DSis_scale], [hdf5_hldll hdf5_hl], [], 
@@ -711,33 +728,35 @@ AC_MSG_RESULT([$BINFILE_NAME $FC $CXX])
 UD_FTPBINDIR
 
 ##################################################
-# Require some version of xdr/rpc if --enable-dap is set.
-# See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
-if test "x$enable_dap" = xyes; then
-   AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
-   		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
-  if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
-    AC_MSG_ERROR(Cannot locate library containing xdr functions.)
-  else
-  if test "$dap_xdrlib" = "lc" ; then
-    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
-  elif test "$dap_xdrlib" = "none required" ; then
-    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
-  else
-    dap_xdrlib=`echo $dap_xdrlib | sed -e s/-l//g`
-    AC_MSG_NOTICE(XDR Functions appear to be in lib${dap_xdrlib}.)	
-    # Add to library list
-    AC_CHECK_LIB($dap_xdrlib,xdr_void)
-  fi
-  # Fix to get working on OS X (thanks to Fedor Baart)
-  AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
-       AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
-       AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
-       ], [], [[#ifdef HAVE_RPC_TYPES_H
-  # include <rpc/types.h>
-  #endif]])
-fi
-fi
+# OC has been modified to not depend on xdr.h, so suppress here
+## Require some version of xdr/rpc if --enable-dap is set.
+## See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
+#if test "x$enable_dap" = xyes; then
+#   AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
+#   		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
+#  if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
+#    AC_MSG_ERROR(Cannot locate library containing xdr functions.)
+#  else
+#  if test "$dap_xdrlib" = "lc" ; then
+#    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
+#  elif test "$dap_xdrlib" = "none required" ; then
+#    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
+#  else
+#    dap_xdrlib=`echo $dap_xdrlib | sed -e s/-l//g`
+#    AC_MSG_NOTICE(XDR Functions appear to be in lib${dap_xdrlib}.)	
+#    # Add to library list
+#    AC_CHECK_LIB($dap_xdrlib,xdr_void)
+#  fi
+#  # Fix to get working on OS X (thanks to Fedor Baart)
+#  AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
+#       AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
+#       AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
+#       ], [], [[#ifdef HAVE_RPC_TYPES_H
+#  # include <rpc/types.h>
+#  #endif]])
+#fi
+#fi
+
 AC_MSG_CHECKING([value of LIBS])
 AC_MSG_RESULT([$LIBS])
 
@@ -797,7 +816,6 @@ AC_CONFIG_FILES([Makefile
                  man4/Makefile
                  man4/images/Makefile
                  libsrc/Makefile
-                 libdiskless/Makefile
                  libsrc4/Makefile
                  nctest/Makefile
                  nc_test4/Makefile
@@ -808,6 +826,14 @@ AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/C/Makefile
                  examples/CDL/Makefile
+                 win32/Makefile
+                 win32/NET/Makefile
+                 win32/NET/libsrc/Makefile
+                 win32/NET/ncdump/Makefile
+                 win32/NET/ncgen/Makefile
+                 win32/NET/examples/Makefile
+                 win32/NET/nctest/Makefile
+                 win32/NET/nc_test/Makefile
                   oc/Makefile
                   libdap2/Makefile
                   libcdmr/Makefile
@@ -815,16 +841,14 @@ AC_CONFIG_FILES([Makefile
                   libdispatch/Makefile
                   liblib/Makefile
                   ncdump/cdl4/Makefile
-                  ncdump/expected4/Makefile],
-                 [test -f  nc-config && chmod 755 nc-config ])
-
-# Temporarily shut down remote testing
-#                  ncdap_test/Makefile
-#                  ncdap_test/testdata3/Makefile
-#                  ncdap_test/expected3/Makefile
-#                  ncdap_test/expected4/Makefile
-#                  ncdap_test/expectremote3/Makefile
-#                  ncdap_test/expectremote4/Makefile
-
+                  ncdump/expected4/Makefile
+                  ncdap_test/Makefile
+                  ncdap_test/testdata3/Makefile
+                  ncdap_test/expected3/Makefile
+                  ncdap_test/expected4/Makefile
+                  ncdap_test/expectremote3/Makefile
+                  ncdap_test/expectremote4/Makefile
+		  ],
+                  [test -f  nc-config && chmod 755 nc-config])
 AC_OUTPUT()
 

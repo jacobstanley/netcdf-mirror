@@ -474,8 +474,6 @@ idmember(const idnode_t* idlist, int id)
 boolean
 group_wanted(int grpid)
 {
-    int igrp;
-
     /* If -g not specified, all groups are wanted */
     if(formatting_specs.nlgrps == 0)
 	return true;
@@ -1763,14 +1761,20 @@ iscoordvar(int ncid, int varid)
     int dimid;
     int* dimids = 0;
     ncdim_t *dims = 0;
+#ifdef USE_NETCDF4
     int include_parents = 1;
+#endif
     int is_coord = 0;		/* true if variable is a coordinate variable */
     char varname[NC_MAX_NAME];
     int varndims;
 
     do {	  /* be safe in case someone is currently adding
 		   * dimensions */
+#ifdef USE_NETCDF4
+	NC_CHECK( nc_inq_dimids(ncid, &ndims, NULL, include_parents ) );
+#else
 	NC_CHECK( nc_inq_ndims(ncid, &ndims) );
+#endif
 	if (dims)
 	    free(dims);
 	dims = (ncdim_t *) emalloc((ndims + 1) * sizeof(ncdim_t));

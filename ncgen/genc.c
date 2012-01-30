@@ -39,19 +39,21 @@ void
 gen_ncc(const char *filename)
 {
     int idim, ivar, iatt, maxdims;
-    int ndims, nvars, natts, ngatts, ngrps, ntyps;
+    int ndims, nvars, natts, ngatts;
     char* cmode_string;
 
 #ifdef USE_NETCDF4
-    int igrp,ityp;
+    int igrp,ityp, ngrps, ntyps;
 #endif
 
     ndims = listlength(dimdefs);
     nvars = listlength(vardefs);
     natts = listlength(attdefs);
     ngatts = listlength(gattdefs);
+#ifdef USE_NETCDF4
     ngrps = listlength(grpdefs);
     ntyps = listlength(typdefs);
+#endif /*USE_NETCDF4*/
 
     /* wrap in main program */
     codeline("#include <stdio.h>");
@@ -922,8 +924,9 @@ genc_defineattr(Symbol* asym)
 
     /* Handle NC_CHAR specially */
     if(typecode == NC_CHAR) {
-	/* revise the length count */
 	len = bbLength(code);
+	/* Revise length if length == 0 */
+	if(len == 0) len++;
 	cquotestring(code);
 	bbNull(code);
     } else {
@@ -1080,19 +1083,19 @@ genc_definevardata(Symbol* vsym)
     int chartype = (vsym->typ.basetype->typ.typecode == NC_CHAR);
 
     if(vsym->data == NULL) return;
+    src = datalist2src(vsym->data);
 
     code = bbNew();
     /* give the buffer a running start to be large enough*/
     bbSetalloc(code, nciterbuffersize);
 
     if(!isscalar && chartype) {
-        gen_chararray(vsym,code,fillsrc);
+        gen_chararray(vsym,src,code,fillsrc);
 	/* generate a corresponding odometer */
         odom = newodometer(&vsym->typ.dimset,NULL,NULL);
 	/* patch the odometer to use the right counts */
         genc_write(vsym,code,odom,0);
     } else { /* not character constant */
-        src = datalist2src(vsym->data);
         fillsrc = vsym->var.special._Fillvalue;
         /* Handle special cases first*/
         if(isscalar) {

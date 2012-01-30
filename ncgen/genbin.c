@@ -13,7 +13,9 @@
 
 #undef TRACE
 
+#ifdef IGNORE
 extern List* vlenconstants;
+#endif
 
 /* Forward*/
 static void genbin_defineattr(Symbol* asym,Bytebuffer*);
@@ -33,10 +35,10 @@ gen_netcdf(const char *filename)
 {
     int stat, ncid;
     int idim, ivar, iatt;
-    int ndims, nvars, natts, ngatts, ntyps, ngrps;
+    int ndims, nvars, natts, ngatts;
 
 #ifdef USE_NETCDF4
-    int igrp;
+    int ntyps, ngrps, igrp;
 #endif
 
     Bytebuffer* databuf = bbNew();
@@ -45,8 +47,10 @@ gen_netcdf(const char *filename)
     nvars = listlength(vardefs);
     natts = listlength(attdefs);
     ngatts = listlength(gattdefs);
+#ifdef USE_NETCDF4
     ntyps = listlength(typdefs);
     ngrps = listlength(grpdefs);
+#endif /*USE_NETCDF4*/
 
     /* create netCDF file, uses NC_CLOBBER mode */
     cmode_modifier |= NC_CLOBBER;
@@ -124,7 +128,9 @@ gen_netcdf(const char *filename)
 
 #ifdef USE_NETCDF4
     /* Collect vlen data*/
+#ifdef IGNORE
     bindata_vlenconstants(vlenconstants);
+#endif
 
     /* define special variable properties */
     if(nvars > 0) {
@@ -364,10 +370,8 @@ genbin_defineattr(Symbol* asym,Bytebuffer* databuf)
             case NC_CHAR: {
                 char* data = (char*)bbContents(databuf);
 		size_t slen = bbLength(databuf);
-#ifdef IGNORE
 		/* Revise length if slen == 0 */
 		if(slen == 0) {bbAppend(databuf,'\0'); slen++;}
-#endif
                 stat = nc_put_att_text(grpid,varid,asym->name,slen,data);
                 check_err(stat,__LINE__,__FILE__);  
             } break;
@@ -445,8 +449,6 @@ genbin_defineattr(Symbol* asym,Bytebuffer* databuf)
 static void
 genbin_definevardata(Symbol* vsym)
 {
-    int varid, grpid;
-    int rank;
     Bytebuffer* memory;
     nciter_t iter;
     Odometer* odom = NULL;
@@ -454,10 +456,13 @@ genbin_definevardata(Symbol* vsym)
     int chartype = (vsym->typ.basetype->typ.typecode == NC_CHAR);
     Datalist* fillsrc = vsym->var.special._Fillvalue;
     int isscalar = (vsym->typ.dimset.ndims == 0);
+    Datasrc* src;
 
+#ifdef IGNORE
     grpid = vsym->container->ncid,
     varid = vsym->ncid;
     rank = vsym->typ.dimset.ndims;
+#endif
 
     memory = bbNew();
     /* give the buffer a running start to be large enough*/
@@ -465,14 +470,15 @@ genbin_definevardata(Symbol* vsym)
 
     if(vsym->data == NULL) return;
 
+    src = datalist2src(vsym->data);
+
     /* Generate character constants separately */    
     if(!isscalar && chartype) {
-        gen_chararray(vsym,memory,fillsrc);
+        gen_chararray(vsym,src,memory,fillsrc);
 	/* generate a corresponding odometer */
         odom = newodometer(&vsym->typ.dimset,NULL,NULL);
         genbin_write(vsym,memory,odom,0);
     } else { /* not character constant */
-        Datasrc* src = datalist2src(vsym->data);
         if(isscalar) { /*scalar */
             bindata_basetype(vsym->typ.basetype,src,memory,fillsrc); /*scalar*/
             if(bbLength(memory) > 0)
@@ -506,6 +512,10 @@ fprintf(stderr,"]\n");
     }
     odometerfree(odom);
     bbFree(memory);
+    /* See if we have too much data */
+    if(srcmore(src)) {
+	semerror(srcline(src),"Extra data found at end of datalist");
+    }	
 }
 
 static void
