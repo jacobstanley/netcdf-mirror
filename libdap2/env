@@ -10,7 +10,7 @@ PARMS="${PARMS}[prefetch]"
 #PARMS="${PARMS}[noprefetch]"
 PARMS="${PARMS}[show=fetch]"
 
-F="http://motherlode.ucar.edu:8080/dts/test.07"
+F="file://${TOPDIR}/ncdap_test/testdata3/synth2"
 
 PROG="./ncd"
 #PROG="../ncdump/ncdump"

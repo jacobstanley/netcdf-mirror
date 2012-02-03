@@ -432,8 +432,10 @@ fprintf(stderr,"define: dim: %s=%ld\n",dim->ncfullname,(long)dim->dim.declsize);
 #endif
 	definename = getdefinename(dim);
         ncstat = nc_def_dim(drno->substrate,definename,dim->dim.declsize,&dimid);
+        if(ncstat != NC_NOERR) {
+	    THROWCHK(ncstat); goto done;
+	}
 	nullfree(definename);
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
         dim->ncid = dimid;
     }
 

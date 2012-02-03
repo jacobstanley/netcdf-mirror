@@ -310,20 +310,25 @@ dupdim->dim.array->ocname,dupdim->ocname
     }
 
     /* Next case: same name and different sizes*/
-    /* => rename second dim by appending a counter */
+    /* => rename second dim */
 
     for(i=0;i<nclistlength(alldims);i++) {
 	CDFnode* basedim = (CDFnode*)nclistget(alldims,i);
-	if(basedim->dim.basedim != NULL) continue; /* ignore*/
+	if(basedim->dim.basedim != NULL) continue;
 	/* Collect all conflicting dimensions */
 	nclistclear(conflicts);
         for(j=i+1;j<nclistlength(alldims);j++) {
 	    CDFnode* dim = (CDFnode*)nclistget(alldims,j);
-	    if(dim->dim.basedim != NULL) continue; /* ignore*/	    
+	    if(dim->dim.basedim != NULL) continue;
 	    if(dim->ocname == NULL && basedim->ocname == NULL) continue;
 	    if(dim->ocname == NULL || basedim->ocname == NULL) continue;
 	    if(strcmp(dim->ocname,basedim->ocname)!=0) continue;
 	    if(dim->dim.declsize == basedim->dim.declsize) continue;
+#ifdef DEBUG2
+fprintf(stderr,"conflict: %s[%lu] %s[%lu]\n",
+			basedim->ncfullname,(unsigned long)basedim->dim.declsize,
+			dim->ncfullname,(unsigned long)dim->dim.declsize);
+#endif
 	    nclistpush(conflicts,(ncelem)dim);
 	}
 	/* Give  all the conflicting dimensions an index */
@@ -388,9 +393,20 @@ dupdim->dim.array->ocname,dupdim->ocname
             dim->ncbasename = cdflegalname3(tmp);
             nullfree(dim->ncfullname);
             dim->ncfullname = nulldup(dim->ncbasename);
-    	} else { /* !anonymous */
+    	} else { /* !anonymous; use index1 if defined */
+   	    char* legalname = cdflegalname3(dim->ocname);
 	    nullfree(dim->ncbasename);
-	    dim->ncbasename = cdflegalname3(dim->ocname);
+	    if(dim->dim.index1 > 0) {/* need to fix conflicting names (see above) */
+	        char sindex[64];
+		snprintf(sindex,sizeof(sindex),"_%d",dim->dim.index1);
+		dim->ncbasename = (char*)malloc(strlen(sindex)+strlen(legalname)+1);
+		if(dim->ncbasename == NULL) return NC_ENOMEM;
+		strcpy(dim->ncbasename,legalname);
+		strcat(dim->ncbasename,sindex);
+		nullfree(legalname);
+	    } else {/* standard case */
+	        dim->ncbasename = legalname;
+	    }
     	    nullfree(dim->ncfullname);
 	    dim->ncfullname = nulldup(dim->ncbasename);
 	}
@@ -399,14 +415,18 @@ dupdim->dim.array->ocname,dupdim->ocname
     /* Verify unique and defined names for dimensions*/
     for(i=0;i<nclistlength(basedims);i++) {
 	CDFnode* dim1 = (CDFnode*)nclistget(basedims,i);
-	if(dim1->dim.basedim != NULL) continue;
+	if(dim1->dim.basedim != NULL) PANIC1("nonbase basedim: %s\n",dim1->ncbasename);
 	if(dim1->ncbasename == NULL || dim1->ncfullname == NULL)
 	    PANIC1("missing dim names: %s",dim1->ocname);
-	for(j=0;j<i;j++) {
+	/* search backward so we can delete duplicates */
+	for(j=nclistlength(basedims)-1;j>i;j--) {
 	    CDFnode* dim2 = (CDFnode*)nclistget(basedims,j);
-	    if(dim2->dim.basedim != NULL) continue;
 	    if(strcmp(dim1->ncfullname,dim2->ncfullname)==0) {
-		PANIC1("duplicate dim names: %s",dim1->ncfullname);
+		/* complain and suppress one of them */
+		fprintf(stderr,"duplicate dim names: %s[%lu] %s[%lu]\n",
+			dim1->ncfullname,(unsigned long)dim1->dim.declsize,
+			dim2->ncfullname,(unsigned long)dim2->dim.declsize);
+		nclistremove(basedims,j);
 	    }
 	}
     }
@@ -1067,8 +1087,13 @@ getalldims34a(NClist* dimset, NClist* alldims)
     int i;
     for(i=0;i<nclistlength(dimset);i++) {
 	CDFnode* dim = (CDFnode*)nclistget(dimset,i);
-	if(!nclistcontains(alldims,(ncelem)dim))
+	if(!nclistcontains(alldims,(ncelem)dim)) {
+#ifdef DEBUG3
+fprintf(stderr,"getalldims: %s[%lu]\n",
+			dim->ncfullname,(unsigned long)dim->dim.declsize);
+#endif
 	    nclistpush(alldims,(ncelem)dim);
+	}
     }
 }
 
