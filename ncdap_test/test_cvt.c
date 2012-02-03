@@ -108,11 +108,14 @@ static char string3[DIMSIZE][STRLEN];
 int main()
 {
     int ncid, varid;
-    int i,j;
+    int i;
     int ncstat = NC_NOERR;
     char* url;
     char* topsrcdir;
     size_t len;
+#ifdef GENERATE
+    int j;
+#endif
 
     /* location of our target url: use file// to avoid remote
 	server downtime issues

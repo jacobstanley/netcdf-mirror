@@ -469,7 +469,7 @@ makecdfnode34(NCDAPCOMMON* nccomm, char* name, OCtype octype,
 	node->ocname[len] = '\0';
     }
     node->nctype = octypetonc(octype);
-    node->dds = ocnode;
+    node->ocnode = ocnode;
     node->subnodes = nclistnew();
     node->container = container;
     if(ocnode != OCNULL) {
@@ -655,7 +655,7 @@ applyclientparams34(NCDAPCOMMON* nccomm)
 	/* Define the client param stringlength for this variable*/
 	var->maxstringlength = 0; /* => use global dfalt */
 	strcpy(tmpname,"stringlength_");
-	pathstr = makeocpathstring3(conn,var->dds,".");
+	pathstr = makeocpathstring3(conn,var->ocnode,".");
 	strcat(tmpname,pathstr);
 	nullfree(pathstr);
 	value = oc_clientparam_get(conn,tmpname);	
@@ -669,7 +669,7 @@ applyclientparams34(NCDAPCOMMON* nccomm)
 	if(var->nctype != NC_Sequence) continue;
 	var->sequencelimit = dfaltseqlim;
 	strcpy(tmpname,"nolimit_");
-	pathstr = makeocpathstring3(conn,var->dds,".");
+	pathstr = makeocpathstring3(conn,var->ocnode,".");
 	strcat(tmpname,pathstr);
 	if(oc_clientparam_get(conn,tmpname) != NULL)
 	    var->sequencelimit = 0;
@@ -865,15 +865,15 @@ setattach(CDFnode* target, CDFnode* template)
 }
 
 static NCerror
-attachdims34(CDFnode* xnode, CDFnode* ddsnode)
+attachdims34(CDFnode* xnode, CDFnode* template)
 {
     unsigned int i;
     for(i=0;i<nclistlength(xnode->array.dimsetall);i++) {
 	CDFnode* xdim = (CDFnode*)nclistget(xnode->array.dimsetall,i);
-	CDFnode* ddim = (CDFnode*)nclistget(ddsnode->array.dimsetall,i);
-	setattach(xdim,ddim);
+	CDFnode* tdim = (CDFnode*)nclistget(template->array.dimsetall,i);
+	setattach(xdim,tdim);
 #ifdef DEBUG2
-fprintf(stderr,"attachdim: %s->%s\n",xdim->ocname,ddim->ocname);
+fprintf(stderr,"attachdim: %s->%s\n",xdim->ocname,tdim->ocname);
 #endif
     }
     return NC_NOERR;
@@ -885,48 +885,48 @@ It is assumed that both trees have been regridded if necessary.
 */
 
 static NCerror
-attach34r(CDFnode* xnode, NClist* path, int depth)
+attach34r(CDFnode* xnode, NClist* templatepath, int depth)
 {
     unsigned int i,plen,lastnode,gridable;
     NCerror ncstat = NC_NOERR;
-    CDFnode* pathnode;
-    CDFnode* pathnext;
+    CDFnode* templatepathnode;
+    CDFnode* templatepathnext;
 
-    plen = nclistlength(path);
+    plen = nclistlength(templatepath);
     if(depth >= plen) {THROWCHK(ncstat=NC_EINVAL); goto done;}
 
     lastnode = (depth == (plen-1));
-    pathnode = (CDFnode*)nclistget(path,depth);
-    ASSERT((simplenodematch34(xnode,pathnode)));
-    setattach(xnode,pathnode);    
+    templatepathnode = (CDFnode*)nclistget(templatepath,depth);
+    ASSERT((simplenodematch34(xnode,templatepathnode)));
+    setattach(xnode,templatepathnode);    
 #ifdef DEBUG2
-fprintf(stderr,"attachnode: %s->%s\n",xnode->ocname,pathnode->ocname);
+fprintf(stderr,"attachnode: %s->%s\n",xnode->ocname,templatepathnode->ocname);
 #endif
 
     if(lastnode) goto done; /* We have the match and are done */
 
     if(nclistlength(xnode->array.dimsetall) > 0) {
-	attachdims34(xnode,pathnode);
+	attachdims34(xnode,templatepathnode);
     }
 
     ASSERT((!lastnode));
-    pathnext = (CDFnode*)nclistget(path,depth+1);
+    templatepathnext = (CDFnode*)nclistget(templatepath,depth+1);
 
-    gridable = (pathnext->nctype == NC_Grid && depth+2 < plen);
+    gridable = (templatepathnext->nctype == NC_Grid && depth+2 < plen);
 
-    /* Try to find an xnode subnode that matches pathnext */
+    /* Try to find an xnode subnode that matches templatepathnext */
     for(i=0;i<nclistlength(xnode->subnodes);i++) {
         CDFnode* xsubnode = (CDFnode*)nclistget(xnode->subnodes,i);
-        if(simplenodematch34(xsubnode,pathnext)) {
-	    ncstat = attach34r(xsubnode,path,depth+1);
+        if(simplenodematch34(xsubnode,templatepathnext)) {
+	    ncstat = attach34r(xsubnode,templatepath,depth+1);
 	    if(ncstat) goto done;
         } else if(gridable && xsubnode->nctype == NC_Primitive) {
             /* grids may or may not appear in the datadds;
 	       try to match the xnode subnodes against the parts of the grid
 	    */
-   	    CDFnode* pathnext2 = (CDFnode*)nclistget(path,depth+2);
-	    if(simplenodematch34(xsubnode,pathnext2)) {
-	        ncstat = attach34r(xsubnode,path,depth+2);
+   	    CDFnode* templatepathnext2 = (CDFnode*)nclistget(templatepath,depth+2);
+	    if(simplenodematch34(xsubnode,templatepathnext2)) {
+	        ncstat = attach34r(xsubnode,templatepath,depth+2);
                 if(ncstat) goto done;
 	    }
 	}
@@ -936,20 +936,20 @@ done:
 }
 
 NCerror
-attach34(CDFnode* xroot, CDFnode* ddstarget)
+attach34(CDFnode* xroot, CDFnode* template)
 {
     NCerror ncstat = NC_NOERR;
-    NClist* path = nclistnew();
-    CDFnode* ddsroot = ddstarget->root;
+    NClist* templatepath = nclistnew();
+    CDFnode* ddsroot = template->root;
 
     if(xroot->attachment) unattach34(xroot);
     if(ddsroot != NULL && ddsroot->attachment) unattach34(ddsroot);
     if(!simplenodematch34(xroot,ddsroot))
 	{THROWCHK(ncstat=NC_EINVAL); goto done;}
-    collectnodepath3(ddstarget,path,WITHDATASET);
-    ncstat = attach34r(xroot,path,0);
+    collectnodepath3(template,templatepath,WITHDATASET);
+    ncstat = attach34r(xroot,templatepath,0);
 done:
-    nclistfree(path);
+    nclistfree(templatepath);
     return ncstat;
 }
 
