@@ -101,8 +101,6 @@ static Constant makeconstdata(nc_type);
 static Constant evaluate(Symbol* fcn, Datalist* arglist);
 static Constant makeenumconst(Symbol*);
 static void addtogroup(Symbol*);
-static Symbol* getunlimiteddim(void);
-static void setunlimiteddim(Symbol* udim);
 static Symbol* currentgroup(void);
 static Symbol* createrootgroup(void);
 static Symbol* creategroup(Symbol*);
@@ -461,13 +459,8 @@ dimdecl:
                    }
         | dimd '=' NC_UNLIMITED_K
                    {
-                       if(usingclassic) {
-	  	         /* check for multiple UNLIMITED decls*/
-                         if(getunlimiteddim() != NULL)
-			    markcdf4("Type specification");
-			 setunlimiteddim($1);
-		       }
-		       $1->dim.declsize = NC_UNLIMITED;
+		        $1->dim.declsize = NC_UNLIMITED;
+		        $1->dim.isunlimited = 1;
 		   }
                 ;
 
@@ -954,18 +947,6 @@ install(const char *sname)
 }
 
 
-static void
-setunlimiteddim(Symbol* udim)
-{
-    rootgroup->grp.unlimiteddim = udim;
-}
-
-static Symbol*
-getunlimiteddim(void)
-{
-    return rootgroup->grp.unlimiteddim;
-}
-
 static Symbol*
 currentgroup(void)
 {
@@ -981,7 +962,6 @@ createrootgroup(void)
     gsym->container = NULL;
     gsym->subnodes = listnew();
     gsym->grp.is_root = 1;
-    gsym->grp.unlimiteddim = NULL;
     gsym->prefix = listnew();
     listpush(grpdefs,(elem_t)gsym);
     rootgroup = gsym;
@@ -1070,9 +1050,7 @@ static Constant
 makeenumconst(Symbol* econst)
 {
     Constant con;
-    if(usingclassic) {
-        markcdf4("Enum type");
-    } 
+    markcdf4("Enum type");
     consttype = NC_ENUM;
     con.nctype = NC_ECONST;
     con.lineno = lineno;
@@ -1185,6 +1163,8 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     char* sdata = NULL;
     int idata =  -1;
 
+    specials_flag = 1;
+
     if(isconst) {
 	con = (Constant*)data;
 	list = builddatalist(1);
@@ -1236,35 +1216,17 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     if(tag == _FORMAT_FLAG) {
 	struct Kvalues* kvalue;
 	int found;
-        int modifier;
 	found = 0;
-        modifier = 0;
-	if(kflag_flag != 0) goto done;
-	/* Only use this tag if kflag is not set */
 	/* Use the table in main.c */
         for(kvalue=legalkinds;kvalue->name;kvalue++) {
 	    if(strcmp(sdata,kvalue->name) == 0) {
-		modifier = kvalue->mode;
+		format_flag = kvalue->k_flag;
 		found = 1;
 	        break;
 	    }
 	}
 	if(!found)
 	    derror("_Format: illegal value: %s",sdata);
-	else {
-            /* Recompute mode flag */
-	    cmode_modifier &= ~(NC_NETCDF4 | NC_CLASSIC_MODEL | NC_64BIT_OFFSET);
-  	    cmode_modifier |= modifier;
-            if((cmode_modifier & NC_NETCDF4)) {
-	        allowspecial = 1;
-                if((cmode_modifier & NC_CLASSIC_MODEL)) {
-		    usingclassic = 1;
-	        } else {
-	            usingclassic = 0;
-	        }
-	    } else
-	        usingclassic = 1;
-	}
     } else if(tag == _FILLVALUE_FLAG) {
 	special->_Fillvalue = list;
 	/* fillvalue must be a single value*/
@@ -1338,7 +1300,7 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
             } break;
         default: PANIC1("makespecial: illegal token: %d",tag);
      }
-done:
+
     return attr;
 }
 

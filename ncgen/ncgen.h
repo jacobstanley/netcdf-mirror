@@ -82,7 +82,7 @@ various C global variables
 
 struct Kvalues {
 char* name;
-int mode;
+int k_flag;
 };
 
 #define NKVALUES 16
@@ -111,7 +111,7 @@ typedef struct Dimset {
 
 typedef struct Diminfo {
     int   isconstant; /* separate constant from named dimension*/
-    size_t  unlimitedsize; /* if unlimited */
+    int   isunlimited;
     size_t  declsize; /* 0 => unlimited/unspecified*/
 } Diminfo;
 
@@ -140,7 +140,6 @@ typedef struct Varinfo {
 
 typedef struct Groupinfo {
     int is_root;
-    struct Symbol* unlimiteddim;
 } Groupinfo;
 
 typedef struct Symbol {  /* symbol table entry*/

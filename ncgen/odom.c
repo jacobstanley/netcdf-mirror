@@ -18,16 +18,11 @@ initodometer(Odometer* odom, Dimset* dimset, size_t* startp, size_t* countp)
     odom->rank = (dimset==NULL?0:dimset->ndims);
     ASSERT(odom->rank <= NC_MAX_VAR_DIMS);
     for(i=0;i<odom->rank;i++) {
-	odom->declsize[i] = dimset->dimsyms[i]->dim.declsize;
-	odom->unlimitedsize[i] = dimset->dimsyms[i]->dim.unlimitedsize;
-	odom->start[i] = 0;
-	odom->count[i] = odom->declsize[i];
-	if(odom->unlimitedsize[i] > 0)odom->count[i] = odom->unlimitedsize[i];
-	if(startp != NULL) {
-	    odom->start[i] = startp[i];
-	    odom->count[i] = countp[i];
-	}
-	odom->index[i] = odom->start[i];
+       odom->start[i] = (startp == NULL ? 0
+                                        : startp[i]);
+       odom->count[i] = (countp == NULL ? dimset->dimsyms[i]->dim.declsize
+                                        : countp[i]);
+       odom->index[i] = odom->start[i];
     }    
 }
 
@@ -55,10 +50,10 @@ odometerprint(Odometer* odom)
     if(odom->rank == 0) {
 	strcat(line,"[]");
     } else for(i=0;i<odom->rank;i++) {
-	sprintf(tmp,"[%lu..(%lu/%lu)]",
+	sprintf(tmp,"[%lu/%lu+%lu]",
 		odom->index[i],
-		odom->unlimitedsize[i],
-		odom->declsize[i]);
+		odom->startp[i],
+		odom->countp[i]);
 	strcat(line,tmp);	
     }
     return line;
@@ -92,6 +87,22 @@ odometercount(Odometer* odom)
     return count;
 }
 
+int
+odometerincr(Odometer* odom)
+{
+    int i;
+    int last = odom->rank-1;
+    ASSERT(odom->rank > 0);
+    for(i=last;i>=0;i--) {
+        odom->index[i]++;
+	if(odom->index[i] < (odom->start[i]+odom->count[i])) break;
+	if(i == 0) break; /* leave the 0th entry if it overflows*/
+	odom->index[i] = odom->start[i];
+    }
+    return i; /* return rightmost incremented */
+}
+
+#ifdef NOTUSED
 void
 odometerreset(Odometer* odom)
 {
@@ -117,37 +128,6 @@ odometertotal(Odometer* odom, int wheel)
     return count;
 }
 
-int
-odometerincr(Odometer* odom)
-{
-    int i;
-    int last = odom->rank-1;
-    ASSERT(odom->rank > 0);
-    for(i=last;i>=0;i--) {
-        odom->index[i]++;
-	if(odom->index[i] < (odom->start[i]+odom->count[i])) break;
-	if(i == 0) break; /* leave the 0th entry if it overflows*/
-	odom->index[i] = odom->start[i];
-    }
-    return i; /* return rightmost incremented */
-}
-
-/* compute the total n-dimensional size as 1 long array;
-   stop if we encounter an unlimited dimension
-*/
-size_t
-odomsubarray(Odometer* odom, int index)
-{
-    size_t result = 1;
-    int i;
-    for(i=index;i<odom->rank;i++) {
-	/* treat unlimited as having size 1 because it will be a sublist */
-	if(odom->declsize[i] == 0) break; /*unlimited*/
-        result *= odom->declsize[i];
-    }
-    return result;
-}
-
 /* compute the total offset represented by the current wheel
    positions for indices 0 .. index.
 */
@@ -162,3 +142,4 @@ odomprefixcount(Odometer* odom, int index)
     return result;
 }
 
+#endif

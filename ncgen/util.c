@@ -583,30 +583,22 @@ cleanup()
   reclaimSymbols();
 }
 
+/* compute the total n-dimensional size as 1 long array;
+   if stop == 0, then stop = dimset->ndims.
+*/
 size_t
-arraylength(Dimset* dimset)
-{
-    return subarraylength(dimset,0);
-}
-
-/* compute the total n-dimensional size as 1 long array*/
-/* stop if we encounter an unlimited dimension */
-size_t
-subarraylength(Dimset* dimset, int first)
+crossproduct(Dimset* dimset, int start, int stop)
 {
     size_t totalsize = 1;
-    int i,last;
-    last = dimset->ndims;
-    for(i=first;i<last;i++) {
-	if(dimset->dimsyms[i]->dim.declsize == NC_UNLIMITED) break;
-	totalsize = totalsize * MAX(dimset->dimsyms[i]->dim.unlimitedsize,
-				     dimset->dimsyms[i]->dim.declsize);
+    int i;
+    if(stop == 0) stop = dimset->ndims;
+    for(i=start;i<stop;i++) {
+	totalsize = totalsize * dimset->dimsyms[i]->dim.declsize;
     }
     return totalsize;    
 }
 
-
-/* Do the "complement" of subarray length;
+/* Do the "complement" of crossproduct;
    compute the total n-dimensional size of an array
    starting at 0 thru the 'last' array index.
    stop if we encounter an unlimited dimension
@@ -614,14 +606,7 @@ subarraylength(Dimset* dimset, int first)
 size_t
 prefixarraylength(Dimset* dimset, int last)
 {
-    size_t totalsize = 1;
-    int i;
-    for(i=0;i<=last;i++) {
-	if(dimset->dimsyms[i]->dim.declsize == NC_UNLIMITED) break;
-	totalsize = totalsize * MAX(dimset->dimsyms[i]->dim.unlimitedsize,
-				     dimset->dimsyms[i]->dim.declsize);
-    }
-    return totalsize;    
+    return crossproduct(dimset,0,last+1);
 }
 
 
@@ -642,4 +627,15 @@ check_err(const int stat, const int line, const char* file) {
 	exit(1);
     }
 }
+
+int
+findunlimited(Dimset* dimset, int start)
+{
+    for(;start<dimset->ndims;start++) {
+	if(dimset->dimsyms[start]->dim.isunlimited)
+	    return start;
+    }
+    return dimset->ndims;
+}
+
 

@@ -35,11 +35,10 @@
 /* Local Configuration flags*/
 #define ENABLE_BINARY
 #define ENABLE_C
-#define ENABLE_F77
-#define ENABLE_JAVA
+#undef ENABLE_F77
+#undef ENABLE_JAVA
 
 #include "netcdf.h"
-#include "odom.h"
 #include "data.h"
 #include "ncgen.h"
 #include "genlib.h"

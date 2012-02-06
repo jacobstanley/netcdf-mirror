@@ -39,6 +39,7 @@ extern void	verror ( const char *fmt, ... )
 #endif
 ;
 
+
 extern void markcdf4(const char *msg);
 extern char* getmarkcdf4(void);
 
@@ -93,13 +94,14 @@ extern  Symbol* lookupingroup(nc_class objectclass, char* name, Symbol* grp);
 extern  Symbol* lookupgroup(List* prefix);
 #ifndef NO_STDARG
 extern  void semerror(const int, const char *fmt, ...);
+extern  void semwarn(const int, const char *fmt, ...);
 #else
 extern  void semerror(lno,fmt,va_alist) const int lno; const char* fmt; va_dcl;
+extern  void semwarnlno,fmt,va_alist) const int lno; const char* fmt; va_dcl;
 #endif
 extern int nounlimited(Dimset* dimset, int from);
 extern int lastunlimited(Dimset* dimset);
 extern void padstring(Constant* con, size_t desiredlength, int fillchar);
-
 
 extern Datalist* explodestrings(Datalist*,char*);
 extern Datalist* implodestrings(Datalist*,char*);
@@ -151,8 +153,10 @@ extern void jflush(void);
 #endif
 
 /* from: main.c */
-extern int usingclassic; /* 0=>false; 1=>true; */
-extern int allowspecial;
+extern int format_flag;   /* _Format attribute value (same range as -k flag) */
+extern int enhanced_flag; /* 1 => netcdf-4 constructs appear in the parse */
+extern int specials_flag; /* 1 => special attributes are present */
+extern int usingclassic;   /* 1 => k_flag == 1|2 */
 
 /* Global data */
 
