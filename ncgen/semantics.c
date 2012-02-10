@@ -581,7 +581,9 @@ processattributes(void)
 	/* If the attribute has a zero length, then default it */
 	if(asym->data == NULL || asym->data->length == 0) {
 	    asym->data = builddatalist(1);
+#ifdef IGNORE
 	    dlappend(asym->data,NULL);
+#endif
 	    emptystringconst(asym->lineno,&asym->data->data[asym->data->length]);
 	    /* force type to be NC_CHAR */
 	    asym->typ.basetype = primsymbols[NC_CHAR];
@@ -596,7 +598,10 @@ processattributes(void)
 	/* If the attribute has a zero length, then default it */
 	if(asym->data == NULL || asym->data->length == 0) {
 	    asym->data = builddatalist(1);
+#ifdef IGNORE
 	    dlappend(asym->data,NULL);
+#endif
+
 	    emptystringconst(asym->lineno,&asym->data->data[asym->data->length]);
 	    /* force type to be NC_CHAR */
 	    asym->typ.basetype = primsymbols[NC_CHAR];

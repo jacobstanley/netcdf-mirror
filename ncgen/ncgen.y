@@ -787,7 +787,7 @@ datalist:
 	;
 
 datalist0:
-	/*empty*/ {$$ = builddatalist(0);}
+	/*empty*/ {$$ = NULL;}
 	;
 
 datalist1: /* Must have at least 1 element */
@@ -1350,12 +1350,14 @@ makeattribute(Symbol* asym,
 static int
 containsfills(Datalist* list)
 {
-    int i;
-    Constant* con = list->data;
-    for(i=0;i<list->length;i++,con++) {
-	if(con->nctype == NC_COMPOUND) {
-	    if(containsfills(con->value.compoundv)) return 1;	
-	} else if(con->nctype == NC_FILLVALUE) return 1;	
+    if(list != NULL) {
+        int i;
+        Constant* con = list->data;
+        for(i=0;i<list->length;i++,con++) {
+	    if(con->nctype == NC_COMPOUND) {
+	        if(containsfills(con->value.compoundv)) return 1;	
+	    } else if(con->nctype == NC_FILLVALUE) return 1;	
+	}
     }
     return 0;
 }

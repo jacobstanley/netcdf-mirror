@@ -145,7 +145,7 @@ gen_charvlen(Datalist* data, Bytebuffer* databuf)
 	if(isstringable(c->nctype)) {
 	    (void)gen_charconstant(c,databuf,NC_FILL_CHAR);
 	} else {
-	    semerror(c->lineno,
+	    semerror(constline(c),
 		     "Encountered non-string and non-char constant in datalist");
 	    return;
 	}
