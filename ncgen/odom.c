@@ -52,8 +52,8 @@ odometerprint(Odometer* odom)
     } else for(i=0;i<odom->rank;i++) {
 	sprintf(tmp,"[%lu/%lu+%lu]",
 		odom->index[i],
-		odom->startp[i],
-		odom->countp[i]);
+		odom->start[i],
+		odom->count[i]);
 	strcat(line,tmp);	
     }
     return line;

@@ -262,13 +262,14 @@ bbFree(buf);
 void
 report0(char* lead, Datasrc* src, int index)
 {
-if(debug == 0) return;
+#ifdef IGNORE
 fprintf(stderr,"%s src ",lead);
 if(index >=0 ) fprintf(stderr,"(%d)",index);
 fprintf(stderr,":: ");
 dumpdatasrc(src);
 fprintf(stderr,"\n");
 fflush(stderr);
+#endif
 }
 #endif
 
@@ -473,6 +474,7 @@ void
 codedump(Bytebuffer* buf)
 {
    bbCatbuf(codebuffer,buf);
+   bbClear(buf);
 }
 
 void

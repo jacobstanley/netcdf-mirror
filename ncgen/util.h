@@ -47,6 +47,7 @@ extern char* poolcat(const char* s1, const char* s2);
 */
 extern size_t crossproduct(Dimset* dimset, int start, int stop);
 extern int findunlimited(Dimset* dimset, int start);
+extern int findlastunlimited(Dimset* dimset);
 
 extern unsigned char* makebytestring(char* s, size_t* lenp);
 extern int getpadding(int offset, int alignment);

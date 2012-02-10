@@ -8,9 +8,31 @@
 
 #ifdef ENABLE_BINARY
 
-/* Define common functions across stdarg */
+static int bin_uid = 0;
+
 static int
-bin_constant_shared(Generator* generator, Constant* con, Bytebuffer* buf,...)
+bin_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
+{
+    alignbuffer(con,buf);
+    return 1;
+}
+
+static int
+bin_charconstant(Generator* generator, Bytebuffer* buf, ...)
+{
+    /* Just transfer charbuf to codebuf */
+    Bytebuffer* charbuf;
+    va_list ap;
+    vastart(ap,buf);
+    charbuf = va_arg(ap, Bytebuffer*);
+    va_end(ap);
+    bbNull(charbuf);
+    bbCatbuf(buf,charbuf);
+    return 1;
+}
+
+static int
+bin_constant(Generator* generator, Constant* con, Bytebuffer* buf,...)
 {
     switch (con->nctype) {
     case NC_OPAQUE: {
@@ -59,7 +81,7 @@ bin_constant_shared(Generator* generator, Constant* con, Bytebuffer* buf,...)
     case NC_STRING: {
         char* ptr;
         int len = (size_t)con->value.stringv.len;
-        ptr = poolalloc(len+1); /* CAREFUL: this has short lifetime*/
+        ptr = (char*)malloc(len+1);
         memcpy(ptr,con->value.stringv.stringv,len);
         ptr[len] = '\0';
         bbAppendn(buf,(void*)&ptr,sizeof(ptr));
@@ -71,36 +93,9 @@ bin_constant_shared(Generator* generator, Constant* con, Bytebuffer* buf,...)
 }
 
 static int
-bin_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
-{
-    alignbuffer(con,buf);
-    return 1;
-}
-
-static int
-bin_reset(Generator* generator, void* state)
-{
-    return 1;
-}
-
-#ifndef NO_STDARG
-
-static int
-bin_charconstant(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-static int
-bin_constant(Generator* generator, Constant* con, Bytebuffer* buf,...)
-{
-    return bin_constant_shared(generator,con,buf);
-}
-
-static int
 bin_listbegin(Generator* generator, ListClass lc, size_t size, Bytebuffer* buf, int* uidp, ...)
 {
-    if(uidp) *uidp = 0; /* not used */
+    if(uidp) *uidp = ++bin_uid;
     return 1;
 }
 
@@ -113,52 +108,33 @@ bin_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* 
 static int
 bin_listend(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* buf, ...)
 {
+    return 1;
+}
+
+
+static int
+bin_vlendecl(Generator* generator, Bytebuffer* buf, Symbol* tsym, int uid, size_t count,...)
+{
     va_list ap;
-    if(lc == VLENLIST) {
-        Bytebuffer* vlenmem;
-        nc_vlen_t ptr;
-        vastart(ap,buf);
-        vlenmem = va_arg(ap, Bytebuffer*);
-	va_end(ap);
-        ptr.len = count;
-        ptr.p = bbDup(vlenmem);
-        bbAppendn(buf,(char*)&ptr,sizeof(ptr));
-    }
+    Bytebuffer* vlenmem;
+    nc_vlen_t ptr;
+    vastart(ap,count);
+    vlenmem = va_arg(ap, Bytebuffer*);
+    va_end(ap);
+    ptr.len = count;
+    ptr.p = bbDup(vlenmem);
+    bbAppendn(buf,(char*)&ptr,sizeof(ptr));
     return 1;
 }
 
 static int
-bin_compoundbegin(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-static int
-bin_compoundend(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-
-static int
-bin_vlenbegin(Generator* generator, Bytebuffer* buf,Symbol* tsym,int uid,...)
-{
-    return 1;
-}
-
-static int
-bin_vlenend(Generator* generator, Bytebuffer* buf,...)
-{
-    return 1;
-}
-
-static int
-bin_vlenstring(Generator* generator, Bytebuffer* codebuf, ...)
+bin_vlenstring(Generator* generator, Bytebuffer* codebuf, int* uidp, size_t* sizep,...)
 {
     Bytebuffer* vlenmem;
     nc_vlen_t ptr;
     va_list ap;
-    vastart(ap,codebuf);
+    if(uidp) *uidp = ++bin_uid;
+    vastart(ap,sizep);
     vlenmem = va_arg(ap, Bytebuffer*);
     va_end(ap);
     ptr.len = bbLength(vlenmem);
@@ -167,113 +143,17 @@ bin_vlenstring(Generator* generator, Bytebuffer* codebuf, ...)
     return 1;
 }
 
-#else /*NO_STDARG*/
-
-static int
-bin_charconstant(generator,buf,buf,va_alist)
-    Generator* generator; Bytebuffer* buf; Bytebuffer* buf; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_constant(generator,con,buf,va_alist)
-    Generator* generator; Constant* con; Bytebuffer* buf; va_dcl
-{
-    return bin_constant_shared(generator,con,buf);
-}
-
-static int
-bin_listbegin(generator,lc,size,uidp, va_alist)
-    Generator* generator; ListClass lc; int size; int* uidp; va_dcl
-{
-    if(uidp) *uidp = 0; /* not used */
-    return 1;
-}
-
-static int
-bin_list(generator,lc,uid,count,buf,va_alist)
-    Generator* generator; ListClass lc; int uid; int count; Bytebuffer* buf; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_listend(generator,lc,uid,count,buf,va_alist)
-    Generator* generator; ListClass lc; int uid; int count; Bytebuffer* buf; va_dcl
-{
-    va_list ap;
-    if(listclass == VLENLIST) {
-        Bytebuffer* vlenmem;
-        nc_vlen_t ptr;
-        vastart(argv,buf);
-        vlenmem = va_arg(ap, Bytebuffer*)
-	va_end(ap);
-        ptr.len = count;
-        ptr.p = bbDup(vlenmem);
-        bbAppendn(buf,(char*)&ptr,sizeof(ptr));
-    }
-    return 1;
-}
-
-static int
-bin_compoundbegin(generator,va_alist)
-    Generator* generator; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_compoundend(generator,va_alist)
-    Generator* generator; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_vlenbegin(generator, Bytebuffer* buf,Symbol* tsym,int uid,va_alist)
-    Generator* generator; Bytebuffer* buf;Symbol* tsym; int uid; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_vlenend(generator,buf,va_alist)
-    Generator* generator; Bytebuffer* buf; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_vlenstring(generator,buf,va_alist)
-    Generator* generator; Bytebuffer* buf; va_dcl
-{
-    Bytebuffer* vlenmem;
-    nc_vlen_t ptr;
-    vastart(argv,buf);
-    vlenmem = va_arg(ap, Bytebuffer*)
-    va_end(ap);
-    ptr.len = count;
-    ptr.p = bbDup(vlenmem);
-    bbAppendn(buf,(char*)&ptr,sizeof(ptr));
-}
-
-#endif /*NO_STDARG*/
 
 /* Define the single static bin data generator  */
 static Generator bin_generator_singleton = {
     NULL,
-    bin_reset,
     bin_alignbuffer,
     bin_charconstant,
     bin_constant,
     bin_listbegin,
     bin_list,
     bin_listend,
-    bin_compoundbegin,
-    bin_compoundend,
-    bin_vlenbegin,
-    bin_vlenend,
+    bin_vlendecl,
     bin_vlenstring
 };
 Generator* bin_generator = &bin_generator_singleton;

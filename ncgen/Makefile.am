@@ -9,7 +9,7 @@ LDADD = ${top_builddir}/liblib/libnetcdf.la
 # Build ncgen from the listed sources.
 bin_PROGRAMS = ncgen
 
-ncgen_SOURCES=walkdata.c walkdata.h main.c cdata.c bindata.c genchar.c cvt.c data.c debug.c	\
+ncgen_SOURCES=generate.c main.c cdata.c bindata.c genchar.c cvt.c data.c debug.c	\
 escapes.c genc.c genbin.c generr.c genlib.c getfill.c odom.c offsets.c	\
 semantics.c ncgentab.c dump.c util.c bytebuffer.c list.c data.h		\
 debug.h generr.h genlib.h includes.h ncgen.h odom.h offsets.h dump.h	\
@@ -46,3 +46,23 @@ makeparser::
 	bison -pncg -t ncgen.y
 	rm -f ncgentab.c
 	mv ncgen.tab.c ncgentab.c
+
+# Test c output
+CTEST=test
+
+ctest::
+	./ncgen -lc ${CTEST}.cdl >${CTEST}.c
+	CFLAGS=`../nc-config --cflags`  \
+	LDFLAGS=`../nc-config --libs`  \
+	gcc -o ${CTEST} -I../include ${CFLAGS} ${CTEST}.c ../liblib/.libs/libnetcdf.a ${LDFLAGS} -lm
+	./${CTEST}
+	../ncdump/ncdump ./${CTEST}.nc >${CTEST}.dmp
+	diff -wBb ${CTEST}.cdl ${CTEST}.dmp
+
+
+btest::
+	./ncgen -b ${CTEST}.cdl -o ${CTEST}.nc
+	../ncdump/ncdump ./${CTEST}.nc >${CTEST}.dmp
+	diff -wBb ${CTEST}.cdl ${CTEST}.dmp
+
+

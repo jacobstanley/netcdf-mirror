@@ -15,7 +15,6 @@
 
 /* Forward*/
 static void generate_array(Symbol*,Bytebuffer*,Datasrc*,Odometer*,int,Datalist*,Generator*);
-static void generate_basetype(Symbol*,Constant*,Bytebuffer*,Datalist*,Generator*);
 static void generate_primdata(Symbol*, Constant*, Bytebuffer*, Datalist* fillsrc, Generator*);
 static void generate_fieldarray(Symbol*, Constant*, Dimset*, Bytebuffer*, Datalist* fillsrc, Generator*);
 
@@ -23,14 +22,29 @@ static void generate_fieldarray(Symbol*, Constant*, Dimset*, Bytebuffer*, Datali
 #define VLENLIST1
 #define FIELDARRAY 1
 
+/**************************************************/
+/* Generator general procedures */
+
+int
+generator_getstate(Generator* generator ,void** statep)
+{
+    if(statep) *statep = (void*)generator->state;
+    return 1;
+}
+
+int generator_reset(Generator* generator, void* state)
+{
+    generator->state = state;
+    return 1;
+}
+
+/**************************************************/
+
 void
-generate_attrdata(Symbol* asym, Generator* generator, Writer writer)
+generate_attrdata(Symbol* asym, Generator* generator, Writer writer, Bytebuffer* codebuf)
 {
     Symbol* basetype = asym->typ.basetype;
-    Bytebuffer* codebuf = NULL; /* capture other decls*/
     nc_type typecode = basetype->typ.typecode;
-
-    codebuf = bbNew();
 
     if(typecode == NC_CHAR) {
 	gen_charattr(asym->data,codebuf);
@@ -46,17 +60,14 @@ generate_attrdata(Symbol* asym, Generator* generator, Writer writer)
         generator->listend(generator,ATTRLIST,uid,count,codebuf,NULL);
     }
 
-    writer(asym,codebuf,0,NULL,NULL);
-
-    bbFree(codebuf);
+    writer(generator,asym,codebuf,0,NULL,NULL);
 }
 
 void
-generate_vardata(Symbol* vsym, Generator* generator, Writer writer)
+generate_vardata(Symbol* vsym, Generator* generator, Writer write, Bytebuffer* code)
 {
     Dimset* dimset = &vsym->typ.dimset;
     int isscalar = (dimset->ndims == 0);
-    Bytebuffer* code = NULL;
     Datalist* fillsrc = NULL;
     Odometer* odom = NULL;
     int chartype = (vsym->typ.basetype->typ.typecode == NC_CHAR);
@@ -64,26 +75,26 @@ generate_vardata(Symbol* vsym, Generator* generator, Writer writer)
 
     if(vsym->data == NULL) return;
 
-    code = bbNew();
     /* give the buffer a running start to be large enough*/
     bbSetalloc(code, nciterbuffersize);
 
     /* Fill in the local odometer instance */
-    odom = newodometer(&vsym->typ.dimset,NULL,NULL);
+    odom = newodometer(dimset,NULL,NULL);
 
-    src = datalist2src(vsym->data);
- 
-    if(!isscalar && chartype) {
-        gen_chararray(dimset,vsym->data,code,fillsrc);
+    if(chartype) { /* Handle separately */
+	Bytebuffer* charbuf = bbNew();
+        gen_chararray(dimset,vsym->data,charbuf,fillsrc);
+	generator->charconstant(generator,code,charbuf);
+	bbFree(charbuf);
 	/* patch the odometer to use the right counts */
-        writer(vsym,code,odom->rank,odom->start,odom->count);
+        write(generator,vsym,code,odom->rank,odom->start,odom->count);
     } else { /* not character constant */
         fillsrc = vsym->var.special._Fillvalue;
         /* Handle special cases first*/
         if(isscalar) {
             generate_basetype(vsym->typ.basetype,datalistith(vsym->data,0),code,fillsrc,generator);
-            writer(vsym,code,0,NULL,NULL);
-        } else { /* Non-scalar*/
+            write(generator,vsym,code,0,NULL,NULL);
+        } else { /* Non-scalar */
             nciter_t iter;
             src = datalist2src(vsym->data);
             /* Create an iterator to generate blocks of data */
@@ -91,17 +102,21 @@ generate_vardata(Symbol* vsym, Generator* generator, Writer writer)
             for(;;) {
                 size_t nelems=nc_next_iter(&iter,odom->start,odom->count);
                 if(nelems == 0) break;
-                generate_array(vsym,code,src,odom,/*index=*/0,fillsrc,generator);
-                writer(vsym,code,odom->rank,odom->start,odom->count);
+		odom->counter = nelems;		
+                generate_array(vsym,code,src,odom,
+                               /*dim index=*/0,
+			       fillsrc,generator
+			       );
+		ASSERT(odom->counter == 0);
+                write(generator,vsym,code,odom->rank,odom->start,odom->count);
             }
+	    /* See if we have too much data */
+	    if(srcmore(src)) {
+		semwarn(srcline(src),"Extra data found at end of datalist");
+	    }	
+	    odometerfree(odom);
         }
     }
-    odometerfree(odom);
-    bbFree(code);
-    /* See if we have too much data */
-    if(srcmore(src)) {
-	semerror(srcline(src),"Extra data found at end of datalist");
-    }	
 }
 
 static void
@@ -115,52 +130,56 @@ generate_array(Symbol* vsym,
 		)
 {
     int i;
-    int rank = odom->rank;
-    int pushed = 0;
-    size_t count;
     Symbol* basetype = vsym->typ.basetype;
     Dimset* dimset = &vsym->typ.dimset;
+    int rank = dimset->ndims;
     int lastdim = (index == (rank - 1)); /* last dimension*/
-    int firstdim = (index == 0); /* first dimension*/
     int isunlimited = dimset->dimsyms[index]->dim.isunlimited;
+    int uid;
+    size_t count;
+
+    if(odom->counter == 0) return; /* stop writing for now */
 
     ASSERT(index >= 0 && index < rank);
+    ASSERT(basetype->typ.typecode != NC_CHAR);
 
     count = odom->count[index];
 
-    if(!firstdim && isunlimited) {
-	SRCPUSH(pushed,src);
-    }
-   
     if(lastdim) {
-        for(i=0;i<count;i++) {
-	    Constant* con = srcnext(src);
+        /* data should be simple list of basetype objects */
+        generator->listbegin(generator,DATALIST,count,codebuf,&uid);
+        for(i=0;i<count && odom->counter > 0;i++) {
+            Constant* con = srcnext(src);
+            generator->list(generator,DATALIST,uid,i,codebuf);
             generate_basetype(basetype,con,codebuf,fillsrc,generator);
-	}
+	    odom->counter--;
+        }
+        generator->listend(generator,DATALIST,uid,i,codebuf);
     } else {
-        /* now walk count elements and generate recursively */
-        for(i=0;i<count;i++) {
+	if(index > 0 && !lastdim && isunlimited) srcpush(src);
+        /* now walk elements and generate recursively */
+        for(i=0;i<count && odom->counter > 0;i++) {
 	   generate_array(vsym,codebuf,src,odom,index+1,fillsrc,generator);
 	}
+	if(index > 0 && !lastdim && isunlimited) srcpop(src);
     }
-
-    if(isunlimited) SRCPOP(pushed,src);
-
     return;
 }
 
 /* Generate an instance of the basetype */
-static void
+void
 generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fillsrc, Generator* generator)
 {
     Datalist* data;
 
+#ifdef IGNORE
     /* Do fill check */
    if(con == NULL || isfillconst(con)) {
 	Datalist* filler = getfiller(tsym,fillsrc);
 	ASSERT(filler->length == 1);
 	con = &filler->data[0];
     }
+#endif
 
     switch (tsym->subclass) {
 
@@ -174,10 +193,7 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	break;
 
     case NC_COMPOUND: {
-	int i;
-	if(!islistconst(con)) {/* fail on no compound*/
-	    semerror(constline(con),"Compound data must be enclosed in {..}");
-        }
+	int i,uid;
 	if(con == NULL || isfillconst(con)) {
 	    Datalist* filler = getfiller(tsym,fillsrc);
 	    ASSERT(filler->length == 1);
@@ -185,19 +201,35 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	    if(!islistconst(con))
 	        semerror(con->lineno,"Compound data fill value is not enclosed in {..}");
 	}
+	if(!islistconst(con)) {/* fail on no compound*/
+	    semerror(constline(con),"Compound data must be enclosed in {..}");
+        }
 	data = con->value.compoundv;
-	generator->compoundbegin(generator,codebuf);
 	ASSERT(listlength(tsym->subnodes) >= data->length);
+	generator->listbegin(generator,COMPOUNDFIELDS,listlength(tsym->subnodes),codebuf,&uid);
         for(i=0;i<listlength(tsym->subnodes);i++) {
             Symbol* field = (Symbol*)listget(tsym->subnodes,i);
 	    con = datalistith(data,i);
+	    generator->list(generator,COMPOUNDFIELDS,uid,i,codebuf);
             generate_basetype(field,con,codebuf,NULL,generator);
 	}
-	generator->compoundend(generator,codebuf);
+	generator->listend(generator,COMPOUNDFIELDS,uid,i,codebuf);
 	} break;
 
     case NC_VLEN: {
 	Bytebuffer* vlenbuf;
+        int uid;
+	size_t count;
+
+	if(con == NULL || isfillconst(con)) {
+	    Datalist* filler = getfiller(tsym,fillsrc);
+	    ASSERT(filler->length == 1);
+	    con = &filler->data[0];
+	    if(con->nctype != NC_COMPOUND) {
+	        semerror(con->lineno,"Vlen data fill value is not enclosed in {..}");
+	    }
+	}
+
 	if(!islistconst(con)) {
 	    semerror(constline(con),"Vlen data must be enclosed in {..}");
         }
@@ -206,24 +238,20 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	vlenbuf = bbNew();	
 	if(tsym->typ.basetype->typ.typecode == NC_CHAR) {
 	    gen_charvlen(data,vlenbuf);
-	    generator->vlenstring(generator,codebuf,vlenbuf);
+	    generator->vlenstring(generator,vlenbuf,&uid,&count);
 	} else {
-	    int uid;
-	    size_t count;
-    	    generator->listbegin(generator,VLENLIST,data->length,codebuf,&uid,(void*)vlenbuf);
+    	    generator->listbegin(generator,VLENLIST,data->length,codebuf,&uid);
             for(count=0;count<data->length;count++) {
-   	        generator->list(generator,VLENLIST,uid,count,codebuf,vlenbuf);
+   	        generator->list(generator,VLENLIST,uid,count,vlenbuf);
                 generate_basetype(tsym->typ.basetype,datalistith(data,count),vlenbuf,NULL,generator);
 	    }
    	    generator->listend(generator,VLENLIST,uid,count,codebuf,(void*)vlenbuf);
 	}
+	generator->vlendecl(generator,codebuf,tsym,uid,count,vlenbuf);
 	bbFree(vlenbuf);
         } break;
 
     case NC_FIELD:
-	/* enclose in braces if and only if field is an array */
-	if(!islistconst(con) && tsym->typ.dimset.ndims > 0)
-	    semerror(constline(con),"non-scalar field array data must be enclosed in {..}");	    
 	if(tsym->typ.dimset.ndims > 0) {
             generate_fieldarray(tsym->typ.basetype,con,&tsym->typ.dimset,codebuf,fillsrc,generator);
 	} else {
@@ -245,9 +273,11 @@ generate_fieldarray(Symbol* basetype, Constant* con, Dimset* dimset,
     Datalist* data;
 
     ASSERT(dimset->ndims > 0);
-    ASSERT(islistconst(con));
 
-    data = con->value.compoundv;
+    if(con != NULL && !isfillconst(con))
+        data = con->value.compoundv;
+    else
+	data = NULL;
 
     if(chartype) {
 	/* Collect the char field in a separate buffer */
@@ -260,8 +290,9 @@ generate_fieldarray(Symbol* basetype, Constant* con, Dimset* dimset,
 	size_t xproduct = crossproduct(dimset,0,0); /* compute total number of elements */
         generator->listbegin(generator,FIELDARRAY,xproduct,codebuf,NULL,&uid);
         for(i=0;i<xproduct;i++) {
+	    con = (data == NULL ? NULL : datalistith(data,i));
 	    generator->list(generator,FIELDARRAY,uid,i,codebuf,NULL);
-            generate_basetype(basetype,datalistith(data,i),codebuf,NULL,generator);
+            generate_basetype(basetype,con,codebuf,NULL,generator);
 	}
         generator->listend(generator,FIELDARRAY,uid,i,codebuf,NULL);
     }
@@ -273,29 +304,30 @@ generate_primdata(Symbol* basetype, Constant* prim, Bytebuffer* codebuf,
 {
     Constant target;
 
-    ASSERT(prim->nctype != NC_COMPOUND);
-
     if(prim == NULL || isfillconst(prim)) {
 	Datalist* filler = getfiller(basetype,fillsrc);
 	ASSERT(filler->length == 1);
 	prim = datalistith(filler,0);
     }
 
+    ASSERT(prim->nctype != NC_COMPOUND);
+
     target.nctype = basetype->typ.typecode;
+
+    if(target.nctype != NC_ECONST) {
+	convert1(prim,&target);
+        generator->alignbuffer(generator,&target,codebuf);
+    }
 
     switch (target.nctype) {
     case NC_ECONST:
         if(basetype->subclass != NC_ENUM) {
 	    semerror(constline(prim),"Conversion to enum not supported (yet)");
-	} else {
-	    generate_primdata(prim->value.enumv->typ.basetype,prim,codebuf,fillsrc,generator);
 	} break;
      case NC_OPAQUE:
-	convert1(prim,&target);
 	setprimlength(&target,basetype->typ.size*2);
 	break;
     default:
-	convert1(prim,&target);
 	break;
     }
     generator->constant(generator,&target,codebuf);

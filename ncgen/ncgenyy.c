@@ -1238,7 +1238,7 @@ char *ncgtext;
 char errstr[100];		/* for short error messages */
 
 int lineno;              /* line number for error messages */
-char* lextext;           /* name or string with escapes removed */
+Bytebuffer* lextext;           /* name or string with escapes removed */
 
 #define YY_BREAK                /* defining as nothing eliminates unreachable
 				   statement warnings from flex output, 
@@ -1617,10 +1617,10 @@ yyerror("string too long, truncated\n");
 ncgtext[MAXTRST-1] = '\0';
 }
 */
-			lextext = emalloc(1+4*ncgleng); /* should be max
-                                                             needed */
 		        /* Assumes expand escapes also does normalization */
+			bbClear(lextext);
 			expand_escapes(lextext,(char *)ncgtext,ncgleng);
+			bbNull(lextext);
 		 	return lexdebug(TERMSTRING);
 		        }
 	YY_BREAK
@@ -1632,124 +1632,123 @@ YY_RULE_SETUP
 		int len = ncgleng - 2;
 		int padlen = len;
 	        if((padlen % 2) == 1) padlen++;
-		lextext = emalloc(1+padlen);
-		strncpy(lextext,p,len+1); /*include null */
-		lextext[len] = '0'; /* assume padding */
-		lextext[padlen] = '\0'; /* make sure null terminated */
+		bbClear(lextext);
+	        bbAppendn(lextext,p,len);
+		bbNull(lextext);
 		/* convert all chars to lower case */
-		for(p=lextext;*p;p++) *p = tolower(*p);
+		for(p=bbContents(lextext);*p;p++) *p = tolower(*p);
 		return lexdebug(OPAQUESTRING);
 		}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 204 "ncgen.l"
+#line 203 "ncgen.l"
 {return lexdebug(COMPOUND);}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 205 "ncgen.l"
+#line 204 "ncgen.l"
 {return lexdebug(ENUM);}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 206 "ncgen.l"
+#line 205 "ncgen.l"
 {return lexdebug(OPAQUE);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 208 "ncgen.l"
+#line 207 "ncgen.l"
 {return lexdebug(FLOAT_K);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 209 "ncgen.l"
+#line 208 "ncgen.l"
 {return lexdebug(CHAR_K);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 210 "ncgen.l"
+#line 209 "ncgen.l"
 {return lexdebug(BYTE_K);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 211 "ncgen.l"
+#line 210 "ncgen.l"
 {return lexdebug(UBYTE_K);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 212 "ncgen.l"
+#line 211 "ncgen.l"
 {return lexdebug(SHORT_K);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 213 "ncgen.l"
+#line 212 "ncgen.l"
 {return lexdebug(USHORT_K);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 214 "ncgen.l"
+#line 213 "ncgen.l"
 {return lexdebug(INT_K);}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 215 "ncgen.l"
+#line 214 "ncgen.l"
 {return lexdebug(UINT_K);}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 216 "ncgen.l"
+#line 215 "ncgen.l"
 {return lexdebug(INT64_K);}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 217 "ncgen.l"
+#line 216 "ncgen.l"
 {return lexdebug(UINT64_K);}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 218 "ncgen.l"
+#line 217 "ncgen.l"
 {return lexdebug(DOUBLE_K);}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 219 "ncgen.l"
+#line 218 "ncgen.l"
 {int32_val = -1;
 			 return lexdebug(NC_UNLIMITED_K);}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 222 "ncgen.l"
+#line 221 "ncgen.l"
 {return lexdebug(TYPES);}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 223 "ncgen.l"
+#line 222 "ncgen.l"
 {return lexdebug(DIMENSIONS);}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 224 "ncgen.l"
+#line 223 "ncgen.l"
 {return lexdebug(VARIABLES);}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 225 "ncgen.l"
+#line 224 "ncgen.l"
 {return lexdebug(DATA);}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 226 "ncgen.l"
+#line 225 "ncgen.l"
 {return lexdebug(GROUP);}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 228 "ncgen.l"
+#line 227 "ncgen.l"
 {BEGIN(TEXT);return lexdebug(NETCDF);}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 230 "ncgen.l"
+#line 229 "ncgen.l"
 { /* missing value (pre-2.4 backward compatibility) */
                 if (ncgtext[0] == '-') {
 		    double_val = NEGINFINITE;
@@ -1762,7 +1761,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 239 "ncgen.l"
+#line 238 "ncgen.l"
 { /* missing value (pre-2.4 backward compatibility) */
 		double_val = NAN;
 		specialconstants = 1;
@@ -1771,7 +1770,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 245 "ncgen.l"
+#line 244 "ncgen.l"
 {/* missing value (pre-2.4 backward compatibility)*/
                 if (ncgtext[0] == '-') {
 		    float_val = NEGINFINITEF;
@@ -1784,7 +1783,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 254 "ncgen.l"
+#line 253 "ncgen.l"
 { /* missing value (pre-2.4 backward compatibility) */
 		float_val = NANF;
 		specialconstants = 1;
@@ -1793,23 +1792,24 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 260 "ncgen.l"
+#line 259 "ncgen.l"
 {
-		lextext = emalloc(1+4*ncgleng); /* should be max needed */
-		strncpy(lextext,(char*)ncgtext,ncgleng+1); /* include null */
-		yylval.sym = makepath(lextext);
-		free(lextext);
+		bbClear(lextext);
+		bbAppendn(lextext,(char*)ncgtext,ncgleng+1); /* include null */
+	        bbNull(lextext);
+		yylval.sym = makepath(bbContents(lextext));
 		return lexdebug(PATH);
 		}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 269 "ncgen.l"
+#line 268 "ncgen.l"
 {struct Specialtoken* st;
-		lextext = emalloc(1+4*ncgleng); /* should be max needed */
-		strncpy(lextext,(char*)ncgtext,ncgleng+1); /* include null */
+		bbClear(lextext);
+		bbAppendn(lextext,(char*)ncgtext,ncgleng+1); /* include null */
+		bbNull(lextext);
 		for(st=specials;st->name;st++) {
-		    if(strcmp(lextext,st->name)==0) {return lexdebug(st->token);}
+		    if(strcmp(bbContents(lextext),st->name)==0) {return lexdebug(st->token);}
 		}
 		return 0;
 		}
@@ -1821,33 +1821,36 @@ YY_RULE_SETUP
 {
 		    int c;
 		    char* p; char* q;
-		    lextext = emalloc(1+4*ncgleng); /* should be max needed */
 		    /* copy the trimmed name */
-		    strncpy(lextext,(char*)ncgtext,ncgleng+1); /* include null */
-		    p = lextext;
-		    q = lextext;
+		    bbClear(lextext);
+		    bbAppendn(lextext,(char*)ncgtext,ncgleng+1); /* include null */
+		    bbNull(lextext);
+		    p = bbContents(lextext);
+		    q = p;
 		    while((c=*p++)) {if(c > ' ') *q++ = c;}
 		    *q = '\0';
-		    datasetname = lextext;
+		    datasetname = bbDup(lextext);
 		    BEGIN(INITIAL);
 		    return lexdebug(DATASETID);
 		}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 293 "ncgen.l"
-{
-		    lextext = emalloc(1+4*ncgleng); /* should be max needed */
-		    strncpy(lextext,(char*)ncgtext,ncgleng+1); /* include null */
-		    deescapify(lextext);
-		    if (STREQ((char *)lextext, FILL_STRING)) return lexdebug(FILLMARKER);
-		    yylval.sym = install(lextext);
+#line 294 "ncgen.l"
+{ char* id;
+		    bbClear(lextext);
+		    bbAppendn(lextext,(char*)ncgtext,ncgleng+1); /* include null */
+		    bbNull(lextext);
+		    id = bbContents(lextext);
+		    deescapify(id);
+		    if (STREQ(id, FILL_STRING)) return lexdebug(FILLMARKER);
+		    yylval.sym = install(id);
 		    return lexdebug(IDENT);
 		}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 302 "ncgen.l"
+#line 305 "ncgen.l"
 {
 		    /* We need to try to see what size of integer ((u)int). */
 		    /* Technically, the user should specify, but... */
@@ -1899,7 +1902,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 351 "ncgen.l"
+#line 354 "ncgen.l"
 { /* The number may be signed or unsigned (signed has priority) */
 		int slen = strlen(ncgtext);
 		int tag = ncgtext[slen-1];
@@ -1954,7 +1957,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 403 "ncgen.l"
+#line 406 "ncgen.l"
 {
 		int slen = strlen(ncgtext);
 		int tag = ncgtext[slen-1];
@@ -1997,7 +2000,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 442 "ncgen.l"
+#line 445 "ncgen.l"
 {
 		int c;
 		int token = 0;
@@ -2035,7 +2038,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 476 "ncgen.l"
+#line 479 "ncgen.l"
 {
 		if (sscanf((char*)ncgtext, "%le", &double_val) != 1) {
 		    sprintf(errstr,"bad long or double constant: %s",(char*)ncgtext);
@@ -2046,7 +2049,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 483 "ncgen.l"
+#line 486 "ncgen.l"
 {
 		if (sscanf((char*)ncgtext, "%e", &float_val) != 1) {
 		    sprintf(errstr,"bad float constant: %s",(char*)ncgtext);
@@ -2058,7 +2061,7 @@ YY_RULE_SETUP
 case 40:
 /* rule 40 can match eol */
 YY_RULE_SETUP
-#line 490 "ncgen.l"
+#line 493 "ncgen.l"
 {
 	        (void) sscanf((char*)&ncgtext[1],"%c",&byte_val);
 		return lexdebug(BYTE_CONST);
@@ -2066,7 +2069,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 494 "ncgen.l"
+#line 497 "ncgen.l"
 {
 		byte_val = (char) strtol((char*)&ncgtext[2], (char **) 0, 8);
 		return lexdebug(BYTE_CONST);
@@ -2074,7 +2077,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 498 "ncgen.l"
+#line 501 "ncgen.l"
 {
 		byte_val = (char) strtol((char*)&ncgtext[3], (char **) 0, 16);
 		return lexdebug(BYTE_CONST);
@@ -2082,7 +2085,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 502 "ncgen.l"
+#line 505 "ncgen.l"
 {
 	       switch ((char)ncgtext[2]) {
 	          case 'a': byte_val = '\007'; break; /* not everyone under-
@@ -2104,7 +2107,7 @@ YY_RULE_SETUP
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 520 "ncgen.l"
+#line 523 "ncgen.l"
 {
 		lineno++ ;
                 break;
@@ -2112,7 +2115,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 525 "ncgen.l"
+#line 528 "ncgen.l"
 {/*initial*/
 	    BEGIN(ST_C_COMMENT);
 	    break;
@@ -2121,21 +2124,21 @@ YY_RULE_SETUP
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 530 "ncgen.l"
+#line 533 "ncgen.l"
 {/* continuation */
 				     break;
 				}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 534 "ncgen.l"
+#line 537 "ncgen.l"
 {/* final */
 			    BEGIN(INITIAL);
 			    break;
 			}
 	YY_BREAK
 case YY_STATE_EOF(ST_C_COMMENT):
-#line 539 "ncgen.l"
+#line 542 "ncgen.l"
 {/* final, error */
 			    fprintf(stderr,"unterminated /**/ comment");
 			    BEGIN(INITIAL);
@@ -2144,17 +2147,17 @@ case YY_STATE_EOF(ST_C_COMMENT):
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 545 "ncgen.l"
+#line 548 "ncgen.l"
 {/* Note: this next rule will not work for UTF8 characters */
 		return lexdebug(ncgtext[0]) ;
 		}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 548 "ncgen.l"
+#line 551 "ncgen.l"
 ECHO;
 	YY_BREAK
-#line 2158 "lex.ncg.c"
+#line 2161 "lex.ncg.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(TEXT):
 	yyterminate();
@@ -3153,7 +3156,7 @@ void ncgfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 548 "ncgen.l"
+#line 551 "ncgen.l"
 
 
 static int
@@ -3170,7 +3173,7 @@ int
 lex_init(void)
 {
     lineno = 1;
-    lextext = NULL;
+    lextext = bbNew();
     if(0) unput(0); /* keep -Wall quiet */
     return 0;
 }

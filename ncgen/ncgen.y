@@ -71,7 +71,7 @@ char* primtypenames[PRIMNO] = {
 
 /*Defined in ncgen.l*/
 extern int lineno;              /* line number for error messages */
-extern char* lextext;           /* name or string with escapes removed */
+extern Bytebuffer* lextext;           /* name or string with escapes removed */
 
 extern double double_val;       /* last double value read */
 extern float float_val;         /* last float value read */
@@ -438,6 +438,9 @@ dimdecl:
 	  dimd '=' UINT_CONST
               {
 		$1->dim.declsize = (size_t)uint32_val;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = %lu\n",$1->name,(unsigned long)$1->dim.declsize);
+#endif
 	      }
 	| dimd '=' INT_CONST
               {
@@ -446,6 +449,9 @@ dimdecl:
 		    YYABORT;
 		}
 		$1->dim.declsize = (size_t)int32_val;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = %lu\n",$1->name,(unsigned long)$1->dim.declsize);
+#endif
 	      }
         | dimd '=' DOUBLE_CONST
                    { /* for rare case where 2^31 < dimsize < 2^32 */
@@ -456,11 +462,17 @@ dimdecl:
                        if (double_val - (size_t) double_val > 0)
                          yyerror("dimension length must be an integer");
                        $1->dim.declsize = (size_t)double_val;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = %lu\n",$1->name,(unsigned long)$1->dim.declsize);
+#endif
                    }
         | dimd '=' NC_UNLIMITED_K
                    {
 		        $1->dim.declsize = NC_UNLIMITED;
 		        $1->dim.isunlimited = 1;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = UNLIMITED\n",$1->name);
+#endif
 		   }
                 ;
 
@@ -1004,9 +1016,10 @@ makeconstdata(nc_type nctype)
 	    break;
         case NC_STRING: { /* convert to a set of chars*/
 	    int len;
-	    len = strlen(lextext);
+	    len = bbLength(lextext);
 	    con.value.stringv.len = len;
-	    con.value.stringv.stringv = nulldup(lextext);
+	    con.value.stringv.stringv = bbDup(lextext);
+	    bbClear(lextext);	    
 	    }
 	    break;
 
@@ -1021,14 +1034,14 @@ makeconstdata(nc_type nctype)
 	case NC_OPAQUE: {
 	    char* s;
 	    int len,padlen;
-	    len = strlen(lextext);
+	    len = bbLength(lextext);
 	    padlen = len;
 	    if(padlen < 16) padlen = 16;
 	    if((padlen % 2) == 1) padlen++;
 	    s = (char*)emalloc(padlen+1);
 	    memset((void*)s,'0',padlen);
 	    s[padlen]='\0';
-	    strncpy(s,lextext,len);
+	    strncpy(s,bbContents(lextext),len);
 	    con.value.opaquev.stringv = s;
 	    con.value.opaquev.len = padlen;
 	    } break;

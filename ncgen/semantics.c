@@ -821,30 +821,55 @@ validate(void)
 static void
 computeunlimitedsizes(Dimset* dimset, int dimindex, Datalist* data, int ischar)
 {
+    int i;
     size_t xproduct, unlimsize;
-    int nextunlim;
+    int nextunlim,lastunlim;
     Symbol* thisunlim = dimset->dimsyms[dimindex];
     
-
     ASSERT(thisunlim->dim.isunlimited);
     nextunlim = findunlimited(dimset,dimindex+1);
+    lastunlim = (nextunlim == dimset->ndims);
+
     xproduct = crossproduct(dimset,dimindex+1,nextunlim);
-    unlimsize = data->length / xproduct;
-    if(data->length % xproduct != 0)
-	unlimsize++; /* => fill requires at some point */
-    if(unlimsize > thisunlim->dim.declsize)
-        thisunlim->dim.declsize = unlimsize; /* want max length of the unlimited*/
-    if(nextunlim < dimset->ndims) { /* recurse */
-	int i;
+
+    if(lastunlim) {
+	size_t length;
+	if(ischar) {
+	    /* Char case requires special computations;
+	       compute total number of characters */
+	    length = 0;
+	    for(i=0;i<data->length;i++) {
+		Constant* con = &data->data[i];
+		switch (con->nctype) {
+	        case NC_CHAR: case NC_BYTE: case NC_UBYTE:
+		    length++;
+		    break;
+		case NC_STRING:
+		    length += con->value.stringv.len;
+	            break;
+		default:
+		    semwarn(datalistline(data),"Illegal character constant");	      
+	        }
+	    }
+	} else { /* Data list should be a list of simple non-char constants */
+   	    length = data->length;
+	}
+	unlimsize = length / xproduct;
+	if(length % xproduct != 0)
+	    unlimsize++; /* => fill requires at some point */
+#ifdef DEBUG2
+fprintf(stderr,"unlimsize: dim=%s declsize=%d xproduct=%d newsize=%d\n",
+thisunlim->name,thisunlim->dim.declsize,xproduct,unlimsize);
+#endif
+	if(thisunlim->dim.declsize < unlimsize) /* want max length of the unlimited*/
+            thisunlim->dim.declsize = unlimsize;
+
+    } else { /*!lastdim => data is list of sublists, recurse on each sublist*/
 	for(i=0;i<data->length;i++) {
 	    Constant* con = data->data+i;
 	    ASSERT(con->nctype == NC_COMPOUND);
 	    computeunlimitedsizes(dimset,nextunlim,con->value.compoundv,ischar);
 	}
-    } else if(ischar) {
-	/* Char case requires special computations; namely, compute total number */
-	
-
     }
 }
 
@@ -878,4 +903,16 @@ processunlimiteddims(void)
 	    }
 	}
     }
+#ifdef DEBUG1
+    /* print unlimited dim size */
+    if(listlength(dimdefs) == 0)
+        fprintf(stderr,"unlimited: no unlimited dimensions\n");
+    else for(i=0;i<listlength(dimdefs);i++) {
+	Symbol* dim = (Symbol*)listget(dimdefs,i);
+	if(dim->dim.isunlimited)
+	    fprintf(stderr,"unlimited: %s = %lu\n",
+		    dim->name,
+	            (unsigned long)dim->dim.declsize);
+    }
+#endif
 }

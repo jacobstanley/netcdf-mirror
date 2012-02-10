@@ -10,22 +10,36 @@
 
 #include <math.h> 
 
-/* Define common functions across stdarg */
+static int c_uid = 0;
+
 static int
-c_constant_shared(Generator* generator, Constant* con, Bytebuffer* buf)
+c_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
+{
+    return 1;
+}
+
+static int
+c_charconstant(Generator* generator, Bytebuffer* codebuf, ...)
+{
+    /* Escapes and quoting will be handled in genc_write */
+    /* Just transfer charbuf to codebuf */
+    Bytebuffer* charbuf;
+    va_list ap;
+    vastart(ap,codebuf);
+    charbuf = va_arg(ap, Bytebuffer*);
+    va_end(ap);
+    bbNull(charbuf);
+    bbCatbuf(codebuf,charbuf);
+    return 1;
+}
+
+static int
+c_constant(Generator* generator, Constant* con, Bytebuffer* buf,...)
 {
     Bytebuffer* codetmp = bbNew();
     char* special = NULL;
 
     switch (con->nctype) {
-    case NC_CHAR: { 
-	char tmp[64];
-	tmp[0] = '\0';
-	escapifychar(con->value.charv,tmp,'\'');
-	bbCat(codetmp,"'");
-	bbCat(codetmp,tmp);
-	bbCat(codetmp,"'");
-	} break;
     case NC_BYTE:
 	bbprintf(codetmp,"%hhd",con->value.int8v);
 	break;
@@ -102,34 +116,19 @@ c_constant_shared(Generator* generator, Constant* con, Bytebuffer* buf)
 }
 
 static int
-c_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
-{
-    return 1;
-}
-
-static int
-c_reset(Generator* generator, void* state)
-{
-    return 1;
-}
-
-#ifndef NO_STDARG
-
-static int
-c_charconstant(Generator* generator, Bytebuffer* codebuf, ...)
-{
-    return 1;
-}
-
-static int
-c_constant(Generator* generator, Constant* con, Bytebuffer* buf,...)
-{
-    return c_constant_shared(generator,con,buf);
-}
-
-static int
 c_listbegin(Generator* generator, ListClass lc, size_t size, Bytebuffer* codebuf, int* uidp, ...)
 {
+    if(uidp) *uidp = ++c_uid;
+    switch (lc) {
+    case VLENLIST:
+    case ATTRLIST:
+    case DATALIST:
+    case FIELDARRAY:
+	break;
+    case COMPOUNDFIELDS:
+        bbAppend(codebuf,'{');
+	break;
+    }
     return 1;
 }
 
@@ -139,8 +138,10 @@ c_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* co
     switch (lc) {
     case VLENLIST:
     case ATTRLIST:
-        if(index > 0) bbCat(codebuf,", ");
+        if(count > 0) bbCat(codebuf,", ");
 	break;
+    case DATALIST:
+    case COMPOUNDFIELDS:
     case FIELDARRAY:
         bbAppend(codebuf,' ');
 	break;
@@ -151,180 +152,62 @@ c_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* co
 static int
 c_listend(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* buf, ...)
 {
-    return 1;
-}
-
-static int
-c_compoundbegin(Generator* generator, Bytebuffer* codebuf,...)
-{
-    bbAppend(codebuf,'{');
-    return 1;
-}
-
-static int
-c_compoundend(Generator* generator,Bytebuffer* codebuf,...)
-{
-    bbAppend(codebuf,'}');
-    return 1;
-}
-
-
-static int
-c_vlenbegin(Generator* generator, Bytebuffer* buf,Symbol* tsym,int uid,...)
-{
-    Bytebuffer* tmp = bbNew();
-    bbprintf0(tmp,"static const %s vlen_%u[] = ",
-	        ctypename(tsym->typ.basetype),
-                uid);
-    bbCatbuf(buf,tmp);
-    bbAppend(buf,'{');
-    bbFree(tmp);
-    return 1;
-}
-
-static int
-c_vlenend(Generator* generator, Bytebuffer* codebuf,...)
-{
-    return 1;
-}
-
-static int
-c_vlenstring(Generator* generator, Bytebuffer* codebuf, ...)
-{
-    Bytebuffer* vlenmem;
-    nc_vlen_t ptr;
-    va_list ap;
-    vastart(ap,codebuf);
-    vlenmem = va_arg(ap, Bytebuffer*);
-    va_end(ap);
-    ptr.len = bbLength(vlenmem);
-    ptr.p = bbDup(vlenmem);
-    bbAppendn(codebuf,(char*)&ptr,sizeof(ptr));
-    return 1;
-}
-
-#else /*NO_STDARG*/
-
-static int
-c_primbegin(generator,va_alist)
-    Generator* generator; va_dcl
-{
-    return 1;
-}
-
-static int
-c_primend(generator,va_alist)
-    Generator* generator; va_dcl
-{
-    return 1;
-}
-
-static int
-c_charconstant(generator,buf,buf,va_alist)
-    Generator* generator; Bytebuffer* buf; Bytebuffer* buf; va_dcl
-{
-    return 1;
-}
-
-static int
-c_constant(generator,con,buf,va_alist)
-    Generator* generator; Constant* con; Bytebuffer* buf; va_dcl
-{
-    return c_constant_shared(generator,con,buf);
-}
-
-static int
-c_listbegin(generator,lc,size,uidp, va_alist)
-    Generator* generator; ListClass lc; int size; int* uidp; va_dcl
-{
-    if(uidp) *uidp = 0; /* not used */
-    return 1;
-}
-
-static int
-c_list(generator,lc,uid,count,buf,va_alist)
-    Generator* generator; ListClass lc; int uid; int count; Bytebuffer* buf; va_dcl
-{
-    return 1;
-}
-
-static int
-c_listend(generator,lc,uid,count,buf,va_alist)
-    Generator* generator; ListClass lc; int uid; int count; Bytebuffer* buf; va_dcl
-{
-    va_list ap;
-    if(listclass == VLENLIST) {
-        Bytebuffer* vlenmem;
-        nc_vlen_t ptr;
-        vastart(argv,buf);
-        vlenmem = va_arg(ap, Bytebuffer*)
-	va_end(ap);
-        ptr.len = count;
-        ptr.p = bbDup(vlenmem);
-        bbAppendn(buf,(char*)&ptr,sizeof(ptr));
+    switch (lc) {
+    case VLENLIST:
+	break;
+    case ATTRLIST:
+	break;
+    case DATALIST:
+    case FIELDARRAY:
+        commify(buf);
+	break;
+    case COMPOUNDFIELDS:
+        commify(buf);
+	break;
     }
     return 1;
 }
 
 static int
-c_compoundbegin(generator,va_alist)
-    Generator* generator; va_dcl
+c_vlendecl(Generator* generator, Bytebuffer* codebuf, Symbol* tsym, int uid, size_t count, ...)
 {
-    return 1;
-}
-
-static int
-c_compoundend(generator,va_alist)
-    Generator* generator; va_dcl
-{
-    return 1;
-}
-
-static int
-c_vlenbegin(generator, Bytebuffer* buf,Symbol* tsym,int uid,va_alist)
-    Generator* generator; Bytebuffer* buf;Symbol* tsym; int uid; va_dcl
-{
-    return 1;
-}
-
-static int
-c_vlenend(generator,buf,va_alist)
-    Generator* generator; Bytebuffer* buf; va_dcl
-{
-    return 1;
-}
-
-static int
-bin_vlenstring(generator,buf,va_alist)
-    Generator* generator; Bytebuffer* buf; va_dcl
-{
-    Bytebuffer* vlenmem;
-    nc_vlen_t ptr;
-    vastart(argv,buf);
-    vlenmem = va_arg(ap, Bytebuffer*)
+    /* Build a bytebuffer to capture the vlen decl */
+    List* declstack = (List*)generator->state;
+    Bytebuffer* decl = bbNew();
+    Bytebuffer* vlenbuf;
+    va_list ap;
+    vastart(ap,count);
+    vlenbuf = va_arg(ap, Bytebuffer*);
     va_end(ap);
-    ptr.len = count;
-    ptr.p = bbDup(vlenmem);
-    bbAppendn(buf,(char*)&ptr,sizeof(ptr));
+    bbprintf0(decl,"static const %s vlen_%u[] = {",
+	        ctypename(tsym->typ.basetype),
+                uid);
+    bbCatbuf(decl,vlenbuf);
+    bbCat(decl,"} ;");
+    listpush(declstack,(elem_t)decl);
+    /* Now generate the reference to buffer */
+    bbprintf(codebuf,"{%u,(void*)vlen_%u}",count,uid);
+    return 1;
 }
 
-#endif /*NO_STDARG*/
-
+static int
+c_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* countp,...)
+{
+    if(uidp) *uidp = ++c_uid;
+    if(countp) *countp = bbLength(vlenmem);
+    return 1;
+}
 
 /* Define the single static bin data generator  */
 static Generator c_generator_singleton = {
     NULL,
-    c_reset,
     c_alignbuffer,
     c_charconstant,
     c_constant,
     c_listbegin,
     c_list,
     c_listend,
-    c_compoundbegin,
-    c_compoundend,
-    c_vlenbegin,
-    c_vlenend,
+    c_vlendecl,
     c_vlenstring
 };
 Generator* c_generator = &c_generator_singleton;

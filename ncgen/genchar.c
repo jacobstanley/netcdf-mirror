@@ -12,6 +12,7 @@
 
 static size_t gen_charconstant(Constant*, Bytebuffer*, int fillchar);
 static int getfillchar(Datalist* fillsrc);
+static void gen_chararrayr(Dimset*,int,int,Bytebuffer*,Datalist*,int,int,int);
 
 /*
 Matching strings to char variables, attributes, and vlen
@@ -49,42 +50,77 @@ Two other cases:
 void
 gen_chararray(Dimset* dimset, Datalist* data, Bytebuffer* databuf, Datalist* fillsrc)
 {
-    int i,j,ndims;
+    int ndims,lastunlim;
     int fillchar = getfillchar(fillsrc);
-    size_t xproduct,dimproduct;
+    size_t expectedsize,xproduct;
     size_t unitsize;
-    Constant* c;
 
     ASSERT(bbLength(databuf) == 0);
 
     ndims = dimset->ndims;
-    ASSERT(ndims > 0);
 
-    unitsize = dimset->dimsyms[ndims-1]->dim.declsize;
 
-    xproduct = crossproduct(dimset,0,ndims-1);
+    /* Find the last unlimited */
+    lastunlim = findlastunlimited(dimset);
+    if(lastunlim < 0) lastunlim = 0; /* pretend */
 
-    dimproduct = (xproduct * unitsize);
+    /* Compute crossproduct upto the last dimension,
+       starting at the last unlimited
+    */
+    xproduct = crossproduct(dimset,lastunlim,ndims-1);
+    if(ndims == 0) {
+	unitsize = 1;
+    } else if(lastunlim == ndims-1) {/* last dimension is unlimited */
+        unitsize = 1;
+    } else { /* last dim is not unlimited */
+        unitsize = dimset->dimsyms[ndims-1]->dim.declsize;
+    }
 
-    for(i=0;i<data->length;i++) {
-	c = datalistith(data,i);
-	ASSERT(!islistconst(c));
-	if(isstringable(c->nctype)) {
-	    size_t constsize,padsize;
-	    constsize = gen_charconstant(c,databuf,fillchar);
-	    padsize = constsize % unitsize;
-	    for(j=0;j<padsize;j++) bbAppend(databuf,fillchar);
-	} else {
-	    semwarn(c->lineno,
-		     "Encountered non-string and non-char constant in datalist; ignored");
+    expectedsize = (xproduct * unitsize);
+
+    gen_chararrayr(dimset,0,lastunlim,databuf,data,fillchar,unitsize,expectedsize);
+}
+
+/* Recursive helper */
+static void
+gen_chararrayr(Dimset* dimset, int dimindex, int lastunlimited,
+               Bytebuffer* databuf, Datalist* data, int fillchar,
+	       int unitsize, int expectedsize)
+{
+    int i;
+
+    if(dimindex < lastunlimited) {
+	/* keep recursing */
+        for(i=0;i<data->length;i++) {
+	    Constant* c = datalistith(data,i);
+	    ASSERT(islistconst(c));
+	    gen_chararrayr(dimset,dimindex+1,lastunlimited,databuf,
+			   c->value.compoundv,fillchar,unitsize,expectedsize);
+	}
+    } else {/* we are at a list of simple constants */
+	for(i=0;i<data->length;i++) {
+	    Constant* c = datalistith(data,i);
+	    ASSERT(!islistconst(c));
+	    if(isstringable(c->nctype)) {
+		int j;
+	        size_t constsize,padsize;
+	        constsize = gen_charconstant(c,databuf,fillchar);
+	        padsize = (unitsize - constsize) % unitsize;
+	        for(j=0;j<padsize;j++) bbAppend(databuf,fillchar);
+	    } else {
+	        semwarn(constline(c),
+		       "Encountered non-string and non-char constant in datalist; ignored");
+	    }
 	}
     }
-    /* If |databuf| > dimproduct, complain */
-    if(bbLength(databuf) > dimproduct) {
-	semwarn(data->data[0].lineno,"character data list to long");
+    /* If |databuf| > expectedsize, complain: exception is zero length */
+    if(bbLength(databuf) == 0 && expectedsize == 1) {
+	/* this is okay */
+    } else if(bbLength(databuf) > expectedsize) {
+	semwarn(data->data[0].lineno,"character data list too long");
     } else {
 	/* Pad to size dimproduct size */
-	size_t padsize = bbLength(databuf) % dimproduct;
+	size_t padsize = (expectedsize - bbLength(databuf)) % expectedsize;
 	for(i=0;i<padsize;i++)
 	    bbAppend(databuf,fillchar);
     }

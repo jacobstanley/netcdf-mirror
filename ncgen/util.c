@@ -638,4 +638,15 @@ findunlimited(Dimset* dimset, int start)
     return dimset->ndims;
 }
 
+int
+findlastunlimited(Dimset* dimset)
+{
+    int i;
+    for(i=dimset->ndims-1;i>=0;i--) {
+	if(dimset->dimsyms[i]->dim.isunlimited)
+	    return i;
+    }
+    return -1;
+}
+
 

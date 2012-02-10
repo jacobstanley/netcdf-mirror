@@ -50,9 +50,9 @@ char *datasetname; /* name from the netcdf <name> {} */
 extern FILE *ncgin;
 
 /* Forward */
-static char* ubasename ( const char* av0 );
-void usage ( void );
-int main ( int argc, char** argv );
+static char* ubasename(char*);
+void usage( void );
+int main( int argc, char** argv );
 
 /* Define tables vs modes for legal -k values*/
 struct Kvalues legalkinds[NKVALUES] = {
@@ -108,9 +108,8 @@ struct Languages {
 /* result is malloc'd */
 
 static char *
-ubasename(const char *av0)
+ubasename(char *logident)
 {
-    char *logident = nulldup(av0);
     char* sep;
 
     sep = strrchr(logident,'/');
@@ -387,7 +386,7 @@ main(
     case 1: cmode_modifier = 0; break;
     case 2: cmode_modifier = NC_64BIT_OFFSET; break;
     case 3: cmode_modifier = NC_NETCDF4; break;
-    case 4: cmode_modifier = NC_NETCDF4 | NC_CLASSIC_MODEL;
+    case 4: cmode_modifier = NC_NETCDF4 | NC_CLASSIC_MODEL; break;
     default: ASSERT(0); /* cannot happen */
     }
 

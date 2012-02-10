@@ -33,8 +33,9 @@ getfiller(Symbol* tvsym, Datalist* fillsrc)
 	filler = buildfill(tvsym);
         tvsym->var.special._Fillvalue = filler; /* cache value*/
     }
-if(debug >= 1)
+#ifdef DEBUG2
     dumpdatalist(filler,"getfiller");
+#endif
     return filler;        
 }
 

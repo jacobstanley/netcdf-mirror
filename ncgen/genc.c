@@ -28,10 +28,10 @@ static void genc_definespecialattributes(Symbol* vsym);
 
 static void genc_defineattr(Symbol* asym);
 static void genc_definevardata(Symbol*);
-static void genc_write(Symbol* sym, Bytebuffer* code,
+static void genc_write(Generator*,Symbol* sym, Bytebuffer* code,
                        int rank, size_t* start, size_t* count);
-static void genc_writevar(Symbol*,Bytebuffer*,int,size_t*,size_t*);
-static void genc_writeattr(Symbol*,Bytebuffer*,int,size_t*,size_t*);
+static void genc_writevar(Generator*,Symbol*,Bytebuffer*,int,size_t*,size_t*);
+static void genc_writeattr(Generator*,Symbol*,Bytebuffer*,int,size_t*,size_t*);
 
 /*
  * Generate C code for creating netCDF from in-memory structure.
@@ -176,7 +176,7 @@ gen_ncc(const char *filename)
 	codelined(1,"/* dimension lengths */");
 	for(idim = 0; idim < ndims; idim++) {
 	    Symbol* dsym = (Symbol*)listget(dimdefs,idim);
-	    if(dsym->dim.declsize == NC_UNLIMITED) {
+	    if(dsym->dim.isunlimited) {
 		bbprintf0(stmt,"%ssize_t %s_len = NC_UNLIMITED;\n",
 			indented(1),cname(dsym));
 	    } else {
@@ -297,10 +297,24 @@ gen_ncc(const char *filename)
 	codelined(1,"/* define dimensions */");
         for(idim = 0; idim < ndims; idim++) {
             Symbol* dsym = (Symbol*)listget(dimdefs,idim);
-    	    bbprintf0(stmt,
-		"    stat = nc_def_dim(%s, \"%s\", %s_len, &%s);\n",
-		groupncid(dsym->container),
-                escapifyname(dsym->name), cname(dsym), dimncid(dsym));
+#ifdef IGNORE
+	    if(dsym->dim.isunlimited) {
+		bbprintf0(stmt,
+		          "    stat = nc_def_dim(%s, \"%s\", %s, &%s);\n",
+		          groupncid(dsym->container),
+                          escapifyname(dsym->name),
+                          "NC_UNLIMITED",
+                          dimncid(dsym));
+	    } else
+#endif
+	    {
+		bbprintf0(stmt,
+		          "    stat = nc_def_dim(%s, \"%s\", %s_len, &%s);\n",
+		          groupncid(dsym->container),
+                          escapifyname(dsym->name),
+                          cname(dsym),
+                          dimncid(dsym));
+	    }
 	    codedump(stmt);
 	    codelined(1,"check_err(stat,__LINE__,__FILE__);");
        }
@@ -899,79 +913,109 @@ genc_deftype(Symbol* tsym)
 static void
 genc_defineattr(Symbol* asym)
 {
-    bin_generator->reset(bin_generator,NULL);
-    generate_attrdata(asym,bin_generator,(Writer)genc_write);
+    /* we need to capture vlen strings for dumping */
+    Bytebuffer* save = bbNew(); /* capture so we can dump
+                                   vlens first */
+    generator_reset(c_generator,(void*)listnew());
+    generate_attrdata(asym,c_generator,(Writer)genc_write,save);
 }
 
 static void
 genc_definevardata(Symbol* vsym)
 {
+    Bytebuffer* save; /* capture so we can dump vlens first */
     if(vsym->data == NULL) return;
-    c_generator->reset(c_generator,NULL);
-    generate_vardata(vsym,c_generator,(Writer)genc_write);
+    save = bbNew();
+    generator_reset(c_generator,(void*)listnew());
+    generate_vardata(vsym,c_generator,(Writer)genc_write,save);
 }
 
 static void
-genc_write(Symbol* sym, Bytebuffer* code,
+genc_write(Generator* generator, Symbol* sym, Bytebuffer* code,
            int rank, size_t* start, size_t* count)
 {
     if(sym->objectclass == NC_ATT)
-	genc_writeattr(sym,code,rank,start,count);
+	genc_writeattr(generator,sym,code,rank,start,count);
     else if(sym->objectclass == NC_VAR)
-	genc_writevar(sym,code,rank,start,count);
+	genc_writevar(generator,sym,code,rank,start,count);
     else
 	PANIC("illegal symbol for genc_write");
 }
 
 static void
-genc_writevar(Symbol* vsym, Bytebuffer* code,
+genc_writevar(Generator* generator, Symbol* vsym, Bytebuffer* code,
            int rank, size_t* start, size_t* count)
 {
     Symbol* basetype = vsym->typ.basetype;
     nc_type typecode = basetype->typ.typecode;
+    List* vlendecls;
+
+    /* define a block to avoid name clashes*/
+    codeline("");
+    codelined(1,"{");
+
+    /* Dump any vlen decls first */
+    generator_getstate(generator,(void**)&vlendecls);
+    if(vlendecls != NULL && listlength(vlendecls) > 0) {
+	int i;
+	for(i=0;i<listlength(vlendecls);i++) {
+	   Bytebuffer* decl = (Bytebuffer*)listget(vlendecls,i);
+	   codelined(1,bbContents(decl));
+	   bbFree(decl);
+	}
+	listfree(vlendecls);
+	generator_reset(generator,NULL);
+    }       
 
     if(rank == 0) {
-	codelined(1,"{");
 	codelined(1,"size_t zero = 0;");
-        bbprintf0(stmt,"%sstatic %s %s_data[1] = {%s};\n",
+	if(typecode == NC_CHAR) {
+            cquotestring(code,'"');
+            bbprintf0(stmt,"%sstatic char* %s_data = %s;\n",
+			    indented(1),
+			    cname(vsym),
+			    bbContents(code));
+	} else {
+            bbprintf0(stmt,"%sstatic %s %s_data[1] = {%s};\n",
 			    indented(1),
 			    ctypename(basetype),
 			    cname(vsym),
 			    bbContents(code));
+	}
 	codedump(stmt);
-        bbprintf0(stmt,"%sstat = nc_put_var1(%s, %s, &zero, %s_data);",
+        bbprintf0(stmt,"%sstat = nc_put_var1(%s, %s, &zero, %s_data);\n",
 		indented(1),
 		groupncid(vsym->container),
 		varncid(vsym),
 		cname(vsym));
         codedump(stmt);
         codelined(1,"check_err(stat,__LINE__,__FILE__);");
-	codelined(1,"}");
-    } else {
+	codeflush();
+    } else { /* rank > 0 */
 	int i;
         size_t length = 0;
-        if(typecode == NC_CHAR)
+        if(typecode == NC_CHAR) {
 	    length = bbLength(code);
-	else {
+	    /* generate data constant */
+	    bbprintf(stmt,"%schar* %s_data = ",
+			indented(1),
+			cname(vsym),
+			(unsigned long)length);
+	    codedump(stmt);
+	    cquotestring(code,'"');
+	    codedump(code);
+	    codeline(" ;");
+	} else {
 	    /* Compute total size */ 
 	    length = 1;
     	    for(i=0;i<rank;i++) length *= count[i];
-	}
-	/* define a block to avoid name clashes*/
-	bbprintf0(stmt,"%s{\n",indented(1));
-	/* generate data constant */
-	bbprintf(stmt,"%s%s %s_data[%lu] = ",
+	    /* generate data constant */
+	    bbprintf(stmt,"%s%s %s_data[%lu] = ",
 			indented(1),
 			ctypename(basetype),
 			cname(vsym),
 			(unsigned long)length);
-	codedump(stmt);
-	
-	if(typecode == NC_CHAR) {
-	    cquotestring(code);
-	    codedump(code);
-	    codeline(" ;");
-	} else {
+	    codedump(stmt);
     	    /* C requires an outer set of braces on datalist constants */
 	    codepartial("{");
 	    codedump(code);
@@ -997,7 +1041,7 @@ genc_writevar(Symbol* vsym, Bytebuffer* code,
 	    bbprintf(stmt,"%s%lu",(i>0?", ":""),count[i]);
 	}
 	codedump(stmt);
-	codeline("} ;");
+	codeline("};");
 	
 	bbprintf0(stmt,"%sstat = nc_put_vara(%s, %s, %s_startset, %s_countset, %s_data);\n",
 			indented(1),
@@ -1008,29 +1052,49 @@ genc_writevar(Symbol* vsym, Bytebuffer* code,
 	codedump(stmt);
 	codelined(1,"check_err(stat,__LINE__,__FILE__);");
 	
-	/* end defined block*/
-	codelined(1,"}\n");
     }
+    /* end defined block*/
+    codelined(1,"}\n");
+    codeflush();
 }
 	
 static void
-genc_writeattr(Symbol* asym, Bytebuffer* code,
+genc_writeattr(Generator* generator, Symbol* asym, Bytebuffer* code,
                int rank, size_t* start, size_t* count)
 {
     Symbol* basetype = asym->typ.basetype;
     int typecode = basetype->typ.typecode;
-    size_t len = bbLength(code);
+    size_t len = asym->data->length; /* default assumption */
+
+    /* define a block to avoid name clashes*/
+    codeline("");
+    codelined(1,"{");
 
     /* Handle NC_CHAR specially */
     if(typecode == NC_CHAR) {
+        len = bbLength(code); /* presumably before quoting */
 	/* Revise length if length == 0 */
 	if(len == 0) len++;
-	cquotestring(code);
-	bbNull(code);
+	cquotestring(code,'"');
     } else {
         /* All other cases */
+	/* Dump any vlen decls first */
+	List* vlendecls;
+	generator_getstate(generator,(void**)&vlendecls);
+	if(vlendecls != NULL && listlength(vlendecls) > 0) {
+	    int i;
+	    for(i=0;i<listlength(vlendecls);i++) {
+	        Bytebuffer* decl = (Bytebuffer*)listget(vlendecls,i);
+	        codelined(1,bbContents(decl));
+	        bbFree(decl);
+	    }
+	    listfree(vlendecls);
+	    generator_reset(generator,NULL);
+	}       
+
         commify(code);
-        bbprintf0(stmt,"%sstatic const %s %s_att[%ld] = ",indented(1),
+        bbprintf0(stmt,"%sstatic const %s %s_att[%ld] = ",
+			indented(1),
 			ctypename(basetype),
 			cname(asym),
 			asym->data->length
@@ -1126,7 +1190,7 @@ genc_writeattr(Symbol* asym, Bytebuffer* code,
 	if(usingclassic && !isclassicprim(basetype->typ.typecode)) {
             verror("Non-classic type: %s",nctypename(basetype->typ.typecode));
 	}
-        bbprintf0(stmt,"%sstat = nc_put_att(%s, %s, \"%s\", %s, %lu, %s_att);",
+        bbprintf0(stmt,"%sstat = nc_put_att(%s, %s, \"%s\", %s, %lu, %s_att);\n",
 		indented(1),
 		groupncid(asym->container),
 		(asym->att.var == NULL?"NC_GLOBAL"
@@ -1140,7 +1204,6 @@ genc_writeattr(Symbol* asym, Bytebuffer* code,
 	break;
     }
 
-    bbFree(code);
     codelined(1,"check_err(stat,__LINE__,__FILE__);");
     codelined(1,"}");
 }

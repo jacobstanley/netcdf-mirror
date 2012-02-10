@@ -12,6 +12,7 @@
 typedef struct Odometer {
     int rank;
     int wholepoint; /*point where whole dimensions are being used */
+    size_t counter; /* track # of elements to read */
     size_t start[NC_MAX_VAR_DIMS];
     size_t count[NC_MAX_VAR_DIMS];
     size_t index[NC_MAX_VAR_DIMS];

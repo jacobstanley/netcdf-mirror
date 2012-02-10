@@ -183,8 +183,8 @@ void alignbuffer(struct Constant* prim, Bytebuffer* buf);
 
 /* Code dump support procedures */
 void bbindent(Bytebuffer*,const int);
-void bbprintf(Bytebuffer*,const char *fmt, ...);
-void bbprintf0(Bytebuffer*,const char *fmt, ...);
+void bbprintf(Bytebuffer*,const char *fmt, ...); /* append */
+void bbprintf0(Bytebuffer*,const char *fmt, ...); /* clear, then append*/
 /* Following dump to codebuffer */
 void codeprintf(const char *fmt, ...);
 void codedump(Bytebuffer*);
@@ -221,43 +221,30 @@ void gen_chararray(struct Dimset*, Datalist*, Bytebuffer*, Datalist* fillsrc);
 /* Mnemonic */
 #define UNKNOWN ((size_t)0)
 
-typedef enum ListClass {ATTRLIST, VLENLIST, FIELDARRAY} ListClass;
+typedef enum ListClass {
+    DATALIST, ATTRLIST, VLENLIST, COMPOUNDFIELDS, FIELDARRAY
+} ListClass;
 
 struct Generator {
     void* state;
-#ifndef NO_STDARG
-        int (*reset)(Generator*,void*);
         int (*alignbuffer)(Generator*,Constant*,Bytebuffer*);
         int (*charconstant)(Generator*,Bytebuffer*,...);
         int (*constant)(Generator*,Constant*,Bytebuffer*,...);
         int (*listbegin)(Generator*,ListClass,size_t,Bytebuffer*,int*,...);
         int (*list)(Generator*,ListClass,int,size_t,Bytebuffer*,...);
         int (*listend)(Generator*,ListClass,int,size_t,Bytebuffer*,...);
-        int (*compoundbegin)(Generator*,Bytebuffer*,...);
-        int (*compoundend)(Generator*,Bytebuffer*,...);
-        int (*vlenbegin)(Generator*,Bytebuffer*,struct Symbol* tsym,int uid,...);
-        int (*vlenend)(Generator*,Bytebuffer*,...);
-        int (*vlenstring)(Generator*,Bytebuffer*,...);
-#else
-        int (*reset)(Generator*,void*);
-        int (*alignbuffer)(Generator*,Constant*,Bytebuffer*);
-        int (*charconstant)(Generator*,Bytebuffer*,Bytebuffer*,va_list);
-        int (*constant)(Generator*,Constant*,Bytebuffer*,va_list);
-        int (*listbegin)(Generator*,ListClass,size_t,Bytebuffer*,int*,va_list);
-        int (*list)(Generator*,ListClass,int,size_t,Bytebuffer*,va_list);
-        int (*listend)(Generator*,ListClass,int,size_t,Bytebuffer*,va_list);
-        int (*compoundbegin)(Generator*,Bytebuffer*,va_list);
-        int (*compoundend)(Generator*,Bytebuffer*,va_list);
-        int (*vlenbegin)(Generator*,Bytebuffer*,struct Symbol* tsym,int uid,va_list);
-        int (*vlenend)(Generator*,Bytebuffer*,va_list);
-        int (*vlenstring)(Generator*,Bytebuffer*,va_list);
-#endif
+	int (*vlendecl)(Generator*,Bytebuffer*,struct Symbol*,int,size_t,...);
+        int (*vlenstring)(Generator*,Bytebuffer*,int*,size_t*,...);
 };
 
-typedef int (*Writer)(struct Symbol*,Bytebuffer*,int,size_t*,size_t*);
+extern int generator_getstate(Generator*,void**);
+extern int generator_reset(Generator*,void*);
 
-extern void generate_attrdata(struct Symbol*, Generator*, Writer writer);
-extern void generate_vardata(struct Symbol*, Generator*, Writer writer);
+typedef int (*Writer)(Generator*,struct Symbol*,Bytebuffer*,int,size_t*,size_t*);
+
+extern void generate_attrdata(struct Symbol*, Generator*, Writer writer, Bytebuffer*);
+extern void generate_vardata(struct Symbol*, Generator*, Writer writer,Bytebuffer*);
+extern void generate_basetype(struct Symbol*,Constant*,Bytebuffer*,Datalist*,Generator*);
 
 
 #endif /*DATA_H*/
