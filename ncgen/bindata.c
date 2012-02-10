@@ -143,6 +143,18 @@ bin_vlenstring(Generator* generator, Bytebuffer* codebuf, int* uidp, size_t* siz
     return 1;
 }
 
+static int
+bin_initialize(Generator* generator, Bytebuffer* buf, ...)
+{
+    return 1;
+}
+
+static int
+bin_finalize(Generator* generator, Bytebuffer* buf, ...)
+{
+    return 1;
+}
+
 
 /* Define the single static bin data generator  */
 static Generator bin_generator_singleton = {

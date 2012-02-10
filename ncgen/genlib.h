@@ -62,6 +62,7 @@ extern char* escapifychar(unsigned int c, char* s0, int quote);
 extern char* escapify(char*,int,size_t);
 extern char* escapifyname(char* s0);
 extern void cquotestring(Bytebuffer*,char quote);
+extern void f77quotestring(Bytebuffer*);
 extern char* f77escapifyname(char* s0);
 extern char* xescapify(char* s0, int quote, size_t len);
 extern char* jescapify(char* s0, int quote, size_t len);
@@ -107,6 +108,8 @@ extern Datalist* explodestrings(Datalist*,char*);
 extern Datalist* implodestrings(Datalist*,char*);
 extern int explodestringconst(Constant* con, char* tag, Constant*);
 
+extern char* indented(int n);
+
 /* Generators for cdf, c, and fortran */
 
 #ifdef ENABLE_BINARY
@@ -120,7 +123,6 @@ extern void cl_netcdf(void);
 extern void gen_ncc(const char *filename);
 extern void cl_c(void);
 extern const char* ctypename(Symbol*);
-extern char* indented(int n);
 extern const char* nctype(nc_type type);
 extern const char* ncctype(nc_type type);
 extern const char* ncstype(nc_type type);

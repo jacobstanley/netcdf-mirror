@@ -198,6 +198,18 @@ c_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* count
     return 1;
 }
 
+static int
+c_initialize(Generator* generator, Bytebuffer* buf, ...)
+{
+    return 1;
+}
+
+static int
+c_finalize(Generator* generator, Bytebuffer* buf, ...)
+{
+    return 1;
+}
+
 /* Define the single static bin data generator  */
 static Generator c_generator_singleton = {
     NULL,

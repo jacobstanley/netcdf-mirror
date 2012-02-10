@@ -103,10 +103,6 @@ extern Generator* c_generator;
 #ifdef ENABLE_F77
 /* from: f77data.c */
 extern Generator* f77_generator;
-void f77data_attrdata(struct Symbol* asym, Bytebuffer*);
-void f77data_array(struct Symbol*,Bytebuffer*,Datasrc*,Odometer*,int,Datalist*);
-char* f77data_const(Constant* ci);
-void f77quotestring(Bytebuffer* databuf);
 #endif
 
 #ifdef ENABLE_CML

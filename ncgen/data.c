@@ -660,3 +660,21 @@ emptystringconst(int lineno, Constant* c)
     c->value.stringv.stringv = NULL;
     return c;    
 }
+
+#define INDENTMAX 256
+static char* dent = NULL;
+
+char*
+indented(int n)
+{
+    char* indentation;
+    if(dent == NULL) {
+	dent = (char*)emalloc(INDENTMAX+1);
+	memset((void*)dent,' ',INDENTMAX);
+	dent[INDENTMAX] = '\0';	
+    }
+    if(n*4 >= INDENTMAX) n = INDENTMAX/4;
+    indentation = dent+(INDENTMAX - 4*n);
+    return indentation;
+}
+

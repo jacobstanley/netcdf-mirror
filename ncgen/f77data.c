@@ -10,7 +10,7 @@
 
 #include <math.h> 
 
-static int f77_uid = 0;
+int f77_uid = 0;
 
 static int
 f77_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
@@ -34,9 +34,11 @@ f77_charconstant(Generator* generator, Bytebuffer* codebuf, ...)
 }
 
 static int
-f77_constant(Generator* generator, Constant* ci, Bytebuffer* buf,...)
+f77_constant(Generator* generator, Constant* ci, Bytebuffer* codebuf,...)
 {
-    switch (ci->nctype);
+    char tmp[64];
+    char* special = NULL;
+    switch (ci->nctype) {
 
     case NC_CHAR:
 	{
@@ -68,23 +70,25 @@ f77_constant(Generator* generator, Constant* ci, Bytebuffer* buf,...)
 	    Bytebuffer* buf = bbNew();
 	    bbAppendn(buf,ci->value.stringv.stringv,ci->value.stringv.len);
 	    f77quotestring(buf);
-	    result = bbDup(buf);
+	    special = bbDup(buf);
 	    bbFree(buf);
-	    goto done;
 	}
 	break;
 
-    default: PANIC1("ncstype: bad type code: %d",con->nctype);
+    default: PANIC1("f77data: bad type code: %d",ci->nctype);
 
     }
-    bbFree(codetmp);
+    if(special != NULL)
+	bbCat(codebuf,special);
+    else
+	bbCat(codebuf,tmp);
     return 1;
 }
 
 static int
 f77_listbegin(Generator* generator, ListClass lc, size_t size, Bytebuffer* codebuf, int* uidp, ...)
 {
-    if(uidp) *uidp = ++c_uid;
+    if(uidp) *uidp = ++f77_uid;
     return 1;
 }
 
@@ -132,12 +136,25 @@ f77_vlendecl(Generator* generator, Bytebuffer* codebuf, Symbol* tsym, int uid, s
 static int
 f77_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* countp,...)
 {
-    if(uidp) *uidp = ++c_uid;
+    if(uidp) *uidp = ++f77_uid;
+    return 1;
+}
+
+
+static int
+f77_initialize(Generator* generator, Bytebuffer* buf, ...)
+{
+    return 1;
+}
+
+static int
+f77_finalize(Generator* generator, Bytebuffer* buf, ...)
+{
     return 1;
 }
 
 /* Define the single static bin data generator  */
-static Generator c_generator_singleton = {
+static Generator f77_generator_singleton = {
     NULL,
     f77_alignbuffer,
     f77_charconstant,

@@ -34,8 +34,8 @@
 
 /* Local Configuration flags*/
 #define ENABLE_BINARY
-#define ENABLE_C
-#undef ENABLE_F77
+#undef ENABLE_C
+#define ENABLE_F77
 #undef ENABLE_JAVA
 
 #include "netcdf.h"

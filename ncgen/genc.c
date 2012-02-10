@@ -12,8 +12,6 @@
 
 #undef TRACE
 
-extern List* vlenconstants;  /* List<Constant*>;*/
-
 /* Forward */
 static const char* groupncid(Symbol*);
 static const char* typencid(Symbol*);
@@ -498,23 +496,6 @@ cl_c(void)
  */
 
 
-#define INDENTMAX 256
-static char* dent = NULL;
-
-char*
-indented(int n)
-{
-    char* indentation;
-    if(dent == NULL) {
-	dent = (char*)emalloc(INDENTMAX+1);
-	memset((void*)dent,' ',INDENTMAX);
-	dent[INDENTMAX] = '\0';	
-    }
-    if(n*4 >= INDENTMAX) n = INDENTMAX/4;
-    indentation = dent+(INDENTMAX - 4*n);
-    return indentation;
-}
-
 
 /* return C name for netCDF type, given type code */
 const char *
@@ -916,8 +897,12 @@ genc_defineattr(Symbol* asym)
     /* we need to capture vlen strings for dumping */
     Bytebuffer* save = bbNew(); /* capture so we can dump
                                    vlens first */
+    List* oldstate = NULL;
+    generator_getstate(c_generator,&oldstate);
+    listfree(oldstate);
     generator_reset(c_generator,(void*)listnew());
     generate_attrdata(asym,c_generator,(Writer)genc_write,save);
+    bbFree(save);
 }
 
 static void
@@ -926,8 +911,12 @@ genc_definevardata(Symbol* vsym)
     Bytebuffer* save; /* capture so we can dump vlens first */
     if(vsym->data == NULL) return;
     save = bbNew();
+    List* oldstate = NULL;
+    generator_getstate(c_generator,&oldstate);
+    listfree(oldstate);
     generator_reset(c_generator,(void*)listnew());
     generate_vardata(vsym,c_generator,(Writer)genc_write,save);
+    bbFree(save);
 }
 
 static void
