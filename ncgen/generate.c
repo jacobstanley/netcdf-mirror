@@ -51,15 +51,14 @@ generate_attrdata(Symbol* asym, Generator* generator, Writer writer, Bytebuffer*
     } else {
 	int uid;
 	size_t count;
-        generator->listbegin(generator,ATTRLIST,asym->data->length,codebuf,NULL,&uid);
+        generator->listbegin(generator,LISTATTR,asym->data->length,codebuf,NULL,&uid);
         for(count=0;count<asym->data->length;count++) {
 	    Constant* con = datalistith(asym->data,count);
-	    generator->list(generator,ATTRLIST,uid,count,codebuf,NULL);
+	    generator->list(generator,LISTATTR,uid,count,codebuf,NULL);
             generate_basetype(asym->typ.basetype,con,codebuf,NULL,generator);
 	}
-        generator->listend(generator,ATTRLIST,uid,count,codebuf,NULL);
+        generator->listend(generator,LISTATTR,uid,count,codebuf,NULL);
     }
-
     writer(generator,asym,codebuf,0,NULL,NULL);
 }
 
@@ -147,14 +146,14 @@ generate_array(Symbol* vsym,
 
     if(lastdim) {
         /* data should be simple list of basetype objects */
-        generator->listbegin(generator,DATALIST,count,codebuf,&uid);
+        generator->listbegin(generator,LISTDATA,count,codebuf,&uid);
         for(i=0;i<count && odom->counter > 0;i++) {
             Constant* con = srcnext(src);
-            generator->list(generator,DATALIST,uid,i,codebuf);
+            generator->list(generator,LISTDATA,uid,i,codebuf);
             generate_basetype(basetype,con,codebuf,fillsrc,generator);
 	    odom->counter--;
         }
-        generator->listend(generator,DATALIST,uid,i,codebuf);
+        generator->listend(generator,LISTDATA,uid,i,codebuf);
     } else {
 	if(index > 0 && !lastdim && isunlimited) srcpush(src);
         /* now walk elements and generate recursively */
@@ -206,14 +205,14 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
         }
 	data = con->value.compoundv;
 	ASSERT(listlength(tsym->subnodes) >= data->length);
-	generator->listbegin(generator,COMPOUNDFIELDS,listlength(tsym->subnodes),codebuf,&uid);
+	generator->listbegin(generator,LISTCOMPOUND,listlength(tsym->subnodes),codebuf,&uid);
         for(i=0;i<listlength(tsym->subnodes);i++) {
             Symbol* field = (Symbol*)listget(tsym->subnodes,i);
 	    con = datalistith(data,i);
-	    generator->list(generator,COMPOUNDFIELDS,uid,i,codebuf);
+	    generator->list(generator,LISTCOMPOUND,uid,i,codebuf);
             generate_basetype(field,con,codebuf,NULL,generator);
 	}
-	generator->listend(generator,COMPOUNDFIELDS,uid,i,codebuf);
+	generator->listend(generator,LISTCOMPOUND,uid,i,codebuf);
 	} break;
 
     case NC_VLEN: {
@@ -240,12 +239,12 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	    gen_charvlen(data,vlenbuf);
 	    generator->vlenstring(generator,vlenbuf,&uid,&count);
 	} else {
-    	    generator->listbegin(generator,VLENLIST,data->length,codebuf,&uid);
+    	    generator->listbegin(generator,LISTVLEN,data->length,codebuf,&uid);
             for(count=0;count<data->length;count++) {
-   	        generator->list(generator,VLENLIST,uid,count,vlenbuf);
+   	        generator->list(generator,LISTVLEN,uid,count,vlenbuf);
                 generate_basetype(tsym->typ.basetype,datalistith(data,count),vlenbuf,NULL,generator);
 	    }
-   	    generator->listend(generator,VLENLIST,uid,count,codebuf,(void*)vlenbuf);
+   	    generator->listend(generator,LISTVLEN,uid,count,codebuf,(void*)vlenbuf);
 	}
 	generator->vlendecl(generator,codebuf,tsym,uid,count,vlenbuf);
 	bbFree(vlenbuf);
@@ -288,13 +287,13 @@ generate_fieldarray(Symbol* basetype, Constant* con, Dimset* dimset,
     } else {
 	int uid;
 	size_t xproduct = crossproduct(dimset,0,0); /* compute total number of elements */
-        generator->listbegin(generator,FIELDARRAY,xproduct,codebuf,NULL,&uid);
+        generator->listbegin(generator,LISTFIELDARRAY,xproduct,codebuf,NULL,&uid);
         for(i=0;i<xproduct;i++) {
 	    con = (data == NULL ? NULL : datalistith(data,i));
-	    generator->list(generator,FIELDARRAY,uid,i,codebuf,NULL);
+	    generator->list(generator,LISTFIELDARRAY,uid,i,codebuf,NULL);
             generate_basetype(basetype,con,codebuf,NULL,generator);
 	}
-        generator->listend(generator,FIELDARRAY,uid,i,codebuf,NULL);
+        generator->listend(generator,LISTFIELDARRAY,uid,i,codebuf,NULL);
     }
 }
 
@@ -316,7 +315,6 @@ generate_primdata(Symbol* basetype, Constant* prim, Bytebuffer* codebuf,
 
     if(target.nctype != NC_ECONST) {
 	convert1(prim,&target);
-        generator->alignbuffer(generator,&target,codebuf);
     }
 
     switch (target.nctype) {

@@ -759,6 +759,7 @@ genf77_writevar(Generator* generator, Symbol* vsym, Bytebuffer* code,
         codeline("call check_err(stat)");
 	f77skip();
     } else if(rank == 0) {
+	commify(code); /* insert commas as needed */
         bbprintf0(stmt,"data %s /%s/\n",
 			    f77name(vsym),bbContents(code));
 	codedump(stmt);
@@ -825,6 +826,7 @@ genf77_writevar(Generator* generator, Symbol* vsym, Bytebuffer* code,
         codedump(stmt);
 
         /* Generate the data // statement */
+	commify(code); /* insert commas as needed */
         bbprintf0(stmt,"data %s /",f77name(vsym));
         bbCatbuf(stmt,code);
         bbCat(stmt,"/\n");

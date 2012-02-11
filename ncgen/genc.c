@@ -965,6 +965,10 @@ genc_writevar(Generator* generator, Symbol* vsym, Bytebuffer* code,
 			    cname(vsym),
 			    bbContents(code));
 	} else {
+	    /* We make the data be an array so we do not need to
+               ampersand it later => we need an outer pair of braces
+            */
+	    commify(code); /* insert commas at proper places */
             bbprintf0(stmt,"%sstatic %s %s_data[1] = {%s};\n",
 			    indented(1),
 			    ctypename(basetype),
@@ -999,6 +1003,7 @@ genc_writevar(Generator* generator, Symbol* vsym, Bytebuffer* code,
 	    length = 1;
     	    for(i=0;i<rank;i++) length *= count[i];
 	    /* generate data constant */
+	    commify(code); /* insert commas at proper places */
 	    bbprintf(stmt,"%s%s %s_data[%lu] = ",
 			indented(1),
 			ctypename(basetype),

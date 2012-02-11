@@ -10,7 +10,7 @@ PARMS="${PARMS}[prefetch]"
 #PARMS="${PARMS}[noprefetch]"
 PARMS="${PARMS}[show=fetch]"
 
-F="file://${TOPDIR}/ncdap_test/testdata3/synth2"
+F="file://${TOPDIR}/ncdap_test/testdata3/1998-6-avhrr.dat"
 
 PROG="./ncd"
 #PROG="../ncdump/ncdump"

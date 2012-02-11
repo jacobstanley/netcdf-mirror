@@ -346,7 +346,8 @@ datalistline(Datalist* ds)
    and insert commas as needed; ideally, this
    operation should be idempotent so that
    the caller need not worry about it having already
-   been applied.
+   been applied. Also, handle situation where there may be missing
+   matching right braces.
 */
 
 static char* commifyr(char* p, Bytebuffer* buf);
@@ -366,6 +367,9 @@ commify(Bytebuffer* buf)
     efree(list);
 }
 
+/* Requires that the string be balanced
+   WRT to braces
+*/
 static char*
 commifyr(char* p, Bytebuffer* buf)
 {
@@ -374,7 +378,9 @@ commifyr(char* p, Bytebuffer* buf)
     while((c=*p++)) {
 	if(c == ' ') continue;
 	if(c == ',') continue;
-	else if(c == '}') break;
+	else if(c == '}') {
+	    break;
+	}
 	if(comma) bbCat(buf,", "); else comma=1;
 	if(c == '{') {
 	    bbAppend(buf,'{');

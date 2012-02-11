@@ -13,12 +13,6 @@
 static int j_uid = 0;
 
 static int
-j_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
-{
-    return 1;
-}
-
-static int
 j_charconstant(Generator* generator, Bytebuffer* codebuf, ...)
 {
     /* Escapes and quoting will be handled in genc_write */
@@ -95,12 +89,12 @@ j_listbegin(Generator* generator, ListClass lc, size_t size, Bytebuffer* codebuf
 {
     if(uidp) *uidp = ++j_uid;
     switch (lc) {
-    case ATTRLIST:
-    case DATALIST:
+    case LISTATTR:
+    case LISTDATA:
 	break;
-    case FIELDARRAY:
-    case VLENLIST:
-    case COMPOUNDFIELDS:
+    case LISTFIELDARRAY:
+    case LISTVLEN:
+    case LISTCOMPOUND:
 	break;
     }
     return 1;
@@ -110,15 +104,15 @@ static int
 j_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* codebuf, ...)
 {
     switch (lc) {
-    case ATTRLIST:
+    case LISTATTR:
         if(count > 0) bbCat(codebuf,", ");
 	break;
-    case DATALIST:
+    case LISTDATA:
         bbCat(codebuf," ");
 	break;
-    case VLENLIST:
-    case COMPOUNDFIELDS:
-    case FIELDARRAY:
+    case LISTVLEN:
+    case LISTCOMPOUND:
+    case LISTFIELDARRAY:
 	break;
     }
     return 1;
@@ -127,18 +121,6 @@ j_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* co
 static int
 j_listend(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* buf, ...)
 {
-    switch (lc) {
-	break;
-    case ATTRLIST:
-	break;
-    case DATALIST:
-        commify(buf);
-	break;
-    case VLENLIST:
-    case FIELDARRAY:
-    case COMPOUNDFIELDS:
-	break;
-    }
     return 1;
 }
 
@@ -156,10 +138,10 @@ j_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* count
     return 1;
 }
 
+
 /* Define the single static bin data generator  */
 static Generator j_generator_singleton = {
     NULL,
-    j_alignbuffer,
     j_charconstant,
     j_constant,
     j_listbegin,

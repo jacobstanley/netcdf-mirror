@@ -469,6 +469,7 @@ genj_writevar(Generator* generator, Symbol* vsym, Bytebuffer* code,
 	    bbprintf0(stmt,"%sdata.set((char)%s);\n",
 			  indented(1),bbContents(code));
 	} else {
+	    commify(code);
             bbprintf0(stmt,"%sdata.set((%s)%s);\n",
 	 	      indented(1),jtype(typecode),bbContents(code));
         }

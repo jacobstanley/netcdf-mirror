@@ -11,13 +11,6 @@
 static int bin_uid = 0;
 
 static int
-bin_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
-{
-    alignbuffer(con,buf);
-    return 1;
-}
-
-static int
 bin_charconstant(Generator* generator, Bytebuffer* buf, ...)
 {
     /* Just transfer charbuf to codebuf */
@@ -34,6 +27,9 @@ bin_charconstant(Generator* generator, Bytebuffer* buf, ...)
 static int
 bin_constant(Generator* generator, Constant* con, Bytebuffer* buf,...)
 {
+    if(con->nctype != NC_ECONST) {
+        alignbuffer(con,buf);
+    }
     switch (con->nctype) {
     case NC_OPAQUE: {
         unsigned char* bytes;
@@ -143,23 +139,9 @@ bin_vlenstring(Generator* generator, Bytebuffer* codebuf, int* uidp, size_t* siz
     return 1;
 }
 
-static int
-bin_initialize(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-static int
-bin_finalize(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-
 /* Define the single static bin data generator  */
 static Generator bin_generator_singleton = {
     NULL,
-    bin_alignbuffer,
     bin_charconstant,
     bin_constant,
     bin_listbegin,

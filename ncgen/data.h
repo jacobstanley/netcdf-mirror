@@ -166,12 +166,11 @@ void gen_chararray(struct Dimset*, Datalist*, Bytebuffer*, Datalist* fillsrc);
 #define UNKNOWN ((size_t)0)
 
 typedef enum ListClass {
-    DATALIST, ATTRLIST, VLENLIST, COMPOUNDFIELDS, FIELDARRAY
+    LISTDATA, LISTATTR, LISTVLEN, LISTCOMPOUND, LISTFIELDARRAY
 } ListClass;
 
 struct Generator {
     void* state;
-        int (*alignbuffer)(Generator*,Constant*,Bytebuffer*);
         int (*charconstant)(Generator*,Bytebuffer*,...);
         int (*constant)(Generator*,Constant*,Bytebuffer*,...);
         int (*listbegin)(Generator*,ListClass,size_t,Bytebuffer*,int*,...);

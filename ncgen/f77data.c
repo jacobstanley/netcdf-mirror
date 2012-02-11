@@ -13,12 +13,6 @@
 int f77_uid = 0;
 
 static int
-f77_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
-{
-    return 1;
-}
-
-static int
 f77_charconstant(Generator* generator, Bytebuffer* codebuf, ...)
 {
     /* Escapes and quoting will be handled in genc_write */
@@ -96,15 +90,15 @@ static int
 f77_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* codebuf, ...)
 {
     switch (lc) {
-    case ATTRLIST:
+    case LISTATTR:
         if(count > 0) bbCat(codebuf,", ");
 	break;
-    case DATALIST:
+    case LISTDATA:
         bbAppend(codebuf,' ');
 	break;
-    case VLENLIST:
-    case COMPOUNDFIELDS:
-    case FIELDARRAY:
+    case LISTVLEN:
+    case LISTCOMPOUND:
+    case LISTFIELDARRAY:
 	break;
     }
     return 1;
@@ -113,17 +107,6 @@ f77_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* 
 static int
 f77_listend(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* buf, ...)
 {
-    switch (lc) {
-    case ATTRLIST:
-	break;
-    case DATALIST:
-        commify(buf);
-	break;
-    case VLENLIST:
-    case FIELDARRAY:
-    case COMPOUNDFIELDS:
-	break;
-    }
     return 1;
 }
 
@@ -140,11 +123,9 @@ f77_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* cou
     return 1;
 }
 
-
 /* Define the single static bin data generator  */
 static Generator f77_generator_singleton = {
     NULL,
-    f77_alignbuffer,
     f77_charconstant,
     f77_constant,
     f77_listbegin,

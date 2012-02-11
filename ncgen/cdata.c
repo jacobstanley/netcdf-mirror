@@ -13,12 +13,6 @@
 static int c_uid = 0;
 
 static int
-c_alignbuffer(Generator* generator, Constant* con, Bytebuffer* buf)
-{
-    return 1;
-}
-
-static int
 c_charconstant(Generator* generator, Bytebuffer* codebuf, ...)
 {
     /* Escapes and quoting will be handled in genc_write */
@@ -120,12 +114,12 @@ c_listbegin(Generator* generator, ListClass lc, size_t size, Bytebuffer* codebuf
 {
     if(uidp) *uidp = ++c_uid;
     switch (lc) {
-    case VLENLIST:
-    case ATTRLIST:
-    case DATALIST:
-    case FIELDARRAY:
+    case LISTVLEN:
+    case LISTATTR:
+    case LISTDATA:
 	break;
-    case COMPOUNDFIELDS:
+    case LISTFIELDARRAY:
+    case LISTCOMPOUND:
         bbAppend(codebuf,'{');
 	break;
     }
@@ -136,13 +130,13 @@ static int
 c_list(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* codebuf, ...)
 {
     switch (lc) {
-    case VLENLIST:
-    case ATTRLIST:
+    case LISTVLEN:
+    case LISTATTR:
         if(count > 0) bbCat(codebuf,", ");
 	break;
-    case DATALIST:
-    case COMPOUNDFIELDS:
-    case FIELDARRAY:
+    case LISTDATA:
+    case LISTCOMPOUND:
+    case LISTFIELDARRAY:
         bbAppend(codebuf,' ');
 	break;
     }
@@ -153,16 +147,13 @@ static int
 c_listend(Generator* generator, ListClass lc, int uid, size_t count, Bytebuffer* buf, ...)
 {
     switch (lc) {
-    case VLENLIST:
+    case LISTCOMPOUND:
+    case LISTFIELDARRAY:
+	bbAppend(buf,'}');
 	break;
-    case ATTRLIST:
-	break;
-    case DATALIST:
-    case FIELDARRAY:
-        commify(buf);
-	break;
-    case COMPOUNDFIELDS:
-        commify(buf);
+    case LISTDATA:
+    case LISTVLEN:
+    case LISTATTR:
 	break;
     }
     return 1;
@@ -182,6 +173,7 @@ c_vlendecl(Generator* generator, Bytebuffer* codebuf, Symbol* tsym, int uid, siz
     bbprintf0(decl,"static const %s vlen_%u[] = {",
 	        ctypename(tsym->typ.basetype),
                 uid);
+    commify(vlenbuf);
     bbCatbuf(decl,vlenbuf);
     bbCat(decl,"} ;");
     listpush(declstack,(elem_t)decl);
@@ -198,22 +190,9 @@ c_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* count
     return 1;
 }
 
-static int
-c_initialize(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-static int
-c_finalize(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
 /* Define the single static bin data generator  */
 static Generator c_generator_singleton = {
     NULL,
-    c_alignbuffer,
     c_charconstant,
     c_constant,
     c_listbegin,
