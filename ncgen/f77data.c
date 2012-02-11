@@ -141,18 +141,6 @@ f77_vlenstring(Generator* generator, Bytebuffer* vlenmem, int* uidp, size_t* cou
 }
 
 
-static int
-f77_initialize(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
-static int
-f77_finalize(Generator* generator, Bytebuffer* buf, ...)
-{
-    return 1;
-}
-
 /* Define the single static bin data generator  */
 static Generator f77_generator_singleton = {
     NULL,

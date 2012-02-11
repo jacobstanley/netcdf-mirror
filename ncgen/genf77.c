@@ -31,7 +31,6 @@ static const char* nfstype(nc_type nctype);
 static const char* ncftype(nc_type type);
 static const char* nfdtype(nc_type type);
 
-
 static void f77skip(void);
 static void f77comment(char* cmt);
 static void f77fold(Bytebuffer* lines);

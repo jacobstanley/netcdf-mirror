@@ -114,12 +114,14 @@ extern char* indented(int n);
 
 #ifdef ENABLE_BINARY
 /* from: genbin.c */
+extern Generator* bin_generator;
 extern void gen_netcdf(const char *filename);
 extern void cl_netcdf(void);
 #endif
 
 #ifdef ENABLE_C
 /* from: genc.c */
+extern Generator* c_generator;
 extern void gen_ncc(const char *filename);
 extern void cl_c(void);
 extern const char* ctypename(Symbol*);
@@ -130,22 +132,16 @@ extern const char* ncstype(nc_type type);
 
 #ifdef ENABLE_F77
 /* from: genf77.c */
+extern Generator* f77_generator;
 extern void gen_ncf77(const char *filename);
 extern void cl_f77(void);
 extern const char* f77name(Symbol*);
 extern const char* f77typename(Symbol*);
 #endif
 
-#ifdef ENABLE_CML
-/* from: gencml.c */
-extern void gen_nccml(const char *filename);
-extern void cl_cml(void);
-extern char* xname(struct Symbol* sym);
-extern char* xtypename(struct Symbol* tsym);
-#endif
-
 #ifdef ENABLE_JAVA
 /* from: genj.c */
+extern Generator* j_generator;
 extern void gen_ncjava(const char *filename);
 extern void cl_java(void);
 extern void jpartial(char*);
@@ -153,6 +149,7 @@ extern void jline(char*);
 extern void jlined(int,char*);
 extern void jflush(void);
 #endif
+
 
 /* from: main.c */
 extern int format_flag;   /* _Format attribute value (same range as -k flag) */

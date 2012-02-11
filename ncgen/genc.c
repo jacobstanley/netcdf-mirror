@@ -898,7 +898,7 @@ genc_defineattr(Symbol* asym)
     Bytebuffer* save = bbNew(); /* capture so we can dump
                                    vlens first */
     List* oldstate = NULL;
-    generator_getstate(c_generator,&oldstate);
+    generator_getstate(c_generator,(void*)&oldstate);
     listfree(oldstate);
     generator_reset(c_generator,(void*)listnew());
     generate_attrdata(asym,c_generator,(Writer)genc_write,save);
@@ -909,10 +909,10 @@ static void
 genc_definevardata(Symbol* vsym)
 {
     Bytebuffer* save; /* capture so we can dump vlens first */
+    List* oldstate = NULL;
     if(vsym->data == NULL) return;
     save = bbNew();
-    List* oldstate = NULL;
-    generator_getstate(c_generator,&oldstate);
+    generator_getstate(c_generator,(void*)&oldstate);
     listfree(oldstate);
     generator_reset(c_generator,(void*)listnew());
     generate_vardata(vsym,c_generator,(Writer)genc_write,save);

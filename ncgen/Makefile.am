@@ -66,13 +66,11 @@ ctest::
 	diff -wBb ${CTEST}.cdl ${CTEST}.dmp
 
 
-ftest::
-	./ncgen -lf77 ${CTEST}.cdl >${CTEST}.f77
-	CFLAGS=`../nc-config --cflags`  \
-	LDFLAGS=`../nc-config --libs`  \
-	gfortran -o ${CTEST} -I../include ${CFLAGS} ${CTEST}.c ../liblib/.libs/libnetcdf.a ${LDFLAGS} -lm
-	./${CTEST}
-	../ncdump/ncdump ./${CTEST}.nc >${CTEST}.dmp
-	diff -wBb ${CTEST}.cdl ${CTEST}.dmp
+CLASSPATH=".:ncCore-4.2.jar"
+jtest::
+	./ncgen -lj ${CTEST}.cdl >Main.java
+	javac -d . -classpath "${CLASSPATH}" Main.java
 
-
+#	java -cp ${CPATH} ./${CTEST}
+#	../ncdump/ncdump ./${CTEST}.nc >${CTEST}.dmp
+#	diff -wBb ${CTEST}.cdl ${CTEST}.dmp

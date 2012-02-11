@@ -90,48 +90,7 @@ struct Vlendata {
 };
 extern struct Vlendata* vlendata;
 
-#ifdef ENABLE_BINARY
-/* from: bindata.c */
-extern Generator* bin_generator;
-#endif
-
-#ifdef ENABLE_C
-/* from: cdata.c */
-extern Generator* c_generator;
-#endif
-
-#ifdef ENABLE_F77
-/* from: f77data.c */
-extern Generator* f77_generator;
-#endif
-
-#ifdef ENABLE_CML
-/* from: cmldata.c */
-extern Generator* cml_generator;
-void gencml_attrdata(struct Symbol* asym, Bytebuffer*);
-void gencml_scalardata(struct Symbol* vsym, Bytebuffer*);
-void gencml_arraydata(struct Symbol* vsym, Bytebuffer*);
-void gencml_vlenconstants(List*, Bytebuffer*);
-void gencml_fillvalue(struct Symbol*, Datalist*, Datasrc*, Bytebuffer*);
-void xquotestring(Bytebuffer* databuf);
-char* xconst(Constant* ci);
-#endif
-
-#ifdef ENABLE_JAVA
-/* from: jdata.c */
-extern Generator* j_generator;
-void jdata_array(struct Symbol*,Bytebuffer*,Datasrc*,Odometer*,int,Datalist*);
-char* jdata_const(Constant* ci);
-void jquotestring(Bytebuffer* databuf, char);
-#endif
-
 /* from: data.c */
-
-/* Convenience*/
-
-#define SRCPUSH(iscmpd,src) {if(((iscmpd)=issublist(src))) {srcpush(src);}}
-#define SRCPOP(iscmpd,src) {if((iscmpd)) {srcpop(src);}}
-
 int issublist(Datasrc* src);
 int isstring(Datasrc* src);
 int isfillvalue(Datasrc* src);
@@ -147,33 +106,22 @@ void freedatasrc(Datasrc* src);
 void srcpush(Datasrc*);
 void srcpushlist(Datasrc* src, Datalist* cmpd);
 void srcpop(Datasrc*);
-void srcmoveto(Datasrc*,size_t);
-void srcmove(Datasrc*,size_t);
 void srcsetfill(Datasrc* ds, Datalist* list);
 
-Datalist* datalistclone(Datalist* dl);
-Datalist* datalistconcat(Datalist* dl1, Datalist* dl2);
-Datalist* datalistappend(Datalist* dl, Constant* con);
-Datalist* datalistreplace(Datalist* dl, unsigned int index, Constant* con);
 int       datalistline(Datalist*);
 #define   datalistith(dl,i) ((i) >= (dl)->length?NULL:&(dl)->data[i])
 
 Constant* srcnext(Datasrc*);
-int srclast(Datasrc*); /* are we at the last entry ? */
 int srcmore(Datasrc*);
 int srcline(Datasrc* ds);
-void srcsplice(Datasrc* ds, Datalist* list);
 
 #define islistconst(con) ((con)!=NULL && (con)->nctype == NC_COMPOUND)
 #define isfillconst(con) ((con)!=NULL && (con)->nctype == NC_FILLVALUE)
 #define constline(con) (con==NULL?0:(con)->lineno)
-Constant* emptycompoundconst(int,Constant*);
+
 Constant* emptystringconst(int,Constant*);
 
-Constant gen_string(unsigned long, Datasrc*);
-int stringimplode(Constant* con);
 Constant cloneconstant(Constant* con); /* shallow clone*/
-Constant gen_stringall(unsigned long size, Datasrc* src, unsigned long);
 
 void alignbuffer(struct Constant* prim, Bytebuffer* buf);
 

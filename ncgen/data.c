@@ -222,21 +222,6 @@ srcsplice(Datasrc* ds, Datalist* list)
 }
 
 void
-srcmove(Datasrc* ds, size_t delta)
-{
-    srcmoveto(ds,ds->index+delta);
-}
-
-void
-srcmoveto(Datasrc* ds, size_t pos)
-{
-    if(pos >= ds->length)
-	ds->index = ds->length;
-    else
-        ds->index = pos;
-}
-
-void
 srcsetfill(Datasrc* ds, Datalist* list)
 {
     if(ds->index >= ds->length) PANIC("srcsetfill: no space");
@@ -593,10 +578,10 @@ retry:	    switch ((c=*p++)) {
 		break;
             case 'f':
 		if(lcount > 0) {
-   	            snprintf(tmp,sizeof(tmp),"%.16g",
+   	            snprintf(tmp,sizeof(tmp),"((double)%.16g)",
 			(double)va_arg(argv,double));
 		} else {
-   	            snprintf(tmp,sizeof(tmp),"%.8g",
+   	            snprintf(tmp,sizeof(tmp),"((float)%.8g)",
 			(double)va_arg(argv,double));
 		}
 		bbCat(buf,tmp);
