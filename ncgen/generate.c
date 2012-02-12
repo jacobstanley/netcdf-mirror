@@ -204,7 +204,6 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	    semerror(constline(con),"Compound data must be enclosed in {..}");
         }
 	data = con->value.compoundv;
-	ASSERT(listlength(tsym->subnodes) >= data->length);
 	generator->listbegin(generator,LISTCOMPOUND,listlength(tsym->subnodes),codebuf,&uid);
         for(i=0;i<listlength(tsym->subnodes);i++) {
             Symbol* field = (Symbol*)listget(tsym->subnodes,i);
@@ -252,6 +251,9 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 
     case NC_FIELD:
 	if(tsym->typ.dimset.ndims > 0) {
+	    /* Verify that we have a sublist (or fill situation) */
+	    if(con != NULL && !isfillconst(con) && !islistconst(con)) 
+		semerror(constline(con),"Dimensioned fields must be enclose in {...}");
             generate_fieldarray(tsym->typ.basetype,con,&tsym->typ.dimset,codebuf,fillsrc,generator);
 	} else {
 	    generate_basetype(tsym->typ.basetype,con,codebuf,NULL,generator);

@@ -109,7 +109,7 @@ void srcpop(Datasrc*);
 void srcsetfill(Datasrc* ds, Datalist* list);
 
 int       datalistline(Datalist*);
-#define   datalistith(dl,i) ((i) >= (dl)->length?NULL:&(dl)->data[i])
+#define   datalistith(dl,i) ((dl)==NULL?NULL:((i) >= (dl)->length?NULL:&(dl)->data[i]))
 
 Constant* srcnext(Datasrc*);
 int srcmore(Datasrc*);

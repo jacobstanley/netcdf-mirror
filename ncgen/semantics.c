@@ -830,6 +830,7 @@ computeunlimitedsizes(Dimset* dimset, int dimindex, Datalist* data, int ischar)
     size_t xproduct, unlimsize;
     int nextunlim,lastunlim;
     Symbol* thisunlim = dimset->dimsyms[dimindex];
+    size_t length;
     
     ASSERT(thisunlim->dim.isunlimited);
     nextunlim = findunlimited(dimset,dimindex+1);
@@ -837,8 +838,25 @@ computeunlimitedsizes(Dimset* dimset, int dimindex, Datalist* data, int ischar)
 
     xproduct = crossproduct(dimset,dimindex+1,nextunlim);
 
-    if(lastunlim) {
-	size_t length;
+    if(!lastunlim) {
+        /*!lastunlim => data is list of sublists, recurse on each sublist*/
+	for(i=0;i<data->length;i++) {
+	    Constant* con = data->data+i;
+	    ASSERT(con->nctype == NC_COMPOUND);
+	    computeunlimitedsizes(dimset,nextunlim,con->value.compoundv,ischar);
+	}
+	/* Compute candiate size of this unlimited */
+        length = data->length;
+	unlimsize = length / xproduct;
+	if(length % xproduct != 0)
+	    unlimsize++; /* => fill requires at some point */
+#ifdef DEBUG2
+fprintf(stderr,"unlimsize: dim=%s declsize=%d xproduct=%d newsize=%d\n",
+thisunlim->name,thisunlim->dim.declsize,xproduct,unlimsize);
+#endif
+	if(thisunlim->dim.declsize < unlimsize) /* want max length of the unlimited*/
+            thisunlim->dim.declsize = unlimsize;
+    } else {//lastunlim
 	if(ischar) {
 	    /* Char case requires special computations;
 	       compute total number of characters */
@@ -868,13 +886,6 @@ thisunlim->name,thisunlim->dim.declsize,xproduct,unlimsize);
 #endif
 	if(thisunlim->dim.declsize < unlimsize) /* want max length of the unlimited*/
             thisunlim->dim.declsize = unlimsize;
-
-    } else { /*!lastdim => data is list of sublists, recurse on each sublist*/
-	for(i=0;i<data->length;i++) {
-	    Constant* con = data->data+i;
-	    ASSERT(con->nctype == NC_COMPOUND);
-	    computeunlimitedsizes(dimset,nextunlim,con->value.compoundv,ischar);
-	}
     }
 }
 

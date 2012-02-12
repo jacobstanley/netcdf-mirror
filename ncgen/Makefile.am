@@ -65,6 +65,12 @@ ctest::
 	../ncdump/ncdump ./${CTEST}.nc >${CTEST}.dmp
 	diff -wBb ${CTEST}.cdl ${CTEST}.dmp
 
+ct::
+	CFLAGS=`../nc-config --cflags`  \
+	LDFLAGS=`../nc-config --libs`  \
+	gcc -o t -I../include ${CFLAGS} t.c ../liblib/.libs/libnetcdf.a ${LDFLAGS} -lm
+	./t
+
 
 CLASSPATH=".:ncCore-4.2.jar"
 jtest::

@@ -370,6 +370,7 @@ genbin_writevar(Generator* generator, Symbol* vsym, Bytebuffer* memory,
            int rank, size_t* start, size_t* count)
 {
     int stat = NC_NOERR;
+    char* data = bbContents(memory);
 
 #ifdef DEBUG
     {
@@ -388,12 +389,9 @@ genbin_writevar(Generator* generator, Symbol* vsym, Bytebuffer* memory,
 	
     if(rank == 0) {
 	size_t count[1] = {1};
-        stat = nc_put_var1(vsym->container->ncid, vsym->ncid, count,
-                           bbContents(memory));
+        stat = nc_put_var1(vsym->container->ncid, vsym->ncid, count, data);
     } else {
-        stat = nc_put_vara(vsym->container->ncid, vsym->ncid,
-                       start, count,
-                       bbContents(memory));
+        stat = nc_put_vara(vsym->container->ncid, vsym->ncid, start, count, data);
     }
     check_err(stat,__LINE__,__FILE__);
     bbClear(memory);
