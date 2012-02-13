@@ -6,6 +6,8 @@
 
 #include "includes.h"
 
+#define DATALISTINIT 32
+
 /* Track primitive symbol instances (initialized in ncgen.y) */
 Symbol* primsymbols[PRIMNO];
 
@@ -488,7 +490,6 @@ dlsetalloc(Datalist* dl, size_t newalloc)
     dl->data = newdata;
 }
 
-#define DATALISTINIT 256
 
 Datalist*
 builddatalist(int initial)

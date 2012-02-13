@@ -14,7 +14,8 @@
 /* For datalist constant rules: see the rules on the man page */
 
 /* Forward*/
-static void generate_array(Symbol*,Bytebuffer*,Datasrc*,Odometer*,int,Datalist*,Generator*);
+static void generate_array(Symbol*,Bytebuffer*,Datalist*,Generator*,Writer);
+static void generate_arrayr(Symbol*,Bytebuffer*,Datalist*,Odometer*,int,Datalist*,Generator*);
 static void generate_primdata(Symbol*, Constant*, Bytebuffer*, Datalist* fillsrc, Generator*);
 static void generate_fieldarray(Symbol*, Constant*, Dimset*, Bytebuffer*, Datalist* fillsrc, Generator*);
 
@@ -51,134 +52,187 @@ generate_attrdata(Symbol* asym, Generator* generator, Writer writer, Bytebuffer*
     } else {
 	int uid;
 	size_t count;
-        generator->listbegin(generator,LISTATTR,asym->data->length,codebuf,NULL,&uid);
+        generator->listbegin(generator,LISTATTR,asym->data->length,codebuf,&uid);
         for(count=0;count<asym->data->length;count++) {
 	    Constant* con = datalistith(asym->data,count);
-	    generator->list(generator,LISTATTR,uid,count,codebuf,NULL);
+	    generator->list(generator,LISTATTR,uid,count,codebuf);
             generate_basetype(asym->typ.basetype,con,codebuf,NULL,generator);
 	}
-        generator->listend(generator,LISTATTR,uid,count,codebuf,NULL);
+        generator->listend(generator,LISTATTR,uid,count,codebuf);
     }
     writer(generator,asym,codebuf,0,NULL,NULL);
 }
 
 void
-generate_vardata(Symbol* vsym, Generator* generator, Writer write, Bytebuffer* code)
+generate_vardata(Symbol* vsym, Generator* generator, Writer writer, Bytebuffer* code)
 {
     Dimset* dimset = &vsym->typ.dimset;
-    int isscalar = (dimset->ndims == 0);
-    Datalist* fillsrc = NULL;
-    Odometer* odom = NULL;
-    int chartype = (vsym->typ.basetype->typ.typecode == NC_CHAR);
-    Datasrc* src = NULL;
+    int rank = dimset->ndims;
+    Symbol* basetype = vsym->typ.basetype;
+    Datalist* filler = getfiller(vsym);
 
     if(vsym->data == NULL) return;
 
     /* give the buffer a running start to be large enough*/
     bbSetalloc(code, nciterbuffersize);
 
-    /* Fill in the local odometer instance */
-    odom = newodometer(dimset,NULL,NULL);
+    if(rank == 0) {/*scalar case*/
+	Constant* c0 = datalistith(vsym->data,0);
+        generate_basetype(basetype,c0,code,filler,generator);
+        writer(generator,vsym,code,0,NULL,NULL);
+    } else {/*rank > 0*/
+	generate_array(vsym,code,filler,generator,writer);
+    }
+}
+		
+static void
+generate_array(Symbol* vsym,
+               Bytebuffer* code,
+               Datalist* filler,
+               Generator* generator,
+	       Writer writer
+              )
+{
+    Dimset* dimset = &vsym->typ.dimset;
+    int rank = dimset->ndims;
+    Symbol* basetype = vsym->typ.basetype;
+    nc_type typecode = basetype->typ.typecode;
+    Odometer* odom;
+    nciter_t iter;
 
-    if(chartype) { /* Handle separately */
+    ASSERT(rank > 0);
+
+    /* Start by doing the two easy cases */
+
+    if(typecode == NC_CHAR) { /* case 1: character typed variable, rank > 0 */
 	Bytebuffer* charbuf = bbNew();
-        gen_chararray(dimset,vsym->data,charbuf,fillsrc);
+        odom = newodometer(dimset,NULL,NULL);
+        gen_chararray(dimset,vsym->data,charbuf,filler);
 	generator->charconstant(generator,code,charbuf);
 	bbFree(charbuf);
-	/* patch the odometer to use the right counts */
-        write(generator,vsym,code,odom->rank,odom->start,odom->count);
-    } else { /* not character constant */
-        fillsrc = vsym->var.special._Fillvalue;
-        /* Handle special cases first*/
-        if(isscalar) {
-            generate_basetype(vsym->typ.basetype,datalistith(vsym->data,0),code,fillsrc,generator);
-            write(generator,vsym,code,0,NULL,NULL);
-        } else { /* Non-scalar */
-            nciter_t iter;
-            src = datalist2src(vsym->data);
-            /* Create an iterator to generate blocks of data */
-            nc_get_iter(vsym,nciterbuffersize,&iter);
-            for(;;) {
-                size_t nelems=nc_next_iter(&iter,odom->start,odom->count);
-                if(nelems == 0) break;
-		odom->counter = nelems;		
-                generate_array(vsym,code,src,odom,
-                               /*dim index=*/0,
-			       fillsrc,generator
-			       );
-		ASSERT(odom->counter == 0);
-                write(generator,vsym,code,odom->rank,odom->start,odom->count);
-            }
-	    /* See if we have too much data */
-	    if(srcmore(src)) {
-		semwarn(srcline(src),"Extra data found at end of datalist");
-	    }	
-	    odometerfree(odom);
+        writer(generator,vsym,code,odom->rank,odom->start,odom->count);
+    } else
+
+    /* Case 2: the only unlimited is dimension 0 */
+    if(findunlimited(dimset,1) == rank) {
+        /* Create an iterator and odometer and just walk the datalist */
+        nc_get_iter(vsym,nciterbuffersize,&iter);
+        odom = newodometer(dimset,NULL,NULL);
+	for(;;) {
+	     int i,uid;
+             size_t nelems=nc_next_iter(&iter,odom->start,odom->count);
+             if(nelems == 0) break;
+             generator->listbegin(generator,LISTDATA,vsym->data->length,code,&uid);
+	     for(i=0;i<nelems;i++) {
+	 	 Constant* con = datalistith(vsym->data,i);
+                 generator->list(generator,LISTDATA,uid,i,code);
+                 generate_basetype(basetype,con,code,filler,generator);
+ 	    }
+	    generator->listend(generator,LISTDATA,uid,i,code);
+            writer(generator,vsym,code,rank,odom->start,odom->count);
+	}
+    } else
+
+    { /* Hard case: multiple unlimited dimensions */
+        /* Setup iterator and odometer */
+        nc_get_iter(vsym,nciterbuffersize,&iter);
+        odom = newodometer(dimset,NULL,NULL);
+	for(;;) {/* iterate in nelem chunks */
+	    /* get nelems count and modify odometer */
+   	    size_t nelems=nc_next_iter(&iter,odom->start,odom->count);
+	    if(nelems == 0) break;
+            generate_arrayr(vsym,code,vsym->data,
+			    odom,
+                            /*dim index=*/0,
+			    filler,generator
+			   );
+            writer(generator,vsym,code,odom->rank,odom->start,odom->count);
         }
     }
+    odometerfree(odom);
 }
 
 static void
-generate_array(Symbol* vsym,
-		  Bytebuffer* codebuf,
-		  Datasrc* src,
-		  Odometer* odom,
-	          int index,
-		  Datalist* fillsrc,
-		  Generator* generator
-		)
+generate_arrayr(Symbol* vsym,
+               Bytebuffer* code,
+               Datalist* list,
+	       Odometer* odom,
+               int dimindex,
+               Datalist* filler,
+               Generator* generator
+              )
 {
-    int i;
     Symbol* basetype = vsym->typ.basetype;
     Dimset* dimset = &vsym->typ.dimset;
     int rank = dimset->ndims;
-    int lastdim = (index == (rank - 1)); /* last dimension*/
-    int isunlimited = dimset->dimsyms[index]->dim.isunlimited;
-    int uid;
-    size_t count;
+    int lastunlimited;
 
-    if(odom->counter == 0) return; /* stop writing for now */
+    lastunlimited = findlastunlimited(dimset);
+    if(lastunlimited == rank) lastunlimited = 0;
 
-    ASSERT(index >= 0 && index < rank);
+    ASSERT(rank > 0);
+    ASSERT(dimindex >= 0 && dimindex < rank);
     ASSERT(basetype->typ.typecode != NC_CHAR);
 
-    count = odom->count[index];
 
-    if(lastdim) {
-        /* data should be simple list of basetype objects */
-        generator->listbegin(generator,LISTDATA,count,codebuf,&uid);
-        for(i=0;i<count && odom->counter > 0;i++) {
-            Constant* con = srcnext(src);
-            generator->list(generator,LISTDATA,uid,i,codebuf);
-            generate_basetype(basetype,con,codebuf,fillsrc,generator);
-	    odom->counter--;
+    if(dimindex == lastunlimited) {
+	int uid,i;
+	Odometer* slabodom;
+	/* build a special odometer to walk the last few dimensions
+	   (similar to case 2 above)
+	*/
+        slabodom = newsubodometer(odom,dimset,dimindex,rank);
+	/* compute the starting offset in our datalist 
+	   (Assumes that slabodom->index[i] == slabodom->start[i])
+        */
+        generator->listbegin(generator,LISTDATA,list->length,code,&uid);
+	for(i=0;odometermore(slabodom);i++) {
+	    size_t offset = odometeroffset(slabodom);
+	    Constant* con = datalistith(list,offset);
+            generator->list(generator,LISTDATA,uid,i,code);
+            generate_basetype(basetype,con,code,filler,generator);
+	    odometerincr(slabodom);
         }
-        generator->listend(generator,LISTDATA,uid,i,codebuf);
+        generator->listend(generator,LISTDATA,uid,i,code);
+	odometerfree(slabodom);
     } else {
-	if(index > 0 && !lastdim && isunlimited) srcpush(src);
-        /* now walk elements and generate recursively */
-        for(i=0;i<count && odom->counter > 0;i++) {
-	   generate_array(vsym,codebuf,src,odom,index+1,fillsrc,generator);
-	}
-	if(index > 0 && !lastdim && isunlimited) srcpop(src);
+        /* If we are strictly to the left of the next unlimited
+           then our datalist is a list of compounds representing
+           the next unlimited; so walk the subarray from this index
+	   upto next unlimited.
+        */
+	int i;
+	Odometer* slabodom;
+        int nextunlimited = findunlimited(dimset,dimindex+1);
+	ASSERT((dimindex < lastunlimited
+                && (dimset->dimsyms[dimindex]->dim.isunlimited)));
+	/* build a sub odometer */
+        slabodom = newsubodometer(odom,dimset,dimindex,nextunlimited);
+	/* compute the starting offset in our datalist 
+	   (Assumes that slabodom->index[i] == slabodom->start[i])
+        */
+	for(i=0;odometermore(slabodom);i++) {
+	    size_t offset = odometeroffset(slabodom);
+	    Constant* con = datalistith(list,offset);
+	    if(!islistconst(con))
+	        semwarn(constline(con),"Expected {...} representing unlimited list");
+	    else {
+	        Datalist* sublist = con->value.compoundv;
+	        generate_arrayr(vsym,code,sublist,odom,nextunlimited,filler,generator);
+	    }
+	    odometerincr(slabodom);
+        }
+	odometerfree(slabodom);
     }
     return;
 }
 
+
 /* Generate an instance of the basetype */
 void
-generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fillsrc, Generator* generator)
+generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* filler, Generator* generator)
 {
     Datalist* data;
-
-#ifdef IGNORE
-    /* Do fill check */
-   if(con == NULL || isfillconst(con)) {
-	Datalist* filler = getfiller(tsym,fillsrc);
-	ASSERT(filler->length == 1);
-	con = &filler->data[0];
-    }
-#endif
 
     switch (tsym->subclass) {
 
@@ -188,15 +242,15 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	if(islistconst(con)) {
 	    semerror(constline(con),"Expected primitive found {..}");
 	}
-	generate_primdata(tsym,con,codebuf,fillsrc,generator);
+	generate_primdata(tsym,con,codebuf,filler,generator);
 	break;
 
     case NC_COMPOUND: {
 	int i,uid;
 	if(con == NULL || isfillconst(con)) {
-	    Datalist* filler = getfiller(tsym,fillsrc);
-	    ASSERT(filler->length == 1);
-	    con = &filler->data[0];
+	    Datalist* fill = (filler==NULL?getfiller(tsym):filler);
+	    ASSERT(fill->length == 1);
+	    con = &fill->data[0];
 	    if(!islistconst(con))
 	        semerror(con->lineno,"Compound data fill value is not enclosed in {..}");
 	}
@@ -220,9 +274,9 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	size_t count;
 
 	if(con == NULL || isfillconst(con)) {
-	    Datalist* filler = getfiller(tsym,fillsrc);
-	    ASSERT(filler->length == 1);
-	    con = &filler->data[0];
+	    Datalist* fill = (filler==NULL?getfiller(tsym):filler);
+	    ASSERT(fill->length == 1);
+	    con = &fill->data[0];
 	    if(con->nctype != NC_COMPOUND) {
 	        semerror(con->lineno,"Vlen data fill value is not enclosed in {..}");
 	    }
@@ -254,7 +308,7 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 	    /* Verify that we have a sublist (or fill situation) */
 	    if(con != NULL && !isfillconst(con) && !islistconst(con)) 
 		semerror(constline(con),"Dimensioned fields must be enclose in {...}");
-            generate_fieldarray(tsym->typ.basetype,con,&tsym->typ.dimset,codebuf,fillsrc,generator);
+            generate_fieldarray(tsym->typ.basetype,con,&tsym->typ.dimset,codebuf,filler,generator);
 	} else {
 	    generate_basetype(tsym->typ.basetype,con,codebuf,NULL,generator);
 	}
@@ -267,7 +321,7 @@ generate_basetype(Symbol* tsym, Constant* con, Bytebuffer* codebuf, Datalist* fi
 /* Used only for structure field arrays*/
 static void
 generate_fieldarray(Symbol* basetype, Constant* con, Dimset* dimset,
-		 Bytebuffer* codebuf, Datalist* fillsrc, Generator* generator)
+		 Bytebuffer* codebuf, Datalist* filler, Generator* generator)
 {
     int i;
     int chartype = (basetype->typ.typecode == NC_CHAR);
@@ -283,32 +337,32 @@ generate_fieldarray(Symbol* basetype, Constant* con, Dimset* dimset,
     if(chartype) {
 	/* Collect the char field in a separate buffer */
 	Bytebuffer* charbuf = bbNew();
-        gen_chararray(dimset,data,charbuf,fillsrc);	
+        gen_chararray(dimset,data,charbuf,filler);	
 	generator->charconstant(generator,codebuf,charbuf);
 	bbFree(charbuf);
     } else {
 	int uid;
 	size_t xproduct = crossproduct(dimset,0,0); /* compute total number of elements */
-        generator->listbegin(generator,LISTFIELDARRAY,xproduct,codebuf,NULL,&uid);
+        generator->listbegin(generator,LISTFIELDARRAY,xproduct,codebuf,&uid);
         for(i=0;i<xproduct;i++) {
 	    con = (data == NULL ? NULL : datalistith(data,i));
-	    generator->list(generator,LISTFIELDARRAY,uid,i,codebuf,NULL);
+	    generator->list(generator,LISTFIELDARRAY,uid,i,codebuf);
             generate_basetype(basetype,con,codebuf,NULL,generator);
 	}
-        generator->listend(generator,LISTFIELDARRAY,uid,i,codebuf,NULL);
+        generator->listend(generator,LISTFIELDARRAY,uid,i,codebuf);
     }
 }
 
 static void
 generate_primdata(Symbol* basetype, Constant* prim, Bytebuffer* codebuf,
-		  Datalist* fillsrc, Generator* generator)
+		  Datalist* filler, Generator* generator)
 {
     Constant target;
 
     if(prim == NULL || isfillconst(prim)) {
-	Datalist* filler = getfiller(basetype,fillsrc);
-	ASSERT(filler->length == 1);
-	prim = datalistith(filler,0);
+	Datalist* fill = (filler==NULL?getfiller(basetype):filler);
+	ASSERT(fill->length == 1);
+	prim = datalistith(fill,0);
     }
 
     ASSERT(prim->nctype != NC_COMPOUND);

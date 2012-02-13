@@ -51,13 +51,13 @@ makeparser::
 CTEST=test
 
 btest::
-	./ncgen -b ${CTEST}.cdl -o ${CTEST}.nc
+	./ncgen -k3 -lb ${CTEST}.cdl -o ${CTEST}.nc
 	../ncdump/ncdump ./${CTEST}.nc >${CTEST}.dmp
 	diff -wBb ${CTEST}.cdl ${CTEST}.dmp
 
 
 ctest::
-	./ncgen -lc ${CTEST}.cdl >${CTEST}.c
+	./ncgen -k3 -lc ${CTEST}.cdl >${CTEST}.c
 	CFLAGS=`../nc-config --cflags`  \
 	LDFLAGS=`../nc-config --libs`  \
 	gcc -o ${CTEST} -I../include ${CFLAGS} ${CTEST}.c ../liblib/.libs/libnetcdf.a ${LDFLAGS} -lm

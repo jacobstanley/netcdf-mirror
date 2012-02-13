@@ -103,10 +103,12 @@ gen_chararrayr(Dimset* dimset, int dimindex, int lastunlimited,
 	    ASSERT(!islistconst(c));
 	    if(isstringable(c->nctype)) {
 		int j;
-	        size_t constsize,padsize;
+	        size_t constsize;
 	        constsize = gen_charconstant(c,databuf,fillchar);
-	        padsize = (unitsize - constsize) % unitsize;
-	        for(j=0;j<padsize;j++) bbAppend(databuf,fillchar);
+		if(constsize % unitsize > 0) {
+	            size_t padsize = unitsize - (constsize % unitsize);
+	            for(j=0;j<padsize;j++) bbAppend(databuf,fillchar);
+		}
 	    } else {
 	        semwarn(constline(c),
 		       "Encountered non-string and non-char constant in datalist; ignored");
@@ -119,10 +121,12 @@ gen_chararrayr(Dimset* dimset, int dimindex, int lastunlimited,
     } else if(bbLength(databuf) > expectedsize) {
 	semwarn(data->data[0].lineno,"character data list too long");
     } else {
+	size_t bufsize = bbLength(databuf);
 	/* Pad to size dimproduct size */
-	size_t padsize = (expectedsize - bbLength(databuf)) % expectedsize;
-	for(i=0;i<padsize;i++)
-	    bbAppend(databuf,fillchar);
+	if(bufsize % expectedsize > 0) {
+	    size_t padsize = expectedsize - (bufsize % expectedsize);
+            for(i=0;i<padsize;i++) bbAppend(databuf,fillchar);
+	}
     }
 }
 

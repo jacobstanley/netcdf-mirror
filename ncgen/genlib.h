@@ -72,8 +72,7 @@ extern char* jdecodify(const char *name);
 /* from: getfill.c */
 extern void nc_getfill(Constant*);
 extern char* nc_dfaltfillname(nc_type);
-extern struct Datalist* getfiller(Symbol*,Datalist*); /* type or variable*/
-extern int checkfillvalue(Symbol*, struct Datalist*);
+extern struct Datalist* getfiller(Symbol*); /* symbol isa variable|type */
 
 /* from: ncgen.y */
 extern Symbol* install(const char *sname);

@@ -1,4 +1,4 @@
-L="-lb"
+L="-lc"
 K="-k3"
 alias q0="./ncgen -d $K $L test.cdl"
 alias qq="gdb --args ./ncgen -d $K $L test.cdl"

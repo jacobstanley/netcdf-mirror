@@ -1,21 +1,19 @@
-
 /*********************************************************************
  *   Copyright 2009, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
  *********************************************************************/
-/* $Id: odom.h,v 1.5 2010/05/27 21:34:18 dmh Exp $ */
-/* $Header: /upc/share/CVS/netcdf-3/ncgen/odom.h,v 1.5 2010/05/27 21:34:18 dmh Exp $ */
 
 #ifndef ODOM_H
 #define ODOM_H 1
 
 typedef struct Odometer {
     int rank;
-    int wholepoint; /*point where whole dimensions are being used */
-    size_t counter; /* track # of elements to read */
-    size_t start[NC_MAX_VAR_DIMS];
-    size_t count[NC_MAX_VAR_DIMS];
-    size_t index[NC_MAX_VAR_DIMS];
+    int offset;
+    struct Odometer* origin;
+    size_t    start[NC_MAX_VAR_DIMS];
+    size_t    count[NC_MAX_VAR_DIMS];
+    size_t    index[NC_MAX_VAR_DIMS];
+    size_t declsize[NC_MAX_VAR_DIMS];
 } Odometer;
 
 /*Forward*/
@@ -23,13 +21,17 @@ struct Dimset;
 
 /* Odometer operators*/
 extern Odometer* newodometer(struct Dimset*, size_t* startp, size_t* countp);
+extern Odometer* newsubodometer(Odometer*, struct Dimset*, int, int);
+
+extern Odometer* newsubodometer(Odometer*, struct Dimset*,
+			        int start, int stop);
+
 extern void odometerfree(Odometer*);
 extern char* odometerprint(Odometer* odom);
-extern int odomupdate(Odometer*, size_t* startp, size_t* countp);
 
 extern int odometermore(Odometer* odom);
 extern int odometerincr(Odometer* odo);
-extern unsigned long odometercount(Odometer* odo);
+extern size_t odometeroffset(Odometer* odom);
 
 #ifdef NOTUSED
 extern void odometerreset(Odometer*);

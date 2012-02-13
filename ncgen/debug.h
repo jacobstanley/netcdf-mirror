@@ -12,7 +12,7 @@
 #include "generr.h"
 #include "bytebuffer.h"
 
-#if 1
+#if 0
 #define GENDEBUG 2
 #endif
 

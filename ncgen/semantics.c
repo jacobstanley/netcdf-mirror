@@ -601,12 +601,26 @@ processattributes(void)
 #ifdef IGNORE
 	    dlappend(asym->data,NULL);
 #endif
-
 	    emptystringconst(asym->lineno,&asym->data->data[asym->data->length]);
 	    /* force type to be NC_CHAR */
 	    asym->typ.basetype = primsymbols[NC_CHAR];
 	}
-	if(asym->typ.basetype == NULL) inferattributetype(asym);
+	/* If no basetype is specified, then try to infer it;
+           the exception if _Fillvalue, whose type is that of the
+           containing variable.
+        */
+        if(strcmp(asym->name,specialname(_FILLVALUE_FLAG)) == 0) {
+	    /* This is _Fillvalue */
+	    asym->typ.basetype = asym->att.var->typ.basetype; /* its basetype is same as its var*/
+	    /* put the datalist into the specials structure */
+	    if(asym->data == NULL) {
+		/* Generate a default fill value */
+	        asym->data = getfiller(asym->typ.basetype);
+	    }
+	    asym->att.var->var.special._Fillvalue = asym->data;
+	} else if(asym->typ.basetype == NULL) {
+	    inferattributetype(asym);
+	}
 	/* fill in the typecode*/
 	asym->typ.typecode = asym->typ.basetype->typ.typecode;
     }
