@@ -71,7 +71,7 @@ char* primtypenames[PRIMNO] = {
 
 /*Defined in ncgen.l*/
 extern int lineno;              /* line number for error messages */
-extern char* lextext;           /* name or string with escapes removed */
+extern Bytebuffer* lextext;           /* name or string with escapes removed */
 
 extern double double_val;       /* last double value read */
 extern float float_val;         /* last float value read */
@@ -101,8 +101,6 @@ static Constant makeconstdata(nc_type);
 static Constant evaluate(Symbol* fcn, Datalist* arglist);
 static Constant makeenumconst(Symbol*);
 static void addtogroup(Symbol*);
-static Symbol* getunlimiteddim(void);
-static void setunlimiteddim(Symbol* udim);
 static Symbol* currentgroup(void);
 static Symbol* createrootgroup(void);
 static Symbol* creategroup(Symbol*);
@@ -188,7 +186,7 @@ Constant       constant;
         _FLETCHER32
 	DATASETID	
 
-%type <sym> typename primtype dimd varspec
+%type <sym> ident typename primtype dimd varspec
 	    attrdecl enumid path dimref fielddim fieldspec
 %type <sym> typeref
 %type <sym> varref
@@ -196,7 +194,7 @@ Constant       constant;
 %type <mark> enumidlist fieldlist fields varlist dimspec dimlist field
 	     fielddimspec fielddimlist
 %type <constant> dataitem constdata constint conststring constbool
-%type <constant> simpleconstant function
+%type <constant> simpleconstant function 
 %type <datalist> datalist intlist datalist1 datalist0 arglist
 
 
@@ -228,7 +226,7 @@ groupbody:
 
 subgrouplist: /*empty*/ | subgrouplist namedgroup;
 
-namedgroup: GROUP IDENT '{'
+namedgroup: GROUP ident '{'
             {
 		Symbol* id = $2;
                 markcdf4("Group specification");
@@ -251,7 +249,7 @@ typesection:    /* empty */
 
 typedecls: type_or_attr_decl | typedecls type_or_attr_decl ;
 
-typename: IDENT
+typename: ident
 	    { /* Use when defining a type */
               $1->objectclass = NC_TYPE;
               if(dupobjectcheck(NC_TYPE,$1))
@@ -322,7 +320,7 @@ enumidlist:   enumid
 		}
 	    ;
 
-enumid: IDENT '=' constdata
+enumid: ident '=' constdata
         {
             $1->objectclass=NC_TYPE;
             $1->subclass=NC_ECONST;
@@ -440,6 +438,9 @@ dimdecl:
 	  dimd '=' UINT_CONST
               {
 		$1->dim.declsize = (size_t)uint32_val;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = %lu\n",$1->name,(unsigned long)$1->dim.declsize);
+#endif
 	      }
 	| dimd '=' INT_CONST
               {
@@ -448,6 +449,9 @@ dimdecl:
 		    YYABORT;
 		}
 		$1->dim.declsize = (size_t)int32_val;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = %lu\n",$1->name,(unsigned long)$1->dim.declsize);
+#endif
 	      }
         | dimd '=' DOUBLE_CONST
                    { /* for rare case where 2^31 < dimsize < 2^32 */
@@ -458,20 +462,21 @@ dimdecl:
                        if (double_val - (size_t) double_val > 0)
                          yyerror("dimension length must be an integer");
                        $1->dim.declsize = (size_t)double_val;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = %lu\n",$1->name,(unsigned long)$1->dim.declsize);
+#endif
                    }
         | dimd '=' NC_UNLIMITED_K
                    {
-                       if(usingclassic) {
-	  	         /* check for multiple UNLIMITED decls*/
-                         if(getunlimiteddim() != NULL)
-			    markcdf4("Type specification");
-			 setunlimiteddim($1);
-		       }
-		       $1->dim.declsize = NC_UNLIMITED;
+		        $1->dim.declsize = NC_UNLIMITED;
+		        $1->dim.isunlimited = 1;
+#ifdef DEBUG1
+fprintf(stderr,"dimension: %s = UNLIMITED\n",$1->name);
+#endif
 		   }
                 ;
 
-dimd:           IDENT
+dimd:           ident
                    { 
                      $1->objectclass=NC_DIM;
                      if(dupobjectcheck(NC_DIM,$1))
@@ -524,7 +529,7 @@ varlist:      varspec
 	        {$$=$1; listpush(stack,(elem_t)$3);}
             ;
 
-varspec:        IDENT dimspec
+varspec:        ident dimspec
                     {
 		    int i;
 		    Dimset dimset;
@@ -583,7 +588,7 @@ fieldlist:
         ;
 
 fieldspec:
-	IDENT fielddimspec
+	ident fielddimspec
 	    {
 		int i;
 		Dimset dimset;
@@ -704,9 +709,9 @@ type_var_ref:
 attrdecllist: /*empty*/ {} | attrdecl ';' attrdecllist {} ;
 
 attrdecl:
-	  ':' IDENT '=' datalist
+	  ':' ident '=' datalist
 	    { $$=makeattribute($2,NULL,NULL,$4,ATTRGLOBAL);}
-	| typeref type_var_ref ':' IDENT '=' datalist
+	| typeref type_var_ref ':' ident '=' datalist
 	    {Symbol* tsym = $1; Symbol* vsym = $2; Symbol* asym = $4;
 		if(vsym->objectclass == NC_VAR) {
 		    $$=makeattribute(asym,vsym,tsym,$6,ATTRVAR);
@@ -715,7 +720,7 @@ attrdecl:
 		    YYABORT;
 		}
 	    }
-	| type_var_ref ':' IDENT '=' datalist
+	| type_var_ref ':' ident '=' datalist
 	    {Symbol* sym = $1; Symbol* asym = $3;
 		if(sym->objectclass == NC_VAR) {
 		    $$=makeattribute(asym,sym,NULL,$5,ATTRVAR);
@@ -749,7 +754,7 @@ attrdecl:
 	;
 
 path:
-	  IDENT
+	  ident
 	    {
 	        $$=$1;
                 $1->is_ref=1;
@@ -782,7 +787,7 @@ datalist:
 	;
 
 datalist0:
-	/*empty*/ {$$ = builddatalist(0);}
+	/*empty*/ {$$ = NULL;}
 	;
 
 datalist1: /* Must have at least 1 element */
@@ -794,13 +799,7 @@ datalist1: /* Must have at least 1 element */
 dataitem:
 	  constdata {$$=$1;}
 	| '{' datalist '}' {$$=builddatasublist($2);}
-        | FCN arglist ')' {}
 	;
-
-arglist:
-          dataitem
-        | arglist ',' dataitem
-        ;
 
 constdata:
 	  simpleconstant      {$$=$1;}
@@ -811,7 +810,7 @@ constdata:
 	;
 
 function:
-	IDENT '(' arglist ')' {$$=evaluate($1,$3);}
+	ident '(' arglist ')' {$$=evaluate($1,$3);}
 	;
 
 arglist:
@@ -861,6 +860,11 @@ constbool:
 	| constint {$$=$1;}
 
 /* End OF RULES */
+
+/* Push all idents thru here*/
+ident:
+	IDENT {$$=$1;}
+	;
 
 %%
 
@@ -955,18 +959,6 @@ install(const char *sname)
 }
 
 
-static void
-setunlimiteddim(Symbol* udim)
-{
-    rootgroup->grp.unlimiteddim = udim;
-}
-
-static Symbol*
-getunlimiteddim(void)
-{
-    return rootgroup->grp.unlimiteddim;
-}
-
 static Symbol*
 currentgroup(void)
 {
@@ -982,7 +974,6 @@ createrootgroup(void)
     gsym->container = NULL;
     gsym->subnodes = listnew();
     gsym->grp.is_root = 1;
-    gsym->grp.unlimiteddim = NULL;
     gsym->prefix = listnew();
     listpush(grpdefs,(elem_t)gsym);
     rootgroup = gsym;
@@ -1025,9 +1016,10 @@ makeconstdata(nc_type nctype)
 	    break;
         case NC_STRING: { /* convert to a set of chars*/
 	    int len;
-	    len = strlen(lextext);
+	    len = bbLength(lextext);
 	    con.value.stringv.len = len;
-	    con.value.stringv.stringv = nulldup(lextext);
+	    con.value.stringv.stringv = bbDup(lextext);
+	    bbClear(lextext);	    
 	    }
 	    break;
 
@@ -1042,14 +1034,14 @@ makeconstdata(nc_type nctype)
 	case NC_OPAQUE: {
 	    char* s;
 	    int len,padlen;
-	    len = strlen(lextext);
+	    len = bbLength(lextext);
 	    padlen = len;
 	    if(padlen < 16) padlen = 16;
 	    if((padlen % 2) == 1) padlen++;
 	    s = (char*)emalloc(padlen+1);
 	    memset((void*)s,'0',padlen);
 	    s[padlen]='\0';
-	    strncpy(s,lextext,len);
+	    strncpy(s,bbContents(lextext),len);
 	    con.value.opaquev.stringv = s;
 	    con.value.opaquev.len = padlen;
 	    } break;
@@ -1071,9 +1063,7 @@ static Constant
 makeenumconst(Symbol* econst)
 {
     Constant con;
-    if(usingclassic) {
-        markcdf4("Enum type");
-    } 
+    markcdf4("Enum type");
     consttype = NC_ENUM;
     con.nctype = NC_ECONST;
     con.lineno = lineno;
@@ -1186,6 +1176,8 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     char* sdata = NULL;
     int idata =  -1;
 
+    specials_flag = 1;
+
     if(isconst) {
 	con = (Constant*)data;
 	list = builddatalist(1);
@@ -1237,35 +1229,17 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     if(tag == _FORMAT_FLAG) {
 	struct Kvalues* kvalue;
 	int found;
-        int modifier;
 	found = 0;
-        modifier = 0;
-	if(kflag_flag != 0) goto done;
-	/* Only use this tag if kflag is not set */
 	/* Use the table in main.c */
         for(kvalue=legalkinds;kvalue->name;kvalue++) {
 	    if(strcmp(sdata,kvalue->name) == 0) {
-		modifier = kvalue->mode;
+		format_flag = kvalue->k_flag;
 		found = 1;
 	        break;
 	    }
 	}
 	if(!found)
 	    derror("_Format: illegal value: %s",sdata);
-	else {
-            /* Recompute mode flag */
-	    cmode_modifier &= ~(NC_NETCDF4 | NC_CLASSIC_MODEL | NC_64BIT_OFFSET);
-  	    cmode_modifier |= modifier;
-            if((cmode_modifier & NC_NETCDF4)) {
-	        allowspecial = 1;
-                if((cmode_modifier & NC_CLASSIC_MODEL)) {
-		    usingclassic = 1;
-	        } else {
-	            usingclassic = 0;
-	        }
-	    } else
-	        usingclassic = 1;
-	}
     } else if(tag == _FILLVALUE_FLAG) {
 	special->_Fillvalue = list;
 	/* fillvalue must be a single value*/
@@ -1339,7 +1313,7 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
             } break;
         default: PANIC1("makespecial: illegal token: %d",tag);
      }
-done:
+
     return attr;
 }
 
@@ -1376,12 +1350,14 @@ makeattribute(Symbol* asym,
 static int
 containsfills(Datalist* list)
 {
-    int i;
-    Constant* con = list->data;
-    for(i=0;i<list->length;i++,con++) {
-	if(con->nctype == NC_COMPOUND) {
-	    if(containsfills(con->value.compoundv)) return 1;	
-	} else if(con->nctype == NC_FILLVALUE) return 1;	
+    if(list != NULL) {
+        int i;
+        Constant* con = list->data;
+        for(i=0;i<list->length;i++,con++) {
+	    if(con->nctype == NC_COMPOUND) {
+	        if(containsfills(con->value.compoundv)) return 1;	
+	    } else if(con->nctype == NC_FILLVALUE) return 1;	
+	}
     }
     return 0;
 }

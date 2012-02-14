@@ -727,7 +727,8 @@ AC_MSG_RESULT([$BINFILE_NAME $FC $CXX])
 
 UD_FTPBINDIR
 
-###################################################
+##################################################
+# OC has been modified to not depend on xdr.h, so suppress here
 ## Require some version of xdr/rpc if --enable-dap is set.
 ## See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
 #if test "x$enable_dap" = xyes; then
@@ -755,6 +756,7 @@ UD_FTPBINDIR
 #  #endif]])
 #fi
 #fi
+
 AC_MSG_CHECKING([value of LIBS])
 AC_MSG_RESULT([$LIBS])
 
@@ -814,7 +816,6 @@ AC_CONFIG_FILES([Makefile
                  man4/Makefile
                  man4/images/Makefile
                  libsrc/Makefile
-                 libdiskless/Makefile
                  libsrc4/Makefile
                  nctest/Makefile
                  nc_test4/Makefile

@@ -68,7 +68,7 @@ iscached(NCDAPCOMMON* nccomm, CDFnode* target, NCcachenode** cachenodep)
 
 done:
 #ifdef DEBUG
-fprintf(stderr,"iscached: search: %s\n",makesimplepathstring3(target));
+fprintf(stderr,"iscached: search: %s\n",makecdfpathstring3(target,"."));
 if(found)
    fprintf(stderr,"iscached: found: %s\n",dumpcachenode(cachenode));
 else
@@ -182,7 +182,7 @@ ncbytescat(buf,"prefetch.vars: ");
 for(i=0;i<nclistlength(vars);i++) {
 CDFnode* var = (CDFnode*)nclistget(vars,i);
 ncbytescat(buf," ");
-s = makesimplepathstring3(var);
+s = makecdfpathstring3(var,".");
 ncbytescat(buf,s);
 nullfree(s);
 }
@@ -213,21 +213,18 @@ buildcachenode34(NCDAPCOMMON* nccomm,
     NCcachenode* cachenode = NULL;
     char* ce = NULL;
 
+#ifdef IGNORE
     if(FLAGSET(nccomm->controls,NCF_CACHE)) {
         /* If the cache flag is on, then cache 
            forces whole variable projections */
-        int i,j;
+        int i;
         /* Remove the slicing (if any) */
         for(i=0;i<nclistlength(constraint->projections);i++) {
             DCEprojection* p = (DCEprojection*)nclistget(constraint->projections,i);
-            if(p->discrim != CES_VAR || p->var == NULL || p->var->segments == NULL)
-                continue;
-            for(j=0;j<nclistlength(p->var->segments);j++) {
-                DCEsegment* seg = (DCEsegment*)nclistget(p->var->segments,j);
-                seg->rank = 0;
-            }
-        }   
+	    dcemakewholeprojection(p);
+	}
     }
+#endif
     ce = buildconstraintstring3(constraint);
 
     ocstat = dap_fetch(nccomm,conn,ce,OCDATADDS,&ocroot);

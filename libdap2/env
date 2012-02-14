@@ -1,4 +1,4 @@
-TOPDIR="/home/dmh/mach/minor"
+TOPDIR="/home/dmh/mach/major"
 #http://esrl.noaa.gov/psd/thredds/dodsC/Datasets/noaa.oisst.v2/sst.wkmean.1990-present.nc"
 PARMS=""; ARGS=""; CON="" ; CE="";  OCON=""
 PARMS="[log]"
@@ -10,9 +10,7 @@ PARMS="${PARMS}[cache]"
 #PARMS="${PARMS}[noprefetch]"
 PARMS="${PARMS}[show=fetch]"
 
-F="http://motherlode.ucar.edu:8080/dts/test.02"
-CON="b[1:2:10]"
-#VAR="person.name"
+F="[cache]file:///machine/netcdf/nc_test_7549/netcdf-4.2-snapshot2012021222/ncdap_test/testdata3/1998-6-avhrr.dat"
 
 PROG="./ncd"
 #PROG="../ncdump/ncdump"
@@ -33,7 +31,11 @@ alias qh="$PROG -h $ARGS '$U'"
 alias qqh="gdb --args $PROG -h $ARGS '$U'"
 alias qall="$PROG -h $ARGS '${UALL}'"
 alias qv="valgrind $VARGS $PROG $ARGS '$U'"
+if test "x$CON" = "x" ; then
 alias qo="~/svn/oc/octest -p dds -p datadds -DN -DX1 $F"
+else
+alias qo="~/svn/oc/octest -p dds -p datadds -DN -DX1 -C $CON $F"
+fi
 
 if test 1 = 0; then
 F="http://nomads.ncep.noaa.gov:9090/dods/gfs_hd/gfs_hd20110908/gfs_hd_00z"
@@ -64,3 +66,4 @@ CON="ens,time,lat,lon,prmslmsl[0:1:0][0:1:64][0:1:10][0:1:10]"
 F="http://motherlode.ucar.edu:8080/thredds/dodsC/station/metar/Surface_METAR_20111122_0000.nc"
 CON="weather[0:10]"
 fi
+

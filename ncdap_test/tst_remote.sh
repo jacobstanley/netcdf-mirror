@@ -118,9 +118,19 @@ GLOBEC_cetaceans;1;number&number>6 \
 GLOBEC_cetaceans;2;lat,lon&lat>42.0&lat<=42.5\
 "
 
+# C3 is too slow for testing. It has nested sequences.
+#We need to think about better optimizations
 REMOTEURLC3="http://dapper.pmel.noaa.gov/dapper/argo"
 REMOTETESTSC3="\
 argo_all.cdp;1;&location.LATITUDE<1&location.LATITUDE>-1\
+"
+
+# Test string access 
+# this test cannot be used because the
+# dataset has a limited lifetime
+REMOTEURLC4="http://motherlode.ucar.edu:8080/thredds/dodsC/station/metar"
+REMOTETESTSC4="\
+Surface_METAR_20120101_0000.nc;1;weather[0:10]\
 "
 
 # Constrained long tests
@@ -219,9 +229,11 @@ for i in $WHICHTESTS ; do
   C1) TESTURL="$REMOTEURLC1" ; TESTSET="$REMOTETESTSC1" ; constrained=1 ;;
   C2) TESTURL="$REMOTEURLC2" ; TESTSET="$REMOTETESTSC2" ; constrained=1 ;ncconstrained=0 ;;
   C3) TESTURL="$REMOTEURLC3" ; TESTSET="$REMOTETESTSC3" ; constrained=1 ;ncconstrained=0 ;;
+  C4) TESTURL="$REMOTEURLC4" ; TESTSET="$REMOTETESTSC4" ; constrained=1 ;ncconstrained=0 ;;
   LC1) TESTURL="$REMOTEURLLC1" ; TESTSET="$REMOTETESTSLC1" ; constrained=1 ;;
   X) TESTURL="$REMOTEURLX" ; TESTSET="$REMOTETESTSX" ; constrained=0 ;;
   XC) TESTURL="$REMOTEURLXC" ; TESTSET="$REMOTETESTSXC" ; constrained=1 ;;
+  *) echo "Unknown which test: $i" ;;
   esac
 
 cd ${RESULTSDIR}

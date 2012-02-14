@@ -48,27 +48,28 @@ The vara constraint is the one formed from the arguments
 (start, count, stride) provided to the call to nc_get_vara().
 
 There are some exceptions to the formation of the fetch constraint.
-a. If the target variable (as specified in nc_get_vara())
-is already in the cache and the whole variable is there,
-then we will not do any fetch at all. This will occur for,
-for example, pre-fetched variables.
-b. If the url is unconstrainable (e.g. file://...), then
-we do not use any constraint and fetch the whole dataset.
+In all cases, the fetch constraint will use any URL selections,
+but will use different fetch projections.
+a. URL is unconstrainable (e.g. file://...):
+   fetchprojection = null => fetch whole dataset
+b. The target variable (as specified in nc_get_vara())
+   is already in the cache => the whole variable is there (may change later)
+   fetchprojection = N.A. since variable is in the cache
+c. Otherwise:
+   fetchprojection = unsliced vara variable => fetch whole variable
 
-2. At this point, the target variable is available in the
-cache, either whole (cases 1a and 1b), or the constrained
-fetched part is in the cache.
+2. At this point, whole target variable is available in the cache.
 
 3. We build a projection to walk (guide) the use of the oc
 data procedures in extract the required data from the cache.
+In all cases:
+   walkprojection = merge(urlprojection,varaprojection)
 
-If the whole target variable is available in the cache,
-(case 1a or 1b) then we need to walk using the
-merge of the url constraint and the vara constraint.
-
-If the partial target variable is in the cache, then that
-means we used the merged constraints to fetch the data and
-we need only extract the complete contents of the cache.
+#ifdef FUTURE
+An eventual optimization involves caching a part of the
+variable of interest using the merge of the
+url constraints and the getvar constraint.
+This means we need only extract the complete contents of the cache.
 Notice that this will not necessarily be a direct memory to
 memory copy because the dap encoding still needs to be
 interpreted. For this case, we derive a walk projection
@@ -76,7 +77,9 @@ from the merged projection that will properly access
 the cached data. This walk projection
 shifts the merged projection so all slices
 start at 0 and have a stride of 1.
- */
+#endif
+
+*/
 
 NCerror
 nc3d_getvarx(int ncid, int varid,
@@ -237,10 +240,6 @@ fprintf(stderr,"var is in cache\n");
 
     ASSERT(state != 0);    
 
-    /* In all cases, we need to construct the single projection
-       as the merge of the url projections and the vara projection.
-    */
-
     /* Convert the start/stop/stride info into a projection */
     ncstat = buildvaraprojection3(varainfo,
 		                  startp,countp,stridep,
@@ -250,65 +249,79 @@ fprintf(stderr,"var is in cache\n");
     fetchprojection = NULL;
     walkprojection = NULL;
 
+    /* Create walkprojection as the merge of the url projections
+       and the vara projection; will change
+       when we do partial variable caching */
+    ncstat = daprestrictprojection(dapcomm->oc.dapconstraint->projections,
+				   varaprojection,&walkprojection);
+    if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+#ifdef DEBUG
+fprintf(stderr,"getvarx: walkprojection: |%s|\n",dumpprojection(walkprojection));
+#endif
+
     /* define the var list of interest */
     vars = nclistnew();
     nclistpush(vars,(ncelem)varainfo->target);
 
-retry:
     switch (state) {
-    case FETCHPART: {
-	/* Create a merge of the url projections and the vara projection */
-	ncstat = daprestrictprojection(dapcomm->oc.dapconstraint->projections,
-					varaprojection,&fetchprojection);
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-	/* Clone the projection for use with the walk */
-	walkprojection = (DCEprojection*)dceclone((DCEnode*)fetchprojection);
-	/* elide any sequence dimensions (dap servers do not allow such). */
-	ncstat = removepseudodims(fetchprojection);
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-	/* After the removal, we might end up with a whole variable */
-	/* occurrence of sequence node automatically makes it not a whole variable */
-	if(!dapinsequence((CDFnode*)fetchprojection->var->annotation)) {
-	    if(dceiswholeprojection(fetchprojection)) {
-	        state = FETCHWHOLE;
-	        goto retry;
-	    }
-	}
-        /* Build the complete constraint to use in the fetch */
-        fetchconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
-        /* merged constraint just uses the url constraint selection */
-        fetchconstraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
-        fetchconstraint->projections = nclistnew();
-	nclistpush(fetchconstraint->projections,(ncelem)fetchprojection);
-#ifdef DEBUG
-fprintf(stderr,"getvarx: fetchconstraint: %s\n",dumpconstraint(fetchconstraint));
-#endif
-        /* buildcachenode3 will create a new cachenode and
-           will also fetch the corresponding datadds;
-        */
-        ncstat = buildcachenode34(dapcomm,fetchconstraint,vars,&cachenode,0);
-	fetchconstraint = NULL; /*buildcachenode34 takes control of fetchconstraint.*/
-	if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-    } break;
 
     case FETCHWHOLE: {
         /* buildcachenode3 will create a new cachenode and
-           will also fetch the corresponding datadds.
+           will also fetch the whole corresponding datadds.
 	*/
         /* Build the complete constraint to use in the fetch */
         fetchconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
-        /* Use no projections */
+        /* Use no projections or selections */
         fetchconstraint->projections = nclistnew();
-        /* merged constraint just uses the url constraint selection */
-        fetchconstraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
+        fetchconstraint->selections = nclistnew();
+#ifdef DEBUG
+fprintf(stderr,"getvarx: FETCHWHOLE: fetchconstraint: %s\n",dumpconstraint(fetchconstraint));
+#endif
         ncstat = buildcachenode34(dapcomm,fetchconstraint,vars,&cachenode,0);
 	fetchconstraint = NULL; /*buildcachenode34 takes control of fetchconstraint.*/
-
 	if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
     } break;
 
     case CACHED: {
-	/* nothing to do since cache node already exists */
+    } break;
+
+    case FETCHPART: {
+        /* Create fetch projection as the merge of the url projections
+           and the vara projection */
+        ncstat = daprestrictprojection(dapcomm->oc.dapconstraint->projections,
+				       varaprojection,&fetchprojection);
+	/* elide any sequence and string dimensions (dap servers do not allow such). */
+	ncstat = removepseudodims(fetchprojection);
+        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
+
+#ifdef FUTURE
+	/* Shift the varaprojection for simple walk */
+	walkprojection = (DCEprojection*)dceclone((DCEnode*)varaprojection);
+        dapshiftprojection(walkprojection);
+#else /*!FUTURE*/
+	dcemakewholeprojection(fetchprojection);
+#endif /*FUTURE*/
+
+#ifdef DEBUG
+fprintf(stderr,"getvarx: FETCHPART: fetchprojection: |%s|\n",dumpprojection(fetchprojection));
+#endif
+
+        /* Build the complete constraint to use in the fetch */
+        fetchconstraint = (DCEconstraint*)dcecreate(CES_CONSTRAINT);
+        /* merged constraint just uses the url constraint selection */
+        fetchconstraint->selections = dceclonelist(dapcomm->oc.dapconstraint->selections);
+	/* and the created fetch projection */
+        fetchconstraint->projections = nclistnew();
+	nclistpush(fetchconstraint->projections,(ncelem)fetchprojection);
+#ifdef DEBUG
+fprintf(stderr,"getvarx: FETCHPART: fetchconstraint: %s\n",dumpconstraint(fetchconstraint));
+#endif
+        /* buildcachenode3 will create a new cachenode and
+           will also fetch the corresponding datadds.
+        */
+        ncstat = buildcachenode34(dapcomm,fetchconstraint,vars,&cachenode,0);
+	fetchconstraint = NULL; /*buildcachenode34 takes control of fetchconstraint.*/
+	if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
     } break;
 
     default: PANIC1("unknown fetch state: %d\n",state);
@@ -324,28 +337,6 @@ fprintf(stderr,"cache.datadds=%s\n",dumptree(cachenode->datadds));
     unattach34(dapcomm->cdf.ddsroot);
     ncstat = attachsubset34(cachenode->datadds,dapcomm->cdf.ddsroot);
     if(ncstat) goto fail;	
-
-    /* Now, walk to the relevant instance */
-
-    switch (state) {
-    case FETCHWHOLE: case CACHED:
-	/* Create a merge of the url projections and the vara projection */
-	ncstat = daprestrictprojection(dapcomm->oc.dapconstraint->projections,
-					varaprojection,&walkprojection);
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-	break;
-    case FETCHPART:
-	/* Derive the proper walk projection from the
-	   fetchprojection (actually the clone created above) */
-	ncstat = dapshiftprojection(walkprojection);/*arg will be modified */
-        if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto fail;}
-	break;
-    default: PANIC("illegal getvarx state");
-    }
-
-#ifdef DEBUG
-fprintf(stderr,"getvarx: walkprojection: %s\n",dumpprojection(walkprojection));
-#endif
 
     /* Fix up varainfo to use the cache */
     varainfo->cache = cachenode;
@@ -374,12 +365,13 @@ ok:
     return THROW(ncstat);
 }
 
+/* Remove any pseudodimensions (sequence and string)*/
 static NCerror
 removepseudodims(DCEprojection* proj)
 {
     int i;
 #ifdef DEBUG1
-fprintf(stderr,"removepseudodims.before: %s\n",dumpprojection(proj));
+fprintf(stderr,"removesequencedims.before: %s\n",dumpprojection(proj));
 #endif
     for(i=0;i<nclistlength(proj->var->segments);i++) {
 	DCEsegment* seg = (DCEsegment*)nclistget(proj->var->segments,i);
@@ -916,7 +908,6 @@ extract(
 #ifdef DEBUG2
 fprintf(stderr,"moveto: primitive: segment=%s",
                 dcetostring((DCEnode*)segment));
-fprintf(stderr," hasstringdim=%d",hasstringdim);
 fprintf(stderr," iswholevariable=%d",xgetvar->cache->wholevariable);
 fprintf(stderr,"\n");
 #endif
@@ -950,7 +941,6 @@ fprintf(stderr,"\n");
 
 #ifdef DEBUG2
 fprintf(stderr,"moveto: primitive: ");
-fprintf(stderr," hasstringdim=%d",hasstringdim);
 fprintf(stderr," wholepoint=%d",wholepoint);
 fprintf(stderr,"\n");
 #endif
@@ -1051,7 +1041,6 @@ extractstring(
 }
 #endif
 
-/* Extract a slice of a string; many special cases to consider and optimize*/
 static NCerror
 slicestring(OCconnection conn, char* stringmem, DCEslice* slice, struct NCMEMORY* memory)
 {
@@ -1069,8 +1058,8 @@ slicestring(OCconnection conn, char* stringmem, DCEslice* slice, struct NCMEMORY
 
 #ifdef DEBUG2
 fprintf(stderr,"moveto: slicestring: string/%lu=%s\n",stringlen,stringmem);
-fprintf(stderr,"stringslice: %lu string=|%s|\n",stringlen,stringmem);
-fprintf(stderr,"stringslice: slice=[%lu:%lu:%lu/%lu]\n",
+fprintf(stderr,"slicestring: %lu string=|%s|\n",stringlen,stringmem);
+fprintf(stderr,"slicestring: slice=[%lu:%lu:%lu/%lu]\n",
 slice->first,slice->stride,slice->stop,slice->declsize);
 #endif
 

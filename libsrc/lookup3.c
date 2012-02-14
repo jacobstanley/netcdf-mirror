@@ -260,6 +260,7 @@ uint32_t       *pb)               /* IN: more seed OUT: secondary hash value */
   /*------------------------------------------------------ report the result */
   *pc=c; *pb=b;
 }
+
 /*
  * hashlittle2: return 2 32-bit hash values
  *
@@ -444,9 +445,10 @@ hashlittle2(
   final(a,b,c);
   *pc=c; *pb=b;
 }
+#endif /*SELF_TEST*/
 
 
-
+#ifdef WORDS_BIGENDIAN
 /*
  * hashbig():
  * This is the same as hashword() on big-endian machines.  It is different
@@ -575,8 +577,7 @@ hashbig( const void *key, size_t length, uint32_t initval)
   final(a,b,c);
   return c;
 }
-#endif /*SELF_TEST*/
-
+#endif /*WORDS_BIGENDIAN*/
 
 /*
 -------------------------------------------------------------------------------

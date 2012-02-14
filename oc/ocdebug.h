@@ -8,7 +8,7 @@
 
 #if 0
 #define OCDEBUG
-#define DAPDEBUG 1
+#define DAPDEBUG 3
 #endif
 
 #ifdef OCDEBUG
