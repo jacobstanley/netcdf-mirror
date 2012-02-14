@@ -227,7 +227,11 @@ main()
       if ((filter = H5Pget_filter2(propid, 0, &flags, &cd_nelems, cd_values, 
 				  namelen, name, &filter_config)) < 0) ERR;
       if (filter != H5Z_FILTER_DEFLATE || cd_nelems != 1 ||
-	  cd_values[0] != DEFLATE_LEVEL || strcmp(name, DEFLATE_NAME)) ERR;
+	  cd_values[0] != DEFLATE_LEVEL || strcmp(name, DEFLATE_NAME)) {
+	fprintf(stderr,"H5Pget_filter2 failed: name=%s\n",name);
+	fflush(stderr);
+	ERR;
+      }
 	  
       if (H5Dclose(datasetid) < 0 ||
 	  H5Pclose(propid) < 0 ||
