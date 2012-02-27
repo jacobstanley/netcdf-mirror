@@ -3,7 +3,7 @@
  *      See netcdf/COPYRIGHT file for copying and redistribution conditions.
  */
 
-#include "nc.h"
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -11,10 +11,13 @@
 #  include <mpp/shmem.h>
 #  include <intrinsics.h>
 #endif
-#ifdef HAVE_UNISTD
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#include "nc.h"
+#include "ncdispatch.h"
+#include "nc3dispatch.h"
 #include "rnd.h"
 #include "ncx.h"
 
@@ -36,7 +39,7 @@ NC_check_id(int ncid, NC **ncpp)
     return NC_NOERR;
 }
 
-void
+static void
 free_NC(NC *ncp)
 {
 	if(ncp == NULL)
@@ -44,6 +47,8 @@ free_NC(NC *ncp)
 	free_NC_dimarrayV(&ncp->dims);
 	free_NC_attrarrayV(&ncp->attrs);
 	free_NC_vararrayV(&ncp->vars);
+	if (ncp->path)
+	   free(ncp->path);
 #if _CRAYMPP && defined(LOCKNUMREC)
 	shfree(ncp);
 #else
@@ -51,25 +56,15 @@ free_NC(NC *ncp)
 #endif /* _CRAYMPP && LOCKNUMREC */
 }
 
-NC *
-new_NC(const size_t *chunkp)
+static NC *
+new_NC(const size_t *chunkp, NC_Dispatch* dispatch)
 {
 	NC *ncp;
-
-#if _CRAYMPP && defined(LOCKNUMREC)
-	ncp = (NC *) shmalloc(sizeof(NC));
-#else
-	ncp = (NC *) malloc(sizeof(NC));
-#endif /* _CRAYMPP && LOCKNUMREC */
-	if(ncp == NULL)
-		return NULL;
-	(void) memset(ncp, 0, sizeof(NC));
-
+	int stat = dispatch->new_nc(&ncp);
+	if(stat) return NULL;
 	ncp->xsz = MIN_NC_XSZ;
 	assert(ncp->xsz == ncx_len_NC(ncp,0));
-	
-	ncp->chunk = chunkp != NULL ? *chunkp : NC_SIZEHINT_DEFAULT;
-
+        ncp->chunk = chunkp != NULL ? *chunkp : NC_SIZEHINT_DEFAULT;
 	return ncp;
 }
 
@@ -77,15 +72,10 @@ static NC *
 dup_NC(const NC *ref)
 {
 	NC *ncp;
-
-#if _CRAYMPP && defined(LOCKNUMREC)
-	ncp = (NC *) shmalloc(sizeof(NC));
-#else
-	ncp = (NC *) malloc(sizeof(NC));
-#endif /* _CRAYMPP && LOCKNUMREC */
+	int stat = ref->dispatch->new_nc(&ncp);
+	if(stat) return NULL;
 	if(ncp == NULL)
 		return NULL;
-	(void) memset(ncp, 0, sizeof(NC));
 
 	if(dup_NC_dimarrayV(&ncp->dims, &ref->dims) != NC_NOERR)
 		goto err;
@@ -859,15 +849,30 @@ NC_calcsize(const NC *ncp, off_t *calcsizep)
 
 /* Public */
 
-/* Expose a couple of extra functions */
+int NC3_new_nc(NC** ncpp)
+{
+	NC *ncp;
 
-NC* dispatch_new_NC(const size_t *chunkp) {return new_NC(chunkp);}
+#if _CRAYMPP && defined(LOCKNUMREC)
+	ncp = (NC *) shmalloc(sizeof(NC));
+#else
+	ncp = (NC *) malloc(sizeof(NC));
+#endif /* _CRAYMPP && LOCKNUMREC */
+	if(ncp == NULL)
+		return NC_ENOMEM;
+	(void) memset(ncp, 0, sizeof(NC));
 
-void dispatch_free_NC(NC *ncp) {free_NC(ncp);}
+	ncp->xsz = MIN_NC_XSZ;
+	assert(ncp->xsz == ncx_len_NC(ncp,0));
+	
+        if(ncpp) *ncpp = ncp;
+        return NC_NOERR;
+
+}
 
 /* WARNING: SIGNATURE CHANGE */
 int
-NC3_create(const char * path, int ioflags,
+NC3_create(const char *path, int ioflags,
 		size_t initialsz, int basepe,
 		size_t *chunksizehintp,
 		int use_parallel, void* parameters,
@@ -882,7 +887,7 @@ NC3_create(const char * path, int ioflags,
 	fSet(ioflags, NC_SHARE);
 #endif
 
-	ncp = new_NC(chunksizehintp);
+	ncp = new_NC(chunksizehintp,dispatch);
 	if(ncp == NULL)
 		return NC_ENOMEM;
 
@@ -1001,7 +1006,7 @@ NC3_open(const char * path, int ioflags,
 	fSet(ioflags, NC_SHARE);
 #endif
 
-	ncp = new_NC(chunksizehintp);
+	ncp = new_NC(chunksizehintp,dispatch);
 	if(ncp == NULL)
 		return NC_ENOMEM;
 
@@ -1499,9 +1504,9 @@ nc_delete_mp(const char * path, int basepe)
 	int status;
 	size_t chunk = 512;
 
-	ncp = new_NC(&chunk);
-	if(ncp == NULL)
-		return NC_ENOMEM;
+	status = NC3_new_nc(&ncp);
+        if(status) return status;
+        ncp->chunk = chunk;
 	
 #if defined(LOCKNUMREC) /* && _CRAYMPP */
 	if (status = NC_init_pe(ncp, basepe)) {
@@ -1544,7 +1549,5 @@ unwind_alloc:
 int
 nc_delete(const char * path)
 {
-	return nc_delete_mp(path, 0);
+        return nc_delete_mp(path, 0);
 }
-
-

@@ -4,12 +4,10 @@
 # This file builds and runs the nctest program, which tests the netCDF
 # version 2 interface.
 
-# $Id: Makefile.am,v 1.34 2010/05/29 00:42:44 dmh Exp $
+# Put together AM_CPPFLAGS and AM_LDFLAGS.
+include $(top_srcdir)/lib_flags.am
 
-# One of the tests needs the math library for some reason. 
-LDADD = -lm
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/liblib @EXTERN_CPPFLAGS@
-AM_LDFLAGS = ${top_builddir}/liblib/libnetcdf.la @EXTERN_LDFLAGS@
+AM_LDFLAGS += ${top_builddir}/liblib/libnetcdf.la 
 
 # Running nctest results in a file testfile.nc, which is then checked
 # to make sure it matches testfile_nc.sav, which was generated under
@@ -21,13 +19,21 @@ EXTRA_DIST = ref_nctest_classic.nc ref_nctest_64bit_offset.nc	\
 compare_test_files.sh
 
 CLEANFILES = nctest_classic.nc nctest_64bit_offset.nc	\
-nctest_netcdf4.nc test2.nc temp.tmp
+nctest_netcdf4.nc test2.nc temp.tmp tst_*.nc
 
 # Run nctest and the script that compares the output with the
 # reference file.
-TESTPROGRAMS = nctest
+TESTPROGRAMS = nctest tst_rename
 check_PROGRAMS = $(TESTPROGRAMS)
 TESTS = $(TESTPROGRAMS) compare_test_files.sh
+
+# This will the test program with valgrind, the memory checking
+# tool. (Valgrind must be present for this to work.)
+if EXTRA_TESTS
+if USE_VALGRIND_TESTS
+TESTS += run_valgrind_tests.sh
+endif # USE_VALGRIND_TESTS
+endif # EXTRA_TESTS
 
 # These are the source files for the nctest program.
 nctest_SOURCES = add.c add.h atttests.c cdftests.c dimtests.c driver.c	\
@@ -35,4 +41,3 @@ emalloc.c emalloc.h error.c error.h misctest.c rec.c slabs.c testcdf.h	\
 tests.h val.c val.h vardef.c varget.c vargetg.c varput.c varputg.c	\
 vartests.c vputget.c vputgetg.c
 
-# For those who can't remember to type make check instead of make test.

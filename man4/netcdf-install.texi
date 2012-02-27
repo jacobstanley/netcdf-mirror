@@ -42,7 +42,7 @@ This document describes how to build and install the netCDF library,
 version @value{VERSION} on Unix and Windows systems. This document was
 last updated on @value{UPDATED}.
 
-The current stable release of netCDF, version 4.1.2, can be obtained
+The current stable release of netCDF, version 4.1.3, can be obtained
 from the netCDF web page at @uref{@value{netcdf-url}}. Instructions
 for installing the current stable release version of netCDF can be
 found at @uref{@value{docs-url}}.
@@ -136,24 +136,24 @@ such as rpm, yum, adept, and others. NetCDF is available from many
 different repositories, including the default Red Hat and Ubuntu
 repositories.
 
-Another way to get netCDF is to get a pre-built binary
-distribution. To get them, see @uref{@value{netcdf-binaries-url}}.
+We no longer support pre-built binary distributions from Unidata.
 
-To install the binary distribution, uncompress and unpack the tar
-file. You will end up with 4 subdirectories, lib, include, man, and
-bin. 
+After installing a binary distribution from one of the package
+management systems, you will end up with files in 4 subdirectories,
+lib, include, man, and bin.
 
 The lib subdirectory holds the netCDF libraries (C, Fortran, and
 C++). The include directory holds the necessary netcdf.h file (for C),
 netcdf.inc (for Fortran), netcdfcpp.h (for C++), and the .mod files
-(for Fortran 90). The bin directory holds the ncgen and ncdump
-utilities, and the man directory holds the netCDF documentation.
+(for Fortran 90). The bin directory holds the ncgen, ncdump, nccopy,
+and nc-config utilities, and the man directory holds the netCDF
+documentation.
 
-You can have these directories anywhere you like, and use netCDF. But
-when compiling a netCDF program, you will have to tell the linker
+When compiling a netCDF program, you will have to tell the linker
 where to find the library (e.g. with the -L option of most C
 compilers), and you will also have to tell the C pre-processor where
-to find the include file (e.g. with the -I option).
+to find the include file (e.g. with the -I option).  The nc-config
+utility can be used to determine the right options to use.
 
 If you are using shared libraries, you will also have to specify the
 library location for run-time dynamic linking. See your compiler
@@ -188,9 +188,9 @@ done!
 @section Building NetCDF With HDF5
 
 If you want to use the HDF5 storage format, you must have the HDF5
-1.8.4-patch1 release. You must also have the zlib compression library,
-version 1.2.3 (or better). Both of these packages are available from
-the netCDF-4 ftp site at @uref{@value{netcdf4-ftp-site}}.
+1.8.6 release. You must also have the zlib compression library,
+version 1.2.5. Both of these packages are available from the netCDF-4
+ftp site at @uref{@value{netcdf4-ftp-site}}.
 
 Make sure you run ``make check'' for the HDF5 and zlib
 distributions. They are very well-behaved distributions, but sometimes
@@ -225,40 +225,33 @@ Build zlib like this:
 make check install
 @end example
 
-(If you want a shared library build of HDF5, you must set CFLAGS to
--fPIC before building zlib.)
-
 Then you build HDF5, specifying the location of the zlib library:
 
 @example
-./configure --with-zlib=/home/ed/local --prefix=/home/ed/local --disable-shared 
+./configure --with-zlib=/home/ed/local --prefix=/home/ed/local 
 make check install
 @end example
 
-This builds a static version of the HDF5 library. For a shared build,
-don't use --disable-shared. For a shared build to work you must have
-compiled zlib (and, optionally, szip) with CFLAGS=-fPIC. In this case
-you may need to add the install directory to the LD_LIBRARY_PATH
-environment variable. See the FAQ for more details on using
-shared libraries: @uref{@value{netcdf-faq-url}}.
+Note that for shared libraries, you may need to add the install
+directory to the LD_LIBRARY_PATH environment variable. See the FAQ for
+more details on using shared libraries: @uref{@value{netcdf-faq-url}}.
 
 If you are building HDF5 with szip, then include the --with-szlib=
 option, with the directory holding the szip library.
 
-After HDF5 is done, build netcdf-4, specifying the location of the
-HDF5, zlib, and (if built into HDF5) the szip libraries with the
---with-hdf5, --with-zlib, and --with-szlib option. (If they are all in
-the same directory, you only need to use one of these options.)
+After HDF5 is done, build netcdf, specifying the location of the
+HDF5, zlib, and (if built into HDF5) the szip header files and
+libraries in the CPPFLAGS and LDFLAGS environment variables.
 
 @example
-./configure --with-hdf5=/home/ed/local --prefix=/home/ed/local
+CPPFLAGS=-I/home/ed/local/include LDFLAGS=-L/home/ed/local/lib ./configure --prefix=/home/ed/local
 make check install
 @end example
 
 The configure script will try to find necessary tools in your
 path. When you run configure you may optionally use the --prefix
-argument to change the default installation directory. For example,
-the above examples install the zlib, HDF5, and netCDF-4 libraries in
+argument to change the default installation directory. The above
+examples install the zlib, HDF5, and netCDF-4 libraries in
 /home/ed/local/lib, the header file in /home/ed/local/include, and the
 utilities in /home/ed/local/bin.
 
@@ -269,21 +262,20 @@ If HDF5 and zlib are found on your system, they will be used by netCDF
 in the build. To prevent this use the --disable-netcdf-4 argument to
 configure.
 
-By default the netCDF configuration will build static libraries
-only. For shared libraries as well, use the --enable-shared option to
-configure.
-
-To use netCDF-4 you must link to all the libraries, netCDF, HDF5,
-zlib, and (if used with HDF5 build) szip. This will mean -L options to
-your build for the locations of the libraries, and -l (lower-case L)
-for the names of the libraries.
+For static build, to use netCDF-4 you must link to all the libraries,
+netCDF, HDF5, zlib, and (if used with HDF5 build) szip. This will mean
+-L options to your build for the locations of the libraries, and -l
+(lower-case L) for the names of the libraries.
 
 For example, one user reports that she can build other applications
 with netCDF-4 by setting the LIBS envoronment variable:
 
 @example
-LIBS='-L/X/netcdf-4.0/lib -lnetcdf -L/X/hdf5-1.8.4/lib -lhdf5_hl -lhdf5 -lz -lm -L/X/szip-2.1/lib -lsz'
+LIBS='-L/X/netcdf-4.0/lib -lnetcdf -L/X/hdf5-1.8.6/lib -lhdf5_hl -lhdf5 -lz -lm -L/X/szip-2.1/lib -lsz'
 @end example
+
+For shared builds, only -lnetcdf is needed. All other libraries will
+be found automatically.
 
 The nc-config command can be used to learn what options are needed for
 the local netCDF installation.
@@ -292,8 +284,9 @@ the local netCDF installation.
 
 The netCDF-4 library can (since version 4.1) read HDF4 data files, if
 they were created with the SD (Scientific Data) API. To enable this
-feature, use the --enable-hdf4 option. The --with-hdf4= option may be
-used to specify a location for the HDF4 library.
+feature, use the --enable-hdf4 option. The location for the HDF4
+header files and library must be set in the CPPFLAGS and LDFLAGS
+options.
 
 @node Building on Unix, Using, Quick Instructions, Top
 @chapter Building and Installing NetCDF on Unix Systems
@@ -358,8 +351,8 @@ Unlike the output from other netCDF test programs, each large test
 program deletes its output before successfully exiting.
 
 To use the netCDF-4 features you will also need to have a
-HDF5-1.8.4-patch1 release installed. HDF5, in turn, must have been
-built with zlib, version 1.2.3 (or better).
+HDF5-1.8.6 release installed. HDF5, in turn, must have been
+built with zlib, version 1.2.5.
 
 A tested version of HDF5 and zlib can be found at the netCDF-4 ftp
 site at @uref{@value{netcdf4-ftp-site}}.
@@ -369,11 +362,9 @@ For more information about HDF5 see the HDF5 web site at
 web site at @uref{@value{zlib-url}}.
 
 To use the DAP features you will also need to have a version of
-libcurl (version 7.18.0 or later) installed.
-Depending on how this library
-was built, you may also need zib (version 1.2.3 or later).
-Information about libcurl may be obtained at
-@uref{@value{curl-url}}.
+libcurl (version 7.18.0 or later) installed.  Depending on how this
+library was built, you may also need zib (version 1.2.5 or later).
+Information about libcurl may be obtained at @uref{@value{curl-url}}.
 
 @node Environment, 64 Bit, Requirements, Building on Unix
 @section Specifying the Environment for Building
@@ -489,11 +480,6 @@ to the FORTRAN 90 build, also set FCFLAGS.
 below. Unless specified, you should not set these environment
 variables, because that may interfere with the configure script.
 
-@item HDF5DIR
-@tab configure option
-@tab Set this to the directory you wish to specify in the --with-hdf5
-argument of configure.
-
 @end multitable
 
 The section marked Tested Systems below contains a list of systems on
@@ -512,7 +498,7 @@ zlib and HDF5 libraries must also be built with 64-bit options.
 @table @code
 
 @item AIX
-Set -q64 option in all compilers, and set NMFLAGS to -X64, and ARFLAGS
+Set -q64 option in all compilers, and set NMFLAGS to -X64, and AR_FLAGS
 to '-X64 cru'. Alternatively, set environment variable OBJECT_MODE to
 64 before running configure.
 
@@ -561,7 +547,11 @@ To build netCDF with parallel I/O, build as usual, but point the
 configure at a version of HDF5 that has been built for parallel I/O.
 
 @example
-FC=mpif90 CXX=mpicxx CC=mpicc ./configure --with-hdf5=/shecky/local_par
+CPPFLAGS=-I/shecky/local_par/include
+CXXFLAGS=-I/shecky/local_par/include
+FFFLAGS=-I/shecky/local_par/include
+FCFLAGS=-I/shecky/local_par/include LDFLAGS=-L/shecky/local_par/lib 
+FC=mpif90 CXX=mpicxx CC=mpicc ./configure 
 make check install
 @end example
 
@@ -571,14 +561,7 @@ may not be appropriate on all systems, especially those which use some
 queue for jobs. 
 
 To use parallel-netcdf to perform parallel I/O on classic and 64-bit
-offset files, use the --enable-pnetcdf option (and, optionally, the
---with-pnetcdf option to specify a location for the parallel-netcdf
-library).
-
-@example
-FC=mpif90 CXX=mpicxx CC=mpicc ./configure --with-hdf5=/shecky/local_par --enable-pnetcdf --with-pnetcdf=/shecky/local/pnetcdf
-make check install
-@end example
+offset files, use the --enable-pnetcdf option.
 
 For parallel builds the netCDF examples are not built. This is to
 avoid cluttering them with MPI_Init/Finalize calls.
@@ -605,7 +588,7 @@ Here's how to execute the configure script with a different
 installation directory:
 
 @example
-    ./configure --prefix=/whatever/you/decided --with-hdf5=/home/ed/local
+    ./configure --prefix=/whatever/you/decided
 @end example
 
 The above would cause the netCDF libraries to be installed in
@@ -613,10 +596,6 @@ The above would cause the netCDF libraries to be installed in
 /whatever/you/decided/include, the utilities (ncdump/ncgen) in
 /whatever/you/decided/bin, and the man pages in
 /whatever/you/decided/man.
-
-The --with-hdf5 option tells configure the location of the HDF5 and
-zlib libraries. HDF5 must be version 1.8.4-patch1 or better, and the
-HDF5 library must have been built with zlib, version 1.2.3 or better.
 
 If the configure script finds HDF5 in the system directories, it will
 (attempt to) build the netCDF-4 enhanced features. To turn this off
@@ -635,20 +614,8 @@ there, if they don't already exist.
 @item --disable-netcdf-4
 Turn off netCDF-4 features, even if HDF5 library is found.
 
-@item --with-hdf5=/location
-Specify the location of the HDF5 library.
-
-@item --with-zlib=/location
-Specify the location of the zlib library. NetCDF-4 requires that HDF5
-be built with zlib, for variable compression.
-
-@item --with-szlib=/location
-Optionally specify the location of the szlib (a.k.a. szip)
-library. (HDF5 must have been built with szlib support.)
-
-@item --enable-shared
-Build shared libraries (as well as static) on platforms which support
-them.
+@item --disable-shared
+Build static libraries only.
 
 @item --enable-dap
 Enable DAP support. This flag is set by default
@@ -688,14 +655,7 @@ This flag is off by default.
 
 @item --enable-hdf4
 Turns on the HDF4 read layer. This reads HDF4 files created with the
-SD (Scientific Data) API of HDF4. If the HDF4 library is in a
-different directory, use the --with-hdf4= option to specify its
-location.
-
-@item --with-hdf4=/your/hdf4/location
-Use the --with-hdf4 option to specify a location for the HDF4
-directory, if it is not in any of the system directories, nor in the
-same directory as HDF5.
+SD (Scientific Data) API of HDF4. 
 
 @item --enable-hdf4-file-tests
 Causes make check to use wget to fetch some HDF4 data files from the
@@ -780,41 +740,16 @@ libsrc4/run_valgrind_tests.sh. It simply reruns the test programs in
 that directory, using valgrind, and with settings such that any error
 reported by valgrind will cause the ``make check'' to fail.
 
-@item --disable-fortran-compiler-check
-Normally the netCDF configure checks the F77 and F90 compilers with
-small test programs to see if they work. This is very helpful in
-supporting netCDF installations on different machines, but won't work
-with cross-compilation. Use the --disable-fortran-compiler-check to
-turn off the fortran compiler tests, and just assume that the
-compilers will work.
-
 @item --disable-fortran-type-check
 The netCDF configure compiles and runs some programs to test fortran
 vs. C type sizes. Setting this option turns off those test, and uses a
 set of default values (which can be overridden by environment
 variables @pxref{Environment}).
 
-@item --disable-compiler-recover
-Normally, if the netCDF configure finds a F90 compiler, and it fails
-to build the test program described in --disable-f90-check, it will
-print a warning, and then continue to build without the F90 API, as if
-the user has specified --disable-f90. With the
---disable-compiler-recover option set, it will not continue, but will
-just stop if the fortran 90 compiler doesn't work. This is useful for
-automatic testing, where we want the tests to fail if something causes
-the fortran compiler to break.
-
 @item --disable-examples
 Starting with version 3.6.2, netCDF comes with some examples in the
 ``examples'' directory. By default, the examples are all built during
 a ``make check'' unless the --disable-examples option is provided.
-
-@item --enable-separate-fortran 
-This will cause the Fortran 77 and Fortran 90 APIs to be built into
-their own separate library, instead of being included in the C
-library. This is useful for supporting more than one fortran compiler
-with the same netCDF C library. This is turned on by default for
-shared library builds.
 
 @item --enable-extra-tests
 This option may turn on tests which are known to fail (i.e. bugs that
@@ -1065,7 +1000,7 @@ option on all AIX compilers by setting CFLAGS, FFLAGS, and CXXFLAGS to
 The following is also necessary on an IBM AIX SP system for 64-bit
 mode:
 @example
-    ARFLAGS='-X64 cru'
+    AR_FLAGS='-X64 cru'
     NMFLAGS='-X64'
 @end example
 

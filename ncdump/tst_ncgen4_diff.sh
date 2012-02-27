@@ -31,7 +31,7 @@ for x in ${TESTSET} ; do
 	if test "x${t}" = "x${x}" ; then isxfail=1; fi
 	done
   rm -f ${x}.nc ${x}.dmp
-  ${builddir}/../ncgen/ncgen -k${KFLAG} -o ${x}.nc ${cdl}/${x}.cdl
+  ${builddir}/../ncgen/ncgen -b -k${KFLAG} -o ${x}.nc ${cdl}/${x}.cdl
   # dump .nc file
   ${builddir}/../ncdump/ncdump ${headflag} ${specflag} ${x}.nc > ${x}.dmp
   # compare the expected (silently if XFAIL)
@@ -55,7 +55,7 @@ cd ..
 
 totalcount=`expr $passcount + $failcount + $xfailcount`
 okcount=`expr $passcount + $xfailcount`
-
+set -x
 echo "*** PASSED: ${okcount}/${totalcount} ; ${xfailcount} expected failures ; ${failcount} unexpected failures"
 
 if test $failcount -gt 0 ; then

@@ -3,7 +3,7 @@
 
 # This is to include the .NET build files.
 
-# $Id: Makefile.am,v 1.6 2009/09/24 18:28:28 dmh Exp $
+# $Id: Makefile.am,v 1.4 2008/09/29 15:17:54 ed Exp $
 
 SUBDIRS = examples libsrc ncdump ncgen nctest nc_test 
 

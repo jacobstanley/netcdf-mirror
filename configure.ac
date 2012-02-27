@@ -1,13 +1,11 @@
 #                                               -*- Autoconf -*-
 ## Process this file with autoconf to produce a configure script.
 
-# This is part of Unidata's netCDF package. Copyright 2005-2006, see
+# This is part of Unidata's netCDF package. Copyright 2005-2011, see
 # the COPYRIGHT file for more information.
 
 # Recall that ${VAR-exp} expands to $VAR if var is set (even to null),
 # and to exp otherwise. 
-
-# $Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $
 
 ## This puts the cvs ID tag in the output configure script.
 AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
@@ -17,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.1.2-beta1], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.2-rc2], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -35,46 +33,15 @@ AC_CANONICAL_HOST
 # Find out about the target we're building for.
 AC_CANONICAL_TARGET
 
-# We will output a config.h for the C library, and a fortran inc file,
-# nfconfig.inc.
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_HEADERS([fortran/nfconfig1.inc:fortran/nfconfig.in], 
-   [sed '1d;s%^/\* \(.*\) \*/%\1%' fortran/nfconfig1.inc >conftest.tmp && mv conftest.tmp fortran/nfconfig.inc])
 
 # This call is required by automake.
-AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-zip dist-tarZ subdir-objects])
+AM_INIT_AUTOMAKE([foreign dist-zip subdir-objects])
 
 # Check for the existance of this file before proceeding.
 AC_CONFIG_SRCDIR([libsrc/nc.c])
 
 AC_MSG_NOTICE([checking user options])
-
-# Turn off shared libraries by default
-AM_DISABLE_SHARED
-
-# For backward compatibility, check to see if the user has set CXX,
-# FC, and/or F90 to null. If so, treat that as the equivilent
-# --disable- option to configure. The autoconf manual suggests the
-# following to set a var if it's not already set:
-# test "${var+set}" = set || var={value}
-
-# Did the user set cxx to null?
-AC_MSG_CHECKING([whether CXX is set to ''])
-nc_null_cxx=no
-test "x${CXX+set}" = xset && test "x$CXX" = x && nc_null_cxx=yes
-AC_MSG_RESULT([$nc_null_cxx])
-
-# Did the user set fc to null?
-AC_MSG_CHECKING([whether FC is set to ''])
-nc_null_fc=no
-test "x${FC+set}" = xset && test "x$FC" = x && nc_null_fc=yes
-AC_MSG_RESULT([$nc_null_fc])
-
-# Did the user set f90 to null?
-AC_MSG_CHECKING([whether F90 is set to ''])
-nc_null_f90=no
-test "x${F90+set}" = xset && test "x$F90" = x && nc_null_f90=yes
-AC_MSG_RESULT([$nc_null_f90])
 
 # Did the user specify a default minimum blocksize (NCIO_MINBLOCKSIZE) for posixio?
 AC_MSG_CHECKING([whether a NCIO_MINBLOCKSIZE was specified])
@@ -85,12 +52,16 @@ AC_ARG_WITH([minblocksize],
 AC_MSG_RESULT([$NCIO_MINBLOCKSIZE])
 AC_DEFINE_UNQUOTED([NCIO_MINBLOCKSIZE], [$NCIO_MINBLOCKSIZE], [min blocksize for posixio.])
 
-AC_MSG_CHECKING([whether udunits is to be built])
-AC_ARG_WITH([udunits],
-              [AS_HELP_STRING([--with-udunits],
-                              [Build udunits2 package.])])
-test "x$with_udunits" = xyes || with_udunits=no
-AC_MSG_RESULT($with_udunits)
+AC_ARG_ENABLE([doxygen],
+  [AS_HELP_STRING([--disable-doxygen],
+    [Disable generation of documentation.])])
+AM_CONDITIONAL([BUILD_DOCS], [test "x$enable_doxygen" != xno]) 
+
+AC_ARG_ENABLE([internal-docs],
+  [AS_HELP_STRING([--enable-internal-docs],
+    [Include documentation of library internals. This is of interest only to those developing the netCDF library.])])
+test "x$enable_internal_docs" = xyes || enable_internal_docs=no
+AC_SUBST([BUILD_INTERNAL_DOCS], [$enable_internal_docs]) 
 
 AC_MSG_CHECKING([if fsync support is enabled])
 AC_ARG_ENABLE([fsync],
@@ -106,32 +77,24 @@ fi
 AC_MSG_CHECKING([whether extra valgrind tests should be run])	
 AC_ARG_ENABLE([valgrind-tests],
               [AS_HELP_STRING([--enable-valgrind-tests],
-                              [build with valgrind-tests (valgrind is required)])])
+                              [build with valgrind-tests (valgrind is required, static builds only)])])
 test "x$enable_valgrind_tests" = xyes || enable_valgrind_tests=no
 AC_MSG_RESULT($enable_valgrind_tests)
 
 # Does the user want to build netcdf-4?
-AC_ARG_ENABLE([netcdf-4], [AS_HELP_STRING([--enable-netcdf-4],
+AC_MSG_CHECKING([whether we should try to build netCDF-4])
+AC_ARG_ENABLE([netcdf-4], [AS_HELP_STRING([--disable-netcdf-4],
               [build with netcdf-4 (HDF5 and zlib required)])])
+test "x$enable_netcdf_4" = xno || enable_netcdf_4=yes
+AC_MSG_RESULT([$enable_netcdf_4])
+
 # Synonym
 # --enable-netcdf-4 is the controlling enable switch
 if test "x$enable_netcdf_4" = "x" ; then
   AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--enable-netcdf4],
               [build with netcdf-4 (HDF5 and zlib required)])])
   enable_netcdf_4="$enable_netcdf4"
-else
-  enable_netcdf4="$enable_netcdf_4"
 fi
-
-# Does the user want to also build the libcf library?
-AC_MSG_CHECKING([whether libcf is to be built])
-AC_ARG_WITH([libcf],
-              [AS_HELP_STRING([--with-libcf],
-                              [build and install libcf library, a library for \
-	      handling data in conformance with the Climate and \
-	      Forecast conventions. (Requires netCDF-4 and HDF5)])])
-test "x$with_libcf" = xyes || with_libcf=no
-AC_MSG_RESULT($with_libcf)
 
 # Does the user want to turn on HDF4 read ability?
 AC_MSG_CHECKING([whether reading of HDF4 SD files is to be enabled])
@@ -157,43 +120,6 @@ AC_ARG_ENABLE([pnetcdf], [AS_HELP_STRING([--enable-pnetcdf],
 test "x$enable_pnetcdf" = xyes || enable_pnetcdf=no
 AC_MSG_RESULT($enable_pnetcdf)
 
-# Did the user specify a location for the PNETCDF library?
-AC_MSG_CHECKING([whether a location for the parallel-netcdf library was specified])
-AC_ARG_WITH([pnetcdf],
-              [AS_HELP_STRING([--with-pnetcdf=<directory>],
-                              [Specify location of parallel-netcdf library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [PNETCDFDIR=$with_pnetcdf])
-if test "x$PNETCDFDIR" = "x" ; then
-AC_MSG_RESULT([no])
-else
-AC_MSG_RESULT([$PNETCDFDIR])
-fi
-AC_SUBST(PNETCDFDIR, [$PNETCDFDIR])
-
-# Does the user want to build cxx-4?
-AC_MSG_CHECKING([whether new netCDF-4 C++ API is to be built])
-AC_ARG_ENABLE([cxx-4],
-              [AS_HELP_STRING([--enable-cxx-4],
-                              [build with new netcdf-4 C++ API])])
-test "x$enable_cxx_4" = xyes || enable_cxx_4=no
-if test "x$enable_netcdf_4" = xno; then
-   enable_cxx_4=no
-fi
-AC_MSG_RESULT($enable_cxx_4)
-
-# Should netcdf-4 do data conversions, or should HDF5?
-# (Note: netCDF-4 should always do conversions, because HDF5 has different handling of extreme numbers.
-dnl AC_MSG_CHECKING([whether HDF5 should do data conversions])
-dnl AC_ARG_ENABLE([hdf5-convert],
-dnl               [AS_HELP_STRING([--enable-hdf5-convert],
-dnl                               [have HDF5 do data conversions instead of netCDF-4])])
-dnl test "x$enable_hdf5_convert" = xyes || enable_hdf5_convert=no
-dnl AC_MSG_RESULT($enable_hdf5_convert)
-dnl if test "x$enable_hdf5_convert" = xyes; then
-dnl    AC_DEFINE([HDF5_CONVERT], 1, [if true, use HDF5 data conversions])
-dnl fi
-
 # Does the user want to run extra example tests
 AC_MSG_CHECKING([whether extra example tests should be run])
 AC_ARG_ENABLE([extra-example-tests],
@@ -212,49 +138,6 @@ AC_ARG_ENABLE([parallel-tests],
                                without parallel I/O support.])])
 test "x$enable_parallel_tests" = xyes || enable_parallel_tests=no
 AC_MSG_RESULT($enable_parallel_tests)
-
-# Did the user specify a location for the HDF5 library?
-AC_MSG_CHECKING([whether a location for the HDF5 library was specified])
-AC_ARG_WITH([hdf5],
-              [AS_HELP_STRING([--with-hdf5=<directory>],
-                              [Specify location of HDF5 library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [HDF5DIR=$with_hdf5])
-AC_MSG_RESULT([$HDF5DIR])
-AC_SUBST(HDF5DIR, [$HDF5DIR])
-
-# Did the user specify a location for the ZLIB library?
-AC_MSG_CHECKING([whether a location for the ZLIB library was specified])
-AC_ARG_WITH([zlib],
-              [AS_HELP_STRING([--with-zlib=<directory>],
-                              [Specify location of ZLIB library. ZLIB is required \
-			      for netCDF-4. Configure will expect to find subdirs \
-			      include and lib.])],
-            [ZLIBDIR=$with_zlib])
-AC_MSG_RESULT([$ZLIBDIR])
-AC_SUBST(ZLIBDIR, [$ZLIBDIR])
-
-# Did the user specify a location for the SZLIB library?
-AC_MSG_CHECKING([whether a location for the SZLIB library was specified])
-AC_ARG_WITH([szlib],
-              [AS_HELP_STRING([--with-szlib=<directory>],
-                              [Specify location of SZLIB library. SZLIB is not \
-			      required for netCDF-4, but you must specify its location \
-			      if HDF5 was built with SZLIB. Configure will expect to \
-			      find subdirs include and lib.])],
-            [SZLIBDIR=$with_szlib])
-AC_MSG_RESULT([$SZLIBDIR])
-AC_SUBST(SZLIBDIR, [$SZLIBDIR])
-
-# Did the user specify a location for the HDF4 library?
-AC_MSG_CHECKING([whether a location for the HDF4 library was specified])
-AC_ARG_WITH([hdf4],
-              [AS_HELP_STRING([--with-hdf4=<directory>],
-                              [Specify location of HDF4 library. Configure will \
-			      expect to find subdirs include and lib.])],
-            [HDF4DIR=$with_hdf4])
-AC_MSG_RESULT([$HDF4DIR])
-AC_SUBST(HDF4DIR, [$HDF4DIR])
 
 # Did the user specify a default chunk size?
 AC_MSG_CHECKING([whether a default chunk size in bytes was specified])
@@ -320,15 +203,15 @@ AC_ARG_ENABLE([logging],
 test "x$enable_logging" = xyes || enable_logging=no
 AC_MSG_RESULT([$enable_logging])
 
-# Figure out if DAP support should be enabled.
-# The primary goal is to first locate curl-config
-# or the curl library location
-# The rules we implement are applied in order:
-# 1. no:  if --disable-dap is set
-# 2. no:  if curl library cannot be located
-# 3. yes: if --enable-dap is set
-# 4. yes: if neither --enable-dap nor --disable-dap is specified
-#         and the curl library can be located
+# Capture the state of the --enable-cdmremote flag
+AC_MSG_CHECKING([whether cdmremote client is to be built])
+AC_ARG_ENABLE([cdmremote],
+                 [AS_HELP_STRING([--enable-cdmremote],
+                                 [build with cdmremote client support.])])
+test "x$enable_cdmremote" = xyes || enable_cdmremote=no
+# CDMREMOTE requires netCDF-4
+if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
+AC_MSG_RESULT($enable_cdmremote)
 
 # Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
@@ -338,106 +221,40 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-# If --disable-dap, then make no attempt to locate curl
-if test "$enable_dap" = yes ; then
+# Capture the state of the --enable-rpc flag
+AC_MSG_CHECKING([whether rpc client and server are to be built])
+AC_ARG_ENABLE([rpc],
+                 [AS_HELP_STRING([--enable-rpc],
+                                 [build with rpc client and server support.])])
+test "x$enable_rpc" = xyes || enable_rpc=no
+AC_MSG_RESULT($enable_rpc)
 
-# Try to locate curl
-curlsrc=
-AC_MSG_CHECKING([whether a path for curl-config was specified])
-AC_ARG_WITH([curl-config], [AS_HELP_STRING([--with-curl-config=<path>],
-            [Specify path (or the containing directory) of the curl-config program; libcurl is required for opendap.])],
-            [curlsrc="withconfig"],[])
-if test "x$curlsrc" = "x" ; then
-  AC_MSG_RESULT([no])
+# Curl support is required if these flags are set:
+# 1. --enable-dap
+# 2. --enable-cdmremote
+# 3. --enable-rpc
+
+# If --disable-dap && --disable cdmremote && --disable-rpc,
+# then libcurl is not required
+if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = "xyes" -o "x$enable_rpc" = "xyes" ; then
+require_curl=yes
 else
-  AC_MSG_RESULT([$with_curl_config])
-  # Perhaps the user specified the containing directory
-  if test -f $with_curl_config/curl-config ; then
-    with_curl_config="$with_curl_config/curl-config"
-    curlsrc="withconfig"    
-  fi  
-  #verify
-  if $with_curl_config --prefix >/dev/null 2>&1 ; then ignore=1; else
-    AC_MSG_ERROR([Erroneous --with-curl-config value])
-  fi
+require_curl=no
 fi
 
-# Alternatively, allow specification of the curl installation directory
-AC_MSG_CHECKING([whether a location for curl installation was specified])
-AC_ARG_WITH([curl], [AS_HELP_STRING([--with-curl=<directory>.],
-            [Specify location of CURL library; libcurl is required for opendap. Configure will expect to find subdirs bin, include and lib.])],
-            [curlsrc="with"],[])
-if test "x$curlsrc" = "xwith" ; then
-  AC_MSG_RESULT([$with_curl])
-  # look for curl-config
-  if $with_curl/bin/curl-config --version >/dev/null 2>&1 ; then
-    # pretend that --with-curl-config was specified
-    curlsrc="withconfig"
-    with_curl_config="$with_curl/bin/curl-config"
-    AC_MSG_NOTICE([checking for curl-config using --with-curl... yes])
-  else
-    AC_MSG_NOTICE([checking for curl-config using --with-curl... no])
-  fi
-else
-  AC_MSG_RESULT([no])
+# Do a lib test for curl
+AC_CHECK_LIB([curl], [curl_easy_setopt])
+found_curl=no
+if test "x$ac_cv_lib_curl_curl_easy_setopt" = xyes ; then
+found_curl=yes
 fi
 
-if test "x$curlsrc" = "x" ; then
-  # look for curl-config in the path
-  if curl-config --version >/dev/null 2>&1 ; then
-    with_curl_config="curl-config"
-    curlsrc="withconfig"
-    AC_MSG_NOTICE([checking whether a location for curl-config is in PATH... yes])
-  else
-    AC_MSG_NOTICE([checking whether a location for curl-config is in PATH... no])
-  fi
-fi
-
-# compute curl values
-if test -n "$with_curl_config" -a -z "$with_curl" ; then
-    # pretend that --with-curl-config was specified
-    with_curl=`$with_curl_config --prefix`
-fi
-
-# Compute the curl flags and libs
-if test -n "$with_curl_config" ; then
-  curl_cflags=`$with_curl_config --cflags`
-  curl_libs=`$with_curl_config --libs`
-  curl_dir="$with_curl"
-elif test -n "$with_curl" ; then
-  curl_libs="-L$with_curl/lib -lcurl"
-  curl_cflags="-I$with_curl/include"
-  curl_dir="$with_curl"
-else
-  curl_cflags=-lcurl
-  curl_libs=
-  curl_dir=
-fi
-
-else #!enable_dap
-
-curl_cflags=""
-curl_libs=""
-curl_dir=""
-
-fi #enable_dap
-
-AC_SUBST([CURL_CFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_FCFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_FFLAGS],[${curl_cflags}])
-AC_SUBST([CURL_LIBS],[${curl_libs}])
-AC_SUBST([CURLDIR],[${curl_dir}])
-
-# If enable_dap is true but there is no curl, then complain
-if test -z "$curlsrc" ; then
-  if test "x$enable_dap" = "xyes" ; then
-     AC_MSG_NOTICE("--enable-dap requires curl library; disabling dap support")
-  fi
+# If curl is required but there is no curl, then complain
+if test $require_curl = yes -a $found_curl = no ; then
+  AC_MSG_NOTICE([libcurl not found; disabling remote protocol(s) support])
   enable_dap=no
-fi
-
-if test "x$enable_dap" = xyes; then
-   AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
+  enable_cdmremote=no
+  enable_rpc=no
 fi
 
 # Default is now to always do the short remote tests
@@ -451,6 +268,39 @@ if test "x$enable_dap" = "xno" ; then
 fi
 AC_MSG_RESULT($enable_dap_remote_tests)
 
+# Control if groups are supported in [netcdf4]dap2 code
+AC_MSG_CHECKING([whether [netcdf4] group names should be enabled (default on)])
+AC_ARG_ENABLE([dap-groups],
+              [AS_HELP_STRING([--disable-dap-groups],
+                                 [disable [netcdf4] dap group names])])
+test "x$enable_groups" = xno || enable_dap_groups=yes
+if test "x$enable_dap" = "xno" -o "x$enable_enable_netcdf_4" = "xno" ; then
+  AC_MSG_NOTICE([dap groups disabled because dap disabled or netcdf-4 disabled])
+  enable_dap_groups=no
+fi
+AC_MSG_RESULT($enable_dap_groups)
+if test "x$enable_dap_groups" = xyes; then
+AC_DEFINE([ENABLE_DAP_GROUPS], [1], [if true, enable DAP group names])
+fi
+
+# Set the config.h flags
+if test "x$enable_dap" = xyes; then
+   AC_DEFINE([USE_DAP], [1], [if true, build DAP Client])
+   AC_DEFINE([ENABLE_DAP], [1], [if true, build DAP Client])
+fi
+
+if test "x$enable_dap_remote_tests" = xyes; then
+   AC_DEFINE([ENABLE_DAP_REMOTE_TESTS], [1], [if true, do remote tests])
+fi
+
+if test "x$enable_cdmremote" = xyes; then
+   AC_DEFINE([USE_CDMREMOTE], [1], [if true, build CDMREMOTE Client])
+fi
+
+if test "x$enable_rpc" = xyes; then
+   AC_DEFINE([BUILD_RPC], [1], [if true, build RPC Client and Server])
+fi
+
 AC_MSG_CHECKING([whether the time-consuming dap tests should be enabled (default off)])
 AC_ARG_ENABLE([dap-long-tests],
               [AS_HELP_STRING([--enable-dap-long-tests],
@@ -461,29 +311,7 @@ if test "x$enable_dap_remote_tests" = "xno" ; then
 fi
 AC_MSG_RESULT([$enable_dap_long_tests])
 
-# Did user must specify a location for liboc?
-AC_MSG_CHECKING([whether a location for liboc was specified])
-AC_ARG_WITH([oclib], [AS_HELP_STRING([--with-oclib=<directory>],
-            [Specify location of liboc. Configure will expect to find subdirs include and lib. This is required for opendap; if not specified, then the internal version will be used.])])
-if test -n "$with_oclib" ; then
-  AC_MSG_RESULT([$with_oclib])
-else
-  AC_MSG_RESULT([no])
-fi
-oclibdir="$with_oclib"
-
-# -loc is required if BUILD_DAP is true
-if test -n "${oclibdir}" ; then
-  AC_MSG_NOTICE([external oclib library not specified; using internal version])
-  oclib_cflags=
-  oclib_libs=
-else
-  oclib_cflags="-I${oclibdir}/include"
-  oclib_libs="-L${oclibdir}/lib -loc"
-fi
-AC_SUBST([OCLIB_CFLAGS],[${oclib_cflags}])
-AC_SUBST([OCLIB_LIBS],[${oclib_libs}])
-AM_CONDITIONAL(INTERNAL_OCLIB,[test "x${with_oclib}" = "x"])
+AM_CONDITIONAL(INTERNAL_OCLIB,[test "x" = "x"])
 
 # Does the user want to do some extra tests?
 AC_MSG_CHECKING([whether netCDF extra tests should be run (developers only)])
@@ -496,14 +324,6 @@ if test "x$enable_extra_tests" = xyes; then
    AC_DEFINE([EXTRA_TESTS], [1], [if true, run extra tests which may not work yet])
 fi
 AM_CONDITIONAL(EXTRA_TESTS, [test x$enable_extra_tests = xyes])
-
-# Does the user want to test f90 compiler.
-AC_MSG_CHECKING([whether Fortran compiler(s) should be tested during configure])
-AC_ARG_ENABLE([fortran-compiler-check],
-              [AS_HELP_STRING([--disable-fortran-compiler-check],
-                              [disable check of F77/F90 compiler during configure])])
-test "x$enable_fortran_compiler_check" = xno || enable_fortran_compiler_check=yes
-AC_MSG_RESULT($enable_fortran_compiler_check)
 
 # Does the user want to use the ffio module?
 AC_MSG_CHECKING([whether FFIO will be used])
@@ -527,42 +347,10 @@ dnl if test "x$enable_sx_vectorization" = xyes; then
 dnl    AC_DEFINE([SX_VECTORIZATION], 1, [if true, turn on vectorization patch for NEC SX])
 dnl fi
 
-# Do we want to recover from a bad C++, F77, or F90 compiler?
-nc_compiler_recover=yes
-AC_MSG_CHECKING([whether to skip C++, F77, or F90 APIs if compiler is broken])
-AC_ARG_ENABLE([compiler-recover],
-              [AS_HELP_STRING([--disable-compiler-recover],
-                              [don't continue if a desired C++, F77, or F90 \
-                              compiler is missing; this is useful for testing \
-                              netCDF, but is not very useful for most netCDF \
-                              users])])
-test "x$enable_compiler_recover" = "xno" || enable_compiler_recover=yes
-AC_MSG_RESULT([$enable_compiler_recover])
-
-# If --enable-c-only is specified only the C lib will be built.
-AC_MSG_CHECKING([whether only the C library is desired])
-AC_ARG_ENABLE([c-only],
-              [AS_HELP_STRING([--enable-c-only],
-                              [build only the netCDF-3 C library; same as \
-                              --disable-f77 --disable-cxx --disable-v2 --disable-examples \
-                              --disable-utilities])])
-test "x$enable_c_only" = xyes || enable_c_only=no
-AC_MSG_RESULT([$enable_c_only])
-if test "x$enable_c_only" = xyes; then
-nc_build_f77=no
-nc_build_f90=no
-nc_build_cxx=no
-nc_build_v2=no
-nc_build_utilities=no
-nc_build_examples=no
-else
-nc_build_f77=yes
-nc_build_f90=yes
-nc_build_cxx=yes
+nc_build_c=yes
 nc_build_v2=yes
 nc_build_utilities=yes
 nc_build_examples=yes
-fi
 
 # Does the user want to build examples?
 AC_MSG_CHECKING([whether examples should be built])
@@ -573,92 +361,6 @@ AC_ARG_ENABLE([examples],
 test "x$enable_examples" = xno && nc_build_examples=no
 AC_MSG_RESULT($nc_build_examples)
 AM_CONDITIONAL(BUILD_EXAMPLES, [test x$nc_build_examples = xyes])
-
-# Do we want to build the fortran 77 API? Check for --disable-f77.
-AC_MSG_CHECKING([whether F77 API is desired])
-AC_ARG_ENABLE([f77],
-              [AS_HELP_STRING([--disable-f77],
-                              [don't try to build the netCDF Fortran 77 (or \   
-                              Fortran 90) API])])
-test "x$enable_f77" = "xno" && nc_build_f77=no
-test "x$nc_null_fc" = xyes && nc_build_f77=no
-AC_MSG_RESULT([$nc_build_f77])
-
-# Do we want to build the fortran 77 API? Check for --disable-fortran
-# for Russ, who can never remember --disable-f77..
-AC_MSG_CHECKING([whether any Fortran API is desired])
-AC_ARG_ENABLE([f77],
-              [AS_HELP_STRING([--disable-fortran],
-                              [don't try to build the netCDF Fortran 77 or \   
-                              Fortran 90 APIs (same effect as --disable-f77)])])
-test "x$enable_fortran" = "xno" && nc_build_f77=no
-AC_MSG_RESULT([$nc_build_f77])
-
-# Do we want to build the fortran 90 API?
-nc_build_f90=yes
-AC_MSG_CHECKING([whether F90 API is desired])
-AC_ARG_ENABLE([f90],
-              [AS_HELP_STRING([--disable-f90],
-                              [don't try to build the netCDF Fortran 90 API])])
-test "x$enable_f90" = xno && nc_build_f90=no
-test "x$nc_null_fc" = xyes || test "x$nc_null_f90" = xyes || \
-     test "x$nc_build_f77" = xno && nc_build_f90=no
-AC_MSG_RESULT([$nc_build_f90])
-
-# Does the user want to check into fortran type information?
-AC_MSG_CHECKING([whether fortran type sizes should be checked])
-AC_ARG_ENABLE([fortran-type-check],
-              [AS_HELP_STRING([--disable-fortran-type-check],
-                              [cause the Fortran type sizes checks to be skipped])])
-test "x$enable_fortran_type_check" = xno || enable_fortran_type_check=yes
-AC_MSG_RESULT($enable_fortran_type_check)
-
-# Do we want to build the C API? If not, the location of an existing C
-# library must be specified with --with-netcdf=
-nc_build_c=yes
-AC_MSG_CHECKING([whether C API is desired])
-AC_ARG_ENABLE([c],
-              [AS_HELP_STRING([--disable-c],
-                              [don't try to build the netCDF C API (if this option \
-                               is specified, the --with-netcdf-c-lib option must \
-                               also be used)])])
-test "x$enable_c" = xno && nc_build_c=no
-AC_MSG_RESULT([$nc_build_c])
-
-# If building without the C API (for example to build some Fortran API
-# for a new Fortran compiler), the --with-netcdf-c-lib= option must be
-# used to tell where to find the netCDF C API. This must point to a
-# netCDF C library which does NOT contain the F77 or F90 functions.
-AC_MSG_CHECKING([where to get netCDF C-only library for separate fortran libraries])
-AC_ARG_WITH([netcdf-c-lib],
-            [AS_HELP_STRING([--netcdf-c-lib=<directory>],
-                            [Specify location of netCDF C-only library (only \
-                            valid when --disable-c is also specified).])],
-            [NETCDF_C_LIB=$with_netcdf_c_lib])
-AM_CONDITIONAL(USE_NETCDF_C_LIB_DIR, [test ! "x$NETCDF_C_LIB" = x])
-AC_MSG_RESULT($NETCDF_C_LIB)
-AC_SUBST(NETCDF_C_LIB)
-
-# If the C API is turned off, a C-only library must be specified.
-if test "x$nc_build_c" = xno -a "x$NETCDF_C_LIB" = x; then
-   AC_MSG_ERROR([If the C API is disabled, you must specify a location of \
-   a netCDF C-only library with --with-netcdf-c-lib.])
-fi
-
-# Do we want to build the C++ API? Check for --disable-cxx as a
-# configure argument.
-AC_MSG_CHECKING([whether CXX API is desired])
-AC_ARG_ENABLE([cxx],
-              [AS_HELP_STRING([--disable-cxx],
-                              [don't try to build C++ API])])
-test "x$enable_cxx" = xno && nc_build_cxx=no
-test "x$nc_null_cxx" = xyes && nc_build_cxx=no
-AC_MSG_RESULT([$nc_build_cxx])
-
-# If the C API is turned off, a C++ must also be disabled.
-if test "x$nc_build_c" = xno -a "x$nc_build_cxx" = xyes; then
-   AC_MSG_ERROR([If the C API is disabled, you must also disable C++ API with --disable-cxx.])
-fi
 
 # Does the user want to disable the V2 API?
 AC_MSG_CHECKING([whether v2 netCDF API should be built])
@@ -672,11 +374,11 @@ if test "x$nc_build_v2" = xno; then
    AC_DEFINE_UNQUOTED(NO_NETCDF_2, 1, [do not build the netCDF version 2 API])
 fi
 
-# Does the user want to disable ncgen/ncdump?
-AC_MSG_CHECKING([whether the ncgen/ncdump should be built])
+# Does the user want to disable ncgen/ncdump/nccopy?
+AC_MSG_CHECKING([whether the ncgen/ncdump/nccopy should be built])
 AC_ARG_ENABLE([utilities],
               [AS_HELP_STRING([--disable-utilities],
-                              [don't build netCDF utilities ncgen and ncdump])])
+                              [don't build netCDF utilities ncgen, ncdump, and nccopy])])
 test "x$nc_build_c" = xno && enable_utilities=no
 test "x$enable_utilities" = xno && nc_build_utilities=no
 AC_MSG_RESULT($nc_build_utilities)
@@ -755,39 +457,6 @@ if test "x$enable_dll" = xyes; then
    AC_DEFINE(DLL_NETCDF, 1, [set this only when building a DLL under MinGW])
 fi
 
-# If --enable-separate-fortran is selected the F77 and F90 APIs will
-# each get their own libraray instead of being crammed in with the C
-# functions. If shared libraries are being built, this is turned
-# on. (Otherwise C programmers using the shared netcdf library would
-# not be able to run C/netCDF programs without the F90 shared
-# libraries.)
-AC_MSG_CHECKING([whether separate fortran libs are desired])
-AC_ARG_ENABLE([separate-fortran],
-              [AS_HELP_STRING([--enable-separate-fortran],
-                              [build F77 and F90 libraries separate from C library \
-                              (turned on automatically when shared libraries are built)])])
-test "x$enable_separate_fortran" != xno && test "x$enable_shared" = xyes && enable_separate_fortran=yes
-test "x$enable_separate_fortran" = xyes || enable_separate_fortran=no
-AC_MSG_RESULT([$enable_separate_fortran])
-AM_CONDITIONAL(BUILD_SEPARATE_FORTRAN, [test x$enable_separate_fortran = xyes])
-
-# If the C API is turned off, separate fortran must be turned on.
-if test "x$nc_build_c" = xno -a x$enable_separate_fortran != xyes; then
-   AC_MSG_ERROR([If the C API is disabled, you must use --enable-separate-fortran.])
-fi
-
-## Does the user want to allow UTF8 characters
-#AC_MSG_CHECKING([whether UTF8 is allowed in identifiers])
-#AC_ARG_ENABLE([utf8],
-#              [AS_HELP_STRING([--enable-utf8],
-#                              [Allow UTF8.])])
-#test "x$enable_utf8" = xyes || enable_utf8=no
-#AC_MSG_RESULT($enable_utf8)
-#if test "x$enable_utf8" = xyes; then
-#   AC_DEFINE([ALLOW_UTF8], 1, [set this to allow UTF8 characters in identifiers])
-#fi
-#AM_CONDITIONAL(ALLOW_UTF8, [test x$enable_utf8 = xyes])
-
 # According to the autoconf mailing list gurus, we must test for
 # compilers unconditionally. That is, we can't skip looking for the
 # fortran compilers, just because the user doesn't want fortran. This
@@ -796,197 +465,76 @@ fi
 # Find the C compiler.
 AC_MSG_NOTICE([finding C compiler])
 
-AC_PROG_CC(xlc cc c89 acc gcc)
+AC_PROG_CC
 AM_PROG_CC_C_O
 AC_C_CONST
 
-# If the user set environment var FC, but not F77, then set F77=FC
-if test "x${FC+set}" = xset -a "x${F77+set}" != xset; then
-   F77=${FC}
+# CURLOPT_KEYPASSWD is not defined until curl version 7.16.4
+
+# Save/restore CFLAGS
+SAVECFLAGS="$CFLAGS"
+CFLAGS="${curl_cflags}"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[#include "curl/curl.h"],
+[[int x = CURLOPT_KEYPASSWD;]])],
+                   [havekeypassword=yes],
+                   [havekeypassword=no])
+AC_MSG_CHECKING([whether a CURLOPT_KEYPASSWD is defined])
+AC_MSG_RESULT([${havekeypassword}])
+if test $havekeypassword = yes; then
+  AC_DEFINE([HAVE_CURLOPT_KEYPASSWD],[1],[Is CURLOPT_KEYPASSWD defined])
 fi
-
-# If F90 is set, and FC isn't, then set FC to whatever F90 was set to.
-if test "${F90+set}" = set -a "${FC+set}" != set; then
-   FC=$F90
-fi
-
-# If F77 is set, and FC (still) isn't, then set FC to whatever F77 was
-# set to.
-if test "${F77+set}" = set -a "${FC+set}" != set; then
-   FC=$F77
-fi
-
-# Find fortran compiler. If FC isn't set after AC_PROG_FC, we couldn't
-# find a fortran compiler. If the user requested the fortran API, and
-# has told us not to recover from a missing compiler, then bail out
-# right here.
-AC_MSG_NOTICE([finding Fortran compiler (will not be used if Fortran API is not desired)])
-
-# On solaris, f95 comes before gfortran.
-case "$host" in
-  *solaris*) 
-             F77S="xlf fort xlf95 ifort ifc efc pgf77 lf95 f95 f90 g95 gfortran f77 frt pgf95 fort77 fl32 af77 f90 xlf90 pgf90 epcf90 g77"
-             F90S="xlf90 fort xlf95 ifort ifc efc pgf95 lf95 f95 f90 g95 gfortran xlf90 pgf90 epcf90"
-             ;;
-  *) 
-             F77S="xlf fort xlf95 ifort ifc efc pgf77 lf95 g95 gfortran f77 frt pgf95 f95 f90 fort77 fl32 af77 f90 xlf90 pgf90 epcf90 g77"
-             F90S="xlf90 fort xlf95 ifort ifc efc pgf95 lf95 g95 gfortran f95 f90 f90 xlf90 pgf90 epcf90"
-             ;;
-esac
-
-# Find a fortran 90 compiler, if possible.
-# MingW has a wierd problem. If arguments are passed to AC_PROG_FC,
-# the link of tests won't work (you get a multiply defined atexit
-# function.) This is annoying, but there it is.
-if test "$host" = "i686-pc-mingw32"; then
-   AC_PROG_FC
-else
-   AC_PROG_FC($F90S)
-fi
-
-# If we couldn't find an F90 compiler, deal with it.
-if test "${FC+set}" = set && test "x$FC" = x; then
-   if test "x$enable_compiler_recover" = xno && test "x$nc_build_f90" = xyes; then
-      AC_MSG_ERROR([Can't find F90 compiler, and compiler recovery disabled.])
-   fi
-   AC_MSG_WARN([No F90 compiler found. F90 API will not be built.])
-   nc_build_f90=no
-fi
-
-# We must call AC_PROG_F77 here, otherwise the LIBTOOL macro below
-# will call it, and reset F77 to g77.
-AC_PROG_F77($F77S)
-if test "${F77+set}" = set && test "x$F77" = x; then
-   if test "x$enable_compiler_recover" = xno && test "x$nc_build_f77" = xyes; then
-      AC_MSG_ERROR([Can't find F77 compiler, and compiler recovery disabled.])
-   fi
-   AC_MSG_WARN([No F77 compiler found. F77 API will not be built.])
-   nc_build_f77=no
-fi
-
-if test "x$nc_build_f90" = xno; then
-   F90=
-   # If F77 is set, and FC isn't, then set FC to whatever F77 was set to.
-   FC=$F77
-fi
-
-# See if the fortran 90 build is desired. If so, set some stuff
-if test "x$nc_build_f90" = xyes; then
-   AC_MSG_NOTICE([setting up Fortran 90])
-   if test "${F90+set}" != set; then 
-      F90=$FC 
-   fi
-
-   # Some f90 compilers change the case of the mod file names. Others
-   # require special flags to be set to dea with .f90 files. Find out
-   # about this compiler.
-   AC_LANG_PUSH(Fortran)
-   AC_FC_SRCEXT(f90)
-   AC_LANG_POP(Fortran)
-   AX_F90_MODULE_FLAG
-   AC_SUBST(MOD_FLAG, ${ax_cv_f90_modflag})
-
-   # Set the FCLIBS flag to help with shared libraries.
-#   AC_FC_LIBRARY_LDFLAGS
-#   AC_F77_LIBRARY_LDFLAGS      
-
-   # Check the fortran 90 compiler to make sure it can compile a
-   # little test file.
-   if test "x$enable_fortran_compiler_check" = xyes; then
-      AC_MSG_CHECKING([if Fortran compiler can handle Fortran-90])
-      cat <<EOF >conftest.f90
-      program foo
-      REAL, PARAMETER        :: A = 3.141592654
-      end program
-EOF
-      doit='$FC  ${FCFLAGS} ${FCFLAGS_f90} conftest.f90'
-      if AC_TRY_EVAL(doit); then
-         nc_ans=yes
-      else
-         nc_ans=no
-         if test "x$nc_build_f90" = xyes && test "x$enable_compiler_recover" = xno; then
-            AC_MSG_ERROR([Can't use F90 compiler, F90 API desired, and compiler recovery disabled.])
-         fi
-         unset F90
-         nc_build_f90=no
-      fi
-      rm -f conftest.*
-      AC_MSG_RESULT([$nc_ans])
-      if test "x$nc_ans" = xno; then
-         AC_MSG_WARN([No F90 compiler found. F90 API will not be built.])
-      fi
-   fi
-fi
-
-AC_MSG_NOTICE([finding C++ compiler (will not be used if C++ API is not desired)])
-
-# Don't use gcc as a C++ compiler, it won't work unless -lstdc++ is also used.
-# On cygwin, osf, and apple, go to g++ first.
-case "$host" in
-  *cygwin*|*osf*|*apple*) CCS="g++ cl KCC CC cxx cc++ xlC aCC c++ g++ egcs";;
-  *) CCS="cl KCC CC cxx cc++ xlC aCC c++ g++ egcs"
-esac
-
-AC_PROG_CXX($CCS)
-
-if test "${CXX+set}" = set && test "x$CXX" = x; then
-   if test "x$enable_compiler_recover" = xno && test "x$nc_build_cxx" = xyes; then
-      AC_MSG_ERROR([Can't find CXX compiler, and compiler recovery disabled.])
-   fi
-   AC_MSG_WARN([No CXX compiler found. The C++ API will not be built.])
-   nc_build_cxx=no
-fi
-
-# Set these conditionals for automake. For some reason, it can't keep
-# it's SUBDIR order straight if I use BUILD_F77 to attach the nf_test
-# directory, so also define an automake conditional TEST_F77 every
-# time BUILD_F77 is defined, and set it to the same value.
-AM_CONDITIONAL(BUILD_C, [test "x$nc_build_c" = xyes])
-AM_CONDITIONAL(BUILD_F77, [test "x$nc_build_f77" = xyes])
-AM_CONDITIONAL(TEST_F77, [test "x$nc_build_f77" = xyes])
-AM_CONDITIONAL(BUILD_F90, [test "x$nc_build_f90" = xyes])
-AM_CONDITIONAL(BUILD_CXX, [test "x$nc_build_cxx" = xyes])
+CFLAGS="$SAVECFLAGS"
 
 # Set up libtool.
 AC_MSG_NOTICE([setting up libtool])
-LT_PREREQ([2.2.2])
-#LT_INIT(win32-dll)
-AC_PROG_LIBTOOL
+LT_PREREQ([2.2])
+LT_INIT(win32-dll)
+
+# Valgrind tests don't work with shared builds because of some libtool
+# weirdness.
+if test "x$enable_shared" = xyes; then
+   if test $enable_valgrind_tests = yes; then
+      AC_MSG_ERROR([No valgrind tests with shared libraries])
+   fi
+fi
 
 AC_MSG_NOTICE([finding other utilities])
 
-AC_PROG_INSTALL
+# Is doxygen installed? If so, have configure construct the Doxyfile.
+AC_CHECK_PROGS([DOXYGEN], [doxygen])
+if test -z "$DOXYGEN"; then 
+   AC_MSG_WARN([Doxygen not found - documentation will not be built])
+else
+   NETCDF_DOC_CODE_FILES='../include/netcdf.h \
+../examples/C/simple_xy_wr.c ../examples/C/simple_xy_rd.c \
+../examples/C/sfc_pres_temp_wr.c ../examples/C/sfc_pres_temp_rd.c \
+../examples/C/pres_temp_4D_wr.c ../examples/C/pres_temp_4D_rd.c \
+../examples/C/simple_nc4_wr.c ../examples/C/simple_nc4_rd.c \
+../examples/C/simple_xy_nc4_wr.c ../examples/C/simple_xy_nc4_rd.c \
+../libdispatch/dfile.c  ../libdispatch/ddim.c \
+../libdispatch/dattget.c ../libdispatch/dattinq.c  ../libdispatch/dattput.c \
+../libdispatch/datt.c ../libdispatch/dvar.c ../libdispatch/dvarinq.c \
+../libdispatch/dvarput.c ../libdispatch/dvarget.c ../libdispatch/derror.c \
+../libdispatch/dcompound.c ../libdispatch/dv2i.c \
+../libdispatch/dvlen.c ../libdispatch/denum.c ../libdispatch/dopaque.c \
+../libdispatch/dtype.c ../libsrc4/nc4file.c ../ncdump/ncdump.c'
+   NETCDF_DOC_ONLY_FILES="mainpage.doc tutorial.doc \
+../COPYRIGHT install.doc dispatch.doc guide.doc types.doc \
+notes.doc cdl.doc architecture.doc internal.doc"
+fi
 
-if test "x$nc_build_f77" = xyes; then
-   AC_MSG_NOTICE([trying to set fortran flags for this platform])
-   # Set fortran flag if the user has not already set it in CPPFLAGS.
-   case "$CPPFLAGS" in
-    *pgiFortran*|*NAGf90Fortran*|*f2cFortran*|*hpuxFortran*|*apolloFortran*|*sunFortran*|*IBMR2Fortran*|*CRAYFortran*|*PATHSCALE_COMPILER*|*gFortran*|*mipsFortran*|*DECFortran*|*vmsFortran*|*CONVEXFortran*|*PowerStationFortran*|*AbsoftUNIXFortran*|*AbsoftProFortran*|*SXFortran*)
-       ;;
-      *)
-         case "$FC" in
-            pgf95|pgf90|pgf77|ifort*|lf90|lf95)
-               AC_DEFINE(pgiFortran, [1], [Turned on by netCDF configure.])
-               ;;
-             *gfortran) 
-                if (gfortran --version | grep '(GCC 4.1.' || gfortran --version | grep '(GCC 4.0.'); then
-                   AC_DEFINE(gFortran, [1], [Turned on by netCDF configure.])    
-                else
-                   AC_DEFINE(pgiFortran, [1], [Turned on by netCDF configure.])    
-                fi
-                ;;
-             *g77) 
-                AC_DEFINE(f2cFortran, [1], [Turned on by netCDF configure.])
-                ;;
-             *)
-                # If it's a gnu compiler, guess f2c.
-                if test "x$ac_cv_fc_compiler_gnu" = xyes; then
-                   AC_DEFINE(f2cFortran, [1], [Turned on by netCDF configure.])
-                fi
-                ;;
-         esac
-   esac
-fi 
+# If we have doxygen, and it's enabled, then process the file.
+if test "x$enable_doxygen" != xno; then
+   if test -n "$DOXYGEN"; then
+      AC_CONFIG_FILES([man4/Doxyfile])
+      AC_SUBST(NETCDF_DOC_CODE_FILES, ${NETCDF_DOC_CODE_FILES})
+      AC_SUBST(NETCDF_DOC_ONLY_FILES, ${NETCDF_DOC_ONLY_FILES})
+   fi
+fi
+
+# Find the install program.
+AC_PROG_INSTALL
 
 # Check to see if any macros must be set to enable large (>2GB) files.
 AC_SYS_LARGEFILE
@@ -998,72 +546,37 @@ AC_MSG_NOTICE([displaying some results])
 UD_DISPLAY_RESULTS
 
 # For nightly build testing, output CC, FC, etc.
-if test x$enable_compiler_recover = xno; then
-   echo "CPPFLAGS=$CPPFLAGS CC=$CC CFLAGS=$CFLAGS CXX=$CXX CXXFLAGS=$CXXFLAGS FC=$FC FCFLAGS=$FCFLAGS F77=$F77 FFLAGS=$FFLAGS LDFLAGS=$LDFLAGS LIBS=$LIBS FLIBS=$FLIBS F90LIBS=$F90LIBS" >> comps.txt
-fi
-
-ac_cv_prog_f90_uppercase_mod=no
-
-# This will test the f77 compiler, as well as check some fortran types.
-if test "x$nc_build_f77" = xyes; then
-
-   if test "$enable_fortran_type_check" = yes; then
-      UD_FORTRAN_TYPES
-      if test "x$ud_fc_failed" = xyes -a "x$enable_compiler_recover" = xno -a "x$nc_build_f77" = xyes; then
-         AC_MSG_ERROR([F77 compiler doesn't work, and compiler recovery disabled.])
-      fi
-   else
-      AC_DEFINE(NCBYTE_T, byte)
-      AC_DEFINE(NCSHORT_T, integer*2)
-      AC_DEFINE(NF_INT1_T, byte)
-      AC_DEFINE(NF_INT2_T, integer*2)
-      AC_DEFINE(NF_INT1_IS_C_SIGNED_CHAR, 1, [default])
-      AC_DEFINE(NF_INT2_IS_C_SHORT, 1, [default])
-      AC_DEFINE(NF_INT_IS_C_INT, 1, [default])
-      AC_DEFINE(NF_REAL_IS_C_FLOAT, 1, [default])
-      AC_DEFINE(NF_DOUBLEPRECISION_IS_C_DOUBLE, 1, [default])
-   fi
-
-   # Test whether F90 module names get capitalized.
-   if test "x$nc_build_f90" = xyes; then
-      AC_PROG_FC_UPPERCASE_MOD
-   fi
-fi
-AM_CONDITIONAL(UPPER_CASE_MOD, [test "x$ac_cv_prog_f90_uppercase_mod" = xyes])
+echo "CPPFLAGS=$CPPFLAGS CC=$CC CFLAGS=$CFLAGS LDFLAGS=$LDFLAGS LIBS=$LIBS" >> comps.txt
 
 AC_MSG_NOTICE([checking types, headers, and functions])
 
 AC_CHECK_HEADER(stdlib.h, ,AC_DEFINE([NO_STDLIB_H], [], [no stdlib.h]))
 AC_CHECK_HEADER(sys/types.h, ,AC_DEFINE([NO_SYS_TYPES_H], [], [no sys_types.h]))
-AC_CHECK_HEADERS([locale.h])
+AC_CHECK_HEADERS([sys/param.h])
+#AC_CHECK_HEADERS([locale.h])
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
-AC_CHECK_HEADERS([stdio.h stdarg.h errno.h ctype.h fcntl.h malloc.h stdlib.h string.h strings.h unistd.h sys/stat.h getopt.h sys/time.h sys/resource.h])
+AC_CHECK_HEADERS([locale.h stdio.h stdarg.h errno.h ctype.h fcntl.h malloc.h stdlib.h string.h \
+			   strings.h unistd.h sys/stat.h getopt.h sys/time.h sys/resource.h])
 AC_FUNC_VPRINTF
 
 # Check for <stdbool.h> that conforms to C99 requirements
 AC_HEADER_STDBOOL
 
 # Check for these functions...
-AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr mktemp strcat strcpy strdup strcasecmp])
-AC_CHECK_FUNCS([getrlimit])
-AC_CHECK_FUNCS([gettimeofday])
-AC_CHECK_FUNCS([fsync])
-AC_CHECK_FUNCS([MPI_Comm_f2c])
+AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr strcat strcpy \
+                strdup strcasecmp strtod strtoll strtoull strstr \
+		mkstemp getpid \
+		getrlimit gettimeofday fsync MPI_Comm_f2c])
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
-#UD_CHECK_LIB_MATH
-
 AC_STRUCT_ST_BLKSIZE
 UD_CHECK_IEEE
 AC_TYPE_SIZE_T
 AC_TYPE_OFF_T
-AC_CHECK_TYPES([size_t, off_t,ssize_t, ptrdiff_t, uchar, longlong, ulonglong])
-#AC_CHECK_TYPE(ssize_t, int)
-#AC_CHECK_TYPE(ptrdiff_t, int)
-#AC_CHECK_TYPE(uchar, unsigned char)
+AC_CHECK_TYPES([ssize_t, ptrdiff_t, uchar, longlong])
 AC_C_CHAR_UNSIGNED
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(short)
@@ -1073,152 +586,76 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(size_t)
-UD_MAKEWHATIS
 
-# Save the old value of LDFLAGS, it will be restored later.
-OLD_LDFLAGS=${LDFLAGS}
-OLD_LIBS=${LIBS}
-OLD_CPPFLAGS=${CPPFLAGS}
-
-# Add the HDF5 directory and the math library info for the linker
-# to use in the tests below.
-if test ! "x$ZLIBDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${ZLIBDIR}/lib"
-   CPPFLAGS="${CPPFLAGS} -I${ZLIBDIR}/include"
-fi    
-if test ! "x$HDF5DIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${HDF5DIR}/lib"
-   CPPFLAGS="${CPPFLAGS} -I${HDF5DIR}/include"
-fi    
-LIBS="${LIBS} -lm -lz -lhdf5"
-
-# Add the HDF4 directory and library if needed.
-if test "x$enable_hdf4" = xyes; then
-   if test ! "x$HDF4DIR" = x; then
-      LDFLAGS="${LDFLAGS} -L${HDF4DIR}/lib"
-      CPPFLAGS="${CPPFLAGS} -I${HDF4DIR}/include"
-   fi    
-   LIBS="${LIBS} -lmfhdf -ldf -ljpeg -lz"
+if test "x$enable_netcdf_4" = xyes || test "x$enable_dap" = xyes; then
+   AC_SEARCH_LIBS([deflate], [zlib1 z], [], [
+     AC_MSG_ERROR([Can't find or link to the z library. Turn off netCDF-4 and \
+     opendap with --disable-netcdf-4 --disable-dap, or see config.log for errors.])])
 fi
 
-# Add the szlib dir and library if needed.
-nc_has_szlib=no
-if test ! "x$SZLIBDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${SZLIBDIR}/lib"
-   LIBS="-lsz ${LIBS}"
-   CPPFLAGS="${CPPFLAGS} -I${SZLIBDIR}/include"
-   nc_has_szlib=yes
-fi
-
-# Add the parallel-netcdf dir and library if needed.
-if test ! "x$PNETCDFDIR" = x; then
-   LDFLAGS="${LDFLAGS} -L${PNETCDFDIR}/lib"
-   LIBS="-lpnetcdf ${LIBS}"
-   CPPFLAGS="${CPPFLAGS} -I${PNETCDFDIR}/include"
-fi
-
-# Check for the header.
-AC_CHECK_HEADERS([hdf5.h], [], [nc_hdf5_h_missing=yes])
-
-# If HDF5 is not found, error out if the user specifically asked for
-# netcdf-4, otherwise just turn netCDF-4 off.
-if test "x$nc_hdf5_h_missing" = xyes; then
-# I think this should only check the
-# enable_netcdf4 flag
-#   if test "x$enable_netcdf_4" = xyes -o "x$HDF5DIR" != x; then
-   if test "x$enable_netcdf_4" = xyes ; then
-      AC_MSG_ERROR([NetCDF-4 requires HDF5, but hdf5.h cannot be found. Try using \
-      the --with-hdf5 option to specify location of HDF5.])
-   else	  
-      enable_netcdf_4=no
-   fi
-else
-   if test ! "x$enable_netcdf_4" = xno; then
-      enable_netcdf_4=yes
-   fi
-fi
-
-AC_MSG_CHECKING([whether we should try to build netCDF-4])
-AC_MSG_RESULT([$enable_netcdf_4])
+# We need the math library.
+AC_CHECK_LIB([m], [floor], [], 
+[AC_MSG_ERROR([Can't find or link to the math library.])])
 
 if test "x$enable_netcdf_4" = xyes; then
+
    AC_DEFINE([USE_NETCDF4], [1], [if true, build netCDF-4])
    AC_DEFINE([H5_USE_16_API], [1], [use HDF5 1.6 API])
 
-   # Check for the main hdf5 library.
-   AC_CHECK_LIB([hdf5], [H5Fflush], [], [nc_hdf5_lib_missing=yes])
-   if test "x$nc_hdf5_h_missing" = xyes || test "x$nc_hdf5_lib_missing" = xyes; then
-      AC_MSG_ERROR([Can't find or link to the hdf5 library. Configure with --disable-netcdf-4 or see config.log for errors.])
-   fi
-   
-   # We also require the HDF5 High Level library.
-   AC_CHECK_LIB([hdf5_hl], [H5DSis_scale], [], [nc_hdf5_hl_lib_missing=yes])
-   if test "x$nc_hdf5_hl_lib_missing" = xyes; then
-      AC_MSG_ERROR([Can't find or link to the hdf5 high-level. Configure with --disable-netcdf-4 or see config.log for errors.])
-   fi
-   
+   AC_SEARCH_LIBS([SZ_Compress], [szip sz], [], [])
+
+   # Check for the main hdf5 and hdf5_hl library.
+
+   AC_SEARCH_LIBS([H5Fflush], [hdf5dll hdf5], [], 
+   [AC_MSG_ERROR([Can't find or link to the hdf5 library. Use --disable-netcdf-4, or see config.log for errors.])])
+   AC_SEARCH_LIBS([H5DSis_scale], [hdf5_hldll hdf5_hl], [], 
+   [AC_MSG_ERROR([Can't find or link to the hdf5 high-level. Use --disable-netcdf-4, or see config.log for errors.])])
+	
+   AC_CHECK_HEADERS([hdf5.h], [], [AC_MSG_ERROR([NetCDF-4 requires HDF5, but hdf5.h cannot be found.])])
+   AC_CHECK_FUNCS([H5Pget_fapl_mpiposix H5Pget_fapl_mpio H5Pset_deflate H5Z_SZIP])
+
    # The user may have parallel HDF5 based on MPI POSIX.
-   AC_CHECK_LIB([hdf5], [H5Pget_fapl_mpiposix], [enable_parallel_posix=yes], [])
-   if test "x$enable_parallel_posix" = xyes; then
+   if test "x$ac_cv_func_H5Pget_fapl_mpiposix" = xyes; then
       AC_DEFINE([USE_PARALLEL_POSIX], [1], [if true, compile in parallel netCDF-4 based on MPI/POSIX])
    fi
    
    # The user may have parallel HDF5 based on MPI mumble mumble.
-   AC_CHECK_LIB([hdf5], [H5Pget_fapl_mpio], [enable_parallel_mpio=yes], [])
-   if test "x$enable_parallel_mpio" = xyes; then
+   if test "x$ac_cv_func_H5Pget_fapl_mpio" = xyes; then
       AC_DEFINE([USE_PARALLEL_MPIO], [1], [if true, compile in parallel netCDF-4 based on MPI/IO])
    fi
 
    # If parallel is in use, enable it in the C code. Also add some stuff to netcdf.h.
    enable_parallel=no
-  # AC_MSG_CHECKING([how to modify netcdf.h to deal with parallel I/O])
-   if test "x$enable_parallel_mpio" = xyes -o "x$enable_parallel_posix" = xyes; then
+   if test "x$ac_cv_func_H5Pget_fapl_mpio" = xyes -o "x$ac_cv_func_H5Pget_fapl_mpiposix" = xyes; then
       enable_parallel=yes
       AC_DEFINE([USE_PARALLEL], [1], [if true, parallel netCDF-4 is in use])
-      # Modify netcdf.h to include parallel stuff.
-# When doing distcheck, this cmd will fail because of
-# the permissions set on $top_builddir.
-# So, we forcibly reset the permissions
-#chmod u+w libsrc4/netcdf.h
-#      sed '/#include <errno.h>/{G;s/$/\/* mpi.h included by configure. *\//;G;s/$/#include <mpi.h>/;}' libsrc4/netcdf_base.h > libsrc4/netcdf.h
 
       # Using pnetcdf for classic parallel I/O?
       if test "x$enable_pnetcdf" = xyes; then
-         AC_CHECK_LIB([pnetcdf], [ncmpi_create], [nc4_have_pnetcdf_lib=yes])
-	 if test "x$nc4_have_pnetcdf_lib" != xyes; then
-            AC_MSG_ERROR([Cannot link to pnetcdf library, yet --enable-pnetcdf was used.])
-	 fi
+         AC_CHECK_LIB([pnetcdf], [ncmpi_create], [], 
+	 [AC_MSG_ERROR([Cannot link to pnetcdf library, yet --enable-pnetcdf was used.])])
+
 dnl          AC_CHECK_HEADERS([pnetcdf.h], [], [nc4_pnetcdf_h_missing=yes)	   
 dnl 	 if test ! "x$HAVE_PNETCDF" = x1; then
 dnl             AC_MSG_ERROR([Cannot find pnetcdf header, yet --enable-pnetcdf was used.])
 dnl 	 fi
          AC_DEFINE([USE_PNETCDF], [1], [if true, parallel netCDF is used])      	 
       fi
-#      AC_MSG_RESULT([with parallel])         
-#   else
-#      AC_MSG_RESULT([without parallel])         
-      # Modify netcdf.h to include defs for missing parallel stuff.
-      # WARNING: the similar defs in libdispatch/ncdispatch.h must match this
-# When doing distcheck, this cmd will fail because of
-# the permissions set on $top_builddir.
-# So, we forcibly reset the permissions
-#chmod u+w libsrc4/netcdf.h
- #     sed '/#include <errno.h>/{G;s/$/\/* These defs added by netCDF configure because parallel HDF5 is not present. *\//;G;s/$/#ifndef MPI_INCLUDED/;G;s/$/#define MPI_Comm int/;G;s/$/#define MPI_Info int/;G;s/$/#define MPI_COMM_WORLD 0/;G;s/$/#define MPI_INFO_NULL 0/;G;s/$/#endif/;}' libsrc4/netcdf_base.h > libsrc4/netcdf.h
    fi
    
    AC_MSG_CHECKING([whether parallel I/O features are to be included])
    AC_MSG_RESULT([$enable_parallel])         
    
-   # The user must have build HDF5 with the ZLIB library.
-   AC_CHECK_LIB([hdf5], [H5Pset_deflate], [enable_zlib=yes], [])
-   if test "x$enable_zlib" = xyes; then
+   # The user must have built HDF5 with the ZLIB library.
+   if test "x$ac_cv_func_H5Pset_deflate" = xyes; then
       AC_DEFINE([USE_ZLIB], [1], [if true, compile in zlib compression in netCDF-4 variables])
+   else		    
+      AC_MSG_ERROR([HDF5 must be built with zlib for netCDF-4])
    fi
 
-   # The user must have build HDF5 with the ZLIB library.
-   AC_CHECK_LIB([hdf5], [H5Z_can_apply_szip], [enable_szip=yes], [])
-   if test "x$enable_szip" = xyes; then
-      AC_DEFINE([USE_SZIP], [1], [if true, compile in szip compression in netCDF-4 variables])
+   # The user may have built HDF5 with the SZLIB library.
+   if test "x$ac_cv_func_H5Z_SZIP" = xyes; then
+     AC_DEFINE([USE_SZIP], [1], [if true, compile in szip compression in netCDF-4 variables])
    fi
 
    # If the user wants hdf4 built in, check it out.
@@ -1227,24 +664,10 @@ dnl 	 fi
       if test "x$nc_mfhdf_h_missing" = xyes; then
          AC_MSG_ERROR([Cannot find mfhdf.h, yet --enable-hdf4 was used.])
       fi		      
+      AC_CHECK_LIB([df], [Hclose], [], [])
       AC_CHECK_LIB([mfhdf], [SDcreate], [], [])
       AC_DEFINE([USE_HDF4], [1], [if true, use HDF4 too])
    fi
-else
-# !netcdf-4
-   # Modify netcdf.h to include defs for missing parallel stuff.
-   #sed '/#include <errno.h>/{G;s/$/\/* These defs added by netCDF configure because parallel HDF5 is not present. *\//;G;s/$/#ifndef MPI_INCLUDED/;G;s/$/#define MPI_Comm int/;G;s/$/#define MPI_Info int/;G;s/$/#define MPI_COMM_WORLD 0/;G;s/$/#define MPI_INFO_NULL 0/;G;s/$/#endif/;}' libsrc4/netcdf_base.h > libsrc4/netcdf.h
- ignore=1;
-fi
-
-# Restore LDFLAGS to it's old value.
-LDFLAGS=${OLD_LDFLAGS}
-LIBS=${OLD_LIBS}
-CPPFLAGS=${OLD_CPPFLAGS}
-
-# Do Renaming if netcdf4 or dap support is enabled
-if test "x$enable_netcdf_4" = xyes -o "x$enable_dap" = xyes ; then
-   AC_DEFINE([USE_RENAMEV3], [1], [if true, build libsrc code with renamed API functions])
 fi
 
 # No logging for netcdf-3.
@@ -1263,17 +686,10 @@ AM_CONDITIONAL(BUILD_DAP, [test "x$enable_dap" = xyes])
 AM_CONDITIONAL(USE_DAP, [test "x$enable_dap" = xyes]) # Alias
 AM_CONDITIONAL(ENABLE_DAP_REMOTE_TESTS, [test "x$enable_dap_remote_tests" = xyes])
 AM_CONDITIONAL(ENABLE_DAP_LONG_TESTS, [test "x$enable_dap_long_tests" = xyes])
-AM_CONDITIONAL(BUILD_CXX4, [test x$enable_cxx_4 = xyes])
 AM_CONDITIONAL(EXTRA_EXAMPLE_TESTS, [test "x$enable_extra_example_tests" = xyes])
-AM_CONDITIONAL(USE_HDF5_DIR, [test ! "x$HDF5DIR" = x])
-AM_CONDITIONAL(USE_HDF4_DIR, [test ! "x$HDF4DIR" = x])
-AM_CONDITIONAL(USE_ZLIB_DIR, [test ! "x$ZLIBDIR" = x])
-AM_CONDITIONAL(USE_SZLIB_DIR, [test ! "x$SZLIBDIR" = x])
-AM_CONDITIONAL(USE_SZIP, [test "x$enable_szip" = xyes])
+AM_CONDITIONAL(USE_SZIP, [test "x$ac_cv_func_H5Z_SZIP" = xyes])
 AM_CONDITIONAL(USE_PNETCDF_DIR, [test ! "x$PNETCDFDIR" = x])
 AM_CONDITIONAL(USE_LOGGING, [test "x$enable_logging" = xyes])
-AM_CONDITIONAL(BUILD_UDUNITS, [test "x$with_udunits" = xyes])
-AM_CONDITIONAL(BUILD_LIBCF, [test "x$with_libcf" = xyes])
 AM_CONDITIONAL(CROSS_COMPILING, [test "x$cross_compiling" = xyes])
 AM_CONDITIONAL(USE_VALGRIND_TESTS, [test "x$enable_valgrind_tests" = xyes])
 AM_CONDITIONAL(USE_NETCDF4, [test x$enable_netcdf_4 = xyes])
@@ -1282,17 +698,18 @@ AM_CONDITIONAL(USE_HDF4_FILE_TESTS, [test x$enable_hdf4_file_tests = xyes])
 AM_CONDITIONAL(USE_RENAMEV3, [test x$enable_netcdf_4 = xyes -o x$enable_dap = xyes])
 AM_CONDITIONAL(USE_PNETCDF, [test x$enable_pnetcdf = xyes])
 AM_CONDITIONAL(USE_DISPATCH, [test x$enable_dispatch = xyes])
+AM_CONDITIONAL(BUILD_CDMREMOTE, [test "x$enable_cdmremote" = xyes]) # Alias
+AM_CONDITIONAL(BUILD_RPC, [test "x$enable_rpc" = xyes])
 
 # If the machine doesn't have a long long, and we want netCDF-4, then
 # we've got problems!
-# Always define
-dnl if test "x$enable_netcdf_4" = xyes; then
+if test "x$enable_netcdf_4" = xyes; then
    AC_TYPE_LONG_LONG_INT
    AC_TYPE_UNSIGNED_LONG_LONG_INT
 dnl    if test ! "x$ac_cv_type_long_long_int" = xyes -o ! "x$ac_cv_type_unsigned_long_long_int" = xyes; then
 dnl       AC_MSG_ERROR([This platform does not support long long types. These are required for netCDF-4.])
 dnl    fi
-dnl fi
+fi
 
 # Create the file name for a "make ftpbin" which is used to generate a
 # binary distribution. For each release we generate binary releases on
@@ -1304,9 +721,6 @@ dnl fi
 AC_MSG_CHECKING([what to call the output of the ftpbin target])
 BINFILE_NAME=binary-netcdf-$PACKAGE_VERSION
 test "x$enable_netcdf_4" = xno && BINFILE_NAME=${BINFILE_NAME}_nc3
-test "x$nc_build_f77" = xyes && BINFILE_NAME=${BINFILE_NAME}_${F77}
-test "x$nc_build_f90" = xyes && BINFILE_NAME=${BINFILE_NAME}_${F90}
-test "x$nc_build_cxx" = xyes && BINFILE_NAME=${BINFILE_NAME}_${CXX}
 BINFILE_NAME=${BINFILE_NAME}.tar
 AC_SUBST(BINFILE_NAME)
 AC_MSG_RESULT([$BINFILE_NAME $FC $CXX])
@@ -1314,33 +728,37 @@ AC_MSG_RESULT([$BINFILE_NAME $FC $CXX])
 UD_FTPBINDIR
 
 ##################################################
-# DRNO and OC configuration
+# OC has been modified to not depend on xdr.h, so suppress here
+## Require some version of xdr/rpc if --enable-dap is set.
+## See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
+#if test "x$enable_dap" = xyes; then
+#   AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
+#   		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
+#  if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
+#    AC_MSG_ERROR(Cannot locate library containing xdr functions.)
+#  else
+#  if test "$dap_xdrlib" = "lc" ; then
+#    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
+#  elif test "$dap_xdrlib" = "none required" ; then
+#    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
+#  else
+#    dap_xdrlib=`echo $dap_xdrlib | sed -e s/-l//g`
+#    AC_MSG_NOTICE(XDR Functions appear to be in lib${dap_xdrlib}.)	
+#    # Add to library list
+#    AC_CHECK_LIB($dap_xdrlib,xdr_void)
+#  fi
+#  # Fix to get working on OS X (thanks to Fedor Baart)
+#  AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
+#       AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
+#       AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
+#       ], [], [[#ifdef HAVE_RPC_TYPES_H
+#  # include <rpc/types.h>
+#  #endif]])
+#fi
+#fi
 
-# Require some version of xdr/rpc
-# See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
-AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
-		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
-if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
-  AC_MSG_ERROR(Cannot locate library containing xdr functions.)
-else
-  if test "$dap_xdrlib" = "lc" ; then
-    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
-  elif test "$dap_xdrlib" = "none required" ; then
-    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
-  else
-    dap_xdrlib=`echo $dap_xdrlib | sed -e s/-l//g`
-    AC_MSG_NOTICE(XDR Functions appear to be in lib${dap_xdrlib}.)	
-    # Add to library list
-    AC_CHECK_LIB($dap_xdrlib,xdr_void)
-  fi
-# Fix to get working on OS X (thanks to Fedor Baart)
-AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
-     AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
-     AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
-     ], [], [[#ifdef HAVE_RPC_TYPES_H
-# include <rpc/types.h>
-#endif]])
-fi
+AC_MSG_CHECKING([value of LIBS])
+AC_MSG_RESULT([$LIBS])
 
 # Flags for nc-config script; by design $prefix, $includir, $libdir,
 # etc.  are left as shell variables in the script so as to facilitate
@@ -1351,33 +769,8 @@ else
    NC_LIBS="$with_netcdf_c_lib"
 fi
 if test "x$enable_shared" != xyes; then
-   if test "x$enable_netcdf_4" = xyes ; then 
-      if test "x$HDF5DIR" != x ; then 
-      	 NC_LIBS="$NC_LIBS -L$HDF5DIR/lib"
-      fi	 
-      NC_LIBS="$NC_LIBS -lhdf5_hl -lhdf5 $SZLIB_LIBS"
-      if test "x$ZLIBDIR" != x ; then 
-         NC_LIBS="$NC_LIBS -L$ZLIBDIR/lib"
-      fi
-      NC_LIBS="$NC_LIBS -lz -lm $LIBS"
-      if test "x$SZLIBDIR" != x ; then 
-         NC_LIBS="$NC_LIBS -L$SZLIBDIR/lib"
-         NC_LIBS="$NC_LIBS -lsz $LIBS"
-      fi
-      if test "x$enable_hdf4" = xyes; then
-         if test "x$HDF4DIR" != x ; then 
-            NC_LIBS="$NC_LIBS -L$HDF4DIR/lib"
-         fi	 
-         NC_LIBS="$NC_LIBS -lmfhdf -ldf"
-      fi
-   fi
-   if test "x$enable_dap" = xyes ; then 
-       if test "x$with_daplib" != x ; then
-          NC_LIBS="$NC_LIBS -L$with_daplib/lib"
-       fi
-       NC_LIBS="$NC_LIBS $CURL_LIBS"
-   fi
-fi
+   NC_LIBS="$LDFLAGS $NC_LIBS $LIBS"
+fi	 
 
 case "x$target_os" in
 xsolaris*) 
@@ -1395,109 +788,19 @@ xsolaris*)
 *);;
 esac
 
-if test "x$enable_separate_fortran" = xyes ; then 
-   NC_FLIBS="-lnetcdff $NC_LIBS"
-else
-   NC_FLIBS="$NC_LIBS"
-fi
+NC_FLIBS="-lnetcdff $NC_LIBS"
 
 AC_SUBST(NC_LIBS,[$NC_LIBS])
-AC_SUBST(NC_FLIBS,[$NC_FLIBS])
 AC_SUBST(HAS_DAP,[$enable_dap])
 AC_SUBST(HAS_NC2,[$nc_build_v2])
 AC_SUBST(HAS_NC4,[$enable_netcdf_4])
 AC_SUBST(HAS_HDF4,[$enable_hdf4])
 AC_SUBST(HAS_PNETCDF,[$enable_pnetcdf])
 AC_SUBST(HAS_HDF5,[$enable_netcdf_4])
-AC_SUBST(HAS_F77,[$nc_build_f77])
-AC_SUBST(HAS_F90,[$nc_build_f90])
-AC_SUBST(HAS_CXX,[$nc_build_cxx])
 AC_SUBST(HAS_SZLIB,[$nc_has_szlib])
 
-AC_CONFIG_SUBDIRS([udunits libcf])
-
-##################################################
-# Remove redundant constructions of AM_CPPFLAGS, etc
-# from the subdir Makefile.am files.
-# Eventually merge with the nc-config construction above
-
-# The following flags are defined
-# Define the -L flags and libs for external libraries
-EXTERN_LDFLAGS=""
-# Define the -I flags for external libraries
-EXTERN_CFLAGS=""
-
-# Add all libraries even if shared is enabled
-if test "x$enable_netcdf_4" = xyes ; then 
-  if test "x$HDF5DIR" != x ; then 
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -L$HDF5DIR/lib"
-    EXTERN_CFLAGS="${EXTERN_CFLAGS} -I$HDF5DIR/include"
-  fi         
-  EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -lhdf5_hl -lhdf5"
-  if test "x$enable_hdf4" = xyes; then
-    if test "x$HDF4DIR" != x ; then 
-      EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -L$HDF4DIR/lib"
-      EXTERN_CFLAGS="${EXTERN_CFLAGS} -I$HDF4DIR/include"
-    fi      
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -lmfhdf -ldf"
-  fi
-  if test "x$enable_pnetcdf" = xyes; then
-    if test "x$PNETCDFDIR" != x ; then 
-      EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -L$PNETCDFDIR/lib"
-      EXTERN_CFLAGS="${EXTERN_CFLAGS} -I$PNETCDFDIR/include"
-    fi      
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -lpnetcdf"
-  fi
-fi # netcdf-4
-# Do zlib and szlib if either dap or netcdf4 is enabled
-if test "x$enable_netcdf_4" = xyes -o "x$enable_dap" = xyes ; then
-  if test "x$ZLIBDIR" != x ; then 
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -L$ZLIBDIR/lib"
-    EXTERN_CFLAGS="${EXTERN_CFLAGS} -I$ZLIBDIR/include"
-  fi
-  EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -lz"
-  if test "x$SZLIBDIR" != x ; then 
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -L$SZLIBDIR/lib -lsz"
-    EXTERN_CFLAGS="${EXTERN_CFLAGS} -I$SZLIBDIR/include"
-  fi
-fi
-
-if test "x$enable_dap" = xyes ; then 
-  if test "x$curl_libs" != x ; then
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} $curl_libs"
-    EXTERN_CFLAGS="${EXTERN_CFLAGS} $curl_cflags"
-  fi
-  # If we are building with dap support check to see if we need to add
-  # external oc library
-  if test "x$with_oclib" != x ; then
-    EXTERN_LDFLAGS="${EXTERN_LDFLAGS} -L$OCLIBDIR/lib -loc"
-    EXTERN_CFLAGS="${EXTERN_CFLAGS} -I$OCLIBDIR/include"
-  fi
-fi
-
-# If we are running on Solaris, then we need to add -R flags as well
-
-case "x$target_os" in
-xsolaris*) 
-  NEWLDFLAGS=""
-  for x in $EXTERN_LDFLAGS ; do
-    case "$x" in
-    -L*) r=`echo "$x" | sed -e 's|^-L|-R|'`
-	 NEWLDFLAGS="$NEWLDFLAGS $x $r"
-	 ;;
-    *)	 NEWLDFLAGS="$NEWLDFLAGS $x" ;;
-    esac
-  done
-  EXTERN_LDFLAGS="$NEWLDFLAGS"
-  ;;
-*);;
-esac
-AC_SUBST(EXTERN_CFLAGS,[$EXTERN_CFLAGS])
-AC_SUBST(EXTERN_LDFLAGS,[$EXTERN_LDFLAGS])
-AC_SUBST(EXTERN_CPPFLAGS,[$EXTERN_CFLAGS])
-
-AC_MSG_NOTICE(CFLAGS for External libraries: ${EXTERN_CFLAGS})
-AC_MSG_NOTICE(LDFLAGS for External libraries: ${EXTERN_LDFLAGS})
+# Access netcdf specific version of config.h
+AH_BOTTOM([#include "ncconfigure.h"])
 
 ##################################################
 # Uncomment this to keep a copy of autoconf defines at this point, for
@@ -1505,27 +808,13 @@ AC_MSG_NOTICE(LDFLAGS for External libraries: ${EXTERN_LDFLAGS})
 # cp confdefs.h my_config.h
 
 AC_MSG_NOTICE([generating header files and makefiles])
-
-# Took these out from the list below for the 4.1 release.
-dnl                  win32/Makefile
-dnl                  win32/NET/Makefile
-dnl                  win32/NET/libsrc/Makefile
-dnl                  win32/NET/ncdump/Makefile
-dnl                  win32/NET/ncgen/Makefile
-dnl                  win32/NET/examples/Makefile
-dnl                  win32/NET/nctest/Makefile
-dnl                  win32/NET/nc_test/Makefile
-
-dnl                  cxx4/d/Makefile
-dnl                  cxx4/d/html/Makefile
-
-
 AC_CONFIG_FILES([Makefile
                  nc-config
                  netcdf.pc
                  include/Makefile
+                 h5_test/Makefile
                  man4/Makefile
-                 fortran/Makefile
+                 man4/images/Makefile
                  libsrc/Makefile
                  libsrc4/Makefile
                  nctest/Makefile
@@ -1534,31 +823,32 @@ AC_CONFIG_FILES([Makefile
                  ncdump/Makefile
                  ncgen3/Makefile
                  ncgen/Makefile
-                 nf_test/Makefile
-                 cxx/Makefile
-                 cxx4/Makefile
-                 f90/Makefile
                  examples/Makefile
                  examples/C/Makefile
                  examples/CDL/Makefile
-                 examples/CXX/Makefile
-                 examples/CXX4/Makefile
-                 examples/F90/Makefile
-                 examples/F77/Makefile
+                 win32/Makefile
+                 win32/NET/Makefile
+                 win32/NET/libsrc/Makefile
+                 win32/NET/ncdump/Makefile
+                 win32/NET/ncgen/Makefile
+                 win32/NET/examples/Makefile
+                 win32/NET/nctest/Makefile
+                 win32/NET/nc_test/Makefile
                   oc/Makefile
-                  libncdap3/Makefile
-                  libncdap4/Makefile
+                  libdap2/Makefile
+                  libcdmr/Makefile
+                  librpc/Makefile
                   libdispatch/Makefile
                   liblib/Makefile
+                  ncdump/cdl4/Makefile
+                  ncdump/expected4/Makefile
                   ncdap_test/Makefile
                   ncdap_test/testdata3/Makefile
                   ncdap_test/expected3/Makefile
                   ncdap_test/expected4/Makefile
                   ncdap_test/expectremote3/Makefile
                   ncdap_test/expectremote4/Makefile
-                  ncdump/cdl4/Makefile
-                  ncdump/expected4/Makefile],
-                 [test -f  nc-config && chmod 755 nc-config ])
-
+		  ],
+                  [test -f  nc-config && chmod 755 nc-config])
 AC_OUTPUT()
 

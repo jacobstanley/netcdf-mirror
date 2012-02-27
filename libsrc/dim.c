@@ -396,7 +396,8 @@ NC3_inq_dimid(int ncid, const char *name, int *dimid_ptr)
 	if(dimid == -1)
 		return NC_EBADDIM;
 
-	*dimid_ptr = dimid;
+	if (dimid_ptr)
+	   *dimid_ptr = dimid;
 	return NC_NOERR;
 }
 
@@ -421,7 +422,7 @@ NC3_inq_dim(int ncid, int dimid, char *name, size_t *sizep)
 			dimp->name->nchars);
 		name[dimp->name->nchars] = 0;
 	}
-	if(sizep != 0)
+	if(sizep != NULL)
 	{
 		if(dimp->size == NC_UNLIMITED)
 			*sizep = NC_get_numrecs(ncp);
@@ -478,6 +479,7 @@ NC3_rename_dim( int ncid, int dimid, const char *unewname)
 	/* else, not in define mode */
 
 	status = set_NC_string(dimp->name, newname);
+	dimp->hash = hash_fast(newname, strlen(newname));
 	free(newname);
 	if(status != NC_NOERR)
 		return status;

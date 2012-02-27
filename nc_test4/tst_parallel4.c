@@ -1,6 +1,9 @@
-/* This is a benchmarking program for netCDF-4 parallel I/O.
+/*   Copyright 2007-2011, UCAR/Unidata. See COPYRIGHT file for copying
+  and redistribution conditions.
 
-   $Id: tst_parallel4.c,v 1.5 2009/08/19 15:58:56 ed Exp $
+  This is part of the netCDF package.
+
+  This is a benchmarking program for netCDF-4 parallel I/O.
 */
 
 /* Defining USE_MPE causes the MPE trace library to be used (and you
@@ -9,7 +12,7 @@
  * clog2TOslog2) and then used in the analysis program jumpshot. */
 /*#define USE_MPE 1*/
 
-#include "tests.h"
+#include <nc_tests.h>
 #include <mpi.h>
 #ifdef USE_MPE
 #include <mpe.h>
@@ -168,10 +171,10 @@ main(int argc, char **argv)
 #endif /* USE_MPE */
 
     /* Reopen the file and check it. */
-    if ((ret = nc_open_par(file_name, NC_NOWRITE, comm, info, &ncid))) 
+    if ((ret = nc_open_par(file_name, NC_NOWRITE|NC_MPIIO, comm, info, &ncid))) 
     {
        printf("ret = %d\n", ret);
-       ERR;
+       ERR_RET;
     }
     if (nc_inq(ncid, &ndims_in, &nvars_in, &natts_in, &unlimdimid_in)) ERR;
     if (ndims_in != NDIMS || nvars_in != 1 || natts_in != 1 || 

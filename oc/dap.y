@@ -8,7 +8,11 @@
 %pure-parser
 %lex-param {DAPparsestate* parsestate}
 %parse-param {DAPparsestate* parsestate}
-%{#include "dapparselex.h"%}
+%{
+#include "config.h"
+#include "dapparselex.h"
+int dapdebug = 0;
+%}
 
 /*DO NOT DELETE THIS LINE*/
 
@@ -34,22 +38,36 @@
 %token SCAN_UINT16
 %token SCAN_UINT32
 %token SCAN_URL 
-%token SCAN_WORD
 /* For errorbody */
 %token SCAN_PTYPE
 %token SCAN_PROG
+
+/* Non-keywords */
+%token WORD_WORD WORD_STRING
 
 %start start
 
 %%
 
 start:
-	  SCAN_DATASET datasetbody
-	| SCAN_DATASET datasetbody SCAN_DATA
-	| SCAN_ATTR dassetup attributebody
-	| SCAN_ERROR errorbody
-        | error
-            {$$=dap_unrecognizedresponse(parsestate); YYABORT; }
+	  dataset datasetbody
+	| dataset datasetbody SCAN_DATA
+	| attr attributebody
+	| err errorbody
+        | error {dap_unrecognizedresponse(parsestate); YYABORT;}
+	;
+
+dataset:
+	SCAN_DATASET
+	    {dap_tagparse(parsestate,SCAN_DATASET);}
+	;
+attr:
+	SCAN_ATTR
+	    {dap_tagparse(parsestate,SCAN_ATTR);}
+	;
+err:
+	SCAN_ERROR
+	    {dap_tagparse(parsestate,SCAN_ERROR);}
 	;
 
 datasetbody:
@@ -98,8 +116,9 @@ array_decls:
 	;
 
 array_decl:
-	   '[' SCAN_WORD ']' {$$=dap_arraydecl(parsestate,null,$2);}
-	 | '[' name '=' SCAN_WORD ']' {$$=dap_arraydecl(parsestate,$2,$4);}
+	   '[' WORD_WORD ']' {$$=dap_arraydecl(parsestate,null,$2);}
+	 | '[' '=' WORD_WORD ']' {$$=dap_arraydecl(parsestate,null,$3);}
+	 | '[' name '=' WORD_WORD ']' {$$=dap_arraydecl(parsestate,$2,$4);}
 	 | error
 	    {daperror(parsestate,"Illegal dimension declaration"); YYABORT;}
 	;
@@ -111,8 +130,6 @@ datasetname:
 	;
 
 var_name: name {$$=$1;};
-
-dassetup: {dap_dassetup(parsestate);}
 
 attributebody:
 	  '{' attr_list '}' {dap_attributebody(parsestate,$2);}
@@ -151,36 +168,36 @@ attribute:
 	;
 
 bytes:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_BYTE);}
-	| bytes ',' SCAN_WORD
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_BYTE);}
+	| bytes ',' WORD_WORD
 		{$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_BYTE);}
 	;
 int16:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_INT16);}
-	| int16 ',' SCAN_WORD
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_INT16);}
+	| int16 ',' WORD_WORD
 		{$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_INT16);}
 	;
 uint16:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_UINT16);}
-	| uint16 ',' SCAN_WORD
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_UINT16);}
+	| uint16 ',' WORD_WORD
 		{$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_UINT16);}
 	;
 int32:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_INT32);}
-	| int32 ',' SCAN_WORD
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_INT32);}
+	| int32 ',' WORD_WORD
 		{$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_INT32);}
 	;
 uint32:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_UINT32);}
-	| uint32 ',' SCAN_WORD  {$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_UINT32);}
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_UINT32);}
+	| uint32 ',' WORD_WORD  {$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_UINT32);}
 	;
 float32:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_FLOAT32);}
-	| float32 ',' SCAN_WORD  {$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_FLOAT32);}
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_FLOAT32);}
+	| float32 ',' WORD_WORD  {$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_FLOAT32);}
 	;
 float64:
-	  SCAN_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_FLOAT64);}
-	| float64 ',' SCAN_WORD  {$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_FLOAT64);}
+	  WORD_WORD {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_FLOAT64);}
+	| float64 ',' WORD_WORD  {$$=dap_attrvalue(parsestate,$1,$3,(Object)SCAN_FLOAT64);}
 	;
 strs:
 	  str_or_id {$$=dap_attrvalue(parsestate,null,$1,(Object)SCAN_STRING);}
@@ -193,38 +210,40 @@ urls:
 	;
 
 url:
-	SCAN_WORD {$$=$1;}
+	name {$$=$1;}
 	;
 
 str_or_id:
-	SCAN_WORD {$$=$1;}
+	  name {$$=$1;}
+	| WORD_STRING {$$=$1;}
 	;
 
 /* Not used
 float_or_int:
-	SCAN_WORD {$$=$1;}
+	  WORD_INT {$$=$1;}
+	| WORD_DOUBLE {$$=$1;}        
 	;
 */
 
 alias:
-	SCAN_ALIAS SCAN_WORD SCAN_WORD {$$=$2; $$=$3; $$=null;} /* Alias is ignored */
+	SCAN_ALIAS WORD_WORD WORD_WORD {$$=$2; $$=$3; $$=null;} /* Alias is ignored */
 	;
 
 errorbody:
 	'{' errorcode errormsg errorptype errorprog '}' ';'
-		{$$=dap_errorbody(parsestate,$2,$3,$4,$5);}
+		{dap_errorbody(parsestate,$2,$3,$4,$5);}
 	;
 
-errorcode:  /*empty*/ {$$=null;} | SCAN_CODE    '=' SCAN_WORD ';' {$$=$3;}
-errormsg:   /*empty*/ {$$=null;} | SCAN_MESSAGE '=' SCAN_WORD ';' {$$=$3;}
-errorptype: /*empty*/ {$$=null;} | SCAN_PTYPE   '=' SCAN_WORD ';' {$$=$3;}
-errorprog : /*empty*/ {$$=null;} | SCAN_PROG    '=' SCAN_WORD ';' {$$=$3;}
+errorcode:  /*empty*/ {$$=null;} | SCAN_CODE    '=' WORD_WORD ';' {$$=$3;}
+errormsg:   /*empty*/ {$$=null;} | SCAN_MESSAGE '=' WORD_WORD ';' {$$=$3;}
+errorptype: /*empty*/ {$$=null;} | SCAN_PTYPE   '=' WORD_WORD ';' {$$=$3;}
+errorprog : /*empty*/ {$$=null;} | SCAN_PROG    '=' WORD_WORD ';' {$$=$3;}
 
 /* Note that variable names like "byte" are legal names
    and are disambiguated by context
 */
 name:
-          SCAN_WORD      {$$=$1;}
+          WORD_WORD      {$$=dapdecode(parsestate->lexstate,$1);}
 	| SCAN_ALIAS     {$$=strdup("alias");}
 	| SCAN_ARRAY     {$$=strdup("array");}
 	| SCAN_ATTR      {$$=strdup("attributes");}
@@ -246,6 +265,8 @@ name:
 	| SCAN_URL       {$$=strdup("url");}
 	| SCAN_CODE      {$$=strdup("code");}
 	| SCAN_MESSAGE   {$$=strdup("message");}
+	| SCAN_PROG      {$$=strdup("program");}
+	| SCAN_PTYPE     {$$=strdup("program_type");}
 	;
 
 %%

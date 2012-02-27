@@ -10,10 +10,11 @@ if BUILD_PARALLEL
 include_HEADERS += netcdf_par.h 
 endif 
 
-noinst_HEADERS = nc_logging.h nc_tests.h 
+noinst_HEADERS = nc_logging.h nc_tests.h fbits.h nc.h	\
+ncio.h nclist.h nc_uri.h utf8proc.h ncdispatch.h ncdimscale.h		\
+netcdf_f.h err_macros.h ncbytes.h nchashmap.h ceconstraints.h rnd.h	\
+nclog.h ncconfigure.h nc4internal.h nctime.h nc3dispatch.h
 
-
-.PHONY: visualstudio
-visualstudio:
-	sh ${top_srcdir}/visualbuild add ${abs_srcdir} "${include_HEADERS} ${noinst_HEADERS}"
-
+if USE_NETCDF4
+noinst_HEADERS += ncaux.h 
+endif

@@ -11,6 +11,11 @@
 #define NETCDF_PAR_H 1
 
 #include <mpi.h>
+#include <netcdf.h>
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /* Use these with nc_var_par_access(). */
 #define NC_INDEPENDENT 0
@@ -37,5 +42,9 @@ nc_create_par_fortran(const char *path, int cmode, int comm,
 extern int
 nc_open_par_fortran(const char *path, int mode, int comm, 
 		    int info, int *ncidp);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* NETCDF_PAR_H */

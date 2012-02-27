@@ -10,6 +10,8 @@
 #ifndef NCGEN_INCLUDES_H
 #define NCGEN_INCLUDES_H
 
+#undef USE_NOFILL
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -39,17 +41,12 @@
 #define ENABLE_JAVA
 
 #include "netcdf.h"
-#include "odom.h"
 #include "data.h"
 #include "ncgen.h"
 #include "genlib.h"
 #include "util.h"
 #include "debug.h"
 
-#ifdef HAVE_STRDUP
-#define nulldup(s) ((s)==NULL?NULL:strdup(s))
-#else
-extern char* nulldup(const char*);
-#endif
+extern int specialconstants;
 
 #endif /* NCGEN_INCLUDES_H */

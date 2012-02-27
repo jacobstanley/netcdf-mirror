@@ -1,50 +1,26 @@
 ## This is a automake file, part of Unidata's netCDF package.
-# Copyright 2005, see the COPYRIGHT file for more information.
+# Copyright 2005-2011, see the COPYRIGHT file for more information.
 
 # This is the main automake file for netCDF. It builds the different
 # netcdf directories. Not all directories are built, depending on the
 # options selected during configure.
 
-# $Id: Makefile.am,v 1.137 2010/06/01 15:34:49 ed Exp $
-
 # This directory stores libtool macros, put there by aclocal.
 ACLOCAL_AMFLAGS = -I m4
 
 # These files get added to the distribution.
-EXTRA_DIST = README COPYRIGHT RELEASE_NOTES INSTALL test_prog.c	\
-test_prog.F test_prog.f90
+EXTRA_DIST = README COPYRIGHT RELEASE_NOTES test_prog.c lib_flags.am
+
+# Doxygen doesn't build nicely in vpath builds.
+# Don't do this; it wipes out any exported values
+#DISTCHECK_CONFIGURE_FLAGS = --disable-doxygen
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = netcdf.pc
 
-# This will go to the man directory and build, if necessary, the
-# netcdf-install.txt file, which will be copied into the main
-# directory, renamed "INSTALL".
-INSTALL:
-	cd man4; make netcdf-install.info netcdf-install.txt
-	cp man4/netcdf-install.txt INSTALL
-
-# If the user wants the F77 API this will cause it to be built and
-# tested.
-if BUILD_F77
-F77_DIR = fortran
-F77_TEST = nf_test
-endif
-
-# Does the user want C API?
-if BUILD_C
-
-LIBSRC_DIR = libsrc
-NC_TEST_DIR = nc_test
-
 # Does the user want to build the V2 API?
 if BUILD_V2
 V2_TEST = nctest
-endif
-
-# Does the user want C++ API?
-if BUILD_CXX
-CXX_DIR = cxx
 endif
 
 # Does the user want to build ncgen/ncdump?
@@ -61,67 +37,40 @@ endif
 
 # Is the user building netCDF-4?
 if USE_NETCDF4
+H5_TEST_DIR = h5_test
 LIBSRC4_DIR = libsrc4
 NC_TEST4 = nc_test4
-endif
-
-DISPATCHDIR = libdispatch
-ASSEMBLEDIR = liblib
-
-endif # BUILD_C
-
-# Does the user want F90 API?
-if BUILD_F90
-F90_DIR = f90
-endif
-
-# Build the new netCDF-4 C++ API?
-if BUILD_CXX4
-CXX4 = cxx4
+# LIBDISKLESS = libdiskless
 endif
 
 # Build the opendap client?
 if BUILD_DAP
-OCLIB=oc
-NCDAP3=libncdap3
-if BUILD_UTILITIES
-NCDAPTESTDIR=ncdap_test
-endif # BUILD_UTILITIES
-NCDAP4=libncdap4
+OCLIB = oc
+DAP2 = libdap2
+#if BUILD_UTILITIES
+NCDAPTESTDIR = ncdap_test
+#endif # BUILD_UTILITIES
 endif
 
-# Build UDUNITS?
-if BUILD_UDUNITS
-UDUNITS=udunits
+# Build libcdmr
+if BUILD_CDMREMOTE
+LIBCDMR = libcdmr
 endif
 
-# Build libcf?
-if BUILD_LIBCF
-LIBCF=libcf
+# Build librpc
+if BUILD_RPC
+LIBRPC = librpc
 endif
 
-#WIN32=win32
+WIN32=win32
 
 # This is the list of subdirs for which Makefiles will be constructed
-# and run. ncgen must come before ncdump and cxx, because their tests
-# depend on it. nf_test depends upon ncgen as well.
-# If not using dispatch then NC3DAPDIR must be
-# built right before LIBSRC_DIR and NC4DAPDIR must be 
-# built right before LIBSRC4_DIR.
-# If using dispatch, then the order is different
-if BUILD_SEPARATE_FORTRAN
-SUBDIRS = include $(UDUNITS) $(DISPATCHDIR) $(OCLIB) $(F90_DIR)		\
-$(F77_DIR) $(LIBSRC_DIR) $(LIBSRC4_DIR) $(NCDAP3) $(NCDAP4)		\
-${ASSEMBLEDIR} $(V2_TEST) $(NCGEN3) $(NCGEN) $(NCDUMP) $(F77_TEST)	\
-${CXX_DIR} $(CXX4) $(NC_TEST_DIR) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
-$(EXAMPLES) $(WIN32) $(LIBCF)
-else
-SUBDIRS = include $(UDUNITS) $(DISPATCHDIR) $(OCLIB) $(F90_DIR)		\
-$(F77_DIR) $(LIBSRC_DIR) $(LIBSRC4_DIR) $(NCDAP3) $(NCDAP4)		\
-${ASSEMBLEDIR} $(V2_TEST) $(NCGEN3) $(NCGEN) $(NCDUMP) $(F77_TEST)	\
-${CXX_DIR} $(CXX4) $(NC_TEST_DIR) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
-$(EXAMPLES) $(WIN32) $(LIBCF)
-endif
+# and run. ncgen must come before ncdump, because their tests
+# depend on it. 
+SUBDIRS = include $(H5_TEST_DIR) libdispatch $(OCLIB) libsrc		\
+$(LIBDISKLESS) $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBRPC) liblib $(V2_TEST) \
+nc_test $(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
+$(EXAMPLES) $(WIN32)
 
 # Remove these generated files, for a distclean.
 DISTCLEANFILES = VERSION comps.txt test_prog
@@ -131,57 +80,45 @@ bin_SCRIPTS = nc-config
 
 # What needs to go in the binrary dist?
 BINFILES = README_BINARIES.txt
-if BUILD_C
 BINFILES += include/netcdf.h share/man/man3/netcdf.3 lib/libnetcdf.a
-endif
+ZIPBINFILES = ${prefix}/include/netcdf.h ${prefix}/share/man/man3/netcdf.3 ${prefix}/lib/libnetcdf.a
 
 if BUILD_UTILITIES
 BINFILES += bin/ncgen3$(EXEEXT) bin/ncgen$(EXEEXT) bin/ncdump$(EXEEXT)	\
 share/man/man1/ncgen.1 share/man/man1/ncdump.1
+ZIPBINFILES += ${prefix}/bin/ncgen3$(EXEEXT) ${prefix}/bin/ncgen$(EXEEXT) ${prefix}/bin/ncdump$(EXEEXT)	\
+${prefix}/share/man/man1/ncgen.1 ${prefix}/share/man/man1/ncdump.1
 endif
 
-if BUILD_F77
-BINFILES += include/netcdf.inc share/man/man3/netcdf_f77.3 
-if BUILD_SEPARATE_FORTRAN
-BINFILES += lib/libnetcdff.a
-endif
-endif
-
-if BUILD_F90
-if UPPER_CASE_MOD
-BINFILES += include/NETCDF.mod include/TYPESIZES.mod
-else
-BINFILES += include/netcdf.mod include/typesizes.mod
-endif
-BINFILES += share/man/man3/netcdf_f90.3
-endif
-
-if BUILD_CXX
-BINFILES += include/netcdf.hh include/ncvalues.h  include/netcdfcpp.h lib/libnetcdf_c++.a 
-endif
+if BUILD_DLL
+BINFILES += bin/libnetcdf-7.dll lib/libnetcdf.dll.a lib/libnetcdf.a	\
+lib/libnetcdf.la lib/netcdfdll.def
+ZIPBINFILES += ${prefix}/bin/libnetcdf-7.dll ${prefix}/lib/libnetcdf.dll.a ${prefix}/lib/libnetcdf.a	\
+${prefix}/lib/libnetcdf.la ${prefix}/lib/netcdfdll.def
+endif # BUILD_DLL
 
 # At Unidata, package up binaries.
 ftpbin: install
 	echo "Getting binaries from ${prefix}"
 	ls -l ${prefix}
 	echo "These are the binaries for netCDF @PACKAGE_VERSION@." > ${prefix}/README_BINARIES.txt
-	echo "For this build: CC=$(CC) CXX=$(CXX) FC=$(FC) F77=$(F77) $F90=$(F90)" >> ${prefix}/README_BINARIES.txt
+	echo "For this build: CC=$(CC) CXX=$(CXX)" >> ${prefix}/README_BINARIES.txt
 	echo "CFLAGS=$(CFLAGS) CXXFLAGS=$(CXXFLAGS)" >> ${prefix}/README_BINARIES.txt
 	echo "FCFLAGS=$(FCFLAGS) F77FLAGS=$(F77FLAGS) $F90FLAGS=$(F90FLAGS)" >> ${prefix}/README_BINARIES.txt
 	which tar
-	echo "PATH: $PATH"
+	echo "PATH: $(PATH)"
 	tar cf @BINFILE_NAME@ -C ${prefix} ${BINFILES}
 	gzip -f @BINFILE_NAME@
+	zip -j netcdf_${VERSION}.zip ${ZIPBINFILES}
 
 check_nc_config:
 	$(CC) `./nc-config --cflags` test_prog.c -o test_prog `./nc-config --libs`
 	./test_prog
-	$(F77) `./nc-config --fflags` test_prog.F -o test_prog `./nc-config --libs`
-	./test_prog
-	$(FC) `./nc-config --fflags` test_prog.f90 -o test_prog `./nc-config --libs`
-	./test_prog
 
 install-data-hook:
+if BUILD_DLL
+	cp liblib/netcdfdll.def ${prefix}/lib
+endif # BUILD_DLL
 	@echo ''
 	@echo '+-------------------------------------------------------------+'
 	@echo '| Congratulations! You have successfully installed netCDF!    |'
@@ -213,4 +150,3 @@ install-data-hook:
 	@echo '| http://www.unidata.ucar.edu                                 |'
 	@echo '+-------------------------------------------------------------+'
 	@echo ''
-

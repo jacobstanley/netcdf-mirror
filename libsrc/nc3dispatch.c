@@ -5,9 +5,12 @@
    $Id: nc3dispatch.c,v 2.8 2010/05/26 11:11:26 ed Exp $
  *********************************************************************/
 
-#include "nc.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
+
+#include "netcdf.h"
+#include "nc.h"
 #include "nc3dispatch.h"
 
 #ifndef NC_CONTIGUOUS
@@ -77,6 +80,8 @@ NC_Dispatch NC3_dispatcher = {
 
 NC_DISPATCH_NC3,
 
+NC3_new_nc,
+
 NC3_create,
 NC3_open,
 
@@ -112,6 +117,11 @@ NC3_inq_varid,
 NC3_rename_var,
 NC3_get_vara,
 NC3_put_vara,
+NCDEFAULT_get_vars,
+NCDEFAULT_put_vars,
+NCDEFAULT_get_varm,
+NCDEFAULT_put_varm,
+
 NC3_inq_var_all,
 
 #ifdef USE_NETCDF4
@@ -156,6 +166,8 @@ NC3_get_var_chunk_cache,
 #endif /*_NC4DISPATCH_H*/
 
 };
+
+NC_Dispatch* NC3_dispatch_table = NULL; /* moved here from ddispatch.c */
 
 int
 NC3_initialize(void)

@@ -1,6 +1,5 @@
-/*
-This file is part of netcdf-4, a netCDF-like interface for HDF5, or a
-HDF5 backend for netCDF, depending on your point of view.
+/** \file \internal
+Internal netcdf-4 functions.
 
 This file contains functions internal to the netcdf4 library. None of
 the functions in this file are exposed in the exetnal API. These
@@ -8,15 +7,15 @@ functions all relate to the manipulation of netcdf-4's in-memory
 buffer of metadata information, i.e. the linked list of NC_FILE_INFO_T
 structs.
 
-Copyright 2003-2005, University Corporation for Atmospheric
+Copyright 2003-2011, University Corporation for Atmospheric
 Research. See the COPYRIGHT file for copying and redistribution
 conditions.
 
-$Id: nc4internal.c,v 1.121 2010/05/26 21:43:35 dmh Exp $
 */
-
-#include "nc.h"
+#include "config.h"
 #include "nc4internal.h"
+#include "nc.h" /* from libsrc */
+#include "ncdispatch.h" /* from libdispatch */
 #include <utf8proc.h>
 
 #define MEGABYTE 1048576
@@ -226,7 +225,7 @@ nc4_find_nc4_grp(int ncid, NC_GRP_INFO_T **grp)
 
    /* If we can't find it, the grp id part of ncid is bad. */
    if (!(*grp = nc4_rec_find_grp(f->nc4_info->root_grp, (ncid & GRP_ID_MASK))))
-      return NC_EBADGRPID;
+      return NC_EBADID;
    return NC_NOERR;
 }
 
@@ -242,7 +241,7 @@ nc4_find_grp_h5(int ncid, NC_GRP_INFO_T **grp, NC_HDF5_FILE_INFO_T **h5)
         assert(f->nc4_info->root_grp);
         /* If we can't find it, the grp id part of ncid is bad. */
 	if (!(*grp = nc4_rec_find_grp(f->nc4_info->root_grp, (ncid & GRP_ID_MASK))))
-  	    return NC_EBADGRPID;
+  	    return NC_EBADID;
 	*h5 = (*grp)->file->nc4_info;
 	assert(*h5);
     } else {
@@ -263,7 +262,7 @@ nc4_find_nc_grp_h5(int ncid, NC_FILE_INFO_T **nc, NC_GRP_INFO_T **grp,
 	assert(f->nc4_info->root_grp);
 	/* If we can't find it, the grp id part of ncid is bad. */
 	if (!(*grp = nc4_rec_find_grp(f->nc4_info->root_grp, (ncid & GRP_ID_MASK))))
-	       return NC_EBADGRPID;
+	       return NC_EBADID;
 
 	*h5 = (*grp)->file->nc4_info;
 	assert(*h5);
@@ -583,15 +582,27 @@ nc4_file_list_free(void)
     free_NCList();
 }
 
+
 int
-nc4_file_list_add(NC_FILE_INFO_T** ncp)
+NC4_new_nc(NC** ncpp)
+{
+    NC_FILE_INFO_T** ncp;
+    /* Allocate memory for this info. */
+    if (!(ncp = calloc(1, sizeof(NC_FILE_INFO_T)))) 
+       return NC_ENOMEM;
+    if(ncpp) *ncpp = (NC*)ncp;
+    return NC_NOERR;
+}
+
+int
+nc4_file_list_add(NC_FILE_INFO_T** ncp, NC_Dispatch* dispatch)
 {
     NC_FILE_INFO_T *nc;
     int status = NC_NOERR;
 
-    /* Allocate memory for this info. */
-    if (!(nc = calloc(1, sizeof(NC_FILE_INFO_T)))) 
-       return NC_ENOMEM;
+    /* Allocate memory for this info; use the dispatcher to do this */
+    status = dispatch->new_nc((NC**)&nc);
+    if(status) return status;
 
     /* Add this file to the list. */
     if ((status = add_to_NCList((NC *)nc)))
@@ -616,11 +627,6 @@ nc4_file_list_add(NC_FILE_INFO_T** ncp)
 void
 nc4_file_list_del(NC_FILE_INFO_T *nc)
 {
-   /* Delete the memory for the path, if it's been allocated. */
-   if (nc->nc4_info)
-      if (nc->nc4_info->path)
-	 free(nc->nc4_info->path);
-
    /* Remove file from master list. */
    del_from_NCList((NC *)nc);
    free(nc);
@@ -957,16 +963,23 @@ var_list_del(NC_VAR_INFO_T **list, NC_VAR_INFO_T *var)
     * type_info is freed. */
    if (var->fill_value)
    {
-      if (var->hdf_datasetid && var->type_info->class == NC_VLEN)
-	 nc_free_vlen((nc_vlen_t *)var->fill_value);
+      if (var->hdf_datasetid)
+      {
+	 if (var->type_info->class == NC_VLEN)
+	    nc_free_vlen((nc_vlen_t *)var->fill_value);
+	 else if (var->type_info->nc_typeid == NC_STRING)
+	    free(*(char **)var->fill_value);
+      }
       free(var->fill_value);
    }
 
    /* For atomic types we have allocated space for type information. */
-   if (var->hdf_datasetid && var->xtype <= NC_STRING)
+/*   if (var->hdf_datasetid && var->xtype <= NC_STRING)*/
+   if (var->xtype <= NC_STRING)
    {
-      if ((H5Tclose(var->type_info->native_typeid)) < 0)
-	 return NC_EHDFERR;
+      if (var->type_info->native_typeid)
+	 if ((H5Tclose(var->type_info->native_typeid)) < 0)
+	    return NC_EHDFERR;
 
       /* Only need to close the hdf_typeid when it was obtained with
        * H5Dget_type (which happens when reading a file, but not when
@@ -974,6 +987,11 @@ var_list_del(NC_VAR_INFO_T **list, NC_VAR_INFO_T *var)
       if (var->type_info->close_hdf_typeid || var->xtype == NC_STRING)
 	 if ((H5Tclose(var->type_info->hdf_typeid)) < 0)
 	    return NC_EHDFERR;
+
+      /* Free the name. */
+      if (var->type_info->name)
+	 free(var->type_info->name);
+
       free(var->type_info);
    }
    

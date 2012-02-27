@@ -14,11 +14,13 @@ dnl
  */
 /* $Id: putget.m4,v 2.79 2010/05/29 22:25:01 russ Exp $ */
 
-#include "nc.h"
+#include "config.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
 
+#include "netcdf.h"
+#include "nc.h"
 #include "ncx.h"
 #include "fbits.h"
 #include "onstack.h"
@@ -517,7 +519,7 @@ NCcoordck(NC *ncp, const NC_var *varp, const size_t *coord)
 
 	if(IS_RECVAR(varp))
 	{
-		if(*coord > X_INT_MAX)
+		if(*coord > X_UINT_MAX) /* rkr: bug fix from previous X_INT_MAX */
 			return NC_EINVALCOORDS; /* sanity check */
 		if(NC_readonly(ncp) && *coord >= NC_get_numrecs(ncp))
 		{
@@ -741,17 +743,15 @@ PUTNCVX(double, longlong)
 dnl Following are not currently used
 #ifdef NOTUSED
 PUTNCVX(schar, uint)
-PUTNCVX(short, uint)
-PUTNCVX(int, uint)
-PUTNCVX(float, uint)
-PUTNCVX(double, uint)
-#ifndef WIN32
 PUTNCVX(schar, ulonglong)
+PUTNCVX(short, uint)
 PUTNCVX(short, ulonglong)
+PUTNCVX(int, uint)
 PUTNCVX(int, ulonglong)
+PUTNCVX(float, uint)
 PUTNCVX(float, ulonglong)
+PUTNCVX(double, uint)
 PUTNCVX(double, ulonglong)
-#endif
 #endif /*NOTUSED*/
 
 dnl
@@ -809,6 +809,7 @@ GETNCVX(schar, float)
 GETNCVX(schar, double)
 GETNCVX(schar, longlong)
 GETNCVX(schar, uint)
+GETNCVX(schar, ulonglong)
 
 GETNCVX(short, schar)
 GETNCVX(short, uchar)
@@ -818,6 +819,7 @@ GETNCVX(short, float)
 GETNCVX(short, double)
 GETNCVX(short, longlong)
 GETNCVX(short, uint)
+GETNCVX(short, ulonglong)
 
 GETNCVX(int, schar)
 GETNCVX(int, uchar)
@@ -827,6 +829,7 @@ GETNCVX(int, float)
 GETNCVX(int, double)
 GETNCVX(int, longlong)
 GETNCVX(int, uint)
+GETNCVX(int, ulonglong)
 
 GETNCVX(float, schar)
 GETNCVX(float, uchar)
@@ -836,6 +839,7 @@ GETNCVX(float, float)
 GETNCVX(float, double)
 GETNCVX(float, longlong)
 GETNCVX(float, uint)
+GETNCVX(float, ulonglong)
 
 GETNCVX(double, schar)
 GETNCVX(double, uchar)
@@ -845,13 +849,7 @@ GETNCVX(double, float)
 GETNCVX(double, double)
 GETNCVX(double, longlong)
 GETNCVX(double, uint)
-#ifndef WIN32
-GETNCVX(schar, ulonglong)
-GETNCVX(short, ulonglong)
-GETNCVX(int, ulonglong)
-GETNCVX(float, ulonglong)
 GETNCVX(double, ulonglong)
-#endif
 
 dnl Following are not currently uses
 #ifdef NOTUSED
@@ -1054,6 +1052,10 @@ readNCv(const NC* ncp, const NC_var* varp, const size_t* start,
     case CASE(NC_BYTE,NC_UINT):
         status = getNCvx_schar_uint(ncp,varp,start,nelems,(unsigned int*)value);
         break;
+    case CASE(NC_BYTE,NC_UINT64):
+        status = getNCvx_schar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+        break;
+
     case CASE(NC_SHORT,NC_BYTE):
         status = getNCvx_short_schar(ncp,varp,start,nelems,(signed char*)value);
         break;
@@ -1077,6 +1079,9 @@ readNCv(const NC* ncp, const NC_var* varp, const size_t* start,
         break;
     case CASE(NC_SHORT,NC_UINT):
         status = getNCvx_short_uint(ncp,varp,start,nelems,(unsigned int*)value);
+        break;
+    case CASE(NC_SHORT,NC_UINT64):
+        status = getNCvx_short_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
         break;
 
 
@@ -1104,6 +1109,9 @@ readNCv(const NC* ncp, const NC_var* varp, const size_t* start,
     case CASE(NC_INT,NC_UINT):
         status = getNCvx_int_uint(ncp,varp,start,nelems,(unsigned int*)value);
         break;
+    case CASE(NC_INT,NC_UINT64):
+        status = getNCvx_int_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+        break;
 
 
     case CASE(NC_FLOAT,NC_BYTE):
@@ -1130,6 +1138,10 @@ readNCv(const NC* ncp, const NC_var* varp, const size_t* start,
     case CASE(NC_FLOAT,NC_UINT):
         status = getNCvx_float_uint(ncp,varp,start,nelems,(unsigned int*)value);
         break;
+    case CASE(NC_FLOAT,NC_UINT64):
+        status = getNCvx_float_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
+        break;
+
 
     case CASE(NC_DOUBLE,NC_BYTE):
         status = getNCvx_double_schar(ncp,varp,start,nelems,(signed char*)value);
@@ -1155,24 +1167,9 @@ readNCv(const NC* ncp, const NC_var* varp, const size_t* start,
     case CASE(NC_DOUBLE,NC_UINT):
         status = getNCvx_double_uint(ncp,varp,start,nelems,(unsigned int*)value);
         break;
-
-#ifndef WIN32
-    case CASE(NC_BYTE,NC_UINT64):
-        status = getNCvx_schar_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-    case CASE(NC_SHORT,NC_UINT64):
-        status = getNCvx_short_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-    case CASE(NC_INT,NC_UINT64):
-        status = getNCvx_int_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
-    case CASE(NC_FLOAT,NC_UINT64):
-        status = getNCvx_float_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
-        break;
     case CASE(NC_DOUBLE,NC_UINT64):
         status = getNCvx_double_ulonglong(ncp,varp,start,nelems,(unsigned long long*)value);
         break;
-#endif /*!WIN32*/
 
     default:
 	return NC_EBADTYPE;

@@ -1200,7 +1200,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( uttext, utleng, 1, utout )
+#define ECHO do { if (fwrite( uttext, utleng, 1, utout )) {} } while (0)
 /* %endif */
 /* %if-c++-only C++ definition */
 /* %endif */

@@ -1,14 +1,13 @@
 /*********************************************************************
    Copyright 2010, UCAR/Unidata See netcdf/COPYRIGHT file for
    copying and redistribution conditions.
-
-   $Id: nclistmgr.c,v 2.3 2010/05/26 11:11:26 ed Exp $
  *********************************************************************/
 
-#include "nc.h"
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "nc.h"
 
 #define ID_SHIFT (16)
 #define NCFILELISTLENGTH 0x10000
@@ -63,9 +62,13 @@ del_from_NCList(NC* ncp)
    if(nc_filelist[ncid] != ncp) return;
    nc_filelist[ncid] = NULL;
    numfiles--;
+
+   /* If all files have been closed, release the filelist memory. */
+   if (numfiles == 0)
+      free_NCList();
 }
 
-NC*
+NC *
 find_in_NCList(int ext_ncid)
 {
    NC* f = NULL;

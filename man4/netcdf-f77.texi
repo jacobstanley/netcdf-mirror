@@ -1666,8 +1666,9 @@ INTEGER FUNCTION NF_INQ_FORMAT   (INTEGER NCID, INTEGER format)
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
- 
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
+
 @item ndims
 Returned number of dimensions defined for this netCDF dataset.
  
@@ -2432,13 +2433,17 @@ or any of its parents.
 @heading Usage 
 
 @example
-INTEGER FUNCTION NF_INQ_DIMIDS(INTEGER NCID, INTEGER DIMIDS, INTEGER INCLUDE_PARENTS)
+INTEGER FUNCTION NF_INQ_DIMIDS(INTEGER NCID, INTEGER NDIMS, INTEGER DIMIDS, INTEGER INCLUDE_PARENTS)
 @end example
 
 @table @code
 
 @item NCID
 The group id for this operation.
+
+@item NDIMS
+Returned number of dimensions for this location.  If INCLUDE_PARENTS
+is non-zero, includes how many dimensions are visible from this group.
 
 @item DIMIDS
 An array of ints when the dimids of the visible dimensions will be
@@ -2741,7 +2746,7 @@ C     Check the parent ncid.
 @section Find a Group by Name: NF_INQ_GRP_NCID
 @findex NF_INQ_GRP_PARENT
 
-Given a group name an an ncid, find the ncid of the group id. 
+Given a group name and an ncid, find the ncid of the group id. 
 
 @heading Usage 
 
@@ -2807,7 +2812,7 @@ C     Go to a child group and find the id of our type.
 @section Find a Group by its Fully-qualified Name: NF_INQ_GRP_FULL_NCID
 @findex NF_INQ_GRP_PARENT
 
-Given a fully qualified group name an an ncid, find the ncid of the
+Given a fully qualified group name and an ncid, find the ncid of the
 group id.
 
 @heading Usage 
@@ -2889,7 +2894,8 @@ INTEGER FUNCTION NF_DEF_GRP(INTEGER PARENT_NCID, CHARACTER*(*) NAME,
 The group id of the parent group.
 
 @item NAME
-The name of the new group.
+The name of the new group, which must be different from the name of
+any variable within the same parent group.
 
 @item NEW_NCID
 The ncid of the new group will be placed there.
@@ -3027,7 +3033,8 @@ INTEGER FUNCTION NF_DEF_DIM (INTEGER NCID, CHARACTER*(*) NAME,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item NAME
 Dimension name.
@@ -3104,7 +3111,8 @@ INTEGER FUNCTION NF_INQ_DIMID (INTEGER NCID, CHARACTER*(*) NAME,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item NAME
 Dimension name.
@@ -3175,7 +3183,8 @@ INTEGER FUNCTION NF_INQ_DIMLEN  (INTEGER NCID, INTEGER DIMID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE. 
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item DIMID
 Dimension ID, from a previous call to NF_INQ_DIMID or NF_DEF_DIM.
@@ -3253,7 +3262,8 @@ INTEGER FUNCTION NF_RENAME_DIM (INTEGER NCID, INTEGER DIMID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item DIMID
 Dimension ID, from a previous call to NF_INQ_DIMID or NF_DEF_DIM.
@@ -4545,8 +4555,8 @@ Create an opaque type. Provide a size and a name.
 @heading Usage 
 
 @example
-INTEGER FUNCTION NF_DEF_OPAQUE(INTEGER NCID, CHARACTER*(*) NAME, 
-        INTEGER SIZE, INTEGER TYPEIDP)
+INTEGER FUNCTION NF_DEF_OPAQUE(INTEGER NCID, INTEGER SIZE, 
+        CHARACTER*(*) NAME, INTEGER TYPEIDP)
 @end example
 
 @table @code
@@ -4555,11 +4565,11 @@ INTEGER FUNCTION NF_DEF_OPAQUE(INTEGER NCID, CHARACTER*(*) NAME,
 The groupid where the type will be created. The type may be used
 anywhere in the file, no matter what group it is in.
 
-@item NAME
-The name for this type. Must be shorter than NF_MAX_NAME.
-
 @item SIZE
 The size of each opaque object.
+
+@item NAME
+The name for this type. Must be shorter than NF_MAX_NAME.
 
 @item TYPEIDP
 Pointer where the new typeid for this type is returned. Use this
@@ -5205,7 +5215,8 @@ INTEGER FUNCTION NF_DEF_VAR(INTEGER NCID, CHARACTER*(*) NAME,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item NAME
 Variable name.
@@ -5345,7 +5356,8 @@ NF_DEF_VAR_CHUNKING(INTEGER NCID, INTEGER VARID, INTEGER STORAGE, INTEGER CHUNKS
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -5461,7 +5473,8 @@ NF_INQ_VAR_CHUNKING(INTEGER NCID, INTEGER VARID, INTEGER STORAGE, INTEGER CHUNKS
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -5530,14 +5543,15 @@ function in the HDF5 library at the HDF5 website:
 @heading Usage 
 
 @example
-nc_set_var_chunk_cache(int ncid, int varid, size_t size, size_t nelems, 
-		       float preemption);
+NF_SET_VAR_CHUNK_CACHE(INTEGER NCID, INTEGER VARID, INTEGER SIZE, INTEGER NELEMS, 
+		       REAL PREEMPTION);
 @end example
 
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -5616,7 +5630,8 @@ INTEGER NF_GET_VAR_CHUNK_CACHE(INTEGER NCID, INTEGER VARID, INTEGER SIZE, INTEGE
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -5694,7 +5709,8 @@ NF_DEF_VAR_FILL(INTEGER NCID, INTEGER VARID, INTEGER NO_FILL, FILL_VALUE);
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -5769,7 +5785,8 @@ NF_INQ_VAR_FILL(INTEGER NCID, INTEGER VARID, INTEGER NO_FILL, FILL_VALUE)
 @table @code
 
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -5835,7 +5852,8 @@ NF_DEF_VAR_DEFLATE(INTEGER NCID, INTEGER VARID, INTEGER SHUFFLE, INTEGER DEFLATE
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -5959,7 +5977,8 @@ NF_INQ_VAR_DEFLATE(INTEGER NCID, INTEGER VARID, INTEGER SHUFFLE,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6035,7 +6054,8 @@ NF_INQ_VAR_SZIP(INTEGER NCID, INTEGER VARID, INTEGER OPTION_MASK,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6098,7 +6118,8 @@ NF_DEF_VAR_FLETCHER32(INTEGER NCID, INTEGER VARID, INTEGER CHECKSUM);
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6198,7 +6219,8 @@ NF_INQ_VAR_FLETCHER32(INTEGER NCID, INTEGER VARID, INTEGER CHECKSUM);
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6273,7 +6295,8 @@ NF_DEF_VAR_ENDIAN(INTEGER NCID, INTEGER VARID, INTEGER ENDIAN)
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6372,7 +6395,8 @@ NF_INQ_VAR_ENDIAN(INTEGER NCID, INTEGER VARID, INTEGER ENDIAN)
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6434,7 +6458,8 @@ INTEGER FUNCTION NF_INQ_VARID(INTEGER NCID, CHARACTER*(*) NAME,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item NAME
 Variable name for which ID is desired.
@@ -6514,7 +6539,8 @@ INTEGER FUNCTION NF_INQ_VARNATTS (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6590,17 +6616,12 @@ IF (STATUS .NE. NF_NOERR) CALL HANDLE_ERR(STATUS)
 @section Write a Single Data Value: NF_PUT_VAR1_  type 
 @findex NF_PUT_VAR1_  type 
 
-The functions NF_PUT_VAR1_  type put a single data value of the
-specified type into a variable of an open netCDF dataset that is in
-data mode. Inputs are the netCDF ID, the variable ID, an index that
-specifies which value to add or alter, and the data value. The value
-is converted to the external data type of the variable, if necessary.
-
-Take care when using the simplest forms of this interface with record
-variables when you don't specify how many records are to be read. If
-you try to read all the values of a record variable into an array but
-there are more records in the file than you assume, more data will be
-read than you expect, which may cause a segmentation violation.
+The functions NF_PUT_VAR1_type (for various types) put a single data
+value of the specified type into a variable of an open netCDF dataset
+that is in data mode. Inputs are the netCDF ID, the variable ID, an
+index that specifies which value to add or alter, and the data
+value. The value is converted to the external data type of the
+variable, if necessary.
 
 @heading Usage 
 @example
@@ -6622,7 +6643,8 @@ INTEGER FUNCTION  NF_PUT_VAR1(INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6713,13 +6735,16 @@ variable varies fastest in the C interface. The values are converted
 to the external data type of the variable, if necessary.
 
 Take care when using the simplest forms of this interface with record
-variables when you don't specify how many records are to be
-written. If you try to write all the values of a record variable into
-a netCDF file that has no record data yet (hence has 0 records),
-nothing will be written. Similarly, if you try to write all of a
-record variable but there are more records in the file than you
-assume, more data may be written to the file than you supply, which
-may result in a segmentation violation.
+variables (variables that use the NF_UNLIMITED dimension) when you
+don't specify how many records are to be written.  If you try to write
+all the values of a record variable into a netCDF file that has no
+record data yet (hence has 0 records), nothing will be written.
+Similarly, if you try to write all the values of a record variable
+from an array but there are more records in the file than you assume,
+more in-memory data will be accessed than you expect, which may cause
+a segmentation violation.  To avoid such problems, it is better to use
+the NF_PUT_VARA_type interfaces for variables that use the
+NF_UNLIMITED dimension.  @xref{NF_PUT_VARA_ type}.
 
 @heading Usage 
 @example
@@ -6741,7 +6766,8 @@ INTEGER FUNCTION NF_PUT_VAR       (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -6794,16 +6820,16 @@ The specified netCDF ID does not refer to an open netCDF dataset.
 Here is an example using NF_PUT_VAR_DOUBLE to add or change all the
 values of the variable named rh to 0.5 in an existing netCDF dataset
 named foo.nc. For simplicity in this example, we assume that we know
-that rh is dimensioned with lon, lat, and time, and that there are ten
-lon values, five lat values, and three time values.
+that rh is dimensioned with lon and lat, and that there are ten
+lon values and five lat values.
 
 @example
 INCLUDE 'netcdf.inc'
    ... 
-PARAMETER (TIMES=3, LATS=5, LONS=10) ! dimension lengths
-INTEGER  STATUS, NCID, TIMES
+PARAMETER (LATS=5, LONS=10) ! dimension lengths
+INTEGER  STATUS, NCID
 INTEGER  RHID                        ! variable ID
-DOUBLE RHVALS(LONS, LATS, TIMES)
+DOUBLE RHVALS(LONS, LATS)
    ... 
 STATUS = NF_OPEN ('foo.nc', NF_WRITE, NCID)
 IF (STATUS .NE. NF_NOERR) CALL HANDLE_ERR(STATUS)
@@ -6812,8 +6838,7 @@ STATUS = NF_INQ_VARID (NCID, 'rh', RHID)
 IF (STATUS .NE. NF_NOERR) CALL HANDLE_ERR(STATUS)
 DO 10 ILON = 1, LONS
    DO 10 ILAT = 1, LATS
-      DO 10 ITIME = 1, TIMES
-         RHVALS(ILON, ILAT, ITIME) = 0.5
+         RHVALS(ILON, ILAT) = 0.5
 10 CONTINUE
 STATUS = NF_PUT_var_DOUBLE (NCID, RHID, RHVALS)
 IF (STATUS .NE. NF_NOERR) CALL HANDLE_ERR(STATUS)
@@ -6858,7 +6883,8 @@ INTEGER FUNCTION NF_PUT_VARA     (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7005,7 +7031,8 @@ INTEGER FUNCTION NF_PUT_VARS       (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7161,7 +7188,8 @@ INTEGER FUNCTION NF_PUT_VARM_DOUBLE(INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7363,7 +7391,8 @@ INTEGER FUNCTION  NF_GET_VAR1(INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7454,12 +7483,15 @@ or when all the values of a multidimensional variable can be read at
 once. The values are read into consecutive locations with the first
 dimension varying fastest. The netCDF dataset must be in data mode.
 
-Take care when using the simplest forms of this interface with
-record variables when you don't specify how many records are to be
-read. If you try to read all the values of a record variable into an
-array but there are more records in the file than you assume, more
-data will be read than you expect, which may cause a segmentation
-violation.
+Take care when using the simplest forms of this interface with record
+variables (variables that use the NF_UNLIMITED dimension) when you
+don't specify how many records are to be read. If you try to read all
+the values of a record variable into an array but there are more
+records in the file than you assume, more data will be read than you
+expect, which may cause a segmentation violation.  To avoid such
+problems, it is better to use the NF_GET_VARA_type interfaces for
+variables that use the NF_UNLIMITED dimension.  @xref{NF_GET_VARA_
+type}.
 
 @heading Usage 
 @example
@@ -7481,7 +7513,8 @@ INTEGER FUNCTION NF_GET_VAR       (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7528,16 +7561,16 @@ The specified netCDF ID does not refer to an open netCDF dataset.
 Here is an example using NF_GET_VAR_DOUBLE to read all the values of
 the variable named rh from an existing netCDF dataset named
 foo.nc. For simplicity in this example, we assume that we know that rh
-is dimensioned with lon, lat, and time, and that there are ten lon
-values, five lat values, and three time values.
+is dimensioned with lon and lat, and that there are ten lon
+values and five lat values.
 
 @example
 INCLUDE 'netcdf.inc'
    ... 
-PARAMETER (TIMES=3, LATS=5, LONS=10) ! dimension lengths
+PARAMETER (LATS=5, LONS=10) ! dimension lengths
 INTEGER STATUS, NCID
 INTEGER RHID                         ! variable ID
-DOUBLE RHVALS(LONS, LATS, TIMES)
+DOUBLE RHVALS(LONS, LATS)
    ... 
 STATUS = NF_OPEN ('foo.nc', NF_NOWRITE, NCID)
 IF (STATUS .NE. NF_NOERR) CALL HANDLE_ERR(STATUS)
@@ -7582,7 +7615,8 @@ INTEGER FUNCTION NF_GET_VARA_DOUBLE(INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7721,7 +7755,8 @@ INTEGER FUNCTION NF_GET_VARS_DOUBLE(INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -7872,7 +7907,8 @@ INTEGER FUNCTION NF_GET_VARM_DOUBLE(INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -8210,7 +8246,8 @@ INTEGER FUNCTION NF_RENAME_VAR (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -8266,8 +8303,8 @@ IF (STATUS .NE. NF_NOERR) CALL HANDLE_ERR(STATUS)
 @cindex NF_VAR_PAR_ACCESS, example
 
 The function NF_VAR_PAR_ACCESS changes whether read/write operations
-on a parallel file system are performed collectively (the default) or
-independently on the variable. This function can only be called if the
+on a parallel file system are performed collectively or
+independently (the default) on the variable. This function can only be called if the
 file was created with NF_CREATE_PAR (see @ref{NF_CREATE_PAR}) or opened
 with NF_OPEN_PAR (see @ref{NF_OPEN_PAR}).
 
@@ -8278,8 +8315,8 @@ linked (like HDF5) to MPI libraries.
 Calling this function affects only the open file - information about
 whether a variable is to be accessed collectively or independently is
 not written to the data file. Every time you open a file on a parallel
-file system, all variables default to collective operations. The change
-a variable to independent lasts only as long as that file is open.
+file system, all variables default to independent operations. The change
+a variable to collective lasts only as long as that file is open.
 
 The variable can be changed from collective to independent, and back,
 as often as desired.
@@ -8443,7 +8480,8 @@ INTEGER FUNCTION  NF_PUT_ATT       (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID of the variable to which the attribute will be assigned or
@@ -8589,7 +8627,8 @@ INTEGER FUNCTION NF_INQ_ATTID  (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID of the attribute's variable, or NF_GLOBAL for a global
@@ -8701,7 +8740,8 @@ INTEGER FUNCTION NF_GET_ATT        (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 Variable ID of the attribute's variable, or NF_GLOBAL for a global attribute.
@@ -8921,7 +8961,8 @@ INTEGER FUNCTION NF_RENAME_ATT (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 ID of the attribute's variable, or NF_GLOBAL for a global attribute
@@ -8997,7 +9038,8 @@ INTEGER FUNCTION NF_DEL_ATT (INTEGER NCID, INTEGER VARID,
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF_OPEN or NF_CREATE.
+NetCDF or group ID, from a previous call to NF_OPEN, NF_CREATE,
+NF_DEF_GRP, or associated inquiry functions such as NF_INQ_NCID.
  
 @item VARID
 ID of the attribute's variable, or NF_GLOBAL for a global attribute.
@@ -9164,7 +9206,7 @@ below.
 
 @section Function Naming Conventions
 
-The netCDF-3 C library employs a new naming convention, intended to
+The netCDF-3 Fortran 77 library employs a naming convention intended to
 make netCDF programs more readable. For example, the name of the
 function to rename a variable is now NF_RENAME_VAR instead of the
 previous NCVREN.

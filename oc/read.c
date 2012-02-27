@@ -1,8 +1,11 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
@@ -13,37 +16,46 @@
 #include "http.h"
 #include "read.h"
 #include "rc.h"
+#include "curlfunctions.h"
 
 extern int oc_curl_file_supported;
 
 /*Forward*/
-static int readpacket(CURL*, DAPURL*, OCbytes*, OCdxd, long*);
+static int readpacket(CURL*, OCURI*, OCbytes*, OCdxd, long*);
 static int readfile(char* path, char* suffix, OCbytes* packet);
-#ifdef OC_DISK_STORAGE
 static int readfiletofile(char* path, char* suffix, FILE* stream, unsigned long*);
-#endif
 
 int
 readDDS(OCstate* state, OCtree* tree)
 {
-   int status;
-   long lastmodified = -1;
-   dapurlsetconstraints(&state->url,tree->constraint);
-   status = readpacket(state->curl,&state->url,state->packet,OCDDS,
+    int stat;
+    long lastmodified = -1;
+
+
+    ocurisetconstraints(state->uri,tree->constraint);
+
+ocset_user_password(state);
+
+    stat = readpacket(state->curl,state->uri,state->packet,OCDDS,
 			&lastmodified);
-   if(status == OC_NOERR) state->ddslastmodified = lastmodified;
-   return status;
+    if(stat == OC_NOERR) state->ddslastmodified = lastmodified;
+
+    return stat;
 }
 
 int
 readDAS(OCstate* state, OCtree* tree)
 {
-   dapurlsetconstraints(&state->url,tree->constraint);
-   return readpacket(state->curl,&state->url,state->packet,OCDAS,NULL);
+    int stat = OC_NOERR;
+
+    ocurisetconstraints(state->uri,tree->constraint);
+    stat = readpacket(state->curl,state->uri,state->packet,OCDAS,NULL);
+
+    return stat;
 }
 
 int
-readversion(CURL* curl, DAPURL* url, OCbytes* packet)
+readversion(CURL* curl, OCURI* url, OCbytes* packet)
 {
    return readpacket(curl,url,packet,OCVER,NULL);
 }
@@ -57,70 +69,79 @@ char* ocdxdextension[] ={
 };
 
 static int
-readpacket(CURL* curl,DAPURL* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
+readpacket(CURL* curl,OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 {
    int stat;
    int fileprotocol = 0;
    char* suffix = ocdxdextension[dxd];
+   char* fetchurl = NULL;
 
-   fileprotocol = (strncmp(url->base,"file:",5)==0);
+   fileprotocol = (strcmp(url->protocol,"file")==0);
 
    if(fileprotocol && !oc_curl_file_supported) {
         /* Short circuit file://... urls*/
 	/* We do this because the test code always needs to read files*/
-	stat = readfile(url->base,suffix,packet);
+	fetchurl = ocuribuild(url,NULL,NULL,0);
+	stat = readfile(fetchurl,suffix,packet);
     } else {
-        char* fetchurl = dapurlgeturl(url,NULL,suffix,!fileprotocol);
+	int flags = 0;
+	if(!fileprotocol) flags |= OCURICONSTRAINTS;
+	flags |= OCURIENCODE;
+        fetchurl = ocuribuild(url,NULL,suffix,flags);
 	MEMCHECK(fetchurl,OC_ENOMEM);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch url=%s\n",fetchurl); fflush(stderr);}
         stat = ocfetchurl(curl,fetchurl,packet,lastmodified);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
-        free(fetchurl);
     }
-    return THROW(stat);
+    free(fetchurl);
+    return OCTHROW(stat);
 }
 
 int
-readDATADDS(OCstate* state, OCtree* tree)
+readDATADDS(OCstate* state, OCtree* tree, OCflags flags)
 {
-   int stat;
-   long lastmod = -1;
-#ifndef OC_DISK_STORAGE
-   dapurlsetconstraints(&state->url,tree->constraint);
-   stat = readpacket(state->curl,&state->url,state->packet,OCDATADDS,&lastmod);
-   if(stat == OC_NOERR)
-        state->datalastmodified = lastmod;
-   tree->data.datasize = ocbyteslength(state->packet);
-#else /*OC_DISK_STORAGE*/
-   DAPURL* url = &state->url;
-   int fileprotocol = 0;
+    int stat;
+    long lastmod = -1;
 
-   fileprotocol = (strncmp(url->base,"file:",5)==0);
-
-    if(fileprotocol && !oc_curl_file_supported) {
-	stat = readfiletofile(url->base, ".dods", tree->data.file, &tree->data.datasize);
-    } else {
-        char* fetchurl;
-        dapurlsetconstraints(url,tree->constraint);
-        fetchurl = dapurlgeturl(url,NULL,".dods",!fileprotocol);
-        MEMCHECK(fetchurl,OC_ENOMEM);
-	if (ocdebug > 0) 
-	    {fprintf(stderr, "fetch url=%s\n", fetchurl);fflush(stderr);}
-	stat = ocfetchurl_file(state->curl, fetchurl, tree->data.file,
-                               &tree->data.datasize, &lastmod);
+    if((flags & OCINMEMORY) != 0) {
+        ocurisetconstraints(state->uri,tree->constraint);
+        stat = readpacket(state->curl,state->uri,state->packet,OCDATADDS,&lastmod);
         if(stat == OC_NOERR)
-	    state->datalastmodified = lastmod;
-	if (ocdebug > 0) 
-            {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
-	free(fetchurl);
+            state->datalastmodified = lastmod;
+        tree->data.datasize = ocbyteslength(state->packet);
+    } else {
+        OCURI* url = state->uri;
+        int fileprotocol = 0;
+        char* readurl = NULL;
+
+        fileprotocol = (strcmp(url->protocol,"file")==0);
+
+        if(fileprotocol && !oc_curl_file_supported) {
+            readurl = ocuribuild(url,NULL,NULL,0);
+            stat = readfiletofile(readurl, ".dods", tree->data.file, &tree->data.datasize);
+        } else {
+            int flags = 0;
+            if(!fileprotocol) flags |= OCURICONSTRAINTS;
+            flags |= OCURIENCODE;
+            ocurisetconstraints(url,tree->constraint);
+            readurl = ocuribuild(url,NULL,".dods",flags);
+            MEMCHECK(readurl,OC_ENOMEM);
+            if (ocdebug > 0) 
+                {fprintf(stderr, "fetch url=%s\n", readurl);fflush(stderr);}
+            stat = ocfetchurl_file(state->curl, readurl, tree->data.file,
+                                   &tree->data.datasize, &lastmod);
+            if(stat == OC_NOERR)
+                state->datalastmodified = lastmod;
+            if (ocdebug > 0) 
+                {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
+        }
+        free(readurl);
     }
-#endif /*OC_DISK_STORAGE*/
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
-#ifdef OC_DISK_STORAGE
 static int
 readfiletofile(char* path, char* suffix, FILE* stream, unsigned long* sizep)
 {
@@ -128,7 +149,7 @@ readfiletofile(char* path, char* suffix, FILE* stream, unsigned long* sizep)
     OCbytes* packet = ocbytesnew();
     size_t len;
     /* check for leading file:/// */
-    if(strncmp(path,"file:///",8)==0) path += 7; /* assume absolute path*/
+    if(ocstrncmp(path,"file:///",8)==0) path += 7; /* assume absolute path*/
     stat = readfile(path,suffix,packet);
     if(stat != OC_NOERR) goto unwind;
     len = oclistlength(packet);
@@ -141,9 +162,8 @@ readfiletofile(char* path, char* suffix, FILE* stream, unsigned long* sizep)
     if(sizep != NULL) *sizep = len;
 unwind:
     ocbytesfree(packet);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
-#endif
 
 static int
 readfile(char* path, char* suffix, OCbytes* packet)
@@ -153,13 +173,13 @@ readfile(char* path, char* suffix, OCbytes* packet)
     char filename[1024];
     int count,size,fd;
     /* check for leading file:/// */
-    if(strncmp(path,"file://",7)==0) path += 7; /* assume absolute path*/
+    if(ocstrncmp(path,"file://",7)==0) path += 7; /* assume absolute path*/
     strcpy(filename,path);
     if(suffix != NULL) strcat(filename,suffix);
     fd = open(filename,O_RDONLY);
     if(fd < 0) {
 	oc_log(LOGERR,"open failed:%s",filename);
-	return THROW(OC_EOPEN);
+	return OCTHROW(OC_EOPEN);
     }
     size=0;
     stat = OC_NOERR;
@@ -176,7 +196,7 @@ readfile(char* path, char* suffix, OCbytes* packet)
 	size += count;
     }
     close(fd);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 

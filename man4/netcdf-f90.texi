@@ -1075,7 +1075,7 @@ named foo.nc for read-only, non-shared access:
  implicit none
  integer :: ncid, status
  ...
- status = nf90_open(path = "foo.nc", cmode = nf90_nowrite, ncid = ncid)
+ status = nf90_open(path = "foo.nc", mode = nf90_nowrite, ncid = ncid)
  if (status /= nf90_noerr) call handle_err(status)
 @end example
 
@@ -1346,7 +1346,8 @@ information is available in memory for each open netCDF dataset.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item nDimensions
 Returned number of dimensions defined for this netCDF dataset.
@@ -1602,10 +1603,11 @@ fill values. @xref{Attribute Conventions,,,netcdf, @value{n-man}}, for
 information about how to define your own fill values.
 
 The behavior corresponding to NF90_NOFILL overrides the default behavior
-of prefilling data with fill values. This can be used to enhance
+of prefilling data with fill values. This may enhance
 performance, because it avoids the duplicate writes that occur when
 the netCDF library writes fill values that are later overwritten with
-data.
+data, at the cost of losing the ability to later detect access of
+values that were never written.
 
 A value indicating which mode the netCDF dataset was already in is
 returned. You can use this value to temporarily change the fill mode
@@ -1619,11 +1621,11 @@ revert to the default behavior. You can also revert to the default
 behavior by calling NF90_SET_FILL again to explicitly set the fill mode
 to NF90_FILL.
 
-There are three situations where it is advantageous to set nofill
+There are three situations where it might be advantageous to set nofill
 mode:
 @enumerate
 @item
-Creating and initializing a netCDF dataset. In this case, you should
+Creating and initializing a netCDF dataset. In this case, you could
 set nofill mode before calling NF90_ENDDEF and then write completely all
 non-record variables and the initial records of all the record
 variables you want to initialize.
@@ -1957,6 +1959,11 @@ or any of its parents.
 @item NCID
 The group id for this operation.
 
+@item NDIMS
+Returned number of dimensions for this location.  If include_parents
+is non-zero, number of dimensions visible from this group, which
+includes dimensions in parent groups.
+
 @item DIMIDS
 An array of ints when the dimids of the visible dimensions will be
 stashed. Use nf90_inq_ndims to find out how many dims are visible from
@@ -2248,7 +2255,7 @@ An error was reported by the HDF5 layer.
 @section Find a Group by Name: NF90_INQ_GRP_NCID
 @findex NF90_INQ_GRP_PARENT
 
-Given a group name an an ncid, find the ncid of the group id. 
+Given a group name and an ncid, find the ncid of the group id. 
 
 @heading Usage 
 
@@ -2323,7 +2330,7 @@ This example is from test program nf_test/f90tst_grps.f90.
 @section Find a Group by its Fully-qualified Name: NF90_INQ_GRP_FULL_NCID
 @findex NF90_INQ_GRP_PARENT
 
-Given a fully qualified group name an an ncid, find the ncid of the
+Given a fully qualified group name and an ncid, find the ncid of the
 group id.
 
 @heading Usage 
@@ -2415,7 +2422,8 @@ Create a group. Its location id is returned in new_ncid.
 The group id of the parent group.
 
 @item NAME
-The name of the new group.
+The name of the new group, which must be different from the name of
+any variable within the same parent group.
 
 @item NEW_NCID
 The ncid of the new group will be placed there.
@@ -2556,7 +2564,8 @@ defined for each netCDF dataset.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item name
 Dimension name.
@@ -2637,7 +2646,8 @@ between 1 and ndims.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item name
 Dimension name.
@@ -2702,7 +2712,8 @@ unlimited dimension, if any, is the number of records written so far.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE. 
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item dimid
 Dimension ID, from a previous call to NF90_INQ_DIMID or NF90_DEF_DIM.
@@ -2786,7 +2797,8 @@ dimension to have the same name as another dimension.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item dimid
 Dimension ID, from a previous call to NF90_INQ_DIMID or NF90_DEF_DIM.
@@ -4687,7 +4699,8 @@ is in a netCDF-4/HDF5 file.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item name
 Variable name.
@@ -4916,7 +4929,8 @@ NF90_DEF_VAR_FILL(INTEGER NCID, INTEGER VARID, INTEGER NO_FILL, FILL_VALUE);
 
 @table @code
 @item NCID
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -4991,7 +5005,8 @@ NF90_INQ_VAR_FILL(INTEGER NCID, INTEGER VARID, INTEGER NO_FILL, FILL_VALUE)
 @table @code
 
 @item NCID
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item VARID
 Variable ID.
@@ -5063,7 +5078,8 @@ netCDF-4/HDF5 file.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -5177,7 +5193,8 @@ Given the name of a varaible, nf90_inq_varid finds the variable ID.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item name
 The variable name. The maximum possible length, in characters, of a
@@ -5245,13 +5262,16 @@ interface. Data values are converted to the external type of the variable,
 if necessary.
 
 Take care when using the simplest forms of this interface with record
-variables when you don't specify how many records are to be
-written. If you try to write all the values of a record variable into
-a netCDF file that has no record data yet (hence has 0 records),
-nothing will be written. Similarly, if you try to write all of a
-record variable but there are more records in the file than you
-assume, more data may be written to the file than you supply, which
-may result in a segmentation violation.
+variables (variables that use the NF90_UNLIMITED dimension) when you
+don't specify how many records are to be written. If you try to write
+all the values of a record variable into a netCDF file that has no
+record data yet (hence has 0 records), nothing will be
+written. Similarly, if you try to write all the values of a record
+variable from an array but there are more records in the file than you
+assume, more in-memory data will be accessed than you expect, which may
+cause a segmentation violation.  To avoid such problems, it is better
+to specify start and count arguments for variables that use the
+NF90_UNLIMITED dimension.
 
 @heading Usage 
 @example
@@ -5265,7 +5285,8 @@ may result in a segmentation violation.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -5548,10 +5569,13 @@ variable varies fastest in the Fortran 90 interface. Data values are
 converted from the external type of the variable, if necessary.
 
 Take care when using the simplest forms of this interface with record
-variables when you don't specify how many records are to be read. If
-you try to read all the values of a record variable into an array but
-there are more records in the file than you assume, more data will be
-read than you expect, which may cause a segmentation violation.
+variables (variables that use the NF90_UNLIMITED dimension) when you
+don't specify how many records are to be read. If you try to read all
+the values of a record variable into an array but there are more
+records in the file than you assume, more data will be read than you
+expect, which may cause a segmentation violation.  To avoid such
+problems, it is better to specify the optional start and count
+arguments for variables that use the NF90_UNLIMITED dimension.
 
 In netCDF classic model the maximum integer size is NF90_INT, the
 4-byte signed integer. Reading variables into an eight-byte integer
@@ -5571,7 +5595,8 @@ classic model flag) will read from an NF90_INT64
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -5753,7 +5778,7 @@ all the values at the last time.
  !Read the values at the last time by passing an array section 
  status = nf90_get_var(ncid, rhVarId, rhValues(:, :, 3), &
                        start = (/ 1, 1, numTimes /),     &
-                       count = (/ numLats, numLons, 1 /))
+                       count = (/ numLons, numLats, 1 /))
  if(status /= nf90_NoErr) call handle_err(status)
 @end example
 
@@ -5998,7 +6023,8 @@ have the name of any existing variable.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID.
@@ -6234,7 +6260,8 @@ double attributes are adequate for most purposes.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID of the variable to which the attribute will be assigned or
@@ -6356,7 +6383,8 @@ attribute number is not called an attribute ID.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID of the attribute's variable, or NF90_GLOBAL for a global
@@ -6458,7 +6486,8 @@ its variable ID and name.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 Variable ID of the attribute's variable, or NF90_GLOBAL for a global attribute.
@@ -6675,7 +6704,8 @@ as another attribute of the same variable.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 ID of the attribute's variable, or NF90_GLOBAL for a global attribute
@@ -6755,7 +6785,8 @@ dataset. The netCDF dataset must be in define mode.
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to NF90_OPEN or NF90_CREATE.
+NetCDF or group ID, from a previous call to NF90_OPEN, NF90_CREATE,
+NF90_DEF_GRP, or associated inquiry functions such as NF90_INQ_NCID.
  
 @item varid
 ID of the attribute's variable, or NF90_GLOBAL for a global attribute.

@@ -10,7 +10,7 @@
 /* To avoid "make distclean" wiping out dap.tab.h */
 #include "daptab.h"
 #else
-#include "dap.tab.h"
+#include "daptab.h"
 #endif
 
 #ifdef WIN32
@@ -39,7 +39,7 @@ typedef struct DAPlexstate {
     char* wordchars1;
     char* wordcharsn;
     char* worddelims;
-    OClist* reclaim; /* reclaim SCAN_WORD instances */
+    OClist* reclaim; /* reclaim WORD_WORD instances */
 } DAPlexstate;
 
 /*! Specifies the DAPparsestate. */
@@ -80,13 +80,16 @@ extern Object dap_makestructure(DAPparsestate*,Object name, Object dimensions, O
 extern Object dap_makesequence(DAPparsestate*,Object name, Object members);
 extern Object dap_makegrid(DAPparsestate*,Object name, Object arraydecl, Object mapdecls);
 
-extern Object dap_errorbody(DAPparsestate*, Object, Object, Object, Object);
-extern Object dap_unrecognizedresponse(DAPparsestate*);
+extern void dap_errorbody(DAPparsestate*, Object, Object, Object, Object);
+extern void dap_unrecognizedresponse(DAPparsestate*);
+
+extern void dap_tagparse(DAPparsestate*,int);
 
 /* Lexer entry points */
 extern int daplex(YYSTYPE*, DAPparsestate*);
 extern void daplexinit(char* input, DAPlexstate** lexstatep);
 extern void daplexcleanup(DAPlexstate** lexstatep);
 extern void dapsetwordchars(DAPlexstate* lexstate, int kind);
+extern char* dapdecode(DAPlexstate*,char*);
 
 #endif /*DAPPARSELEX_H*/

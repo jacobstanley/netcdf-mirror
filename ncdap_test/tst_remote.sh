@@ -5,6 +5,9 @@ quiet=0
 leakcheck=0
 timing=0
 
+PARAMS="[log]"
+#PARAMS="${PARAMS}[show=fetch]"
+
 #OCLOGFILE=/dev/null
 OCLOGFILE="" ; export OCLOGFILE
 
@@ -16,6 +19,12 @@ if test "x$4" = "x" ; then cache=1 ; else cache=0; fi
 longtests="$5"
 
 if test "x$timing" = "x1" ; then leakcheck=0; fi
+
+# get the list of test files
+WHICHTESTS="S1 C1 C2"
+if test -n "$longtests"; then
+WHICHTESTS="${WHICHTESTS} L1 LC1"
+fi
 
 # This fails because solaris ping does not like the -c1 option
 # # See if we can access the remote server at all
@@ -30,45 +39,48 @@ if test "x$timing" = "x1" ; then leakcheck=0; fi
 # fi
 # fi
 
+
 #locate the testdata and expected directory
 if test "$cache" = 0 ; then
-CACHE=""
+# No cache means no cache, including prefetch
+CACHE="[noprefetch]"
 expected3="${srcdir}/nocacheremote3"
 expected4="${srcdir}/nocacheremote4"
 else
-CACHE="[cache]"
+CACHE="[cache][prefetch]"
 expected3="${srcdir}/expectremote3"
 expected4="${srcdir}/expectremote4"
 fi
 
-# get the list of test files
+PARAMS="${PARAMS}${CACHE}"
+
 ##################################################
 # Remote test info
 ##################################################
-# For now, only do only following test sets
-if test -n "$longtests"; then
-WHICHTESTS="L1 LC1"
-else
-WHICHTESTS="S1 C1"
-fi
 
 # For special testing
-REMOTEURLX="http://test.opendap.org:8080/dods/dts"
-REMOTETESTSX="test.67"
+REMOTEURLX="http://motherlode.ucar.edu:8080/dts"
+REMOTETESTSX="test.03"
+
+REMOTEURLXC="http://motherlode.ucar.edu:8080/dts"
+REMOTETESTSXC="test.03;1;s0,s1"
 
 # These shorter tests are always run
-REMOTEURLS1="http://test.opendap.org:8080/dods/dts"
+REMOTEURLS1="http://motherlode.ucar.edu:8080/dts"
 REMOTETESTSS1="\
-test.01 test.02 test.04 test.05 test.06a test.07a test.07 \
-test.21 test.22 test.23 \
-test.31 \
+test.01 test.02 test.04 test.05 test.06 test.07a test.07 \
+test.21 \
 test.50 test.53 test.55 test.56 test.57 \
 test.66 test.67 test.68 test.69"
+
+# Server is failing on some tests ; investigate why
+S1FAIL="test.06a test.22 test.23 test.31"
 
 # These longer tests are optional
 REMOTEURLL1="$REMOTEURLS1"
 REMOTETESTSL1="\
 test.03 \
+test.06 \
 b31 b31a D1 Drifters EOSDB \
 ingrid nestedDAS NestedSeq NestedSeq2 OverideExample \
 SimpleDrdsExample test.an1 \
@@ -81,18 +93,13 @@ whoi"
 
 
 # Anything larger than about 100k will not be in the distribution
-TOOBIG="parserBug0001 test.satimage Sat_Images test.06 test.32"
+TOOBIGL1="parserBug0001 test.satimage Sat_Images test.32"
 
 # Following contain %XX escapes which I cannot handle yet
 ESCAPEDFAIL="test.dfr1 test.dfr2 test.dfr3 test.GridFile test.PointFile test.SwathFile test.sds6 test.sds7"
 
-REMOTEURLA="http://test.opendap.org/dap/data/nc"
-REMOTETESTSA="\
-test.nc\
-"
-
 # Following tests are to check constraint handling
-REMOTEURLC1="http://test.opendap.org:8080/dods/dts"
+REMOTEURLC1="http://motherlode.ucar.edu:8080/dts"
 REMOTETESTSC1="\
 test.01;1;f64 \
 test.02;1;b[1:2:10] \
@@ -102,22 +109,49 @@ test.05;1;types.floats.f32 \
 test.06;1;ThreeD \
 test.07;1;person.age \
 test.07;3;person \
-test.07;4;types[0:2:10].f32"
+test.07;4;types.f32"
+
+# Following tests are to check selection handling
+REMOTEURLC2="http://oceanwatch.pfeg.noaa.gov/opendap/GLOBEC"
+REMOTETESTSC2="\
+GLOBEC_cetaceans;1;number&number>6 \
+GLOBEC_cetaceans;2;lat,lon&lat>42.0&lat<=42.5\
+"
+
+# C3 is too slow for testing. It has nested sequences.
+#We need to think about better optimizations
+REMOTEURLC3="http://dapper.pmel.noaa.gov/dapper/argo"
+REMOTETESTSC3="\
+argo_all.cdp;1;&location.LATITUDE<1&location.LATITUDE>-1\
+"
+
+# Test string access 
+# this test cannot be used because the
+# dataset has a limited lifetime
+REMOTEURLC4="http://motherlode.ucar.edu:8080/thredds/dodsC/station/metar"
+REMOTETESTSC4="\
+Surface_METAR_20120101_0000.nc;1;weather[0:10]\
+"
 
 # Constrained long tests
-REMOTEURLLC1="http://test.opendap.org:8080/dods/dts"
+REMOTEURLLC1="http://motherlode.ucar.edu:8080/dts"
 REMOTETESTSLC1="\
 test.03;2;s1"
 
 # Unknown problem: test.07;2;&age>2
 IGNORE="test.07.2" 
 
-# Temporarily suppress
+# Known to fail
+
 XFAILTESTS3=""
-XFAILTESTS4=""
+XFAILTESTS4="$XFAILTESTS3"
+
+# Server is down at the moment
+SVCFAILTESTS3="GLOBEC_cetaceans.1 GLOBEC_cetaceans.2"
+SVCFAILTESTS4="$SVCFAILTESTS3"
 
 # Misc tests not currently used
-REMOTEURL0="http://test.opendap.org/dap/netcdf/examples"
+REMOTEURL0="http://test.opendap.org/opendap/netcdf/examples"
 REMOTETESTS0="\
 cami_0000-09-01_64x128_L26_c030918.nc \
 ECMWF_ERA-40_subset.nc \
@@ -143,14 +177,16 @@ case "$mode" in
 3)
     EXPECTED="$expected3"
     TITLE="DAP to netCDF-3 translation"
-    PARAMS="${CACHE}[netcdf3]"
+    PARAMS="${PARAMS}[netcdf3]"
     XFAILTESTS="$XFAILTESTS3"
+    SVCFAILTESTS="$SVCFAILTESTS3"
     ;;
 4)
     EXPECTED="$expected4"
     TITLE="DAP to netCDF-4 translation"
-    PARAMS="${CACHE}[netcdf4]"
+    PARAMS="${PARAMS}[netcdf4]"
     XFAILTESTS="$XFAILTESTS4"
+    SVCFAILTESTS="$SVCFAILTESTS4"
     ;;
 esac
 
@@ -169,10 +205,10 @@ mkdir "${RESULTSDIR}"
 
 passcount=0
 xfailcount=0
+svcfailcount=0
 failcount=0
 
 echo "*** Testing $TITLE "
-echo "        Base URL: ${TESTURL}"
 echo "        Client Parameters: ${PARAMS}"
 if test "$cache" = 0; then
 echo "        Caching: off"
@@ -185,15 +221,19 @@ status=0
 
 for i in $WHICHTESTS ; do
   constrained=0
-  ncconstrained=0
   case "$i" in
   S1) TESTURL="$REMOTEURLS1" ; TESTSET="$REMOTETESTSS1" ;;
   S2) TESTURL="$REMOTEURLS2" ; TESTSET="$REMOTETESTSS2" ;;
   L1) TESTURL="$REMOTEURLL1" ; TESTSET="$REMOTETESTSL1" ;;
   L2) TESTURL="$REMOTEURLL2" ; TESTSET="$REMOTETESTSL2" ;;
-  C1) TESTURL="$REMOTEURLC1" ; TESTSET="$REMOTETESTSC1" ; constrained=1 ;ncconstrained=0 ;;
-  LC1) TESTURL="$REMOTEURLLC1" ; TESTSET="$REMOTETESTSLC1" ; constrained=1 ;ncconstrained=0 ;;
-  X) TESTURL="$REMOTEURLX" ; TESTSET="$REMOTETESTSX" ; constrained=0 ; ncconstrained=0 ;;
+  C1) TESTURL="$REMOTEURLC1" ; TESTSET="$REMOTETESTSC1" ; constrained=1 ;;
+  C2) TESTURL="$REMOTEURLC2" ; TESTSET="$REMOTETESTSC2" ; constrained=1 ;ncconstrained=0 ;;
+  C3) TESTURL="$REMOTEURLC3" ; TESTSET="$REMOTETESTSC3" ; constrained=1 ;ncconstrained=0 ;;
+  C4) TESTURL="$REMOTEURLC4" ; TESTSET="$REMOTETESTSC4" ; constrained=1 ;ncconstrained=0 ;;
+  LC1) TESTURL="$REMOTEURLLC1" ; TESTSET="$REMOTETESTSLC1" ; constrained=1 ;;
+  X) TESTURL="$REMOTEURLX" ; TESTSET="$REMOTETESTSX" ; constrained=0 ;;
+  XC) TESTURL="$REMOTEURLXC" ; TESTSET="$REMOTETESTSXC" ; constrained=1 ;;
+  *) echo "Unknown which test: $i" ;;
   esac
 
 cd ${RESULTSDIR}
@@ -209,20 +249,13 @@ for t in ${TESTSET} ; do
     testname=`echo $t | cut -d ';' -f1`
     testno=`echo $t | cut -d ';' -f2`
     ce=`echo $t | cut -d ';' -f3-`
-    if test "x$ncconstrained" = "x1" ; then
-      ce=`echo $ce | tr '[]' '()'`
-    fi
   fi
   if test "x$constrained" = "x0" ; then
     name="${testname}"
     url="${PARAMS}${TESTURL}/$testname"
   else
     name="${testname}.${testno}"
-    if test "x$ncconstrained" = "x0" ; then
-      url="${PARAMS}${TESTURL}/$testname?${ce}"
-    else
-      url="[ce=${ce}]${PARAMS}${TESTURL}/$testname"
-    fi
+    url="${PARAMS}${TESTURL}/$testname?${ce}"
   fi
   if test "x$quiet" = "x0" ; then echo "*** Testing: ${name}"; fi
   if test "x$quiet" = "x0" ; then echo "*** URL: ${url}"; fi
@@ -232,6 +265,13 @@ for t in ${TESTSET} ; do
   for x in ${XFAILTESTS} ; do
     if test "x${name}" = "x${x}" ; then isxfail=1; fi
   done
+
+  # determine if this is a down server test
+  issvcfail=0
+  for x in ${SVCFAILTESTS} ; do
+    if test "x${name}" = "x${x}" ; then issvcfail=1; fi
+  done
+
   status=0
 
   if ${TIMECMD} ${VALGRIND} ${NCDUMP} "${url}" > ${name}.dmp ; then status=$status; else status=1; fi
@@ -240,6 +280,7 @@ for t in ${TESTSET} ; do
     then status=$status; else status=1; fi
   if test "x$status" = "x1" ; then
     if test "x$isxfail" = "x1" ; then status=2; fi  # xfail
+    if test "x$issvcfail" = "x1" ; then status=3; fi  # svcfail
   fi
 
   case "$status" in
@@ -255,6 +296,10 @@ for t in ${TESTSET} ; do
     xfailcount=`expr $xfailcount + 1`
     echo "*** XFAIL: ${name}"
     ;;
+  3)
+    svcfailcount=`expr $svcfailcount + 1`
+    echo "*** SVCFAIL: ${name}"
+    ;;
   esac
 
 done
@@ -265,10 +310,13 @@ cd ..
 
 done
 
-totalcount=`expr $passcount + $failcount + $xfailcount`
-okcount=`expr $passcount + $xfailcount`
+totalcount=`expr $passcount + $failcount + $xfailcount + $svcfailcount`
+okcount=`expr $passcount + $xfailcount + $svcfailcount`
 
 echo "*** PASSED: ${okcount}/${totalcount} ; ${xfailcount} expected failures ; ${failcount} unexpected failures"
+if test "$svcfailcount" -gt 0 ; then
+echo "            ${svcfailcount} failures from unavailable server"
+fi
 
 # Ignore failures for now
 #failcount=0

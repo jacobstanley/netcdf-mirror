@@ -1387,7 +1387,7 @@ and attributes.
 If the NC_NETCDF4 flag is used, the HDF5 library is used for parallel
 I/O. If not, the parallel-netcdf library is used.
 
-When a file is created for parallel access, collective operations are
+When a file is created for parallel access, independent operations are
 the default. To use independent access on a variable,
 @xref{nc_var_par_access}.
 
@@ -1677,7 +1677,7 @@ opens the file using either MPI-IO or MPI-POSIX.
 
 DAP access is not allowed with parallel I/O.
 
-When netCDF opens a file for parallel access, collective operations
+When netCDF opens a file for parallel access, independent operations
 are the default. To use independent access on a variable,
 @xref{nc_var_par_access}.
 
@@ -2178,7 +2178,8 @@ int nc_inq_path     (int ncid, size_t *pathlenp, char *path);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item ndimsp
 Pointer to location for returned number of dimensions defined for this
@@ -2441,10 +2442,11 @@ values see @ref{Attribute Conventions,,, netcdf, NetCDF
 Users' Guide}.
 
 The behavior corresponding to NC_NOFILL overrides the default behavior
-of prefilling data with fill values. This can be used to enhance
+of prefilling data with fill values. This may enhance
 performance, because it avoids the duplicate writes that occur when
 the netCDF library writes fill values that are later overwritten with
-data.
+data, at the cost of losing the ability to later detect access of
+values that were never written.
 
 A value indicating which mode the netCDF dataset was already in is
 returned. You can use this value to temporarily change the fill mode
@@ -2458,13 +2460,13 @@ revert to the default behavior. You can also revert to the default
 behavior by calling nc_set_fill again to explicitly set the fill mode
 to NC_FILL.
 
-There are three situations where it is advantageous to set nofill
+There are three situations where it might be advantageous to set nofill
 mode:
 
 @enumerate
 
 @item
-Creating and initializing a netCDF dataset. In this case, you should
+Creating and initializing a netCDF dataset. In this case, you could
 set nofill mode before calling nc_enddef and then write completely all
 non-record variables and the initial records of all the record
 variables you want to initialize.
@@ -3056,6 +3058,11 @@ int nc_inq_dimids(int ncid, int *ndims, int *dimids, int include_parents);
 @item ncid
 The group id for this operation.
 
+@item ndims
+If non-zero, pointer to location for returned number of dimensions defined for this
+location, including dimensions inherited from parent groups if
+include_parents is non-zero.
+
 @item dimids
 An already allocated array of ints when the dimids of the visible
 dimensions will be stashed. Use nc_inq_ndims to find out how many dims
@@ -3372,7 +3379,8 @@ An error was reported by the HDF5 layer.
 @section Find a Group by Name: nc_inq_grp_ncid
 @findex nc_inq_grp_parent
 
-Given a group name an an ncid, find the ncid of the group id. 
+Given a group location id and the name of an immediate subgroup, find
+the location id of the named subgroup. 
 
 @heading Usage 
 
@@ -3383,13 +3391,13 @@ int nc_inq_grp_ncid(int ncid, const char *grp_name, int *grp_ncid);
 @table @code
 
 @item ncid
-The group id to look in.
+The location id of the group in which to look.
 
 @item grp_name
-The name of the group that should be found.
+The name of a subgroup.
 
 @item grp_ncid
-A pointer to int which will get the group id, if it is found.
+A pointer to int which will get the group id of the named subgroup, if it is found.
 
 @end table
 
@@ -3409,7 +3417,7 @@ Bad group id.
 No name provided or name longer than NC_MAX_NAME.
 
 @item NC_ENOGRP
-Named group not found.
+Named subgroup not found.
 
 @item NC_ENOTNC4
 Attempting a netCDF-4 operation on a netCDF-3 file. NetCDF-4
@@ -3438,7 +3446,7 @@ This example is from test program libsrc4/tst_grps.c.
 @section Find a Group by its Fully-qualified Name: nc_inq_grp_full_ncid
 @findex nc_inq_grp_parent
 
-Given a fully qualified group name an an ncid, find the ncid of the
+Given a fully qualified group name and an ncid, find the ncid of the
 group id.
 
 @heading Usage 
@@ -3519,7 +3527,8 @@ int nc_def_grp(int parent_ncid, const char *name, int *new_ncid);
 The group id of the parent group.
 
 @item name
-The name of the new group.
+The name of the new group.  A group cannot have the same name as a
+variable within the same parent group.
 
 @item new_ncid
 A pointer to an int. The ncid of the new group will be placed there.
@@ -3569,15 +3578,11 @@ Not in define mode.
 @heading Example
 
 @example
-      int root_ncid, a1_ncid;
+      int ncid, a1_ncid;
       char grpname[] = "assimilation1";
 
-      /* Get the ncid of the root group. */
-      if ((res = nc_inq_ncid(root_ncid, NULL, &root_ncid)))
-         return res;
-
       /* Create a group. */
-      if ((res = nc_def_grp(root_ncid, grpname, &a1_ncid)))
+      if ((res = nc_def_grp(ncid, grpname, &a1_ncid)))
          return res;
 @end example
 
@@ -3751,7 +3756,8 @@ int nc_inq_dimid (int ncid, const char *name, int *dimidp);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item name
 Dimension name.
@@ -3819,7 +3825,8 @@ int nc_inq_dimlen  (int ncid, int dimid, size_t *lengthp);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create. 
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item dimid
 Dimension ID, from a previous call to nc_inq_dimid or nc_def_dim.
@@ -3901,7 +3908,8 @@ int nc_rename_dim(int ncid, int dimid, const char* name);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item dimid
 Dimension ID, from a previous call to nc_inq_dimid or nc_def_dim.
@@ -5735,7 +5743,7 @@ Create an opaque type. Provide a size and a name.
 @heading Usage 
 
 @example
-nc_def_opaque(int ncid, const char *name, size_t size, nc_type *typeidp);
+nc_def_opaque(int ncid, size_t size, const char *name, nc_type *typeidp);
 @end example
 
 @table @code
@@ -5744,11 +5752,11 @@ nc_def_opaque(int ncid, const char *name, size_t size, nc_type *typeidp);
 The groupid where the type will be created. The type may be used
 anywhere in the file, no matter what group it is in.
 
-@item name
-The name for this type. Must be shorter than NC_MAX_NAME.
-
 @item size
 The size of each opaque object.
+
+@item name
+The name for this type. Must be shorter than NC_MAX_NAME.
 
 @item typeidp
 Pointer where the new typeid for this type is returned. Use this
@@ -6588,7 +6596,8 @@ int nc_def_var (int ncid, const char *name, nc_type xtype,
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item name
 Variable name.
@@ -6736,7 +6745,8 @@ int nc_def_var_chunking(int ncid, int varid, int storage, size_t *chunksizesp);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -6861,7 +6871,8 @@ int nc_inq_var_chunking(int ncid, int varid, int *storagep, size_t *chunksizesp)
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -6962,7 +6973,8 @@ nc_set_var_chunk_cache(int ncid, int varid, size_t size, size_t nelems,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7042,7 +7054,8 @@ int nc_get_var_chunk_cache(int ncid, int varid, size_t *sizep, size_t *nelemsp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7118,7 +7131,8 @@ int nc_def_var_fill(int ncid, int varid, int no_fill, void *fill_value);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7207,7 +7221,8 @@ int nc_inq_var_fill(int ncid, int varid, int *no_fill, void *fill_value);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7288,7 +7303,8 @@ nc_def_var_deflate(int ncid, int varid, int shuffle, int deflate,
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7368,7 +7384,8 @@ nc_inq_var_deflate(int ncid, int varid, int *shufflep,
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7433,7 +7450,8 @@ int nc_inq_var_szip(int ncid, int varid, int *options_maskp, int *pixels_per_blo
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7506,7 +7524,8 @@ nc_def_var_fletcher32(int ncid, int varid, int checksum);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7574,7 +7593,8 @@ nc_inq_var_fletcher32(int ncid, int varid, int *checksump);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7643,7 +7663,8 @@ nc_def_var_endian(int ncid, int varid, int endian);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7712,7 +7733,8 @@ nc_inq_var_endian(int ncid, int varid, int *endianp);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7771,7 +7793,8 @@ int nc_inq_varid (int ncid, const char *name, int *varidp);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item name
 Variable name for which ID is desired.
@@ -7852,7 +7875,8 @@ int nc_inq_varnatts (int ncid, int varid, int *nattsp);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -7991,7 +8015,8 @@ int nc_put_var1(int ncid, int varid, const size_t *indexp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -8108,13 +8133,16 @@ variable varies fastest in the C interface. The values are converted
 to the external data type of the variable, if necessary.
 
 Take care when using the simplest forms of this interface with record
-variables when you don't specify how many records are to be
-written. If you try to write all the values of a record variable into
-a netCDF file that has no record data yet (hence has 0 records),
-nothing will be written. Similarly, if you try to write all of a
-record variable but there are more records in the file than you
-assume, more data may be written to the file than you supply, which
-may result in a segmentation violation.
+variables (variables that use the NC_UNLIMITED dimension) when you
+don't specify how many records are to be written. If you try to write
+all the values of a record variable into a netCDF file that has no
+record data yet (hence has 0 records), nothing will be
+written. Similarly, if you try to write all the values of a record
+variable but there are more records in the file than you assume, more
+in-memory data will be accessed than you supply, which may result in a
+segmentation violation.  To avoid such problems, it is better to use
+the nc_put_vara interfaces for variables that use the
+NC_UNLIMITED dimension.  @xref{nc_put_vara_ type}.
 
 The functions for types ubyte, ushort, uint, longlong, ulonglong, and
 string are only available for netCDF-4/HDF5 files.
@@ -8145,7 +8173,8 @@ int nc_put_var       (int ncid, int varid,  const void *op);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -8158,7 +8187,7 @@ Variable ID.
 @itemx lp
 @itemx fp
 @itemx dp
-Pointer to a block of data values to be written. The order in which
+Pointer to a block of contiguous data values to be written. The order in which
 the data will be written to the netCDF variable is with the last
 dimension of the specified variable varying fastest. If the type of
 data values differs from the netCDF variable type, type conversion
@@ -8197,19 +8226,18 @@ Bad variable ID.
 Here is an example using nc_put_var_double to add or change all the
 values of the variable named rh to 0.5 in an existing netCDF dataset
 named foo.nc. For simplicity in this example, we assume that we know
-that rh is dimensioned with time, lat, and lon, and that there are
-three time values, five lat values, and ten lon values.
+that rh is dimensioned with lat and lon, and that there are
+five lat values and ten lon values.
 
 @example
 #include <netcdf.h>
    ... 
-#define TIMES 3
 #define LATS  5
 #define LONS  10
 int  status;                       /* error status */
 int  ncid;                         /* netCDF ID */
 int  rh_id;                        /* variable ID */
-double rh_vals[TIMES*LATS*LONS];   /* array to hold values */
+double rh_vals[LATS*LONS];         /* array to hold values */
 int i;
    ... 
 status = nc_open("foo.nc", NC_WRITE, &ncid);
@@ -8218,7 +8246,7 @@ if (status != NC_NOERR) handle_error(status);
 status = nc_inq_varid (ncid, "rh", &rh_id);
 if (status != NC_NOERR) handle_error(status);
    ... 
-for (i = 0; i < TIMES*LATS*LONS; i++)
+for (i = 0; i < LATS*LONS; i++)
     rh_vals[i] = 0.5;
 /* write values into netCDF variable */
 status = nc_put_var_double(ncid, rh_id, rh_vals);
@@ -8300,7 +8328,8 @@ int nc_put_vara       (int ncid, int varid,  const size_t *startp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -8335,7 +8364,7 @@ function to exit without error, and without doing anything.
 @itemx lp
 @itemx fp
 @itemx dp
-Pointer to a block of data values to be written. The order in which
+Pointer to a block of contiguous data values to be written. The order in which
 the data will be written to the netCDF variable is with the last
 dimension of the specified variable varying fastest. If the type of
 data values differs from the netCDF variable type, type conversion
@@ -8510,7 +8539,8 @@ int nc_put_vars       (int ncid, int varid,  const size_t *startp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -8554,7 +8584,7 @@ etc.). A NULL stride argument is treated as (1, 1, ... , 1).
 @itemx lp
 @itemx fp
 @itemx dp
-Pointer to a block of data values to be written. The order in which
+Pointer to a block of contiguous data values to be written. The order in which
 the data will be written to the netCDF variable is with the last
 dimension of the specified variable varying fastest. If the type of
 data values differs from the netCDF variable type, type conversion
@@ -8731,7 +8761,8 @@ n@end example
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -8997,7 +9028,8 @@ int nc_get_var1       (int ncid, int varid,  const size_t *indexp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -9124,10 +9156,14 @@ once. The values are read into consecutive locations with the last
 dimension varying fastest. The netCDF dataset must be in data mode.
 
 Take care when using the simplest forms of this interface with record
-variables when you don't specify how many records are to be read. If
-you try to read all the values of a record variable into an array but
-there are more records in the file than you assume, more data will be
-read than you expect, which may cause a segmentation violation.
+variables (variables that use the NC_UNLIMITED dimension) when you
+don't specify how many records are to be read. If you try to read all
+the values of a record variable into an array but there are more
+records in the file than you assume, more data will be read than you
+expect, which may cause a segmentation violation. To avoid such
+problems, it is better to use the nc_get_vara interfaces for
+variables that use the NC_UNLIMITED dimension.  @xref{nc_get_vara_
+type}. 
 
 The functions for types ubyte, ushort, uint, longlong, ulonglong, and
 string are only available for netCDF-4/HDF5 files.
@@ -9158,7 +9194,8 @@ int nc_get_var       (int ncid, int varid,  void *ip);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -9171,7 +9208,7 @@ Variable ID.
 @itemx lp
 @itemx fp
 @itemx dp
-Pointer to the location into which the data value is read. If the type
+Pointer to a block of contiguous locations in memory into which the data values are read. If the type
 of data value differs from the netCDF variable type, type conversion
 will occur. @xref{Type Conversion,,, netcdf, @value{n-man}}.
 
@@ -9226,19 +9263,18 @@ Out of memory.
 Here is an example using nc_get_var_double to read all the values of
 the variable named rh from an existing netCDF dataset named
 foo.nc. For simplicity in this example, we assume that we know that rh
-is dimensioned with time, lat, and lon, and that there are three time
-values, five lat values, and ten lon values.
+is dimensioned with lat and lon, and that there are five lat values
+and ten lon values.
 
 @example
 #include <netcdf.h>
    ... 
-#define TIMES 3
 #define LATS 5
 #define LONS 10
 int  status;                       /* error status */
 int ncid;                          /* netCDF ID */
 int rh_id;                         /* variable ID */
-double rh_vals[TIMES*LATS*LONS];   /* array to hold values */
+double rh_vals[LATS*LONS];         /* array to hold values */
    ... 
 status = nc_open("foo.nc", NC_NOWRITE, &ncid);
 if (status != NC_NOERR) handle_error(status);
@@ -9321,7 +9357,8 @@ int nc_get_vara       (int ncid, int varid, const size_t start[],
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -9357,7 +9394,8 @@ function to exit without error, and without doing anything.
 @itemx lp
 @itemx fp
 @itemx dp
-Pointer to the location into which the data value is read. If the type
+Pointer to a block of contiguous locations in memory into which the data values are read.
+If the type
 of data value differs from the netCDF variable type, type conversion
 will occur. @xref{Type Conversion,,, netcdf, @value{n-man}}.
 
@@ -9513,7 +9551,8 @@ int nc_get_vars       (int ncid, int varid,  const size_t *startp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -9555,7 +9594,8 @@ argument is treated as (1, 1, ... , 1).
 @itemx lp
 @itemx fp
 @itemx dp
-Pointer to the location into which the data value is read. If the type
+Pointer to a block of contiguous locations in memory into which the data values are read.
+If the type
 of data value differs from the netCDF variable type, type conversion
 will occur. @xref{Type Conversion,,, netcdf, @value{n-man}}.
 
@@ -9729,7 +9769,8 @@ int nc_get_varm       (int ncid, int varid,  const size_t *startp,
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID.
@@ -10217,7 +10258,8 @@ have the name of any existing variable.
 int nc_rename_var(int ncid, int varid, const char* name);
 
 ncid
- NetCDF ID, from a previous call to nc_open or nc_create.
+ NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 varid
  Variable ID.
@@ -10335,16 +10377,17 @@ One or more values out of range.
 @cindex nc_var_par_access, example
 
 The function nc_var_par_access changes whether read/write operations
-on a parallel file system are performed collectively (the default) or
-independently on the variable. This function can only be called if the
-file was created with nc_create_par (see @ref{nc_create_par}) or opened
-with nc_open_par (see @ref{nc_open_par}).
+on a parallel file system are performed collectively or independently
+(the default) on the variable. This function can only be called if the
+file was created with nc_create_par (see @ref{nc_create_par}) or
+opened with nc_open_par (see @ref{nc_open_par}).
 
 Calling this function affects only the open file - information about
 whether a variable is to be accessed collectively or independently is
 not written to the data file. Every time you open a file on a parallel
-file system, all variables default to collective operations. The change
-a variable to independent lasts only as long as that file is open.
+file system, all variables default to independent operations. The
+change a variable to collective I/O lasts only as long as that file is
+open.
 
 The variable can be changed from collective to independent, and back,
 as often as desired.
@@ -10368,7 +10411,7 @@ Variable ID.
  
 @item access
 NC_INDEPENDENT to set this variable to independent
-operations.NC_COLLECTIVE to set it to collective operations.
+operations.  NC_COLLECTIVE to set it to collective operations.
 
 @end table
  
@@ -10591,7 +10634,8 @@ int nc_put_att           (int ncid, int varid, const char *name, nc_type xtype,
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID of the variable to which the attribute will be assigned or
@@ -10760,7 +10804,8 @@ int nc_inq_attid   (int ncid, int varid, const char *name, int *attnump);
 @vtable @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID of the attribute's variable, or NC_GLOBAL for a global
@@ -10889,7 +10934,8 @@ int nc_get_att           (int ncid, int varid, const char *name, void *ip);
 @table @code
 
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 Variable ID of the attribute's variable, or NC_GLOBAL for a global attribute.
@@ -11113,7 +11159,8 @@ int nc_rename_att (int ncid, int varid, const char* name,
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 ID of the attribute's variable, or NC_GLOBAL for a global attribute
@@ -11191,7 +11238,8 @@ int nc_del_att (int ncid, int varid, const char* name);
 
 @table @code
 @item ncid
-NetCDF ID, from a previous call to nc_open or nc_create.
+NetCDF or group ID, from a previous call to nc_open, nc_create,
+nc_def_grp, or associated inquiry functions such as nc_inq_ncid.
  
 @item varid
 ID of the attribute's variable, or NC_GLOBAL for a global attribute.

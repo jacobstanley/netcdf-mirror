@@ -4,25 +4,44 @@
 
 # $Id: Makefile.am,v 1.147 2010/05/29 00:50:39 dmh Exp $
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/nc_test	\
--I${top_srcdir}/liblib @EXTERN_CPPFLAGS@
-LDADD = -lm ${top_builddir}/liblib/libnetcdf.la @EXTERN_LDFLAGS@
+# Put together AM_CPPFLAGS and AM_LDFLAGS.
+include $(top_srcdir)/lib_flags.am
+LDADD = ${top_builddir}/liblib/libnetcdf.la 
 
+# This is the program we're building, and it's sources.
+bin_PROGRAMS = ncdump 
+ncdump_SOURCES = ncdump.c vardata.c dumplib.c indent.c nctime0.c	\
+ncdump.h vardata.h dumplib.h indent.h isnan.h nctime0.h cdl.h \
+utils.h utils.c nciter.h nciter.c nccomps.h
+
+# Another utility program that copies any netCDF file using only the
+# netCDF API
+bin_PROGRAMS += nccopy
+nccopy_SOURCES = nccopy.c nciter.c nciter.h chunkspec.h chunkspec.c \
+utils.h utils.c dimmap.h dimmap.c
+
+# This is the man page.
+man_MANS = ncdump.1 nccopy.1
+
+if !BUILD_DLL
 # These tests are run for both netCDF-4 and non-netCDF-4 builds.
 check_PROGRAMS = rewrite-scalar ctest ctest64 ncdump tst_utf8
 TESTS = run_tests.sh tst_64bit.sh ctest ctest64 tst_output.sh	\
-tst_lengths.sh tst_calendars.sh tst_utf8 run_utf8_tests.sh
+tst_lengths.sh tst_calendars.sh tst_utf8 run_utf8_tests.sh      \
+tst_nccopy3.sh tst_charfill.sh
 
 if USE_NETCDF4
 # NetCDF-4 has some extra tests.
 check_PROGRAMS += tst_create_files tst_h_rdc0 tst_group_data		\
 tst_enum_data tst_opaque_data tst_string_data tst_vlen_data tst_comp	\
-tst_comp2 tst_nans tst_special_atts tst_unicode tst_fillbug
+tst_comp2 tst_nans tst_special_atts tst_unicode tst_fillbug tst_compress \
+tst_chunking
 
 TESTS += tst_create_files tst_group_data tst_enum_data tst_opaque_data	\
 tst_string_data tst_vlen_data tst_comp tst_comp2 tst_nans		\
 tst_special_atts tst_netcdf4.sh tst_h_rdc0 tst_unicode tst_fillbug	\
-tst_fillbug.sh tst_netcdf4_4.sh tst_nccopy4.sh 
+tst_fillbug.sh tst_netcdf4_4.sh tst_compress tst_nccopy4.sh             \
+tst_grp_spec.sh
 
 if EXTRA_TESTS
 TESTS += run_back_comp_tests.sh
@@ -30,11 +49,8 @@ endif # EXTRA_TESTS
 
 tst_h_rdc0_CPPFLAGS = -I${top_srcdir}/nc_test ${AM_CPPFLAGS}
 
-else #!USE_NETCDF4
-
-TESTS += tst_nccopy3.sh
-
 endif #!USE_NETCDF4
+endif #!BUILD_DLL
 
 CLEANFILES = test0.nc test1.cdl test1.nc test2.cdl ctest1.cdl ctest.c	\
 ctest64.c ctest0.nc ctest0_64.nc c1.cdl ctest1_64.cdl c0.nc small.nc	\
@@ -49,21 +65,9 @@ tst_enum_data.cdl tst_small.cdl tst_times.cdl tst_solar_2.cdl		\
 tst_string_data.cdl tst_fillbug.cdl tst_opaque_data.cdl			\
 tst_compounds4.cdl tst_utf8.cdl tst_compounds3.cdl			\
 tst_special_atts.cdl tst_nans.cdl tst_format_att_64.cdl			\
-tst_vlen_data.cdl tst_solar_1.cdl tst_format_att.cdl
-
-
-# This is the program we're building, and it's sources.
-bin_PROGRAMS = ncdump 
-ncdump_SOURCES = ncdump.c vardata.c dumplib.c indent.c nctime.c	\
-ncdump.h vardata.h dumplib.h indent.h isnan.h nctime.h cdl.h
-
-# Another utility program that copies any netCDF file using only the
-# netCDF API
-bin_PROGRAMS += nccopy
-nccopy_SOURCES = nccopy.c nciter.c nciter.h
-
-# This is the man page.
-man_MANS = ncdump.1 nccopy.1
+tst_vlen_data.cdl tst_solar_1.cdl tst_format_att.cdl tst_inflated.nc    \
+tmp_subset.cdl tst_inflated4.nc tst_deflated.nc tst_chunking.nc tmp*.nc \
+tst_charfill.nc tmp_tst_charfill.cdl
 
 # These files all have to be included with the distribution.
 EXTRA_DIST = run_tests.sh tst_64bit.sh tst_output.sh test0.cdl		\
@@ -80,20 +84,25 @@ ref_tst_compounds3.nc ref_tst_compounds3.cdl ref_tst_compounds4.nc	\
 ref_tst_compounds4.cdl ref_tst_group_data_v23.cdl tst_mslp.cdl		\
 ref_tst_format_att.cdl ref_tst_format_att_64.cdl tst_nccopy3.sh		\
 tst_nccopy4.sh ref_nc_test_netcdf4_4_0.nc run_back_comp_tests.sh	\
-ref_nc_test_netcdf4.cdl ref_tst_special_atts3.cdl
+ref_nc_test_netcdf4.cdl ref_tst_special_atts3.cdl tst_brecs.cdl         \
+ref_tst_grp_spec0.cdl ref_tst_grp_spec.cdl tst_grp_spec.sh              \
+ref_tst_charfill.cdl tst_charfill.cdl tst_charfill.sh
 
-BUILT_SOURCES = ctest.c ctest64.c
 
 # Can't run ncgen to generate ctest.c and ctest64.c on cross-compiles.
-if CROSS_COMPILING
-	cp ref_ctest.c ctest.c
-	cp ref_ctest64.c ctest64.c
-else
+BUILT_SOURCES = ctest.c ctest64.c
+if EXTRA_TESTS
 ctest.c:
-	$(top_builddir)/ncgen/ncgen -c -o ctest0.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest.c
+	$(top_builddir)/ncgen/ncgen -lc -o ctest0.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest.c
 
 ctest64.c:
-	$(top_builddir)/ncgen/ncgen -v2 -c -o ctest0_64.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest64.c
+	$(top_builddir)/ncgen/ncgen -v2 -lc -o ctest0_64.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest64.c
+else
+ctest.c:
+	cp ref_ctest.c ctest.c
+
+ctest64.c:
+	cp ref_ctest64.c ctest64.c
 endif # CROSS_COMPILING
 
 # NCGEN4 additions
@@ -102,7 +111,9 @@ EXTRA_DIST += tst_ncgen4_shared.sh tst_ncgen4.sh tst_ncgen4_classic.sh	\
 tst_ncgen4_diff.sh tst_ncgen4_cycle.sh ref_ctest.c ref_ctest64.c
 
 CLEANFILES += results/*.nc results/*.dmp results/*.dmp2 tmp*.cdl
+if !BUILD_DLL
 TESTS += tst_ncgen4_classic.sh
 if USE_NETCDF4
 TESTS += tst_ncgen4.sh
+endif
 endif

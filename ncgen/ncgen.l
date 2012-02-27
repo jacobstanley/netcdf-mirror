@@ -23,6 +23,9 @@
    The tests are derived from the table at
 	    http://www.w3.org/2005/03/23-lex-U
    We include lexical definitions for all three, but use the second version.
+4. Single character constants enclosed in '...' cannot be
+   utf-8, so we assume they are the one case where US-Ascii (7-bit) is used.
+   We could use ISO-8859-1, but that conflicts with UTF-8 above value 127.
 */
 
 /* lex specification for tokens for ncgen */
@@ -38,13 +41,14 @@
 char errstr[100];		/* for short error messages */
 
 int lineno;              /* line number for error messages */
-char* lextext;           /* name or string with escapes removed */
+Bytebuffer* lextext;           /* name or string with escapes removed */
 
 #define YY_BREAK                /* defining as nothing eliminates unreachable
 				   statement warnings from flex output, 
                                    but make sure every action ends with
                                    "return" or "break"! */
 
+int specialconstants;		/* 1 if nan, nanf, infinity, etc is used */
 double double_val;             /* last double value read */
 float float_val;               /* last float value read */
 long long int64_val;           /* last int64 value read */
@@ -59,6 +63,7 @@ unsigned char ubyte_val;       /* last byte value read */
 
 static Symbol* makepath(char* text);
 static int lexdebug(int);
+static int parseLL(char* text);
 
 static struct Specialtoken {
     char* name;
@@ -155,6 +160,8 @@ FLTNUMBER    [+-]?[0-9]*\.[0-9]*{exp}?[Ff]|[+-]?[0-9]*{exp}[Ff]
 
 SPECIAL "_FillValue"|"_Format"|"_Storage"|"_ChunkSizes"|"_Fletcher32"|"_DeflateLevel"|"_Shuffle"|"_Endianness"|"_NoFill"
 
+USASCII   [\x01-\x7F]
+
 %%
 [ \r\t\f]+	{ /* whitespace */ 
 		  break;        
@@ -173,10 +180,10 @@ yyerror("string too long, truncated\n");
 yytext[MAXTRST-1] = '\0';
 }
 */
-			lextext = emalloc(1+4*yyleng); /* should be max
-                                                             needed */
 		        /* Assumes expand escapes also does normalization */
+			bbClear(lextext);
 			expand_escapes(lextext,(char *)yytext,yyleng);
+			bbNull(lextext);
 		 	return lexdebug(TERMSTRING);
 		        }
 
@@ -185,12 +192,11 @@ yytext[MAXTRST-1] = '\0';
 		int len = yyleng - 2;
 		int padlen = len;
 	        if((padlen % 2) == 1) padlen++;
-		lextext = emalloc(1+padlen);
-		strncpy(lextext,p,len+1); /*include null */
-		lextext[len] = '0'; /* assume padding */
-		lextext[padlen] = '\0'; /* make sure null terminated */
+		bbClear(lextext);
+	        bbAppendn(lextext,p,len);
+		bbNull(lextext);
 		/* convert all chars to lower case */
-		for(p=lextext;*p;p++) *p = tolower(*p);
+		for(p=bbContents(lextext);*p;p++) *p = tolower(*p);
 		return lexdebug(OPAQUESTRING);
 		}
 
@@ -212,44 +218,59 @@ double|DOUBLE		{return lexdebug(DOUBLE_K);}
 unlimited|UNLIMITED	{int32_val = -1;
 			 return lexdebug(NC_UNLIMITED_K);}
 
-group:|GROUP:		{return lexdebug(GROUP);}
-types:|TYPES:		{return lexdebug(TYPES);}
-dimensions:|DIMENSIONS:	{return lexdebug(DIMENSIONS);}
-variables:|VARIABLES:	{return lexdebug(VARIABLES);}
-data:|DATA:		{return lexdebug(DATA);}
+types:			{return lexdebug(TYPES);}
+dimensions:		{return lexdebug(DIMENSIONS);}
+variables:		{return lexdebug(VARIABLES);}
+data:			{return lexdebug(DATA);}
+group:			{return lexdebug(GROUP);}
+
 (netcdf|NETCDF|netCDF)  {BEGIN(TEXT);return lexdebug(NETCDF);}
 
-DoubleInf|NaN|-?Infinity { /* missing value (pre-2.4 backward compatibility) */
+DoubleInf|-?Infinity { /* missing value (pre-2.4 backward compatibility) */
                 if (yytext[0] == '-') {
-		    double_val = -NC_FILL_DOUBLE;
+		    double_val = NEGINFINITE;
                 } else {
-		    double_val = NC_FILL_DOUBLE;
+		    double_val = INFINITE;
                 }
+		specialconstants = 1;
 		return lexdebug(DOUBLE_CONST);
 		}
-FloatInf|NaNf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibility)*/
+NaN|nan { /* missing value (pre-2.4 backward compatibility) */
+		double_val = NAN;
+		specialconstants = 1;
+		return lexdebug(DOUBLE_CONST);
+		}
+
+FloatInf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibility)*/
                 if (yytext[0] == '-') {
-		    float_val = -NC_FILL_FLOAT;
+		    float_val = NEGINFINITEF;
                 } else {
-		    float_val = NC_FILL_FLOAT;
+		    float_val = INFINITEF;
                 }
+		specialconstants = 1;
+		return lexdebug(FLOAT_CONST);
+		}
+NaNf|nanf { /* missing value (pre-2.4 backward compatibility) */
+		float_val = NANF;
+		specialconstants = 1;
 		return lexdebug(FLOAT_CONST);
 		}
 
 {PATH}		{
-		lextext = emalloc(1+4*yyleng); /* should be max needed */
-		strncpy(lextext,(char*)yytext,yyleng+1); /* include null */
-		yylval.sym = makepath(lextext);
-		free(lextext);
+		bbClear(lextext);
+		bbAppendn(lextext,(char*)yytext,yyleng+1); /* include null */
+	        bbNull(lextext);
+		yylval.sym = makepath(bbContents(lextext));
 		return lexdebug(PATH);
 		}
 
 
 {SPECIAL}      {struct Specialtoken* st;
-		lextext = emalloc(1+4*yyleng); /* should be max needed */
-		strncpy(lextext,(char*)yytext,yyleng+1); /* include null */
+		bbClear(lextext);
+		bbAppendn(lextext,(char*)yytext,yyleng+1); /* include null */
+		bbNull(lextext);
 		for(st=specials;st->name;st++) {
-		    if(strcmp(lextext,st->name)==0) {return lexdebug(st->token);}
+		    if(strcmp(bbContents(lextext),st->name)==0) {return lexdebug(st->token);}
 		}
 		return 0;
 		}
@@ -257,32 +278,38 @@ FloatInf|NaNf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibili
 <TEXT>{DATASETID} {
 		    int c;
 		    char* p; char* q;
-		    lextext = emalloc(1+4*yyleng); /* should be max needed */
 		    /* copy the trimmed name */
-		    strncpy(lextext,(char*)yytext,yyleng+1); /* include null */
-		    p = lextext;
-		    q = lextext;
+		    bbClear(lextext);
+		    bbAppendn(lextext,(char*)yytext,yyleng+1); /* include null */
+		    bbNull(lextext);
+		    p = bbContents(lextext);
+		    q = p;
 		    while((c=*p++)) {if(c > ' ') *q++ = c;}
 		    *q = '\0';
-		    datasetname = lextext;
+		    datasetname = bbDup(lextext);
 		    BEGIN(INITIAL);
 		    return lexdebug(DATASETID);
 		}
 
-{ID}		{
-		    lextext = emalloc(1+4*yyleng); /* should be max needed */
-		    strncpy(lextext,(char*)yytext,yyleng+1); /* include null */
-		    deescapify(lextext);
-		    if (STREQ((char *)lextext, FILL_STRING)) return lexdebug(FILLMARKER);
-		    yylval.sym = install(lextext);
+{ID}		{ char* id;
+		    bbClear(lextext);
+		    bbAppendn(lextext,(char*)yytext,yyleng+1); /* include null */
+		    bbNull(lextext);
+		    id = bbContents(lextext);
+		    deescapify(id);
+		    if (STREQ(id, FILL_STRING)) return lexdebug(FILLMARKER);
+		    yylval.sym = install(id);
 		    return lexdebug(IDENT);
 		}
 
 {SIMPLENUMBER}	{
 		    /* We need to try to see what size of integer ((u)int). */
 		    /* Technically, the user should specify, but... */
-		    if(yytext[0] == '-') { /* assume signed */
-		        sscanf((char*)yytext, "%lld", &int64_val);
+		    /* If out of any integer range, then complain */
+		    switch (parseLL(yytext)) {
+		    case 0:
+			return lexdebug(INT64_CONST); /* meaningless */
+		    case -1:
 #ifdef USE_NETCDF4
 		        if(int64_val >= NC_MIN_INT) {
 			    int32_val = (int)int64_val;
@@ -290,11 +317,16 @@ FloatInf|NaNf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibili
 			} else
 		            return lexdebug(INT64_CONST);
 #else
-			int32_val = (int)int64_val;
-			return lexdebug(INT_CONST);		    
+			/* Convert to int32, unless overflow then complain  */
+			if(int64_val >=NC_MIN_INT) {
+			    int32_val = (int)int64_val;
+			} else {
+			   sprintf(errstr,"32 bit integer constant out of range: %s",(char*)yytext);
+			   yyerror(errstr);
+			}
+		        return lexdebug(INT_CONST);		    
 #endif
-		    } else {
-		        sscanf((char*)yytext, "%llu", &uint64_val);
+		    case 1:
 #ifdef USE_NETCDF4
  		        if(uint64_val <= NC_MAX_INT) {
 			    int32_val = (int)uint64_val;
@@ -308,6 +340,11 @@ FloatInf|NaNf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibili
 			} else
 		            return lexdebug(UINT64_CONST);
 #else
+			/* Convert to int32 but complain if overflow */
+			if(uint64_val > NC_MAX_INT) {
+			    sprintf(errstr,"32 bit integer constant out of range: %s",(char*)yytext);
+			    yyerror(errstr);
+			}
 			int32_val = (int)uint64_val;
 			return lexdebug(INT_CONST);
 #endif
@@ -350,13 +387,13 @@ FloatInf|NaNf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibili
 		    }
 		    break;
 		case 'L': case 'l':
-		    if (sscanf((char*)yytext, "%lld", &int64_val) == 1) {
-		        token = INT64_CONST;
-		    } else if (sscanf((char*)yytext, "%llu", &uint64_val) == 1) {
-			token = UINT64_CONST;
-		    } else {
+		    switch(parseLL(yytext)) {
+		    case 0:
 		        sprintf(errstr,"bad int64 constant: %s",(char*)yytext);
 		        yyerror(errstr);
+			break;
+		    case -1: token = INT64_CONST; break;
+		    case 1: token = UINT64_CONST; break;
 		    }
 		    break;
 		default:/*(optionally)signed string of digits; treat like int*/
@@ -515,7 +552,8 @@ FloatInf|NaNf|-?Infinityf|-?Inff {/* missing value (pre-2.4 backward compatibili
 static int
 lexdebug(int token)
 {
-    if(debug >= 2) {
+    if(debug >= 2)
+    {
         fprintf(stderr,"Token=%d |%s|\n",token,yytext);
     }
     return token;
@@ -525,7 +563,7 @@ int
 lex_init(void)
 {
     lineno = 1;
-    lextext = NULL;
+    lextext = bbNew();
     if(0) unput(0); /* keep -Wall quiet */
     return 0;
 }
@@ -587,4 +625,40 @@ makepath(char* text0)
 	free(text);
     }
     return sym;
+}
+
+static int
+parseLL(char* text)
+{
+    int result = 0;
+#if defined(HAVE_STRTOLL) && defined(HAVE_STRTOULL)
+    extern int errno;
+    char* endptr;
+    errno = 0; endptr = NULL;
+    if(text[0] == '-') {
+        int64_val = strtoll(text,&endptr,10);
+	result = -1; /* negative int64_val */	
+    } else {
+        uint64_val = strtoull(text,&endptr,10);
+	result = 1; /* positive uint64_val */	
+    }
+    if(result == 0) {
+	sprintf(errstr,"Unparseable 64 bit integer constant: %s",(char*)text);
+	yyerror(errstr);
+    } else if(errno == ERANGE) {
+	sprintf(errstr,"64 bit integer constant out of range: %s",(char*)text);
+	yyerror(errstr);
+	result = 0; /* out of range */
+    }			
+#else /*!(defined HAVE_STRTOLL && defined HAVE_STRTOULL)*/
+    if(text[0] == '-') {
+        sscanf((char*)text, "%lld", &int64_val);
+	result = -1; /* negative int64_val */	
+    } else {
+	sscanf((char*)text, "%llu", &uint64_val);
+	result = 1; /* positive uint64_val */	
+    }
+    /* Have no useful way to detect out of range */
+#endif /*!(defined HAVE_STRTOLL && defined HAVE_STRTOULL)*/
+    return result;
 }

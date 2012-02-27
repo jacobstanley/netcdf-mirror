@@ -4,13 +4,17 @@
  *   $Header: /upc/share/CVS/netcdf-3/libsrc4/nc4dispatch.c,v 1.5 2010/05/27 02:19:37 dmh Exp $
  *********************************************************************/
 
-#include "nc.h"
+#include "config.h"
 #include <stdlib.h>
+#include "nc.h"
+#include "ncdispatch.h"
 #include "nc4dispatch.h"
 
 NC_Dispatch NC4_dispatcher = {
 
 NC_DISPATCH_NC4,
+
+NC4_new_nc,
 
 NC4_create,
 NC4_open,
@@ -47,6 +51,10 @@ NC4_inq_varid,
 NC4_rename_var,
 NC4_get_vara,
 NC4_put_vara,
+NCDEFAULT_get_vars,
+NCDEFAULT_put_vars,
+NCDEFAULT_get_varm,
+NCDEFAULT_put_varm,
 
 NC4_inq_var_all,
 
@@ -91,6 +99,8 @@ NC4_set_var_chunk_cache,
 NC4_get_var_chunk_cache,
 
 };
+
+NC_Dispatch* NC4_dispatch_table = NULL; /* moved here from ddispatch.c */
 
 int
 NC4_initialize(void)

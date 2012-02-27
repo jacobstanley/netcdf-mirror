@@ -7,6 +7,7 @@
 
 #include        "includes.h"
 #include        "bytebuffer.h"
+#include	<math.h>
 
 static char stmp[256];
 
@@ -16,6 +17,8 @@ convert1(Constant* src, Constant* dst)
     Constvalue tmp;
     unsigned char* bytes = NULL;
     size_t bytelen;
+
+    dst->lineno = src->lineno;
 
     /* Need to translate all possible sources to all possible sinks.*/
     /* Rather than have a nested switch, combine the src and target into*/
@@ -365,12 +368,11 @@ case CASE(NC_FLOAT,NC_INT64):
     tmp.int64v	 = (long long)src->value.floatv;
     break;
 case CASE(NC_FLOAT,NC_FLOAT):
-    tmp.floatv	= (float)src->value.floatv;
+    tmp.floatv = src->value.floatv;
     break;
 case CASE(NC_FLOAT,NC_DOUBLE):
-    tmp.doublev = (double)src->value.floatv;
+    tmp.doublev = (isnan(src->value.floatv)?NAN:(double)src->value.floatv);
     break;
-
 case CASE(NC_DOUBLE,NC_BYTE):
     tmp.uint8v	= (unsigned char)src->value.doublev;
     break;
@@ -396,7 +398,7 @@ case CASE(NC_DOUBLE,NC_INT64):
     tmp.int64v	 = (long long)src->value.doublev;
     break;
 case CASE(NC_DOUBLE,NC_FLOAT):
-    tmp.floatv	= (float)src->value.doublev;
+    tmp.floatv = (isnan(src->value.doublev)?NANF:(float)src->value.doublev);
     break;
 case CASE(NC_DOUBLE,NC_DOUBLE):
     tmp.doublev = (double)src->value.doublev;

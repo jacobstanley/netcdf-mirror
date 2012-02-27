@@ -1,11 +1,13 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
 #include "ocinternal.h"
 #include "ocdebug.h"
 
 static const unsigned int MAX_UINT = 0xffffffff;
 
+static OCerror occomputeskipdatar(OCstate*, OCnode*, ocoffset_t offset);
 static int mergedas1(OCnode* dds, OCnode* das);
 static int converttype(OCtype etype, char* value, char* memory);
 static char* pathtostring(OClist* path, char* separator, int usecdfname);
@@ -13,7 +15,7 @@ static void computefullname(OCnode* node);
 
 /* Process ocnodes to fix various semantic issues*/
 void
-computeocsemantics(OClist* ocnodes)
+occomputesemantics(OClist* ocnodes)
 {
     unsigned int i;
     OCASSERT((ocnodes != NULL));
@@ -27,14 +29,14 @@ computeocsemantics(OClist* ocnodes)
 }
 
 void
-computeocfullnames(OCnode* root)
+occomputefullnames(OCnode* root)
 {
     unsigned int i;
     if(root->name != NULL) computefullname(root);
     if(root->subnodes != NULL) { /* recurse*/
         for(i=0;i<oclistlength(root->subnodes);i++) {
 	    OCnode* node = (OCnode*)oclistget(root->subnodes,i);
-	    computeocfullnames(node);
+	    occomputefullnames(node);
 	}
     }
 }
@@ -48,10 +50,10 @@ computefullname(OCnode* node)
 
     OCASSERT((node->name != NULL));
     path = oclistnew();
-    collectpathtonode(node,path);
+    occollectpathtonode(node,path);
     tmp = pathtostring(path,PATHSEPARATOR,1);
     if(tmp == NULL) {
-        fullname = strdup(node->name);
+        fullname = nulldup(node->name);
     } else {
         fullname = tmp;
     }
@@ -87,21 +89,21 @@ pathtostring(OClist* path, char* separator, int usecdfname)
 
 /* Collect the set of nodes ending in "node"*/
 void
-collectpathtonode(OCnode* node, OClist* path)
+occollectpathtonode(OCnode* node, OClist* path)
 {
     if(node == NULL) return;
-    collectpathtonode(node->container,path);
+    occollectpathtonode(node->container,path);
     oclistpush(path,(ocelem)node);
 }
 
 OCnode*
-makeocnode(char* name, OCtype ptype, OCnode* root)
+ocmakenode(char* name, OCtype ptype, OCnode* root)
 {
     OCnode* cdf = (OCnode*)ocmalloc(sizeof(OCnode));
     MEMCHECK(cdf,(OCnode*)NULL);
     memset((void*)cdf,0,sizeof(OCnode));
     cdf->magic = OCMAGIC;
-    cdf->name = (name?strdup(name):NULL);
+    cdf->name = (name?nulldup(name):NULL);
     cdf->octype = ptype;
     cdf->array.dimensions = NULL;
     cdf->root = root;
@@ -160,9 +162,11 @@ converttype(OCtype etype, char* value, char* memory)
     unsigned long uiv;
     double dv;
     char c[1];
+    int outofrange = 0;
+#ifdef HAVE_LONG_LONG_INT
     long long llv;
     unsigned long long ullv;
-    int outofrange = 0;
+#endif
 
     switch (etype) {
     case OC_Char:
@@ -185,7 +189,7 @@ converttype(OCtype etype, char* value, char* memory)
 	*((signed short*)memory) = (signed short)iv;
 	break;
     case OC_UInt16:
-	if(sscanf(value,"%ld",&uiv) != 1) goto fail;
+	if(sscanf(value,"%lu",&uiv) != 1) goto fail;
         else if(uiv > OC_UINT16_MAX) {uiv = OC_UINT16_MAX; outofrange = 1;}
 	*((unsigned short*)memory) = (unsigned short)uiv;
 	break;
@@ -195,10 +199,11 @@ converttype(OCtype etype, char* value, char* memory)
 	*((signed int*)memory) = (signed int)iv;
 	break;
     case OC_UInt32:
-	if(sscanf(value,"%ld",&uiv) != 1) goto fail;
+	if(sscanf(value,"%lu",&uiv) != 1) goto fail;
         else if(uiv > OC_UINT32_MAX) {uiv = OC_UINT32_MAX; outofrange = 1;}
 	*((unsigned char*)memory) = (unsigned int)uiv;
 	break;
+#ifdef HAVE_LONG_LONG_INT
     case OC_Int64:
 	if(sscanf(value,"%lld",&llv) != 1) goto fail;
         /*else if(iv > OC_INT64_MAX || iv < OC_INT64_MIN) goto fail;*/
@@ -208,6 +213,7 @@ converttype(OCtype etype, char* value, char* memory)
 	if(sscanf(value,"%llu",&ullv) != 1) goto fail;
 	*((unsigned long long*)memory) = (unsigned long long)ullv;
 	break;
+#endif
     case OC_Float32:
 	if(sscanf(value,"%lf",&dv) != 1) goto fail;
 	*((float*)memory) = (float)dv;
@@ -217,7 +223,7 @@ converttype(OCtype etype, char* value, char* memory)
 	*((double*)memory) = (double)dv;
 	break;
     case OC_String: case OC_URL:
-	*((char**)memory) = strdup(value);
+	*((char**)memory) = nulldup(value);
 	break;
     default:
 	goto fail;
@@ -230,100 +236,25 @@ fail:
     return 0;
 }
 
-/* For those nodes that are uniform in size, compute size
-   size of the node*/
-size_t
-ocsetsize(OCnode* node)
-{
-    size_t count, subnodesum;
-    unsigned int i;
-    int isscalar = (node->array.rank == 0);
-    size_t instancesize;
-    size_t dimsize; /* to give to parent*/
-
-    instancesize = 0; /* assume not uniform*/
-    dimsize = 0;
-
-    /* compute total # of elements if dimensioned*/
-    count = 1;
-    for(i=0;i<node->array.rank;i++) {
-	OCnode* dim = (OCnode*)oclistget(node->array.dimensions,i);
-	count *= (dim->dim.declsize);
-    }
-
-    /* Recursively compute sizes of subnodes, if any*/
-    subnodesum = 0;
-    if(node->subnodes != NULL) {
-	int nonuniform = 0;
-        for(i=0;i<oclistlength(node->subnodes);i++) {
-	    OCnode* subnode = (OCnode*)oclistget(node->subnodes,i);
-	    size_t subsize = ocsetsize(subnode); /* includes subnode dimension counts*/
-	    if(subsize == 0) nonuniform = 1;
-	    subnodesum += subsize;
-	}
-	if(nonuniform) subnodesum = 0;
-    }
-
-    switch (node->octype) {
-        case OC_Primitive:
-	    switch (node->etype) {
-	    case OC_String: case OC_URL: /* not uniform*/
-		instancesize = 0;
-		dimsize = 0; /* not uniform*/
-		break; /* not uniform*/
-	    case OC_Byte:
-	    case OC_UByte:
-	    case OC_Char:
-		instancesize = (isscalar?BYTES_PER_XDR_UNIT:1);
-	        dimsize = instancesize;
-		/* We have to watch out for the fact that packed instances have padding in the xdr packet*/
-		if(!isscalar) { /* padding to multiple of BYTE_PER_XDR_UNIT*/
-		    unsigned int rem;
-	            dimsize = count*instancesize;
-		    rem = (dimsize % BYTES_PER_XDR_UNIT);
-		    if(rem > 0) dimsize += (BYTES_PER_XDR_UNIT - rem);
-		    dimsize += 2*BYTES_PER_XDR_UNIT; /* the dimension counts (repeated)*/
-		}
-		break;
-	    case OC_Float64:
-	    case OC_Int64:
-	    case OC_UInt64:
-		instancesize = (2*BYTES_PER_XDR_UNIT); /*double = 2 xdr units*/
-	        dimsize = count*instancesize + (isscalar?0:2*BYTES_PER_XDR_UNIT);
-		break;
-	    default:
-		instancesize = (BYTES_PER_XDR_UNIT); /* all others: 1 xdr unit*/
-	        dimsize = count*instancesize + (isscalar?0:2*BYTES_PER_XDR_UNIT);
-		break;
-	    }
-	    break;
-
-        case OC_Sequence: /* never uniform, but instances may be*/
-	    dimsize = 0;
-	    instancesize = subnodesum;
-	    break;
-
-        case OC_Grid:
-	case OC_Dataset:
-        case OC_Structure:
-	    instancesize = subnodesum;
-	    dimsize = count*instancesize + (isscalar?0:BYTES_PER_XDR_UNIT);
-	    break;
-
-        default: OCPANIC1("ocmap: encountered unexpected node type: %x",node->octype);
-	    break;
-    }
-    node->dap.instancesize = instancesize;
-    node->dap.arraysize = dimsize;
-    return dimsize;
-}
 
 void
 ocfreeroot(OCnode* root)
 {
     OCtree* tree;
+    OCstate* state;
+    int i;
+
     if(root == NULL || root->tree == NULL) return;
+
     tree = root->tree;
+    /* Remove the root from the state->trees list */
+    state = tree->state;
+    for(i=0;i<oclistlength(state->trees);i++) {
+	OCnode* node = (OCnode*)oclistget(state->trees,i);
+	if(root == node)
+	    oclistremove(state->trees,i);
+    }
+    /* Note: it is ok if state->trees does not contain this root */    
     ocfreetree(tree);
 }
 
@@ -335,18 +266,11 @@ ocfreetree(OCtree* tree)
     ocfree(tree->constraint);
     ocfree(tree->text);
     if(tree->data.xdrs != NULL) {
-        xdr_destroy(tree->data.xdrs);
-	ocfree(tree->data.xdrs);
+        xxdr_free(tree->data.xdrs);
     }
-#ifdef OC_DISK_STORAGE
-    if(tree->dxdclass == OCDATA) {
-	ocfree(tree->data.filename);
-        if(tree->data.file != NULL) fclose(tree->data.file);
-    }
-#else
-    ocfree(tree->data.xdrdata);
-#endif
-    freeocmemdata(tree->data.memdata);
+    ocfree(tree->data.filename); /* may be null */
+    if(tree->data.file != NULL) fclose(tree->data.file);
+    ocfree(tree->data.memory);
     ocfree(tree);
 }
 
@@ -409,10 +333,10 @@ ocddsdasmerge(OCstate* state, OCnode* dasroot, OCnode* ddsroot)
     unsigned int i,j;
 
     if(dasroot->tree == NULL || dasroot->tree->dxdclass != OCDAS)
-	return THROW(OC_EINVAL);
+	return OCTHROW(OC_EINVAL);
     if(ddsroot->tree == NULL || (ddsroot->tree->dxdclass != OCDDS
         && ddsroot->tree->dxdclass != OCDATADDS))
-	return THROW(OC_EINVAL);
+	return OCTHROW(OC_EINVAL);
 
     ddsnodes = ddsroot->tree->nodes;
 
@@ -489,7 +413,7 @@ ocddsdasmerge(OCstate* state, OCnode* dasroot, OCnode* ddsroot)
     oclistfree(dasglobals);
     oclistfree(dasnodes);
     oclistfree(varnodes);
-    return THROW(OC_NOERR);
+    return OCTHROW(OC_NOERR);
 }
 
 static int
@@ -509,12 +433,12 @@ mergedas1(OCnode* dds, OCnode* das)
             oclistpush(dds->attributes,(ocelem)att);
 	}
     }
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 
 
-#if 0 /*def IGNORE*/
+#ifdef IGNORE
 
 int
 ocddsdasmerge(OCstate* state, OCnode* ddsroot, OCnode* dasroot)
@@ -522,7 +446,7 @@ ocddsdasmerge(OCstate* state, OCnode* ddsroot, OCnode* dasroot)
     int i,j;
     int stat = OC_NOERR;
     OClist* globals = oclistnew();
-    if(dasroot == NULL) return THROW(stat);
+    if(dasroot == NULL) return OCTHROW(stat);
     /* Start by looking for global attributes*/
     for(i=0;i<oclistlength(dasroot->subnodes);i++) {
 	OCnode* node = (OCnode*)oclistget(dasroot->subnodes,i);
@@ -555,7 +479,7 @@ ocddsdasmerge(OCstate* state, OCnode* ddsroot, OCnode* dasroot)
         if(!match) {marklostattribute(das);}
     }
     if(stat == OC_NOERR) ddsroot->attributed = 1;
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 /* Merge das attributes into the dds node*/
@@ -591,7 +515,7 @@ mergedas1(OCnode* dds, OCnode* das)
 	}
         if(!match) {marklostattribute(dasnode);}
     }
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 #endif
 
@@ -614,17 +538,17 @@ occorrelater(OCnode* dds, OCnode* dxd)
     OCerror ocstat = OC_NOERR;
 
     if(dds->octype != dxd->octype) {
-	THROWCHK((ocstat = OC_EINVAL)); goto fail;
+	OCTHROWCHK((ocstat = OC_EINVAL)); goto fail;
     }
     if(dxd->name != NULL && dxd->name != NULL
        && strcmp(dxd->name,dds->name) != 0) {
-	THROWCHK((ocstat = OC_EINVAL)); goto fail;
+	OCTHROWCHK((ocstat = OC_EINVAL)); goto fail;
     } else if(dxd->name != dxd->name) { /* test NULL==NULL */
-	THROWCHK((ocstat = OC_EINVAL)); goto fail;
+	OCTHROWCHK((ocstat = OC_EINVAL)); goto fail;
     }
 
     if(dxd->array.rank != dds->array.rank) {
-	THROWCHK((ocstat = OC_EINVAL)); goto fail;
+	OCTHROWCHK((ocstat = OC_EINVAL)); goto fail;
     }
 
     dds->datadds = dxd;
@@ -641,7 +565,7 @@ occorrelater(OCnode* dds, OCnode* dxd)
 		OCnode* dds1 = (OCnode*)oclistget(dds->subnodes,j);
 		if(strcmp(dxd1->name,dds1->name) == 0) {
 		    ocstat = occorrelater(dds1,dxd1);
-		    if(ocstat != OC_NOERR) {THROWCHK(ocstat); goto fail;}
+		    if(ocstat != OC_NOERR) {OCTHROWCHK(ocstat); goto fail;}
 		    break;
 		}
 	    }
@@ -663,7 +587,7 @@ occorrelater(OCnode* dds, OCnode* dxd)
     }
 
 fail:
-    return THROW(ocstat);
+    return OCTHROW(ocstat);
 
 }
 
@@ -673,4 +597,158 @@ occorrelate(OCnode* dds, OCnode* dxd)
     if(dds == NULL || dxd == NULL) return OC_EINVAL;
     ocuncorrelate(dds);
     return occorrelater(dds,dxd);
+}
+
+/*
+Mark cacheable those primitive String/URL typed nodes
+that are contained only in structures with rank > 0.
+*/
+void
+ocmarkcacheable(OCstate* state, OCnode* ddsroot)
+{
+    int i,j;
+#ifdef IGNORE
+    int ok;
+#endif
+    OClist* treenodes = ddsroot->tree->nodes;
+    OClist* path = oclistnew();
+    for(i=0;i<oclistlength(treenodes);i++) {
+        OCnode* node = (OCnode*)oclistget(treenodes,i);
+	if(node->octype != OC_Primitive) continue;
+	if(node->etype != OC_String && node->etype != OC_URL) continue;
+	/* collect node path */
+        oclistclear(path);
+        occollectpathtonode(node,path);	
+#ifdef IGNORE
+        ok = 1;
+#endif
+	for(j=1;j<oclistlength(path)-1;j++) {/* skip top level dataset and node itself*/
+            OCnode* pathnode = (OCnode*)oclistget(path,j);
+	    if(pathnode->octype != OC_Structure
+		|| pathnode->array.rank > 0) {
+#ifdef IGNORE
+	    ok=0;
+#endif
+	    break;
+	    }
+	}	
+#ifdef IGNORE
+	if(ok) {
+   	    node->cache.cacheable = 1;
+	    node->cache.valid = 0;
+	}
+#endif
+    }
+    oclistfree(path);
+}
+
+
+/*
+Fill in the OCnode.skip fields
+*/
+OCerror
+occomputeskipdata(OCstate* state, OCnode* ddsroot)
+{
+    OCerror stat = OC_NOERR;
+    OCASSERT(ddsroot->octype == OC_Dataset);
+    stat = occomputeskipdatar(state,ddsroot,0);    
+    return stat;
+}
+
+/* Recursive helper for computeskipdata */
+static OCerror
+occomputeskipdatar(OCstate* state, OCnode* xnode, ocoffset_t offset)
+{
+    OCerror stat = OC_NOERR;
+    int i,nfields;
+    int scalar = 0;
+    ocoffset_t instancesize, totalsize;
+
+    scalar = (xnode->array.rank == 0 ? 1 : 0);
+
+    /* Set skip count and offset*/
+    if(xnode->octype == OC_Sequence)
+	xnode->skip.count = OCINDETERMINATE;
+    else
+        xnode->skip.count = totaldimsize(xnode);
+
+    xnode->skip.offset = offset; /* possibly overridden below */
+
+    switch (xnode->octype) {
+
+    case OC_Primitive:
+	switch(xnode->etype) {
+	case OC_String: case OC_URL:
+	    instancesize = OCINDETERMINATE;
+	    totalsize = OCINDETERMINATE;
+	    break;
+	case OC_Char: case OC_Byte: case OC_UByte:
+	    if(!scalar) {/*=>packed*/
+		instancesize = octypesize(xnode->etype);
+		totalsize = instancesize * xnode->skip.count;
+		totalsize = RNDUP(totalsize);
+		totalsize += 2*XDRUNIT; /* overhead is double count */
+		break;
+	    }
+	    /* !packed => singleton char object */
+	    /* fall thru */
+	case OC_Int16: case OC_UInt16:
+	case OC_Int32: case OC_UInt32:
+	case OC_Int64:	case OC_UInt64:
+	case OC_Float32: case OC_Float64:
+	    instancesize = octypesize(xnode->etype);
+	    instancesize = RNDUP(instancesize); /* make multiple of XDRUNIT */
+	    totalsize = (instancesize*xnode->skip.count); /* overhead is double count */
+	    if(!scalar)
+		totalsize += 2*XDRUNIT; /* overhead is double count */
+	    break;
+
+	default: OCPANIC("unexpected etype"); /* better not happen */
+	}
+	break;
+
+    case OC_Sequence:
+	offset = (xnode->skip.offset = OCINDETERMINATE); /* do not know field offsets for arbitrary record */
+    case OC_Dataset:
+    case OC_Grid:    
+    case OC_Structure:
+	/* Compute size of each field and sum */
+	nfields = oclistlength(xnode->subnodes);
+	instancesize = 0; /* of structure as a whole */
+	for(i=0;i<nfields;i++) {
+	    OCnode* subnode = (OCnode*)oclistget(xnode->subnodes,i);
+	    ocoffset_t fieldsize;
+	    if(offset == OCINDETERMINATE || instancesize == OCINDETERMINATE)
+	        stat = occomputeskipdatar(state,subnode,OCINDETERMINATE);
+	    else 
+                stat = occomputeskipdatar(state,subnode,offset+instancesize);
+	    if(stat != OC_NOERR) goto done;
+	    fieldsize = subnode->skip.totalsize;
+	    if(instancesize == OCINDETERMINATE || fieldsize == OCINDETERMINATE)
+		instancesize = OCINDETERMINATE;
+	    else
+		instancesize += fieldsize; 
+	}
+	if(instancesize != OCINDETERMINATE) {
+            instancesize = RNDUP(instancesize); /* make multiple of XDRUNIT */
+	    totalsize = (instancesize*xnode->skip.count); /* overhead is single count */
+	    if(!scalar)
+	        totalsize += XDRUNIT; /* overhead is single count */
+        } else {
+	    totalsize = OCINDETERMINATE; 
+	}
+	if(xnode->octype == OC_Sequence) {
+            totalsize = OCINDETERMINATE;
+            offset = OCINDETERMINATE;
+	}
+	break;
+
+    default: OCPANIC("unexpected octype"); /* better not happen */
+    }
+
+    xnode->skip.instancesize = instancesize;
+    xnode->skip.totalsize = totalsize;
+
+done:
+    return stat;
 }

@@ -9,16 +9,15 @@ function, depending on ncid.
 Copyright 2003, University Corporation for Atmospheric Research. See
 netcdf-4/docs/COPYRIGHT file for copying and redistribution
 conditions.
-
-$Id: ncfunc.c,v 1.51 2010/05/26 20:13:32 dmh Exp $
 */
 
-#include "nc.h"
 #include "nc4internal.h"
 #include "nc3dispatch.h"
 
+#ifdef IGNORE
 /* Keep a linked list of file info objects. */
 extern NC_FILE_INFO_T *nc_file;
+#endif
 
 #ifdef IGNORE
 /* This function deletes a member of parliment. Be careful! Last time

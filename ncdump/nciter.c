@@ -1,198 +1,16 @@
 /*********************************************************************
  *   Copyright 2009, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   "$Header: /upc/share/CVS/netcdf-3/ncdump/nciter.c,v 1.8 2010/04/04 19:57:57 dmh Exp $"
+ *   "$Id: nciter.c 400 2010-08-27 21:02:52Z russ $"
  *********************************************************************/
 
 #include "config.h"		/* for USE_NETCDF4 macro */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netcdf.h>
+#include "utils.h"
 #include "nciter.h"
-
-#define CHECK(stat,f) if(stat != NC_NOERR) {check(stat,#f,__FILE__,__LINE__);} else {}
-
-/* forward declarations */
-static int nc_blkio_init(size_t bufsize, size_t value_size, int rank, 
-			  int chunked, nciter_t *iter);
-static int up_start(int ndims, const size_t *dims, int incdim, size_t inc, 
-		    size_t* odom);
-static int up_start_by_chunks(int ndims, const size_t *dims, 
-			      const size_t *chunks, size_t* odom);
-static int inq_value_size(int igrp, nc_type vartype, size_t *value_sizep);
-
-static void
-check(int err, const char* fcn, const char* file, const int line)
-{
-    fprintf(stderr,"%s\n",nc_strerror(err));
-    fprintf(stderr,"Location: function %s; file %s; line %d\n",
-	    fcn,file,line);
-    fflush(stderr); fflush(stdout);
-    exit(1);
-}
-
-/* Check error return from malloc, and allow malloc(0) with subsequent free */
-static void *
-emalloc (size_t size)
-{
-    void   *p;
-
-    p = (void *) malloc (size==0 ? 1 : size); /* don't malloc(0) */
-    if (p == 0) {
-	fprintf(stderr,"Out of memory!\n");
-	exit(1);
-    }
-    return p;
-}
-
-/* Initialize iteration for a variable.  Just a wrapper for
- * nc_blkio_init() that makes the netCDF calls needed to initialize
- * lower-level iterator. */
-int
-nc_get_iter(int ncid,
-	     int varid,
-	     size_t bufsize,   /* size in bytes of memory buffer */
-	     nciter_t **iterpp /* returned opaque iteration state */) 
-{
-    int stat = NC_NOERR;
-    nciter_t *iterp;
-    nc_type vartype;
-    size_t value_size;      /* size in bytes of each variable element */
-    int ndims;		    /* number of dimensions for variable */
-    int *dimids;
-    long long nvalues = 1;
-    int dim;
-    int chunked = 0;
-
-    /* Caller should free this by calling nc_free_iter(iterp) */
-    iterp = (nciter_t *) emalloc(sizeof(nciter_t));
-    memset((void*)iterp,0,sizeof(nciter_t)); /* make sure it is initialized */
-
-    stat = nc_inq_varndims(ncid, varid, &ndims);
-    CHECK(stat, nc_inq_varndims);
-    dimids = (int *) emalloc(ndims * sizeof(size_t));
-    iterp->dimsizes = (size_t *) emalloc(ndims * sizeof(size_t));
-    iterp->chunksizes = (size_t *) emalloc(ndims * sizeof(size_t));
-
-    stat = nc_inq_vardimid (ncid, varid, dimids);
-    CHECK(stat, nc_inq_vardimid);
-    for(dim = 0; dim < ndims; dim++) {
-	size_t len;
-	stat = nc_inq_dimlen(ncid, dimids[dim], &len);
-	CHECK(stat, nc_inq_dimlen);
-	nvalues *= len;
-	iterp->dimsizes[dim] = len;
-    }
-    stat = nc_inq_vartype(ncid, varid, &vartype);
-    CHECK(stat, nc_inq_vartype);
-    stat = inq_value_size(ncid, vartype, &value_size);
-    CHECK(stat, inq_value_size);
-#ifdef USE_NETCDF4    
-    {
-	int contig = 1;
-	if(ndims > 0) {
-	    stat = nc_inq_var_chunking(ncid, varid, &contig, NULL);
-	    CHECK(stat, nc_inq_var_chunking);
-	}
-	if(contig == 0) {	/* chunked */
-	    stat = nc_inq_var_chunking(ncid, varid, &contig, iterp->chunksizes);
-	    CHECK(stat, nc_inq_var_chunking);
-	    chunked = 1;
-	}
-    }
-#endif	/* USE_NETCDF4 */
-    stat = nc_blkio_init(bufsize, value_size, ndims, chunked, iterp);
-    CHECK(stat, nc_blkio_init);
-    iterp->to_get = 0;
-    free(dimids);
-    *iterpp = iterp;
-    return stat;
-}
-
-/* Iterate on blocks for variables, by updating start and count vector
- * for next vara call.  Assumes nc_get_iter called first.  Returns
- * number of variable values to get, 0 if done, negative number if
- * error, so use like this: 
-   size_t to_get;
-   while((to_get = nc_next_iter(&iter, start, count)) > 0) { 
-      ... iteration ... 
-   } 
-   if(to_get < 0) { ... handle error ... }
- */
-size_t
-nc_next_iter(nciter_t *iter,	/* returned opaque iteration state */
-	     size_t *start, 	/* returned start vector for next vara call */
-	     size_t *count	/* returned count vector for next vara call */
-    ) {
-    int i;
-    /* Note: special case for chunked variables is just an
-     * optimization, the contiguous code below is OK even
-     * for chunked variables, but in general will do more I/O ... */
-    if(iter->first) {
-	if(!iter->chunked) { 	/* contiguous storage */
-	    for(i = 0; i < iter->right_dim; i++) {
-		start[i] = 0;
-		count[i] = 1;
-	    }
-	    start[iter->right_dim] = 0;
-	    count[iter->right_dim] = iter->rows;
-	    for(i = iter->right_dim + 1; i < iter->rank; i++) {
-		start[i] = 0;
-		count[i] = iter->dimsizes[i];
-	    }
-	} else {		/* chunked storage */
-	    for(i = 0; i < iter->rank; i++) {
-		start[i] = 0;
-		count[i] = iter->chunksizes[i];
-	    }
-	}
-	iter->first = 0;
-    } else {
-	if(!iter->chunked) { 	/* contiguous storage */
-	    iter->more = up_start(iter->rank, iter->dimsizes, iter->right_dim, 
-				  iter->inc, start);
-	    /* iterate on pieces of variable */
-	    if(iter->cur < iter->numrows) {
-		iter->inc = iter->rows;
-		count[iter->right_dim] = iter->rows;
-		iter->cur++;
-	    } else {
-		if(iter->leftover > 0) {
-		    count[iter->right_dim] = iter->leftover;
-		    iter->inc = iter->leftover;
-		    iter->cur = 0;
-		}
-	    }
-	} else {		/* chunked storage */
-	    iter->more = up_start_by_chunks(iter->rank, iter->dimsizes, 
-					    iter->chunksizes, start);
-	    /* adjust count to stay in range of dimsizes */
-	    for(i = 0; i < iter->rank; i++) {
-		int leftover = iter->dimsizes[i] - start[i];
-		count[i] = iter->chunksizes[i];
-		if(leftover < count[i]) 
-		    count[i] = leftover;
-	    }
-	}
-    }
-    iter->to_get = 1;
-    for(i = 0; i < iter->rank; i++) {
-	iter->to_get *= count[i];
-    }
-    return iter->more == 0 ? 0 : iter->to_get ;
-}
-
-/* Free iterator and its internally allocated memory */
-int
-nc_free_iter(nciter_t *iterp) {
-    if(iterp->dimsizes)
-	free(iterp->dimsizes);
-    if(iterp->chunksizes)
-	free(iterp->chunksizes);
-    if(iterp)
-	free(iterp);
-    return NC_NOERR;
-}
 
 /* Initialize block iteration for variables, including those that
  * won't fit in the copy buffer all at once.  Returns error if
@@ -259,8 +77,7 @@ inq_value_size(int igrp, nc_type vartype, size_t *value_sizep) {
     int stat = NC_NOERR;
     
 #ifdef USE_NETCDF4
-    stat = nc_inq_type(igrp, vartype, NULL, value_sizep);
-    CHECK(stat, nc_inq_type);
+    NC_CHECK(nc_inq_type(igrp, vartype, NULL, value_sizep));
 #else
     switch(vartype) {
     case NC_BYTE:
@@ -282,8 +99,7 @@ inq_value_size(int igrp, nc_type vartype, size_t *value_sizep) {
 	*value_sizep = sizeof(double);
 	break;
     default:
-	stat = NC_EBADTYPE;
-	CHECK(stat, inq_value_size);
+	NC_CHECK(NC_EBADTYPE);
 	break;
     }
 #endif	/* USE_NETCDF4 */
@@ -350,3 +166,334 @@ up_start_by_chunks(
     return ret;
 }
 
+/* initialize and return a new empty stack of grpids */
+static ncgiter_t *
+gs_init() {
+    ncgiter_t *s = emalloc(sizeof(ncgiter_t));
+    s->ngrps = 0;
+    s->top = NULL;
+    return s;
+}
+
+/* free a stack and all its nodes */
+static void
+gs_free(ncgiter_t *s) {
+    grpnode_t *n0, *n1;
+    n0 = s->top;
+    while (n0) {
+	n1 = n0->next;
+	free(n0);
+	n0 = n1;
+    }
+    free(s);
+}
+
+/* test if a stack is empty */
+static int
+gs_empty(ncgiter_t *s)
+{
+    return s->ngrps == 0;
+}
+
+/* push a grpid on stack */
+static void
+gs_push(ncgiter_t *s, int grpid)
+{
+    grpnode_t *node = emalloc(sizeof(grpnode_t));
+ 
+    node->grpid = grpid;
+    node->next = gs_empty(s) ? NULL : s->top;
+    s->top = node;
+    s->ngrps++;
+}
+
+/* pop value off stack and return */
+static int 
+gs_pop(ncgiter_t *s)
+{
+    if (gs_empty(s)) {
+	return -1;		/* underflow, stack is empty */
+    } else {			/* pop a node */
+	grpnode_t *top = s->top;
+	int value = top->grpid;
+	s->top = top->next;
+	/* TODO: first call to free gets seg fault with libumem */
+	free(top);
+	s->ngrps--;
+	return value;
+    }
+}
+
+#ifdef UNUSED
+/* Return top value on stack without popping stack.  Defined for
+ * completeness but not used (here). */
+static int 
+gs_top(ncgiter_t *s)
+{
+    if (gs_empty(s)) {
+	return -1;		/* underflow, stack is empty */
+    } else {			/* get top value */
+	grpnode_t *top = s->top;
+	int value = top->grpid;
+	return value;
+    }
+}
+#endif
+
+/* Like netCDF-4 function nc_inq_grps(), but can be called from
+ * netCDF-3 only code as well.  Maybe this is what nc_inq_grps()
+ * should do if built without netCDF-4 data model support. */
+static int
+nc_inq_grps2(int ncid, int *numgrps, int *grpids)
+{
+    int stat = NC_NOERR;
+
+    /* just check if ncid is valid id of open netCDF file */
+    NC_CHECK(nc_inq(ncid, NULL, NULL, NULL, NULL));
+
+#ifdef USE_NETCDF4
+    NC_CHECK(nc_inq_grps(ncid, numgrps, grpids));
+#else
+    *numgrps = 0;
+#endif
+    return stat;
+}
+
+/* Begin public interfaces */
+
+/* Initialize iteration for a variable.  Just a wrapper for
+ * nc_blkio_init() that makes the netCDF calls needed to initialize
+ * lower-level iterator. */
+int
+nc_get_iter(int ncid,
+	     int varid,
+	     size_t bufsize,   /* size in bytes of memory buffer */
+	     nciter_t **iterpp /* returned opaque iteration state */) 
+{
+    int stat = NC_NOERR;
+    nciter_t *iterp;
+    nc_type vartype;
+    size_t value_size;      /* size in bytes of each variable element */
+    int ndims;		    /* number of dimensions for variable */
+    int *dimids;
+    long long nvalues = 1;
+    int dim;
+    int chunked = 0;
+
+    /* Caller should free this by calling nc_free_iter(iterp) */
+    iterp = (nciter_t *) emalloc(sizeof(nciter_t));
+    memset((void*)iterp,0,sizeof(nciter_t)); /* make sure it is initialized */
+
+    NC_CHECK(nc_inq_varndims(ncid, varid, &ndims));
+    dimids = (int *) emalloc((ndims + 1) * sizeof(size_t));
+    iterp->dimsizes = (size_t *) emalloc((ndims + 1) * sizeof(size_t));
+    iterp->chunksizes = (size_t *) emalloc((ndims + 1) * sizeof(size_t));
+
+    NC_CHECK(nc_inq_vardimid (ncid, varid, dimids));
+    for(dim = 0; dim < ndims; dim++) {
+	size_t len;
+	NC_CHECK(nc_inq_dimlen(ncid, dimids[dim], &len));
+	nvalues *= len;
+	iterp->dimsizes[dim] = len;
+    }
+    NC_CHECK(nc_inq_vartype(ncid, varid, &vartype));
+    NC_CHECK(inq_value_size(ncid, vartype, &value_size));
+#ifdef USE_NETCDF4    
+    {
+	int contig = 1;
+	if(ndims > 0) {
+	    NC_CHECK(nc_inq_var_chunking(ncid, varid, &contig, NULL));
+	}
+	if(contig == 0) {	/* chunked */
+	    NC_CHECK(nc_inq_var_chunking(ncid, varid, &contig, iterp->chunksizes));
+	    chunked = 1;
+	}
+    }
+#endif	/* USE_NETCDF4 */
+    NC_CHECK(nc_blkio_init(bufsize, value_size, ndims, chunked, iterp));
+    iterp->to_get = 0;
+    free(dimids);
+    *iterpp = iterp;
+    return stat;
+}
+
+/* Iterate on blocks for variables, by updating start and count vector
+ * for next vara call.  Assumes nc_get_iter called first.  Returns
+ * number of variable values to get, 0 if done, negative number if
+ * error, so use like this: 
+   size_t to_get;
+   while((to_get = nc_next_iter(&iter, start, count)) > 0) { 
+      ... iteration ... 
+   } 
+   if(to_get < 0) { ... handle error ... }
+ */
+size_t
+nc_next_iter(nciter_t *iter,	/* returned opaque iteration state */
+	     size_t *start, 	/* returned start vector for next vara call */
+	     size_t *count	/* returned count vector for next vara call */
+    ) {
+    int i;
+    /* Note: special case for chunked variables is just an
+     * optimization, the contiguous code below is OK even
+     * for chunked variables, but in general will do more I/O ... */
+    if(iter->first) {
+	if(!iter->chunked) { 	/* contiguous storage */
+	    for(i = 0; i < iter->right_dim; i++) {
+		start[i] = 0;
+		count[i] = 1;
+	    }
+	    start[iter->right_dim] = 0;
+	    count[iter->right_dim] = iter->rows;
+	    for(i = iter->right_dim + 1; i < iter->rank; i++) {
+		start[i] = 0;
+		count[i] = iter->dimsizes[i];
+	    }
+	} else {		/* chunked storage */
+	    for(i = 0; i < iter->rank; i++) {
+		start[i] = 0;
+		if(iter->chunksizes[i] <= iter->dimsizes[i])
+		    count[i] = iter->chunksizes[i];
+		else /* can happen for variables with only unlimited dimensions */
+		    count[i] = iter->dimsizes[i];
+	    }
+	}
+	iter->first = 0;
+    } else {
+	if(!iter->chunked) { 	/* contiguous storage */
+	    iter->more = up_start(iter->rank, iter->dimsizes, iter->right_dim, 
+				  iter->inc, start);
+	    /* iterate on pieces of variable */
+	    if(iter->cur < iter->numrows) {
+		iter->inc = iter->rows;
+		count[iter->right_dim] = iter->rows;
+		iter->cur++;
+	    } else {
+		if(iter->leftover > 0) {
+		    count[iter->right_dim] = iter->leftover;
+		    iter->inc = iter->leftover;
+		    iter->cur = 0;
+		}
+	    }
+	} else {		/* chunked storage */
+	    iter->more = up_start_by_chunks(iter->rank, iter->dimsizes, 
+					    iter->chunksizes, start);
+	    /* adjust count to stay in range of dimsizes */
+	    for(i = 0; i < iter->rank; i++) {
+		int leftover = iter->dimsizes[i] - start[i];
+		if(iter->chunksizes[i] <= iter->dimsizes[i])
+		    count[i] = iter->chunksizes[i];
+		else /* can happen for variables with only unlimited dimensions */
+		    count[i] = iter->dimsizes[i];
+		if(leftover < count[i]) 
+		    count[i] = leftover;
+	    }
+	}
+    }
+    iter->to_get = 1;
+    for(i = 0; i < iter->rank; i++) {
+	iter->to_get *= count[i];
+    }
+    return iter->more == 0 ? 0 : iter->to_get ;
+}
+
+/* Free iterator and its internally allocated memory */
+int
+nc_free_iter(nciter_t *iterp) {
+    if(iterp->dimsizes)
+	free(iterp->dimsizes);
+    if(iterp->chunksizes)
+	free(iterp->chunksizes);
+    if(iterp)
+	free(iterp);
+    return NC_NOERR;
+}
+
+/* Initialize group iterator for start group and all its descendant
+ * groups. */
+int
+nc_get_giter(int grpid,	       /* start group id */
+	    ncgiter_t **iterp  /* returned opaque iteration state */
+    ) 
+{
+    int stat = NC_NOERR;
+
+    stat = nc_inq(grpid, NULL, NULL, NULL, NULL); /* check if grpid is valid */
+    if(stat != NC_EBADGRPID && stat != NC_EBADID) {
+	*iterp = gs_init();
+	gs_push(*iterp, grpid);
+    }
+
+    return stat;
+}
+
+/* 
+ * Get group id of next group.  On first call gets start group id,
+ * subsequently returns other subgroup ids in preorder.  Returns zero
+ * when no more groups left.
+ */
+int
+nc_next_giter(ncgiter_t *iterp, int *grpidp) {
+    int stat = NC_NOERR;
+    int numgrps;
+    int *grpids;
+    int i;
+
+    if(gs_empty(iterp)) {
+	*grpidp = 0;		/* not a group, signals iterator is done */
+    } else {
+	*grpidp = gs_pop(iterp);
+	NC_CHECK(nc_inq_grps2(*grpidp, &numgrps, NULL));
+	if(numgrps > 0) {
+	    grpids = (int *)emalloc(sizeof(int) * numgrps);
+	    NC_CHECK(nc_inq_grps2(*grpidp, &numgrps, grpids));
+	    for(i = numgrps - 1; i >= 0; i--) { /* push ids on stack in reverse order */
+		gs_push(iterp, grpids[i]);
+	    }
+	    free(grpids);
+	}
+    }
+    return stat;
+}
+
+/*
+ * Release group iter.
+ */
+void
+nc_free_giter(ncgiter_t *iterp)
+{
+    gs_free(iterp);
+}
+
+/* 
+ * Get total number of groups (including the top-level group and all
+ * descendant groups, recursively) and all descendant subgroup ids
+ * (including the input rootid of the start group) for a group and
+ * all its descendants, in preorder.
+ *
+ * If grpids or numgrps is NULL, it will be ignored.  So typical use
+ * is to call with grpids NULL to get numgrps, allocate enough space
+ * for the group ids, then call again to get them.
+ */
+int
+nc_inq_grps_full(int rootid, int *numgrps, int *grpids) 
+{
+    int stat = NC_NOERR;
+    ncgiter_t *giter;		/* pointer to group iterator */
+    int grpid;
+    size_t count;
+
+    NC_CHECK(nc_get_giter(rootid, &giter));
+    
+    count = 0;
+    NC_CHECK(nc_next_giter(giter, &grpid));
+    while(grpid != 0) {
+	if(grpids)
+	    grpids[count] = grpid;
+	count++;
+	NC_CHECK(nc_next_giter(giter, &grpid));
+    }
+    if(numgrps)
+	*numgrps = count;
+    nc_free_giter(giter);
+    return stat;
+}

@@ -13,12 +13,14 @@
   $Id: nc4hdf.c,v 1.273 2010/05/27 21:34:14 dmh Exp $
 */
 
-#include "nc.h"
+#include "config.h"
 #include "nc4internal.h"
 #include <H5DSpublic.h>
 #include <math.h>
 
+#ifdef IGNORE
 extern NC_FILE_INFO_T *nc_file;
+#endif
 
 #define NC3_STRICT_ATT_NAME "_nc3_strict"
 
@@ -91,8 +93,16 @@ rec_detach_scales(NC_GRP_INFO_T *grp, int dimid, hid_t dimscaleid)
       if ((retval = rec_detach_scales(child_grp, dimid, dimscaleid)))
          return retval;
 
-   /* Find any (already created) vars that use this dimension id. */
-   for (var = grp->var; var; var = var->next)
+   /* If there are no vars, we are done. */
+   if (!grp->var)
+      return NC_NOERR;
+
+   /* Find any (already created) vars that use this dimension id. Go
+    * through the list backwards to accomdate a HDF5 bug. */
+   for (var = grp->var; var->next; var = var->next)
+      ;
+
+   for ( ; var; var = var->prev)
       for (d = 0; d < var->ndims; d++)
          if (var->dimids[d] == dimid && !var->dimscale)
          {
@@ -100,9 +110,12 @@ rec_detach_scales(NC_GRP_INFO_T *grp, int dimid, hid_t dimscaleid)
                  var->dimids[d], var->name));
             if (var->created)
             {
-               if (H5DSdetach_scale(var->hdf_datasetid, dimscaleid, d) < 0)
-                  return NC_EHDFERR;
-               var->dimscale_attached[d] = 0;
+	       if (var->dimscale_attached[d])
+	       {
+		  if (H5DSdetach_scale(var->hdf_datasetid, dimscaleid, d) < 0)
+		     return NC_EHDFERR;
+		  var->dimscale_attached[d] = 0;
+	       }
             }
          }
 
@@ -243,9 +256,6 @@ get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp)
     * one. */
    if (var->xtype == NC_STRING)
    {
-      if (var->fill_value)
-         size = strlen((char *)var->fill_value) + 1;
-      else
          size = 1;
    }
    
@@ -276,6 +286,9 @@ get_fill_value(NC_HDF5_FILE_INFO_T *h5, NC_VAR_INFO_T *var, void **fillp)
       }
       else if (var->xtype == NC_STRING)
       {
+         if (!(*(char **)fillp = malloc((strlen((char *)var->fill_value) + 1) * 
+					sizeof(char))))
+	    return NC_ENOMEM;
          strcpy(*(char **)fillp, (char *)var->fill_value);
       }
       else
@@ -542,7 +555,8 @@ nc4_put_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
    LOG((3, "nc4_put_vara: var->name %s mem_nc_type %d is_long %d", 
         var->name, mem_nc_type, is_long));
 
-   /* Check some stuff about the type and the file. */
+   /* Check some stuff about the type and the file. If the file must
+    * be switched from define mode, it happens here. */
    if ((retval = check_for_vara(&mem_nc_type, var, h5)))
       return retval;
 
@@ -553,7 +567,13 @@ nc4_put_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
       count[i] = countp[i];
    }
    
-   /* Open this databset if necessary. */
+   /* Open this dataset if necessary, first checking for the case of
+    * a non-coordinate variable that has the same name as a dimension. */
+   if (var->hdf5_name && strlen(var->hdf5_name) >= strlen(NON_COORD_PREPEND) && 
+       strncmp(var->hdf5_name, NON_COORD_PREPEND, strlen(NON_COORD_PREPEND)) == 0)
+       if ((var->hdf_datasetid = H5Dopen2(grp->hdf_grpid, var->hdf5_name,
+					  H5P_DEFAULT)) < 0)
+	   return NC_ENOTVAR;
    if (!var->hdf_datasetid)
       if ((var->hdf_datasetid = H5Dopen2(grp->hdf_grpid, var->name,
 	      H5P_DEFAULT)) < 0)
@@ -727,6 +747,8 @@ nc4_put_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
          LOG((4, "extending dataset"));
          if (H5Dextend(var->hdf_datasetid, xtend_size) < 0)
             BAIL(NC_EHDFERR);
+	 if (file_spaceid > 0 && H5Sclose(file_spaceid) < 0)
+	    BAIL2(NC_EHDFERR);
          if ((file_spaceid = H5Dget_space(var->hdf_datasetid)) < 0) 
             BAIL(NC_EHDFERR);
 #ifdef EXTRA_TESTS
@@ -847,7 +869,14 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
       count[i] = countp[i];
    }
 
-   /* Open this dataset if necessary. */
+   /* Open this dataset if necessary, also checking for a weird case:
+    * a non-coordinate variable that has the same name as a
+    * dimension. */
+   if (var->hdf5_name && strlen(var->hdf5_name) >= strlen(NON_COORD_PREPEND) && 
+			  strncmp(var->hdf5_name, NON_COORD_PREPEND, strlen(NON_COORD_PREPEND)) == 0)
+       if ((var->hdf_datasetid = H5Dopen2(grp->hdf_grpid, var->hdf5_name,
+					  H5P_DEFAULT)) < 0)
+	   return NC_ENOTVAR;
    if (!var->hdf_datasetid)
       if ((var->hdf_datasetid = H5Dopen2(grp->hdf_grpid, var->name,
 	      H5P_DEFAULT)) < 0)
@@ -896,7 +925,7 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
                      BAIL(retval);
                   
                   /* Check for out of bound requests. */
-                  if (start[d2] >= (hssize_t)ulen)
+                  if (start[d2] >= (hssize_t)ulen && count[d2])
                      BAIL_QUIET(NC_EINVALCOORDS);
                   if (start[d2] + count[d2] > ulen)
                      BAIL_QUIET(NC_EEDGE);
@@ -924,7 +953,7 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
    
    /* A little quirk: if any of the count values are zero, don't
     * read. */
-   for (d2=0; d2<var->ndims; d2++)
+   for (d2 = 0; d2 < var->ndims; d2++)
       if (count[d2] == 0)
          no_read++;
    
@@ -971,7 +1000,7 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
          /* We must convert - allocate a buffer. */
          need_to_convert++;
          if (var->ndims)
-            for (d2=0; d2<var->ndims; d2++)
+            for (d2 = 0; d2 < var->ndims; d2++)
                len *= countp[d2];
          LOG((4, "converting data for var %s type=%d len=%d", var->name, 
               var->xtype, len));
@@ -1059,13 +1088,13 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
    if (!scalar && provide_fill)
    {
       void *filldata;
-      int real_data_size = 0;
-      int fill_len;
+      size_t real_data_size = 0;
+      size_t fill_len;
 
       /* Skip past the real data we've already read. */
       if (!no_read)
-         for (real_data_size = 1, d2 = 0; d2 < var->ndims; d2++)
-            real_data_size *= (count[d2] - start[d2]) * file_type_size;
+         for (real_data_size = file_type_size, d2 = 0; d2 < var->ndims; d2++)
+            real_data_size *= (count[d2] - start[d2]);
 
       /* Get the fill value from the HDF5 variable. Memory will be
        * allocated. */
@@ -1097,25 +1126,36 @@ nc4_get_vara(NC_FILE_INFO_T *nc, int ncid, int varid, const size_t *startp,
   exit:
 /**   if (var->xtype == NC_CHAR && mem_typeid > 0 && H5Tclose(mem_typeid) < 0)
       BAIL2(NC_EHDFERR);*/
-   if (file_spaceid > 0 && H5Sclose(file_spaceid) < 0)
-      BAIL2(NC_EHDFERR);
+   if (file_spaceid > 0)
+   {
+      if (H5Sclose(file_spaceid) < 0)
+	 BAIL2(NC_EHDFERR);
 #ifdef EXTRA_TESTS
-   num_spaces--;
+      num_spaces--;
 #endif
-   if (mem_spaceid > 0 && H5Sclose(mem_spaceid) < 0)
-      BAIL2(NC_EHDFERR);
+   }
+   if (mem_spaceid > 0)
+   {
+      if (H5Sclose(mem_spaceid) < 0)
+	 BAIL2(NC_EHDFERR);
 #ifdef EXTRA_TESTS
-   num_spaces--;
+      num_spaces--;
 #endif
-   if (H5Pclose(xfer_plistid) < 0)
-      BAIL2(NC_EHDFERR);
+   }
+   if (xfer_plistid > 0)
+   {
+      if (H5Pclose(xfer_plistid) < 0)
+	 BAIL2(NC_EHDFERR);
 #ifdef EXTRA_TESTS
       num_plists--;
 #endif
+   }
 #ifndef HDF5_CONVERT
-   if (need_to_convert) free(bufr);
+   if (need_to_convert) 
+      free(bufr);
 #endif
-   if (xtend_size) free(xtend_size);
+   if (xtend_size) 
+      free(xtend_size);
    if (fillvalue) 
    {
       if (var->xtype == NC_STRING)
@@ -1177,9 +1217,6 @@ static int
 write_netcdf4_dimid(hid_t datasetid, int dimid)
 {
    hid_t dimid_spaceid, dimid_attid;
-   hid_t att = 0;
-   char att_name[NC_MAX_HDF5_NAME + 1];
-   int a, num, found_it = 0;
 
    /* Create the space. */
    if ((dimid_spaceid = H5Screate(H5S_SCALAR)) < 0) 
@@ -1189,33 +1226,19 @@ write_netcdf4_dimid(hid_t datasetid, int dimid)
 #endif
 
    /* Does the attribute already exist? If so, don't try to create it. */
+   H5E_BEGIN_TRY { 
+      dimid_attid = H5Aopen_by_name(datasetid, ".", NC_DIMID_ATT_NAME, 
+				    H5P_DEFAULT, H5P_DEFAULT);
+   } H5E_END_TRY;
   
-   if ((num = H5Aget_num_attrs(datasetid)) < 0)
-      return NC_EHDFERR;
-   for (a = 0; a < num && !found_it; a++) 
-   {
-      if ((att = H5Aopen_idx(datasetid, (unsigned int)a)) < 0)
-         return NC_EHDFERR;
-      if (H5Aget_name(att, NC_MAX_HDF5_NAME, att_name) < 0)
-         return NC_EHDFERR;
-      if (!strcmp(att_name, NC_DIMID_ATT_NAME))
-      {
-         LOG((4, "write_netcdf4_dimid: found existing att %s", att_name));
-         found_it++;
-	 dimid_attid = att;
-	 break;
-      }
-      if (att > 0 && H5Aclose(att) < 0)
-         return NC_EHDFERR;
-   }
-
    /* Create the attribute if needed. */
-   if (!found_it)
+   if (dimid_attid < 0)
       if ((dimid_attid = H5Acreate(datasetid, NC_DIMID_ATT_NAME, 
 				   H5T_NATIVE_INT, dimid_spaceid, H5P_DEFAULT)) < 0)
 	 return NC_EHDFERR;
 
    /* Write it. */
+   LOG((4, "write_netcdf4_dimid: writting secret dimid %d", dimid));
    if (H5Awrite(dimid_attid, H5T_NATIVE_INT, &dimid) < 0)
       return NC_EHDFERR;
 
@@ -1227,8 +1250,6 @@ write_netcdf4_dimid(hid_t datasetid, int dimid)
 #endif
    if (H5Aclose(dimid_attid) < 0)
       return NC_EHDFERR;
-   LOG((4, "write_netcdf4_dimid: wrote secret dimid attribute with value %d", 
-	dimid));
 
    return NC_NOERR;
 }
@@ -1303,6 +1324,10 @@ var_create_dataset(NC_GRP_INFO_T *grp, NC_VAR_INFO_T *var, int write_dimid)
 		  BAIL(NC_EHDFERR);
          }
       }
+   } else {
+       /* Required to truly turn HDF5 fill values off */
+       if(H5Pset_fill_time(plistid,H5D_FILL_TIME_NEVER) < 0)
+	   BAIL(NC_EHDFERR);
    }
 
    /* If the user wants to shuffle the data, set that up now. */
@@ -1570,9 +1595,10 @@ put_att_grpa(NC_GRP_INFO_T *grp, int varid, NC_ATT_INFO_T *att)
    }
 
    /* Delete the att if it exists already. */
-   if ((retval = nc4_delete_hdf5_att(locid, att->name)))
-      BAIL(retval);
-
+   H5E_BEGIN_TRY {
+      H5Adelete(locid, att->name);
+   } H5E_END_TRY;
+      
    /* Get the length ready, and find the HDF type we'll be
     * writing. */
    dims[0] = att->len;
@@ -1660,41 +1686,6 @@ put_att_grpa(NC_GRP_INFO_T *grp, int varid, NC_ATT_INFO_T *att)
 #ifdef EXTRA_TESTS
    num_spaces--;
 #endif
-   return retval;
-}
-
-/* This will delete HDF5 attribute name from loc, if it exists. If the
-   att doesn't exists, nothing will happen (and the function will
-   return NC_NOERR). */
-int
-nc4_delete_hdf5_att(hid_t loc, const char *name)
-{
-   hid_t att = 0;
-   char att_name[NC_MAX_HDF5_NAME + 1];
-   int a, num, finished = 0;
-   int retval = NC_NOERR;
-
-   if ((num = H5Aget_num_attrs(loc)) < 0)
-      return NC_EHDFERR;
-
-   for (a = 0; a < num && !finished; a++) 
-   {
-      if ((att = H5Aopen_idx(loc, (unsigned int)a)) < 0)
-         BAIL(NC_EHDFERR);
-      if (H5Aget_name(att, NC_MAX_HDF5_NAME, att_name) < 0)
-         BAIL(NC_EHDFERR);
-      if (!strcmp(att_name, name))
-      {
-         LOG((4, "nc4_delete_hdf5_att: deleting HDF5 att %s", name));
-         if (H5Adelete(loc, name) < 0)
-            BAIL(NC_EHDFERR);
-         finished++;
-      }
-      if (att > 0 && H5Aclose(att) < 0)
-         BAIL(NC_EHDFERR);
-   }
-   
-  exit:
    return retval;
 }
 
@@ -1997,6 +1988,77 @@ write_attlist(NC_ATT_INFO_T *attlist, int varid, NC_GRP_INFO_T *grp)
    return NC_NOERR;
 }
 
+/* Using the HDF5 group iterator is more efficient than the original
+ * code (O(n) vs O(n**2) for n variables in the group) */
+#define USE_ITERATE_CODE
+#ifdef  USE_ITERATE_CODE
+typedef struct {
+    char *name;          /* The name of the object to searched*/
+    int  *exists;         /* 1 if the object exists, 0 otherswise */
+} var_exists_iter_info;
+
+/*-------------------------------------------------------------------------
+ * Function:    var_exists_cb
+ *
+ * Purpose:     Callback routine for checking an object by its name
+ *
+ * Return:      Exist:      1
+ *              Not exist:  0
+ *              Failure:   -1
+ *
+ * Programmer:  Peter Cao
+ *              1/25/2012
+ *
+ *-------------------------------------------------------------------------
+ */
+static int
+var_exists_cb(hid_t grpid, const char *name, const H5L_info_t *info,
+    void *_op_data)
+{
+    var_exists_iter_info *iter_info = (var_exists_iter_info *)_op_data;
+    H5I_type_t otype;
+	hid_t oid;
+
+    if ((oid = H5Oopen(grpid, name, H5P_DEFAULT)) < 0) 
+        return H5_ITER_STOP;
+	  
+    if ((otype = H5Iget_type( oid ))<0) {
+		H5Oclose(oid);
+		return H5_ITER_STOP;
+	}
+    H5Oclose(oid);
+	
+    if (otype == H5I_DATASET) {
+		if (!strcmp(iter_info->name, name)) {
+			*(iter_info->exists) = 1;
+			return (H5_ITER_STOP);
+		}
+	}
+
+    return (H5_ITER_CONT);
+} /* end var_exists_cb() */
+
+static int
+var_exists(hid_t grpid, char *name, int *exists)
+{
+    var_exists_iter_info iter_info;
+    iter_info.name = name;
+    iter_info.exists = exists;
+    hsize_t num_obj;
+
+	if (H5Gget_num_objs(grpid, &num_obj) < 0)
+      return NC_EVARMETA;
+
+    if (!name)
+       return NC_NOERR;
+	   
+    *exists = 0;
+    if (H5Literate(grpid, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, var_exists_cb, &iter_info) < 0)
+       return NC_EHDFERR;
+
+    return NC_NOERR;
+}
+#else
 static int
 var_exists(hid_t grpid, char *name, int *exists)
 {
@@ -2033,6 +2095,7 @@ var_exists(hid_t grpid, char *name, int *exists)
 
    return retval;
 }
+#endif	/* USE_ITERATE_CODE */
 
 /* This function writes a variable. The principle difficulty comes
  * from the possibility that this is a coordinate variable, and was
@@ -2188,7 +2251,7 @@ write_dim(NC_DIM_INFO_T *dim, NC_GRP_INFO_T *grp, int write_dimid)
          dims[0] = dim->len;
          max_dims[0] = dim->len;
          if (dim->unlimited) 
-         {
+	 {
             max_dims[0] = H5S_UNLIMITED;
             if (H5Pset_chunk(create_propid, 1, chunk_dims) < 0)
                BAIL(NC_EHDFERR);
@@ -3127,7 +3190,7 @@ nc4_convert_type(const void *src, void *dest,
                case NC_USHORT:
                   for (lp = (long *)src, usp = dest; count < len; count++)
                   {
-                     if (*lp > X_SHORT_MAX || *lp < X_SHORT_MIN)
+                     if (*lp > X_USHORT_MAX || *lp < 0)
                         (*range_error)++;
                      *usp++ = *lp++;
                   }
@@ -3213,7 +3276,7 @@ nc4_convert_type(const void *src, void *dest,
                case NC_USHORT:
                   for (ip = (int *)src, usp = dest; count < len; count++)
                   {
-                     if (*ip > X_SHORT_MAX || *ip < X_SHORT_MIN)
+                     if (*ip > X_USHORT_MAX || *ip < 0)
                         (*range_error)++;
                      *usp++ = *ip++;
                   }
@@ -3559,7 +3622,7 @@ nc4_convert_type(const void *src, void *dest,
             case NC_USHORT:
                for (fp = (float *)src, usp = dest; count < len; count++)
                {
-                  if (*fp > X_SHORT_MAX || *fp < X_SHORT_MIN)
+                  if (*fp > X_USHORT_MAX || *fp < 0)
                      (*range_error)++;
                   *usp++ = *fp++;
                }
@@ -3652,7 +3715,7 @@ nc4_convert_type(const void *src, void *dest,
             case NC_USHORT:
                for (dp = (double *)src, usp = dest; count < len; count++)
                {
-                  if (*dp > X_SHORT_MAX || *dp < X_SHORT_MIN)
+                  if (*dp > X_USHORT_MAX || *dp < 0)
                      (*range_error)++;
                   *usp++ = *dp++;
                }
@@ -3708,8 +3771,8 @@ nc4_convert_type(const void *src, void *dest,
             case NC_DOUBLE:
                for (dp = (double *)src, dp1 = dest; count < len; count++)
                {
-                  if (*dp > X_DOUBLE_MAX || *dp < X_DOUBLE_MIN)
-                     (*range_error)++;
+		   /* if (*dp > X_DOUBLE_MAX || *dp < X_DOUBLE_MIN) */
+		   /*    (*range_error)++; */
                   *dp1++ = *dp++;
                }
                break;

@@ -1,14 +1,6 @@
-/*
-  This file is part of netcdf-4, a netCDF-like interface for HDF5, or
-  a HDF5 backend for netCDF, depending on your point of view.
-
-  This file handles the nc4 file functions.
-
-  Copyright 2003, University Corporation for Atmospheric Research. See
-  COPYRIGHT file for copying and redistribution conditions.
-*/
-
-#include "nc.h"
+#include "config.h"
+#include "netcdf.h"
+#include "ncdispatch.h"
 
 extern NC_Dispatch* NC3_dispatch_table;
 

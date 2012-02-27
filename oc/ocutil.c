@@ -1,7 +1,10 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include "ocinternal.h"
 #include "ocdebug.h"
@@ -10,8 +13,8 @@
 #define snprintf _snprintf
 #endif
 
-static char* DDSdatamark = "Data:";
-static char* DDSdatamarkR = "Data:\r";
+/* Order is important: longest first */
+static char* DDSdatamarks[3] = {"Data:\r\n","Data:\n",(char*)NULL};
 
 /* Not all systems have strndup, so provide one*/
 char*
@@ -25,6 +28,24 @@ ocstrndup(const char* s, size_t len)
     dup[len] = '\0';
     return dup;
 }
+
+/* Do not trust strncmp semantics */
+int
+ocstrncmp(const char* s1, const char* s2, size_t len)
+{
+    const char *p,*q;
+    if(s1 == s2) return 0;
+    if(s1 == NULL) return -1;
+    if(s2 == NULL) return +1;
+    for(p=s1,q=s2;len > 0;p++,q++,len--) {
+	if(*p == 0 && *q == 0) return 0; /* *p == *q == 0 */
+	if(*p != *q)
+	    return (*p - *q);	
+    }
+    /* 1st len chars are same */
+    return 0;
+}
+
 
 void
 makedimlist(OClist* path, OClist* dims)
@@ -100,19 +121,21 @@ findbod(OCbytes* buffer, size_t* bodp, size_t* ddslenp)
     unsigned int i;
     char* content;
     size_t len = ocbyteslength(buffer);
-    int tlen = strlen(DDSdatamark);
-
+    char** marks;
+    
     content = ocbytescontents(buffer);
-    for(i=0;i<len;i++) {
-	if((i+tlen) <= len 
-	   && (strncmp(content+i,DDSdatamark,tlen)==0
-	       || strncmp(content+i,DDSdatamarkR,tlen)==0)) {
-	    *ddslenp = i;
-	    i += tlen;
-	    if(i < len && content[i] == '\r') i++;
-	    if(i < len && content[i] == '\n') i++;
-	    *bodp = i;
-	    return 1;
+
+    for(marks = DDSdatamarks;*marks;marks++) {
+	char* mark = *marks;
+        int tlen = strlen(mark);
+        for(i=0;i<len;i++) {
+	    if((i+tlen) <= len 
+	        && (ocstrncmp(content+i,mark,tlen)==0)) {
+	       *ddslenp = i;
+	        i += tlen;
+	        *bodp = i;
+	        return 1;
+	    }
 	}
     }
     *ddslenp = 0;
@@ -158,14 +181,15 @@ octypesize(OCtype etype)
     case OC_UInt16:	return sizeof(unsigned short);
     case OC_Int32:	return sizeof(int);
     case OC_UInt32:	return sizeof(unsigned int);
-    case OC_Int64:	return sizeof(long long);
-    case OC_UInt64:	return sizeof(unsigned long long);
     case OC_Float32:	return sizeof(float);
     case OC_Float64:	return sizeof(double);
+#ifdef HAVE_LONG_LONG_INT
+    case OC_Int64:	return sizeof(long long);
+    case OC_UInt64:	return sizeof(unsigned long long);
+#endif
     case OC_String:	return sizeof(char*);
     case OC_URL:	return sizeof(char*);
-		  /* Ignore all others */
-    default: break;
+    default: break;     /* Ignore all others */
     }
     return 0;
 }
@@ -248,18 +272,20 @@ octypeprint(OCtype etype, char* buf, size_t bufsize, void* value)
     case OC_UInt32:
 	snprintf(buf,bufsize,"%u",*(unsigned int*)value);
 	break;
-    case OC_Int64:
-	snprintf(buf,bufsize,"%lld",*(long long*)value);
-	break;
-    case OC_UInt64:
-	snprintf(buf,bufsize,"%llu",*(unsigned long long*)value);
-	break;
     case OC_Float32:
 	snprintf(buf,bufsize,"%g",*(float*)value);
 	break;
     case OC_Float64:
 	snprintf(buf,bufsize,"%g",*(double*)value);
 	break;
+#ifdef HAVE_LONG_LONG_INT
+    case OC_Int64:
+	snprintf(buf,bufsize,"%lld",*(long long*)value);
+	break;
+    case OC_UInt64:
+	snprintf(buf,bufsize,"%llu",*(unsigned long long*)value);
+	break;
+#endif
     case OC_String:
     case OC_URL: {
 	char* s = *(char**)value;
@@ -271,7 +297,7 @@ octypeprint(OCtype etype, char* buf, size_t bufsize, void* value)
 }
 
 size_t
-ocxdrsize(OCtype etype)
+xxdrsize(OCtype etype)
 {
     switch (etype) {
     case OC_Char:
@@ -281,62 +307,19 @@ ocxdrsize(OCtype etype)
     case OC_UInt16:
     case OC_Int32:
     case OC_UInt32:
-	return BYTES_PER_XDR_UNIT;
+	return XDRUNIT;
     case OC_Int64:
     case OC_UInt64:
-	return (2*BYTES_PER_XDR_UNIT);
+	return (2*XDRUNIT);
     case OC_Float32:
-	return BYTES_PER_XDR_UNIT;
+	return XDRUNIT;
     case OC_Float64:
-	return (2*BYTES_PER_XDR_UNIT);
+	return (2*XDRUNIT);
     case OC_String:
     case OC_URL:
     default: break;
     }
     return 0;
-}
-
-/***********************************/
-/* Skip "len" bytes in the input*/
-int
-xdr_skip(XDR* xdrs, unsigned int len)
-{
-    unsigned int pos;
-    if(len <= 0) return 1; /* ignore*/
-    pos = xdr_getpos(xdrs);
-    return xdr_setpos(xdrs,(pos+RNDUP(len)));
-}
-
-/* skip "n" string/bytestring instances in the input*/
-int
-xdr_skip_strings(XDR* xdrs, unsigned int n)
-{
-    while(n-- > 0) {
-        unsigned int slen;
-	if(!xdr_u_int(xdrs,&slen)) return xdrerror();
-	if(xdr_skip(xdrs,RNDUP(slen))) return xdrerror();
-    }
-    return THROW(OC_NOERR);
-}
-
-unsigned int xdr_roundup(unsigned int n)
-{
-    unsigned int rem;
-    rem = (n % BYTES_PER_XDR_UNIT);
-    if(rem > 0) n += (BYTES_PER_XDR_UNIT - rem);
-    return n;
-}
-
-unsigned int
-ocbyteswap(unsigned int i)
-{
-    unsigned int swap,b0,b1,b2,b3;
-    b0 = (i>>24) & 0x000000ff;
-    b1 = (i>>16) & 0x000000ff;
-    b2 = (i>>8) & 0x000000ff;
-    b3 = (i) & 0x000000ff;
-    swap = (b0 | (b1 << 8) | (b2 << 16) | (b3 << 24));
-    return swap;
 }
 
 /**************************************/
@@ -369,8 +352,16 @@ ocerrstring(int err)
 	    return "OC_EDIMSIZE: Invalid dimension size";
 	case OC_EDAP:
 	    return "OC_EDAP: DAP failure";
+	case OC_EXDR:
+	    return "OC_EXDR: XDR failure";
 	case OC_ECURL:
 	    return "OC_ECURL: libcurl failure";
+	case OC_EBADURL:
+	    return "OC_EBADURL: malformed url";
+	case OC_EBADVAR:
+	    return "OC_EBADVAR: no such variable";
+	case OC_EOPEN:
+	    return "OC_EOPEN: temporary file open failed";	
 	case OC_EIO:
 	    return "OC_EIO: I/O failure";
 	case OC_ENODATA:
@@ -387,6 +378,8 @@ ocerrstring(int err)
 	    return "OC_EDATADDS: Malformed or unreadable DATADDS";
 	case OC_ERCFILE:
 	    return "OC_ERCFILE: Malformed or unreadable run-time configuration file";
+	case OC_ENOFILE:
+	    return "OC_ENOFILE: cannot read content of URL";
 	default: break;
     }
     return "<unknown error code>";
@@ -402,7 +395,8 @@ ocsvcerrordata(OCstate* state, char** codep, char** msgp, long* httpp)
 }
 
 /* if we get OC_EDATADDS error, then try to capture any
-   error message and log it.
+   error message and log it; assumes that in this case,
+   the datadds is not big.
 */
 void
 ocdataddsmsg(OCstate* state, OCtree* tree)
@@ -410,34 +404,39 @@ ocdataddsmsg(OCstate* state, OCtree* tree)
 #define ERRCHUNK 1024
 #define ERRFILL ' '
 #define ERRTAG "Error {" 
-    int count,len,pos0;
-    char* p;
-    unsigned int i,j;
-    XDR* xdrs;
-    char chunk[ERRCHUNK+1];
+    unsigned int i,j,len;
+    XXDR* xdrs;
+    char* contents;
+    off_t ckp;
 
     if(tree == NULL) return;
+    /* get available space */
     xdrs = tree->data.xdrs;
-    len = (int)tree->data.datasize;
-    /* obtain the last ERRCHUNK (or less) bytes of xdr data */
-    count = (len < ERRCHUNK?len:ERRCHUNK);
-    pos0 = (len - count);
-    xdr_setpos(xdrs,pos0);
-    xdr_opaque(xdrs,(caddr_t)chunk,count);
-    chunk[count] = '\0';
+    len = xxdr_length(xdrs);
+    if(len < strlen(ERRTAG))
+	return; /* no room */
+    ckp = xxdr_getpos(xdrs);
+    xxdr_setpos(xdrs,0);
+    /* read the whole thing */
+    contents = (char*)malloc(len+1);
+    xxdr_getbytes(xdrs,contents,len);
+    contents[len] = '\0';
     /* Look for error tag */
-    for(p=chunk,i=0;i<(count - strlen(ERRTAG));i++,p++) {
-        if(strncmp(p,ERRTAG,strlen(ERRTAG))==0) {
+    for(i=0;i<len;i++) {
+        if(ocstrncmp(contents+i,ERRTAG,strlen(ERRTAG))==0) {
 	    /* log the error message */
 	    /* Do a quick and dirty escape */
-	    for(p=chunk+i,j=i;j<len;j++,p++) {
-		if(*p > 0 && (*p < ' ' || *p >= '\177')) *p = ERRFILL;
+	    for(j=i;j<len;j++) {
+	        int c = contents[i+j];
+		if(c > 0 && (c < ' ' || c >= '\177'))
+		    contents[i+j] = ERRFILL;
 	    }
-	    oc_log(LOGERR,"DATADDS failure, possible message: '%s'",
-			chunk+i);
+	    oc_log(LOGERR,"DATADDS failure, possible message: '%s'\n",
+			contents+i);
 	    goto done;
 	}
     }
+    xxdr_setpos(xdrs,ckp);
 done:
     return;
 }

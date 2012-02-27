@@ -1,36 +1,51 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
 #include "dapparselex.h"
 
 /* Forward */
 
 static void addedges(OCnode* node);
+static void setroot(OCnode*,OClist*);
 static int isglobalname(char* name);
 static OCnode* newocnode(char* name, OCtype octype, DAPparsestate* state);
 static OCtype octypefor(Object etype);
 static char* scopeduplicates(OClist* list);
 static int check_int32(char* val, long* value);
 
+
 /****************************************************/
 
 /* Switch to DAS parsing SCAN_WORD definition */
+
+/* Use the initial keyword to indicate what we are parsing */
 void
-dap_dassetup(DAPparsestate* state)
+dap_tagparse(DAPparsestate* state, int kind)
 {
-    dapsetwordchars(state->lexstate,1);
+    switch (kind) {
+    case SCAN_DATASET:
+    case SCAN_ERROR:
+	break;
+    case SCAN_ATTR:
+	dapsetwordchars(state->lexstate,1);
+        break;
+    default:
+        fprintf(stderr,"tagparse: Unknown tag argument: %d\n",kind);
+    }
 }
+
 
 Object
 dap_datasetbody(DAPparsestate* state, Object name, Object decls)
 {
-    OCnode* node = newocnode((char*)name,OC_Dataset,state);
-    node->subnodes = (OClist*)decls;
+    OCnode* root = newocnode((char*)name,OC_Dataset,state);
+    root->subnodes = (OClist*)decls;
     OCASSERT((state->root == NULL));
-    addedges(node);
-    state->root = node;
-    /* make sure to cross link */
-    state->root->root = state->root;
+    state->root = root;
+    state->root->root = state->root; /* make sure to cross link */
+    addedges(root);
+    setroot(root,state->ocnodes);
     return NULL;
 }
 
@@ -47,27 +62,30 @@ dap_attributebody(DAPparsestate* state, Object attrlist)
     return NULL;
 }
 
-Object
+void
 dap_errorbody(DAPparsestate* state,
 	  Object code, Object msg, Object ptype, Object prog)
 {
     state->svcerror = 1;
-    state->code     = (code != NULL?strdup((char*)code):NULL);
-    state->message  = (msg != NULL?strdup((char*)msg):NULL);
+    state->code     = nulldup((char*)code);
+    state->message  = nulldup((char*)msg);
     /* Ignore ptype and prog for now */
-    return NULL;
 }
 
-Object
+void
 dap_unrecognizedresponse(DAPparsestate* state)
 {
     /* see if this is an HTTP error */
     unsigned int httperr = 0;
-    char i[32];
+    int i;
+    char iv[32];
     sscanf(state->lexstate->input,"%u ",&httperr);
-    sprintf(i,"%u",httperr);
+    sprintf(iv,"%u",httperr);
     state->lexstate->next = state->lexstate->input;
-    return dap_errorbody(state,i,state->lexstate->input,NULL,NULL);
+    /* Limit the amount of input to prevent runaway */
+    for(i=0;i<4096;i++) {if(state->lexstate->input[i] == '\0') break;}
+    state->lexstate->input[i] = '\0';
+    dap_errorbody(state,iv,state->lexstate->input,NULL,NULL);
 }
 
 Object
@@ -156,6 +174,7 @@ dap_attrset(DAPparsestate* state, Object name, Object attributes)
     /* Check var set vs global set */
     attset->att.isglobal = isglobalname(name);
     attset->subnodes = (OClist*)attributes;
+    addedges(attset);
     return attset;
 }
 
@@ -278,6 +297,16 @@ addedges(OCnode* node)
     }
 }
 
+static void
+setroot(OCnode* root, OClist* ocnodes)
+{
+    int i;
+    for(i=0;i<oclistlength(ocnodes);i++) {
+	OCnode* node = (OCnode*)oclistget(ocnodes,i);
+	node->root = root;
+    }
+}
+
 int
 daperror(DAPparsestate* state, const char* msg)
 {
@@ -305,32 +334,11 @@ flatten(char* s, char* tmp, int tlen)
     return tmp;
 }
 
-void
-dap_parse_error(DAPparsestate* state, const char *fmt, ...)
-{
-    size_t len, suffixlen, prefixlen;
-    va_list argv;
-    char* tmp = NULL;
-    va_start(argv,fmt);
-    (void) vfprintf(stderr,fmt,argv) ;
-    (void) fputc('\n',stderr) ;
-    len = strlen(state->lexstate->input);
-    suffixlen = strlen(state->lexstate->next);
-    prefixlen = (len - suffixlen);
-    tmp = (char*)ocmalloc(len+1);
-    flatten(state->lexstate->input,tmp,prefixlen);
-    (void) fprintf(stderr,"context: %s",tmp);
-    flatten(state->lexstate->next,tmp,suffixlen);
-    (void) fprintf(stderr,"^%s\n",tmp);
-    (void) fflush(stderr);	/* to ensure log files are current */
-    ocfree(tmp);
-}
-
 /* Create an ocnode and capture in the state->ocnode list */
 static OCnode*
 newocnode(char* name, OCtype octype, DAPparsestate* state)
 {
-    OCnode* node = makeocnode(name,octype,state->root);
+    OCnode* node = ocmakenode(name,octype,state->root);
     oclistpush(state->ocnodes,(ocelem)node);
     return node;
 }
@@ -380,6 +388,27 @@ octypefor(Object etype)
     return OC_NAT;
 }
 
+void
+dap_parse_error(DAPparsestate* state, const char *fmt, ...)
+{
+    size_t len, suffixlen, prefixlen;
+    va_list argv;
+    char* tmp = NULL;
+    va_start(argv,fmt);
+    (void) vfprintf(stderr,fmt,argv) ;
+    (void) fputc('\n',stderr) ;
+    len = strlen(state->lexstate->input);
+    suffixlen = strlen(state->lexstate->next);
+    prefixlen = (len - suffixlen);
+    tmp = (char*)ocmalloc(len+1);
+    flatten(state->lexstate->input,tmp,prefixlen);
+    (void) fprintf(stderr,"context: %s",tmp);
+    flatten(state->lexstate->next,tmp,suffixlen);
+    (void) fprintf(stderr,"^%s\n",tmp);
+    (void) fflush(stderr);	/* to ensure log files are current */
+    ocfree(tmp);
+}
+
 static void
 dap_parse_cleanup(DAPparsestate* state)
 {
@@ -421,7 +450,12 @@ DAPparse(OCstate* conn, OCtree* tree, char* parsestring)
             conn->error.code = nulldup(state->code);
             conn->error.message = nulldup(state->message);
 	    tree->root = NULL;
-	    ocerr = OC_EDAPSVC;
+	    /* Attempt to further decipher the error code */
+	    if(strcmp(state->code,"404") == 0 /* tds returns 404 */
+		|| strcmp(state->code,"5") == 0) /* hyrax returns 5 */
+		ocerr = OC_ENOFILE;
+	    else
+	        ocerr = OC_EDAPSVC;
 	} else {
 	    OCASSERT((state->root != NULL));	
             tree->root = state->root;

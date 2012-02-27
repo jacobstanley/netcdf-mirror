@@ -1,6 +1,7 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
 #include <stdarg.h>
 #include "ocinternal.h"
 #include "ocdebug.h"
@@ -24,7 +25,7 @@ int
 xdrerror(void)
 {
     oc_log(LOGERR,"xdr failure");
-    return THROW(OC_EDATADDS);
+    return OCTHROW(OC_EDATADDS);
 }
 
 

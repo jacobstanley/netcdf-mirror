@@ -1,6 +1,8 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
+
 #include "ocinternal.h"
 #include <stdio.h>
 #include <fcntl.h>
@@ -52,7 +54,8 @@ oc_logopen(const char* file)
 	oclogfile = NULL;
     } else {
 	int fd;
-	oclogfile = strdup(file);
+	oclogfile = (char*)malloc(strlen(file)+1);
+	strcpy(oclogfile,file);
 	oclogstream = NULL;
 	/* We need to deal with this file carefully
 	   to avoid unauthorized access*/

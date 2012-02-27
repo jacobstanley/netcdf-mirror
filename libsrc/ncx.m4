@@ -38,15 +38,11 @@ dnl
  * An external data representation interface.
  */
 
-#include "nc.h"
-#include <string.h>
-#include <limits.h>
 #include "ncx.h"
 #include "nc3dispatch.h"
+#include <string.h>
+#include <limits.h>
 
-#ifndef ENOERR
-#define ENOERR 0
-#endif
 
 /* alias poorly named limits.h macros */
 #define  SHORT_MAX  SHRT_MAX
@@ -468,7 +464,6 @@ ncx_get_short_longlong(const void *xp, long long *ip)
 #endif
 }
 
-#ifndef WIN32
 int
 ncx_get_short_ulonglong(const void *xp, unsigned long long *ip)
 {
@@ -483,7 +478,6 @@ ncx_get_short_ulonglong(const void *xp, unsigned long long *ip)
 	return ENOERR;
 #endif
 }
-#endif
 
 int
 ncx_get_short_float(const void *xp, float *ip)
@@ -597,7 +591,6 @@ ncx_put_short_longlong(void *xp, const long long *ip)
 #endif
 }
 
-#ifndef WIN32
 int
 ncx_put_short_ulonglong(void *xp, const unsigned long long *ip)
 {
@@ -614,7 +607,6 @@ ncx_put_short_ulonglong(void *xp, const unsigned long long *ip)
 	return ENOERR;
 #endif
 }
-#endif /*WIN32*/
 
 int
 ncx_put_short_float(void *xp, const float *ip)
@@ -779,7 +771,6 @@ ncx_get_int_longlong(const void *xp, long long *ip)
 #endif
 }
 
-#ifndef WIN32
 int
 ncx_get_int_ulonglong(const void *xp, unsigned long long *ip)
 {
@@ -797,7 +788,6 @@ ncx_get_int_ulonglong(const void *xp, unsigned long long *ip)
 	return ENOERR;
 #endif
 }
-#endif /*WIN32*/
 
 int
 ncx_get_int_float(const void *xp, float *ip)
@@ -921,7 +911,6 @@ ncx_put_int_longlong(void *xp, const longlong *ip)
 #endif
 }
 
-#ifndef WIN32
 int
 ncx_put_int_ulonglong(void *xp, const unsigned long long *ip)
 {
@@ -938,7 +927,6 @@ ncx_put_int_ulonglong(void *xp, const unsigned long long *ip)
 	return ENOERR;
 #endif
 }
-#endif /*WIN32*/
 
 int
 ncx_put_int_float(void *xp, const float *ip)
@@ -1438,7 +1426,6 @@ ncx_get_float_longlong(const void *xp, longlong *ip)
 	return ENOERR;
 }
 
-#ifndef WIN32
 int
 ncx_get_float_ulonglong(const void *xp, unsigned long long *ip)
 {
@@ -1449,7 +1436,6 @@ ncx_get_float_ulonglong(const void *xp, unsigned long long *ip)
 		return NC_ERANGE;
 	return ENOERR;
 }
-#endif /*WIN32*/
 
 int
 ncx_get_float_float(const void *xp, float *ip)
@@ -1534,7 +1520,6 @@ ncx_put_float_longlong(void *xp, const longlong *ip)
 	return ENOERR;
 }
 
-#ifndef WIN32
 int
 ncx_put_float_ulonglong(void *xp, const unsigned long long *ip)
 {
@@ -1546,7 +1531,6 @@ ncx_put_float_ulonglong(void *xp, const unsigned long long *ip)
 #endif
 	return ENOERR;
 }
-#endif /*WIN32*/
 
 int
 ncx_put_float_float(void *xp, const float *ip)
@@ -1912,7 +1896,6 @@ ncx_get_double_longlong(const void *xp, longlong *ip)
 	return ENOERR;
 }
 
-#ifndef WIN32
 int
 ncx_get_double_ulonglong(const void *xp, unsigned long long *ip)
 {
@@ -1923,7 +1906,6 @@ ncx_get_double_ulonglong(const void *xp, unsigned long long *ip)
 		return NC_ERANGE;
 	return ENOERR;
 }
-#endif /*WIN32*/
 
 int
 ncx_get_double_float(const void *xp, float *ip)
@@ -2017,7 +1999,6 @@ ncx_put_double_longlong(void *xp, const longlong *ip)
 	return ENOERR;
 }
 
-#ifndef WIN32
 int
 ncx_put_double_ulonglong(void *xp, const unsigned long long *ip)
 {
@@ -2029,7 +2010,6 @@ ncx_put_double_ulonglong(void *xp, const unsigned long long *ip)
 #endif
 	return ENOERR;
 }
-#endif /*WIN32*/
 
 int
 ncx_put_double_float(void *xp, const float *ip)
@@ -2861,7 +2841,6 @@ ncx_getn_int_longlong(const void **xpp, size_t nelems, longlong *tp)
 	return ENOERR;
 }
 
-#ifndef WIN32
 int
 ncx_getn_int_ulonglong(const void **xpp, size_t nelems, unsigned long long *tp)
 {
@@ -2873,7 +2852,6 @@ ncx_getn_int_ulonglong(const void **xpp, size_t nelems, unsigned long long *tp)
 	*xpp = (const void *)((const char *)(*xpp) + nelems * X_SIZEOF_INT);
 	return ENOERR;
 }
-#endif /*WIN32*/
 
 #else
 NCX_GETN(int, longlong)
@@ -2928,7 +2906,6 @@ ncx_putn_int_longlong(void **xpp, size_t nelems, const longlong *tp)
 	return ENOERR;
 }
 
-#ifndef WIN32
 int
 ncx_putn_int_ulonglong(void **xpp, size_t nelems, const unsigned long long *tp)
 {
@@ -2940,12 +2917,9 @@ ncx_putn_int_ulonglong(void **xpp, size_t nelems, const unsigned long long *tp)
 	*xpp = (void *)((char *)(*xpp) + nelems * X_SIZEOF_INT);
 	return ENOERR;
 }
-#endif /*WIN32*/
 #else
 NCX_PUTN(int, longlong)
-#ifndef WIN32
 NCX_PUTN(int, ulonglong)
-#endif
 #endif
 NCX_PUTN(int, float)
 NCX_PUTN(int, double)
@@ -3007,9 +2981,7 @@ ncx_getn_float_float(const void **xpp, size_t nelems, float *tp)
 NCX_GETN(float, double)
 NCX_GETN(float, uint)
 NCX_GETN(float, longlong)
-#ifndef WIN32
 NCX_GETN(float, ulonglong)
-#endif
 
 NCX_PUTN(float, schar)
 NCX_PUTN(float, uchar)
@@ -3065,9 +3037,7 @@ ncx_putn_float_float(void **xpp, size_t nelems, const float *tp)
 NCX_PUTN(float, double)
 NCX_PUTN(float, uint)
 NCX_PUTN(float, longlong)
-#ifndef WIN32
 NCX_PUTN(float, ulonglong)
-#endif
 
 /* double */
 
@@ -3079,9 +3049,7 @@ NCX_GETN(double, float)
 dnl NCX_GETN(double, double)
 NCX_GETN(double, uint)
 NCX_GETN(double, longlong)
-#ifndef WIN32
 NCX_GETN(double, ulonglong)
-#endif
 #if X_SIZEOF_DOUBLE == SIZEOF_DOUBLE && !defined(NO_IEEE_FLOAT)
 /* optimized version */
 int
@@ -3138,9 +3106,7 @@ NCX_PUTN(double, float)
 dnl NCX_PUTN(double, double)
 NCX_PUTN(double, uint)
 NCX_PUTN(double, longlong)
-#ifndef WIN32
 NCX_PUTN(double, ulonglong)
-#endif
 #if X_SIZEOF_DOUBLE == SIZEOF_DOUBLE && !defined(NO_IEEE_FLOAT)
 /* optimized version */
 int

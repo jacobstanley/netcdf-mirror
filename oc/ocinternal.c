@@ -1,6 +1,7 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -22,21 +23,21 @@
 
 /* Note: TMPPATH must end in '/' */
 #ifdef __CYGWIN__
-/*#define TMPPATH "c:/temp/"*/
+#define TMPPATH1 "c:/temp/"
+#define TMPPATH2 "./"
 #else
-/*#define TMPPATH "/tmp/"*/
+#define TMPPATH1 "/tmp/"
+#define TMPPATH2 "./"
 #endif
-#define TMPPATH "./"
 
-/* Define default rc files */
-#define DODSRC ".dodsrc"
-#define OPENDAPRC ".opendap.rc"
+/* Define default rc files and aliases*/
+static char* rcfilenames[3] = {".dodsrc",".ocrc",NULL};
 
-static int ocextractdds(OCstate*,OCtree*);
+static int ocextractddsinmemory(OCstate*,OCtree*,int);
+static int ocextractddsinfile(OCstate*,OCtree*,int);
 static char* constraintescape(const char* url);
-#ifdef OC_DISK_STORAGE
 static OCerror createtempfile(OCstate*,OCtree*);
-#endif
+static int createtempfile1(char*,char**);
 
 static void ocsetcurlproperties(OCstate*);
 
@@ -46,21 +47,11 @@ extern OCnode* makeunlimiteddimension(void);
 #include <fcntl.h>
 #define _S_IREAD 256
 #define _S_IWRITE 128
-int mkstemp(char *tmpl)
-{
-   int ret=-1;
-
-mktemp(tmpl); ret=open(tmpl,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
-
-   return ret;
-}
-
+#else
+#include <sys/stat.h>
 #endif
 
 /* Global flags*/
-static int oc_big_endian;
-int oc_network_order; /* network order is big endian */
-int oc_invert_xdr_double;
 int oc_curl_file_supported;
 int oc_curl_https_supported;
 
@@ -69,64 +60,9 @@ ocinternalinitialize(void)
 {
     int stat = OC_NOERR;
 
-    /* Compute if we are same as network order v-a-v xdr */
-#ifdef XDRBYTEORDER
-    {
-        XDR xdrs;
-        union {
-            char tmp[sizeof(unsigned int)];
-            unsigned int i;
-        } u;
-        int testint = 1;
-        xrmem_create(&xdrs, (caddr_t)&u.tmp,sizeof(u.tmp), XDR_ENCODE);
-        xdr_int(&xdrs, &testint);   
-        oc_network_order = (udub.i == testint?1:0);
-        oc_big_endian = oc_network_order;
-    }
-#else   
-    {
-        int testint = 0x00000001;
-        char *byte = (char *)&testint;
-        oc_big_endian = (byte[0] == 0 ? 1 : 0);
-        oc_network_order = oc_big_endian;
-    }
-#endif /*XDRBYTEORDER*/
-    {
-        /* It turns out that various machines
-           store double in different formats.
-           This affects the conversion code ocdata.c
-           when reconstructing; probably could deduce this
-           from oc_big_endian, but not sure.
-        */
-        XDR xdrs;
-	union {
-	    double dv;
-	    unsigned int i;
-	    unsigned int iv[2];
-	    char tmp[sizeof(double)];
-	} udub;
-        double testdub = 18000;
-	/* verify double vs int size */
-        if(sizeof(double) != (2 * sizeof(unsigned int)))
-            ocpanic("|double| != 2*|int|");
-        if(sizeof(udub) != sizeof(double))
-            ocpanic("|double| != |udub|");
-	memset((void*)&udub,0,sizeof(udub));
-        xdrmem_create(&xdrs, (caddr_t)&udub.tmp,sizeof(udub.tmp), XDR_ENCODE);
-        xdr_double(&xdrs, &testdub);
-	udub.iv[0] = ocntoh(udub.iv[0]);
-	udub.iv[1] = ocntoh(udub.iv[1]);
-	if (udub.dv == testdub)
-		oc_invert_xdr_double = 0;
-	else { /* swap and try again */
-	    unsigned int temp = udub.iv[0];
-	    udub.iv[0] = udub.iv[1];
-	    udub.iv[1] = temp;
-	    if (udub.dv != testdub)
-		ocpanic("cannot unpack xdr_double");
-	    oc_invert_xdr_double = 1;
-	}
-    }
+    /* Compute some xdr related flags */
+    xxdr_init();
+
     oc_loginit();
 
     /* Determine if this version of curl supports
@@ -152,36 +88,48 @@ ocinternalinitialize(void)
     {
         char* path = NULL;
         char* homepath = NULL;
+	char** alias;
 	FILE* f = NULL;
-        /* locate the configuration files: . first, then $HOME */
-        path = (char*)malloc(strlen(".")+1+strlen(DODSRC)+1);
-        strcpy(path,"./");
-        strcat(path,DODSRC);
-	/* see if file is readable */
-	f = fopen(path,"r");
-	if(f == NULL) {
-	    /* try $HOME */
+        /* locate the configuration files: . first in '.',  then $HOME */
+	for(alias=rcfilenames;*alias;alias++) {
+            path = (char*)malloc(strlen("./")+strlen(*alias)+1);
+	    if(path == NULL) return OC_ENOMEM;
+            strcpy(path,"./");
+            strcat(path,*alias);
+  	    /* see if file is readable */
+	    f = fopen(path,"r");
+	    if(f != NULL) break;
+    	    if(path != NULL) {free(path); path = NULL;} /* cleanup */
+	}
+	if(f == NULL) { /* try $HOME */
+	    OCASSERT(path == NULL);
             homepath = getenv("HOME");
             if (homepath!= NULL) {
-	       path = (char*)malloc(strlen(homepath)+1+strlen(DODSRC)+1);
-	       strcpy(path,homepath);
-	       strcat(path,"/");
-	       strcat(path,DODSRC);
-	       f = fopen(path,"r");
+	        for(alias=rcfilenames;*alias;alias++) {
+	            path = (char*)malloc(strlen(homepath)+1+strlen(*alias)+1);
+	            if(path == NULL) return OC_ENOMEM;
+	            strcpy(path,homepath);
+	            strcat(path,"/");
+	            strcat(path,*alias);
+		    f = fopen(path,"r");
+		    if(f != NULL) break;
+ 	            if(path != NULL) {free(path); path=NULL;}
+		}
             }
-        }
+	}
         if(f == NULL) {
-	    oc_log(LOGWARN,"Cannot find runtime .dodsrc configuration file");
+            oc_log(LOGDBG,"Cannot find runtime configuration file");
 	} else {
+	    OCASSERT(path != NULL);
        	    fclose(f);
             if(ocdebug > 1)
 		fprintf(stderr, "DODS RC file: %s\n", path);
-            if(ocdodsrc_read(path) == 0)
+            if(ocdodsrc_read(*alias,path) == 0)
 	        oc_log(LOGERR, "Error parsing %s\n",path);
         }
-        if(path != NULL) {free(path) ; path = NULL;}
+        if(path != NULL) free(path);
     }
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 /**************************************************/
@@ -190,27 +138,23 @@ ocopen(OCstate** statep, const char* url)
 {
     int stat = OC_NOERR;
     OCstate * state = NULL;
-    DAPURL tmpurl;
+    OCURI* tmpurl = NULL;
     CURL* curl = NULL; /* curl handle*/
 
-    memset((void*)&tmpurl,0,sizeof(tmpurl));
-
-    if(!dapurlparse(url,&tmpurl)) {THROWCHK(stat=OC_EBADURL); goto fail;}
+    if(!ocuriparse(url,&tmpurl)) {OCTHROWCHK(stat=OC_EBADURL); goto fail;}
     
     stat = occurlopen(&curl);
-    if(stat != OC_NOERR) {THROWCHK(stat); goto fail;}
+    if(stat != OC_NOERR) {OCTHROWCHK(stat); goto fail;}
 
     state = (OCstate*)ocmalloc(sizeof(OCstate)); /* ocmalloc zeros memory*/
-    if(state == NULL) {THROWCHK(stat=OC_ENOMEM); goto fail;}
+    if(state == NULL) {OCTHROWCHK(stat=OC_ENOMEM); goto fail;}
 
     /* Setup DAP state*/
     state->magic = OCMAGIC;
     state->curl = curl;
     state->trees = oclistnew();
-    state->contentlist = NULL;
-    state->url = tmpurl;
-    state->clientparams = ocparamdecode(state->url.params);
-    if(state->clientparams == NULL) {
+    state->uri = tmpurl;
+    if(!ocuridecodeparams(state->uri)) {
 	oc_log(LOGWARN,"Could not parse client parameters");
     }
     state->packet = ocbytesnew();
@@ -219,18 +163,22 @@ ocopen(OCstate** statep, const char* url)
     /* set curl properties for this link */
     ocsetcurlproperties(state);
 
+    /* Set up list to support reuse/reclamation of OCcontent objects. */
+    state->contentlist = NULL;
+
     if(statep) *statep = state;
-    return THROW(stat);   
+    return OCTHROW(stat);   
 
 fail:
-    dapurlclear(&tmpurl);
+    ocurifree(tmpurl);
     if(state != NULL) ocfree(state);
     if(curl != NULL) occurlclose(curl);
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
 OCerror
-ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
+ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
+        OCnode** rootp)
 {
     OCtree* tree = NULL;
     OCnode* root = NULL;
@@ -240,9 +188,16 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
     MEMCHECK(tree,OC_ENOMEM);
     memset((void*)tree,0,sizeof(OCtree));
     tree->dxdclass = kind;
+    tree->state = state;
     tree->constraint = constraintescape(constraint);
     if(tree->constraint == NULL)
 	tree->constraint = nulldup(constraint);
+
+    /* Set curl properties: pwd, flags, proxies, ssl */
+    if((stat=ocset_user_password(state))!= OC_NOERR) goto fail;
+    if((stat=ocset_curl_flags(state)) != OC_NOERR) goto fail;
+    if((stat=ocset_proxy(state)) != OC_NOERR) goto fail;
+    if((stat=ocset_ssl(state)) != OC_NOERR) goto fail;
 
     ocbytesclear(state->packet);
 
@@ -262,28 +217,28 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
 	}
 	break;
     case OCDATADDS:
-#ifdef OC_DISK_STORAGE
-       /* Create the datadds file immediately
-           so that DRNO can reference it*/
-        /* Make the tmp file*/
-        stat = createtempfile(state,tree);
-        if(stat) {THROWCHK(stat); goto unwind;}
-        stat = readDATADDS(state,tree);
-	if(stat == OC_NOERR) {
-            /* Separate the DDS from data and return the dds;
-	       will modify packet */
-            stat = ocextractdds(state,tree);
+	if((flags & OCINMEMORY) == 0) {/* store in file */
+	    /* Create the datadds file immediately
+               so that DRNO can reference it*/
+            /* Make the tmp file*/
+            stat = createtempfile(state,tree);
+            if(stat) {OCTHROWCHK(stat); goto unwind;}
+            stat = readDATADDS(state,tree,flags);
+	    if(stat == OC_NOERR) {
+                /* Separate the DDS from data and return the dds;
+                   will modify packet */
+                stat = ocextractddsinfile(state,tree,flags);
+	    }
+	} else { /*inmemory*/
+            stat = readDATADDS(state,tree,flags);
+	    if(stat == OC_NOERR) {
+                /* Separate the DDS from data and return the dds;
+               will modify packet */
+            stat = ocextractddsinmemory(state,tree,flags);
 	}
-#else
-        stat = readDATADDS(state,tree);
-	if(stat == OC_NOERR) {
-            /* Separate the DDS from data*/
-            stat = ocextractdds(state,tree);
-	    tree->data.xdrdata = ocbytesdup(state->packet);
 	}
-#endif
 	break;
-    }
+    }/*switch*/
     if(stat != OC_NOERR) {
 	/* Obtain any http code */
 	state->error.httpcode = ocfetchhttpcode(state->curl);
@@ -292,7 +247,7 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
 	} else {
 	    oc_log(LOGWARN,"oc_open: Could not read url");
 	}
-	return THROW(stat);
+	return OCTHROW(stat);
     }
 
     tree->nodes = NULL;
@@ -303,7 +258,7 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
 		  state->error.code,	
 		  (state->error.message?state->error.message:""));
     }
-    if(stat) {THROWCHK(stat); goto unwind;}
+    if(stat) {OCTHROWCHK(stat); goto unwind;}
     root = tree->root;
     /* make sure */
     tree->root = root;
@@ -313,15 +268,15 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
     switch (kind) {
     case OCDAS:
         if(root->octype != OC_Attributeset)
-	    {THROWCHK(stat=OC_EDAS); goto unwind;}
+	    {OCTHROWCHK(stat=OC_EDAS); goto unwind;}
 	break;
     case OCDDS:
         if(root->octype != OC_Dataset)
-	    {THROWCHK(stat=OC_EDDS); goto unwind;}
+	    {OCTHROWCHK(stat=OC_EDDS); goto unwind;}
 	break;
     case OCDATADDS:
         if(root->octype != OC_Dataset)
-	    {THROWCHK(stat=OC_EDATADDS); goto unwind;}
+	    {OCTHROWCHK(stat=OC_EDATADDS); goto unwind;}
 	/* Modify the tree kind */
 	tree->dxdclass = OCDATADDS;
 	break;
@@ -329,41 +284,38 @@ ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCnode** rootp)
     }
 
     if(kind != OCDAS) {
-        /* Process ocnodes to fix various semantic issues*/
-        computeocsemantics(tree->nodes);
+        /* Process ocnodes to assign offsets and sizes where possible */
+        occomputeskipdata(state,root);
+        /* Process ocnodes to mark those that are cacheable */
+        ocmarkcacheable(state,root);
+        /* Process ocnodes to handle various semantic issues*/
+        occomputesemantics(tree->nodes);
     }
 
     /* Process ocnodes to compute name info*/
-    computeocfullnames(tree->root);
+    occomputefullnames(tree->root);
 
-    if(kind != OCDAS) {
-        /* Process ocnodes to compute sizes when uniform in size*/
-        ocsetsize(tree->root);
-    }
-
-    if(kind == OCDATADDS) {
-        tree->data.xdrs = (XDR*)ocmalloc(sizeof(XDR));
+     if(kind == OCDATADDS) {
+	if((flags & OCINMEMORY) == 0) {
+            tree->data.xdrs = xxdr_filecreate(tree->data.file,tree->data.bod);
+	} else {
+	    /* Switch to zero based memory */
+            tree->data.xdrs
+		= xxdr_memcreate(tree->data.memory,tree->data.datasize,tree->data.bod);
+	}
         MEMCHECK(tree->data.xdrs,OC_ENOMEM);
-#ifdef OC_DISK_STORAGE
-        ocxdrstdio_create(tree->data.xdrs,tree->data.file,XDR_DECODE);
-#else
-	xdrmem_create(tree->data.xdrs,tree->data.xdrdata,tree->data.datasize,XDR_DECODE);
-#endif
-        if(!xdr_setpos(tree->data.xdrs,tree->data.bod)) return xdrerror();
     }
 
-#ifdef OC_DISK_STORAGE
-    if(ocdebug == 0 && tree->data.filename != NULL) {
-	unlink(tree->data.filename);
-    }
-#endif
+    /* Put root into the state->trees list */
+    oclistpush(state->trees,(ocelem)root);
 
     if(rootp) *rootp = root;
     return stat;
 
 unwind:
     ocfreetree(tree);
-    return THROW(stat);
+fail:
+    return OCTHROW(stat);
 }
 
 void
@@ -372,12 +324,14 @@ occlose(OCstate* state)
     unsigned int i;
     if(state == NULL) return;
 
+    /* Warning: ocfreeroot will attempt to remove the root from state->trees */
+    /* Ok in this case because we are popping the root out of state->trees */
     for(i=0;i<oclistlength(state->trees);i++) {
 	OCnode* root = (OCnode*)oclistpop(state->trees);
 	ocfreeroot(root);
     }
     oclistfree(state->trees);
-    dapurlclear(&state->url);
+    ocurifree(state->uri);
     ocbytesfree(state->packet);
     ocfree(state->error.code);
     ocfree(state->error.message);
@@ -390,33 +344,28 @@ occlose(OCstate* state)
 	    curr = next;
 	}
     }
+    ocfree(state->curlflags.useragent);
+    ocfree(state->curlflags.cookiejar);
+    ocfree(state->curlflags.cookiefile);
+    ocfree(state->ssl.certificate);
+    ocfree(state->ssl.key);
+    ocfree(state->ssl.keypasswd);
+    ocfree(state->ssl.cainfo);
+    ocfree(state->ssl.capath); 
+    ocfree(state->proxy.host);
+    ocfree(state->creds.username);
+    ocfree(state->creds.password);
     if(state->curl != NULL) occurlclose(state->curl);
-    if(state->clientparams != NULL) ocparamfree(state->clientparams);
     ocfree(state);
 }
 
 static OCerror
-ocextractdds(OCstate* state, OCtree* tree)
+ocextractddsinmemory(OCstate* state, OCtree* tree, OCflags flags)
 {
     OCerror stat = OC_NOERR;
     size_t ddslen, bod, bodfound;
-#ifdef OC_DISK_STORAGE
-    /* Read until we find the separator (or EOF)*/
-    ocbytesclear(state->packet);
-    rewind(tree->data.file);
-    do {
-	char chunk[128];
-	size_t count;
-	/* read chunks of the file until we find the separator*/
-        count = fread(chunk,1,sizeof(chunk),tree->data.file);
-	if(count <= 0) break; /* EOF;*/
-        ocbytesappendn(state->packet,chunk,count);
-	bodfound = findbod(state->packet,&bod,&ddslen);
-    } while(!bodfound);
-#else /*!OC_DISK_STORAGE*/
     /* Read until we find the separator (or EOF)*/
     bodfound = findbod(state->packet,&bod,&ddslen);
-#endif
     if(!bodfound) {/* No BOD; pretend */
 	bod = tree->data.bod;
 	ddslen = tree->data.datasize;
@@ -430,51 +379,74 @@ ocextractdds(OCstate* state, OCtree* tree)
         tree->text[ddslen] = '\0';
     } else
 	tree->text = NULL;
-#ifdef OC_DISK_STORAGE
-    /* reset the position of the tmp file*/
-    fseek(tree->data.file,tree->data.bod,SEEK_SET);
-#else
-    /* If the data part is not on an 8 byte boundary, make it so */
-    if(tree->data.bod % sizeof(unsigned long long) != 0) {
+    /* Extract the inmemory contents */
+    tree->data.memory = ocbytesextract(state->packet);
+#ifdef IGNORE
+    /* guarantee the data part is on an 8 byte boundary */
+    if(tree->data.bod % 8 != 0) {
         unsigned long count = tree->data.datasize - tree->data.bod;
-	char* dst = ocbytescontents(state->packet);
-	char* src = dst + tree->data.bod;
-	int i;
-	/* memcpy((void*)dst,(void*)src,count); overlap*/
-	for(i=0;i<count;i++) dst[i] = src[i]; /* avoid memcpy overlap */
-	tree->data.datasize = count;
+        memcpy(tree->xdrmemory,tree->xdrmemory+tree->data.bod,count);
+        tree->data.datasize = count;
 	tree->data.bod = 0;
 	tree->data.ddslen = 0;
     }
 #endif
     if(tree->text == NULL) stat = OC_EDATADDS;
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 
-#ifdef OC_DISK_STORAGE
+static OCerror
+ocextractddsinfile(OCstate* state, OCtree* tree, OCflags flags)
+{
+    OCerror stat = OC_NOERR;
+    size_t ddslen, bod, bodfound;
+
+    /* Read until we find the separator (or EOF)*/
+    ocbytesclear(state->packet);
+    rewind(tree->data.file);
+    do {
+        char chunk[1024];
+	size_t count;
+	/* read chunks of the file until we find the separator*/
+        count = fread(chunk,1,sizeof(chunk),tree->data.file);
+	if(count <= 0) break; /* EOF;*/
+        ocbytesappendn(state->packet,chunk,count);
+	bodfound = findbod(state->packet,&bod,&ddslen);
+    } while(!bodfound);
+    if(!bodfound) {/* No BOD; pretend */
+	bod = tree->data.bod;
+	ddslen = tree->data.datasize;
+    }
+    tree->data.bod = bod;
+    tree->data.ddslen = ddslen;
+    /* copy out the dds */
+    if(ddslen > 0) {
+        tree->text = (char*)ocmalloc(ddslen+1);
+        memcpy((void*)tree->text,(void*)ocbytescontents(state->packet),ddslen);
+        tree->text[ddslen] = '\0';
+    } else
+	tree->text = NULL;
+    /* reset the position of the tmp file*/
+    fseek(tree->data.file,tree->data.bod,SEEK_SET);
+    if(tree->text == NULL) stat = OC_EDATADDS;
+    return OCTHROW(stat);
+}
+
 static OCerror
 createtempfile(OCstate* state, OCtree* tree)
 {
-    int fd,c,slen = strlen(TMPPATH) + strlen("datadds") + strlen("XXXXXX");
-    char* name = (char*)ocmalloc(slen+1);
-    char* p;
-    MEMCHECK(name,OC_ENOMEM);
-    strcpy(name,TMPPATH);
-    strcpy(name,"datadds");
-    strcat(name,"XXXXXX");
-    p = name + strlen("datadds");
-    /* \', and '/' to '_' and '.' to '-'*/
-    for(;(c=*p);p++) {
-        if(c == '\\' || c == '/') {*p = '_';}
-        else if(c == '.') {*p = '-';}
-    }
-    /* Note Potential problem: old versions of this function
-       leave the file in mode 0666 instead of 0600 */
-    fd = mkstemp(name);
+    int fd;
+    char* name = NULL;
+    fd = createtempfile1(TMPPATH1,&name);
+    if(fd < 0)
+        fd = createtempfile1(TMPPATH2,&name);
     if(fd < 0) {
-        oc_log(LOGERR,"oc_open: attempt to open tmp file %s failed",name);
+        oc_log(LOGERR,"oc_open: attempt to open tmp file failed: %s",name);
         return errno;
     }
+#ifdef OCDEBUG
+    oc_log(LOGNOTE,"oc_open: using tmp file: %s",name);
+#endif
     tree->data.filename = name; /* remember our tmp file name */
     tree->data.file = fdopen(fd,"w+");
     if(tree->data.file == NULL) return OC_EOPEN;
@@ -482,7 +454,55 @@ createtempfile(OCstate* state, OCtree* tree)
     if(ocdebug == 0) unlink(tree->data.filename);
     return OC_NOERR;
 }
-#endif /*OC_DISK_STORAGE*/
+
+int
+createtempfile1(char* tmppath, char** tmpnamep)
+{
+    int fd;
+    char* tmpname = NULL;
+    {
+	char* p;
+	char c;
+	tmpname = (char*)malloc(strlen(tmppath)+strlen("dataddsXXXXXX")+1);
+	if(tmpname == NULL) return -1;
+	strcpy(tmpname,tmppath);
+#ifdef HAVE_MKSTEMP
+	strcat(tmpname,"dataddsXXXXXX");
+#else
+	strcat(tmpname,"datadds");
+        {
+	    long pid = -1;
+	    char spid[7];
+#  ifdef HAVE_GETPID
+  	    pid = (long)getpid();
+#  endif
+  	    if(pid < 0) return -1;
+            sprintf(spid,"%06ld",pid);
+            strcat(tmpname,spid);
+	}
+#endif
+	p = tmpname + strlen("datadds");
+	/* \', and '/' to '_' and '.' to '-'*/
+	for(;(c=*p);p++) {
+	    if(c == '\\' || c == '/') {*p = '_';}
+	    else if(c == '.') {*p = '-';}
+	}
+        /* Note Potential problem: old versions of this function
+           leave the file in mode 0666 instead of 0600 */
+#ifdef HAVE_MKSTEMP
+        fd = mkstemp(tmpname);
+#else
+#  ifdef WIN32
+        fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
+#  else
+        fd=open(tmpname,O_RDWR|O_CREAT|O_EXCL, S_IRWXU);
+#  endif
+#endif
+    }
+    if(tmpname == NULL) return -1;
+    if(tmpnamep) *tmpnamep = tmpname;
+    return fd;
+}
 
 /* Allow these (non-alpha-numerics) to pass thru */
 static char okchars[] = "&/:;,.=?@'\"<>{}!|\\^[]`~";
@@ -524,7 +544,10 @@ ocupdatelastmodifieddata(OCstate* state)
 {
     OCerror status = OC_NOERR;
     long lastmodified;
-    status = ocfetchlastmodified(state->curl, state->url.base, &lastmodified);
+    char* base = NULL;
+    base = ocuribuild(state->uri,NULL,NULL,OCURIENCODE);
+    status = ocfetchlastmodified(state->curl, base, &lastmodified);
+    free(base);
     if(status == OC_NOERR) {
 	state->datalastmodified = lastmodified;
     }
@@ -537,47 +560,22 @@ ocupdatelastmodifieddata(OCstate* state)
 static void
 ocsetcurlproperties(OCstate* state)
 {
-    CURL* curl = state->curl;
     CURLcode cstat = CURLE_OK;
-    int stat = OC_NOERR;
 
     /* process the triple store wrt to this state */
     if(ocdodsrc_process(state) != OC_NOERR) {
-	oc_log(LOGERR,"Malformed .dodsrc");
+	oc_log(LOGERR,"Malformed .opendaprc configuration file");
 	goto fail;
     }
-    /* Set username+password from .dodsrc */
-    stat=ocset_user_password(curl,state->creds.username,
-                                  state->creds.password);
-    if(stat != OC_NOERR) goto fail;    
-
-    if (occredentials_in_url(state->url.url)) {
-	/* this overrides .dodsrc */
-        char *result_url = NULL;
-        char* userName = NULL;
-        char* password = NULL;
-        if (ocextract_credentials(state->url.url, &userName, &password, &result_url) != OC_NOERR)
-            goto fail;
-	dapurlclear(&state->url);
-	dapurlparse(result_url,&state->url);
-	/* this overrides .dodsrc */
-        if(password != NULL && strlen(password) > 0) {
+    if(state->creds.username == NULL && state->creds.password == NULL) {
+        if(state->uri->user != NULL && state->uri->password != NULL) {
+	    /* this overrides .dodsrc */
             if(state->creds.password) free(state->creds.password);
-            state->creds.password = password;
-	}
-        if(userName != NULL && strlen(userName) > 0) {
+            state->creds.password = nulldup(state->uri->password);
             if(state->creds.username) free(state->creds.username);
-            state->creds.username = userName;
+            state->creds.username = nulldup(state->uri->user);
 	}
     }
-
-    /* Set curl properties */
-    if((stat=ocset_curl_flags(curl,state)) != OC_NOERR) goto fail;
-    /* Set curl proxy */
-    if((stat=ocset_proxy(curl,state)) != OC_NOERR) goto fail;
-    /* Set curl ssl */
-    if((stat=ocset_ssl(curl,state)) != OC_NOERR) goto fail;
-
     return;
 
 fail:

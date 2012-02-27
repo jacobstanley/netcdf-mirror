@@ -7,36 +7,36 @@
 # code. It also contains code that sit above the dispatch layer, like
 # the v2 API.
 
-# $Id: Makefile.am,v 1.10 2010/06/01 15:34:50 ed Exp $
-
-# Set up include directories.
-AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/liblib -I${top_srcdir}/libsrc
+# Put together AM_CPPFLAGS and AM_LDFLAGS.
+include $(top_srcdir)/lib_flags.am
 
 # This is our output, the dispatch convenience library.
 noinst_LTLIBRARIES = libdispatch.la
+libdispatch_la_CPPFLAGS = ${AM_CPPFLAGS}
 
 # The source files.
-libdispatch_la_SOURCES = ncdispatch.h parallel.c copy.c file.c dim.c	\
-att.c error.c var.c dispatch.c
+libdispatch_la_SOURCES = dparallel.c dcopy.c dfile.c ddim.c datt.c	\
+dattinq.c dattput.c dattget.c derror.c dvar.c dvarget.c dvarput.c	\
+dvarinq.c ddispatch.c                                                   \
+dnclog.c dstring.c dutf8proc.c utf8proc_data.h                          \
+nc_uri.c nclist.c ncbytes.c nchashmap.c nctime.c                        \
+dsubstrate.c
 
 # Add functions only found in netCDF-4.
 if USE_NETCDF4
-libdispatch_la_SOURCES += nc4.c
+libdispatch_la_SOURCES += dgroup.c dvlen.c dcompound.c dtype.c denum.c	\
+dopaque.c ncaux.c
 endif # USE_NETCDF4
 
-# Add functions needed by opendap client.
-if USE_DAP
-libdispatch_la_SOURCES += dap.c
-AM_CPPFLAGS += -I${top_srcdir}/oc
-endif # USE_DAP
+# Turn on pre-processor flag when building a DLL for windows.
+if BUILD_DLL
+libdispatch_la_CPPFLAGS += -DDLL_EXPORT
+endif # BUILD_DLL
 
 # Add V2 API convenience library if needed.
 if BUILD_V2
 noinst_LTLIBRARIES += libnetcdf2.la 
-libnetcdf2_la_SOURCES = v2i.c
+libnetcdf2_la_SOURCES = dv2i.c
+libnetcdf2_la_CPPFLAGS = ${AM_CPPFLAGS} -DDLL_EXPORT
 endif # BUILD_V2
-
-.PHONY: visualstudio
-visualstudio:
-	sh ${abs_top_srcdir}/visualbuild add ${abs_srcdir} "${libdispatch_la_SOURCES}"
 

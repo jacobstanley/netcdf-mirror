@@ -1,6 +1,7 @@
 /* Copyright 2009, UCAR/Unidata and OPeNDAP, Inc.
    See the COPYRIGHT file for more information. */
 
+#include "config.h"
 #include "oc.h"
 #include "ocinternal.h"
 #include "ocdebug.h"
@@ -35,16 +36,16 @@ oc_stringcontent(OCstate* state, OCcontent* content, char** stringp, size_t* sle
     unsigned int slen;
     char* stringmemory;
 
-    if(state == NULL || content == NULL) return THROW(OC_EINVAL);
+    if(state == NULL || content == NULL) return OCTHROW(OC_EINVAL);
 
-    if(content->node->octype != OC_Primitive) return THROW(OC_EINVAL);
+    if(content->node->octype != OC_Primitive) return OCTHROW(OC_EINVAL);
     if(content->node->etype != OC_String
-       && content->node->etype != OC_URL) return THROW(OC_EINVAL);
+       && content->node->etype != OC_URL) return OCTHROW(OC_EINVAL);
 
     xdrs = state->dap.xdrs;
-    if(xdrs == NULL) return THROW(OC_EXDR);
+    if(xdrs == NULL) return OCTHROW(OC_EXDR);
 
-    if(oc_contentmode(state,content) != Datamode) return THROW(OC_EINVAL);
+    if(oc_contentmode(state,content) != Datamode) return OCTHROW(OC_EINVAL);
     /* We are at a single instance of a string data type*/
     if(!xdr_setpos(xdrs,content->xdroffset)) return xdrerror();
     if(!xdr_u_int(xdrs,&slen)) return xdrerror();
@@ -56,6 +57,6 @@ oc_stringcontent(OCstate* state, OCcontent* content, char** stringp, size_t* sle
     if(!xdr_setpos(xdrs,content->xdroffset)) return xdrerror();
     if(stringp != NULL) *stringp = stringmemory;
     if(slenp != NULL) *slenp = slen;
-    return THROW(stat);
+    return OCTHROW(stat);
 }
 #endif

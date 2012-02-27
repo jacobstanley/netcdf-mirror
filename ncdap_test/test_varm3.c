@@ -25,8 +25,7 @@ netcdf-4.1-beta2-snapshot2009091100
 
 #undef DEBUG
 
-#define URL "http://test.opendap.org/opendap/data/nc/coads_climatology.nc"
-
+#define URL "http://motherlode.ucar.edu:8080/thredds/dodsC/testdods/coads_climatology.nc"
 #define VAR "SST"
 
 static float expected_stride1[12] = {
@@ -64,7 +63,7 @@ check(int status, char* file, int line)
 {
     if(status == 0) return;
     fprintf(stderr,"error: %s at %s:%d\n",nc_strerror(status),file,line);
-    exit(0); /* treat like xfail */
+    exit(1);
 }
 
 int
@@ -77,9 +76,11 @@ main()
     int err;
     size_t start[5], count[5];
     ptrdiff_t stride[5], imap[5];
-
-    int idim, ndim;  
+    int idim;
     float dat[20];
+#ifdef STANDALONE
+    int ndim;
+#endif
 
 #ifdef DEBUG
     oc_loginit();
@@ -97,8 +98,9 @@ main()
         stride[idim] = 1;
         imap[idim] = 1;
     }
+#ifdef STANDALONE
     ndim=3;
-
+#endif
 
     printf("*** Testing: stride case 1\n");
     start[1] = 44;
@@ -126,8 +128,9 @@ main()
     printf("\n");
 #endif
 
-    check(err = nc_get_varm_float (ncid, varid, start, count, stride, imap,
-			     (float*) dat),__FILE__,__LINE__);
+    check(err = nc_get_varm_float (ncid, varid, start, count, stride, imap,(float*) dat),__FILE__,__LINE__);
+//    check(err = nc_get_vara_float (ncid, varid, start, count, (float*) dat),__FILE__,__LINE__);
+
 #ifdef STANDALONE
     printf("varm: %s =",VAR);
     for(i=0;i<12;i++) printf(" %f",dat[i]);
@@ -234,11 +237,8 @@ main()
     }
     printf("*** %s: stride case 3\n",(fail?"Fail":"Pass"));
 
-    return 0;
+    return fail;
 
-ncfail:
-    printf("*** nc function failure: %d %s\n",err,nc_strerror(err));
-    return 0; /* treat like xfail */
 }
 
 
