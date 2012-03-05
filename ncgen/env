@@ -1,8 +1,10 @@
 L="-lc"
-K="-k3"
-alias q0="./ncgen -d $K $L test.cdl"
-alias qq="gdb --args ./ncgen -d $K $L test.cdl"
-alias qv="valgrind --leak-check=full ./ncgen -d $K $L test.cdl"
+K="-k1"
+F="test"
+NCGEN="./.libs/ncgen"
+alias q0="$NCGEN -d $K $L $F.cdl"
+alias qq="gdb --args $NCGEN -d $K $L $F.cdl"
+alias qv="valgrind --leak-check=full $NCGEN -d $K $L $F.cdl"
 
 
 
