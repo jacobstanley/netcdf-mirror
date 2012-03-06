@@ -1,0 +1,10 @@
+netcdf tst_iter {
+dimensions:
+	d = 4 ;
+variables:
+	float seas_climo(d) ;
+		seas_climo:_FillValue = 0.f ;
+data:
+
+ seas_climo = _, _, _, 41 ;
+}
