@@ -20,8 +20,6 @@ tst_h_opaques tst_h_strings tst_h_strings1 tst_h_strings2 tst_h_ints	\
 tst_h_dimscales tst_h_dimscales1 tst_h_dimscales2 tst_h_dimscales3	\
 tst_h_enums tst_h_dimscales4 #tst_h_filters 
 
-H5TESTS = tst
-
 # If benchmarks were turned on, build and run a bunch more tests.
 if BUILD_BENCHMARKS
 H5TESTS += tst_h_mem
