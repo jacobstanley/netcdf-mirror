@@ -2705,7 +2705,7 @@ fprintf(stderr,"dimension: %s = UNLIMITED\n",(yyvsp[(1) - (3)].sym)->name);
 
 /* Line 1806 of yacc.c  */
 #line 790 "ncgen.y"
-    {(yyval.datalist) = NULL;}
+    {(yyval.datalist) = builddatalist(0);}
     break;
 
   case 114:

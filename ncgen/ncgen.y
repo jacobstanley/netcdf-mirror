@@ -787,7 +787,7 @@ datalist:
 	;
 
 datalist0:
-	/*empty*/ {$$ = NULL;}
+	/*empty*/ {$$ = builddatalist(0);}
 	;
 
 datalist1: /* Must have at least 1 element */

@@ -14,10 +14,10 @@ DAP=1
 
 cmds=""
 #cmds="all"
-cmds="all check"
+#cmds="all check"
 #cmds="all dist"
 #cmds="all distcheck"
-cmds="$cmds install"
+#cmds="$cmds install"
 
 # Test pgi compiler
 if test "x$PGI" = x1 ; then

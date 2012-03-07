@@ -8,6 +8,8 @@
 #include "odom.h"
 #include "offsets.h"
 
+#undef ITERBUG
+
 /**************************************************/
 /* Code for generating data lists*/
 /**************************************************/
@@ -138,7 +140,11 @@ generate_array(Symbol* vsym,
 	     bbClear(code);
              generator->listbegin(generator,LISTDATA,vsym->data->length,code,&uid);
 	     for(i=0;i<nelems;i++) {
+#ifdef ITERBUG
+	 	Constant* con = datalistith(vsym->data,i);
+#else
 	 	Constant* con = datalistith(vsym->data,i+offset);
+#endif	
                 generator->list(generator,LISTDATA,uid,i,code);
 #ifdef USE_NOFILL
 		if(nofill_flag && con == NULL)
