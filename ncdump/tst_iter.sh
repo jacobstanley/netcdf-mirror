@@ -45,7 +45,7 @@ echo "*** dumping tst_iter.nc to tst_iter.cdl..."
 ./ncdump tst_iter.nc > tst_iter.cdl
 echo "*** reformat tst_iter.cdl"
 mv tst_iter.cdl tmp
-sed -e 's/[0-9], /\0@/g' <tmp |tr '@' '\n' |sed -e '/^$/d' >./tst_iter.cdl
+sed -e 's/\([0-9][,]\) /\1@/g' <tmp |tr '@' '\n' |sed -e '/^$/d' >./tst_iter.cdl
 
 echo "*** comparing tst_iter.cdl with ref_tst_iter.cdl..."
 diff -w tst_iter.cdl ./ref_tst_iter.cdl
