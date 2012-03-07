@@ -8,6 +8,8 @@
 include $(top_srcdir)/lib_flags.am
 LDADD = ${top_builddir}/liblib/libnetcdf.la 
 
+TESTS_ENVIRONMENT=CC=${CC}
+
 # This is the program we're building, and it's sources.
 bin_PROGRAMS = ncdump 
 ncdump_SOURCES = ncdump.c vardata.c dumplib.c indent.c nctime0.c	\
@@ -67,7 +69,9 @@ tst_compounds4.cdl tst_utf8.cdl tst_compounds3.cdl			\
 tst_special_atts.cdl tst_nans.cdl tst_format_att_64.cdl			\
 tst_vlen_data.cdl tst_solar_1.cdl tst_format_att.cdl tst_inflated.nc    \
 tmp_subset.cdl tst_inflated4.nc tst_deflated.nc tst_chunking.nc tmp*.nc \
-tst_charfill.nc tmp_tst_charfill.cdl tst_iter.nc ref_tst_iter.cdl tst_iter.cdl
+tst_charfill.nc tmp_tst_charfill.cdl \
+tst_iter.nc ref_tst_iter.cdl tst_iter.cdl \
+tst_nc_test_netcdf4_4_0.cdl
 
 # These files all have to be included with the distribution.
 EXTRA_DIST = run_tests.sh tst_64bit.sh tst_output.sh test0.cdl		\
