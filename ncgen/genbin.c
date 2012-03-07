@@ -166,15 +166,17 @@ gen_netcdf(const char *filename)
     stat = nc_enddef(rootgroup->ncid);
     check_err(stat,__LINE__,__FILE__);
 
-    /* Load values into those variables with defined data */
-    if(nvars > 0) {
-        for(ivar = 0; ivar < nvars; ivar++) {
-	    Symbol* vsym = (Symbol*)listget(vardefs,ivar);
-	    if(vsym->data != NULL) {
-	        bbClear(databuf);
-		genbin_definevardata(vsym);
-	    }
-	}
+    if(!header_only) {
+        /* Load values into those variables with defined data */
+        if(nvars > 0) {
+            for(ivar = 0; ivar < nvars; ivar++) {
+                Symbol* vsym = (Symbol*)listget(vardefs,ivar);
+                if(vsym->data != NULL) {
+                    bbClear(databuf);
+                    genbin_definevardata(vsym);
+                }
+            }
+        }
     }
     bbFree(databuf);
 }
@@ -397,15 +399,8 @@ genbin_writevar(Generator* generator, Symbol* vsym, Bytebuffer* memory,
 #endif
 	
     if(rank == 0) {
-if(1) {
 	size_t count[1] = {0};
         stat = nc_put_var1(vsym->container->ncid, vsym->ncid, count, data);
-} else {
-    static const char* vlen_3[1] = {"111s"} ;
-    size_t zero = 0;
-    static nc_vlen_t cmpd_data[1] = {{1, (void*)vlen_3}};
-    stat = nc_put_var1(vsym->container->ncid, vsym->ncid, &zero, cmpd_data);
-}
     } else {
         stat = nc_put_vara(vsym->container->ncid, vsym->ncid, start, count, data);
     }

@@ -3323,7 +3323,7 @@ makeconstdata(nc_type nctype)
 	    con.value.doublev = double_val;
 	    break;
         case NC_STRING: { /* convert to a set of chars*/
-	    int len;
+	    size_t len;
 	    len = bbLength(lextext);
 	    con.value.stringv.len = len;
 	    con.value.stringv.stringv = bbDup(lextext);
