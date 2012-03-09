@@ -216,6 +216,7 @@ main(
 	  break;
 	case 'o':		/* to explicitly specify output name */
 	  netcdf_name = nulldup(optarg);
+	  binary_flag = 1; /* as per documentation */
 	  break;
 	case 'x': /* set nofill mode to speed up creation of large files */
 	  nofill_flag = 1;
