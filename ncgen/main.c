@@ -375,7 +375,7 @@ main(
 	return 0;
     }
 
-    if(specials_flag && k_flag == 0)
+    if(specials_flag > 0 && k_flag == 0)
 #ifdef USE_NETCDF4
 	k_flag = 3;
 #else

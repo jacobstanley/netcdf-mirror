@@ -1176,7 +1176,8 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     char* sdata = NULL;
     int idata =  -1;
 
-    specials_flag = 1;
+    
+    specials_flag += (tag == _FILLVALUE_FLAG ? 0 : 1);
 
     if(isconst) {
 	con = (Constant*)data;
