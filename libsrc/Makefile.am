@@ -19,7 +19,7 @@ nclistmgr.c putget.c attr.c nc3dispatch.c nc.c var.c dim.c ncx.c	\
 ncx.h lookup3.c pstdint.h
 
 if USE_NEWIO
-libnetcdf3_la_SOURCES += ncstdio.c ncnewio.h
+libnetcdf3_la_SOURCES += ncstdio.h ncstdio.h ncFile.c
 else !USE_NEWIO
 # Does the user want to use ffio, a replacement for posixio for Cray
 # computers?

@@ -98,17 +98,19 @@ tst_iter.sh
 BUILT_SOURCES = ctest.c ctest64.c
 if EXTRA_TESTS
 ctest.c:
-	$(top_builddir)/ncgen/ncgen -lc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest.c
+	sed -e 's/netcdf c0/netcdf ctest/' <$(top_srcdir)/ncgen/c0.cdl |\
+	$(top_builddir)/ncgen/ncgen -lc - > $(srcdir)/ctest.c
 
 ctest64.c:
-	$(top_builddir)/ncgen/ncgen -v2 -lc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest64.c
+	sed -e 's/netcdf c0/netcdf ctest64/' <$(top_srcdir)/ncgen/c0.cdl |\
+	$(top_builddir)/ncgen/ncgen -v2 -lc - > $(srcdir)/ctest64.c
 else
 ctest.c:
 	cp ref_ctest.c ctest.c
 
 ctest64.c:
 	cp ref_ctest64.c ctest64.c
-endif # CROSS_COMPILING
+endif
 
 # NCGEN4 additions
 SUBDIRS=cdl4 expected4

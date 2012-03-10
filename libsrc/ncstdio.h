@@ -27,13 +27,6 @@ struct ncstdio {
     } ops;
 };
 
-/* Use these functions to invoke the dispatch operators */
-extern int
-ncstdio_create(const char *path, int ioflags, ncstdio** ncstdiopp);
-
-extern int
-ncstdio_open(const char *path, int ioflags, ncstdio** ncstdiopp);
-
 extern int 
 ncstdio_close(ncstdio* ncstdiop, int unlink);
 
@@ -56,5 +49,14 @@ extern int
 ncstdio_write(ncstdio* ncstdiop, const void* memory, const size_t size, size_t* actual);
 
 #define ncio_flagset(iop, flags) (iop->ioflags & flags)
+
+/* export all known ncstdio implementation create/open procedures */
+extern int ncFile_create(const char *path, int ioflags, ncstdio** filepp);
+extern int ncFile_open(const char *path, int ioflags, ncstdio** filepp);
+
+#ifdef USE_DISKLESS
+extern int ncMemory_create(const char *path, int ioflags, ncstdio** filepp);
+extern int ncMemory_open(const char *path, int ioflags, ncstdio** filepp);
+#endif
 
 #endif /* _NCSTDIO_H_* /

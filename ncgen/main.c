@@ -216,7 +216,6 @@ main(
 	  break;
 	case 'o':		/* to explicitly specify output name */
 	  netcdf_name = nulldup(optarg);
-	  binary_flag = 1; /* as per documentation */
 	  break;
 	case 'x': /* set nofill mode to speed up creation of large files */
 	  nofill_flag = 1;
@@ -280,7 +279,8 @@ main(
 
     if(languages == 0) {
 	binary_flag = 1; /* default */
-        if(k_flag == 0)
+	/* Treat -k or -o as an implicit -lb assuming no other -l flags */
+        if(k_flag == 0 && netcdf_name == NULL)
 	    syntax_only = 1;
     }
 
