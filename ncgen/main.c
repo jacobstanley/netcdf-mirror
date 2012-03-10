@@ -377,7 +377,7 @@ main(
 
     if(specials_flag && k_flag == 0)
 #ifdef USE_NETCDF4
-	k_flag = 4;
+	k_flag = 3;
 #else
 	k_flag = 1;
 #endif
