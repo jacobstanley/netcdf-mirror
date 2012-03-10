@@ -335,12 +335,13 @@ AC_MSG_RESULT($enable_ffio)
 AM_CONDITIONAL(USE_FFIO, [test x$enable_ffio = xyes])
 
 # Does the user want to use the new io mechanism?
-AC_MSG_CHECKING([whether new IO module will be used])
-AC_ARG_ENABLE([newio],
-              [AS_HELP_STRING([--enable-newio],
-                              [use new io module (not yet implemented)])])
-test "x$enable_newio" = xyes || enable_newio=no
-AC_MSG_RESULT($enable_newio)
+#AC_MSG_CHECKING([whether new IO module will be used])
+#AC_ARG_ENABLE([newio],
+#              [AS_HELP_STRING([--enable-newio],
+#                              [use new io module (not yet implemented)])])
+#test "x$enable_newio" = xyes || enable_newio=no
+#AC_MSG_RESULT($enable_newio)
+enable_newio=no
 AM_CONDITIONAL(USE_NEWIO, [test x$enable_newio = xyes])
 
 # Does the user want to enable the user-provided NEC-SX vectorization
