@@ -75,9 +75,9 @@ variables:
   file        Name of netCDF file\n"
 
 static void
-usage(void)
+usage(char* msg)
 {
-   fprintf(stderr, "tst_ar4 -v -h -t -c CACHE_SIZE file\n%s", USAGE);
+   fprintf(stderr, "%s\nusage: tst_ar4 -v -h -t -c CACHE_SIZE file\n%s", msg,USAGE);
 }
 
 #define NDIMS3 3
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 	    sscanf(optarg, "%d", &cache);
 	    break;
 	 case '?':
-	    usage();
+	    usage("unknown option");
 	    return 1;
       }
       
@@ -139,7 +139,7 @@ main(int argc, char **argv)
    /* If no file arguments left, print usage message. */
    if (argc < 1)
    {
-      usage();
+      usage("no file specified");
       return 0;
    }
       
