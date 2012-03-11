@@ -21,9 +21,11 @@
 extern int oc_curl_file_supported;
 
 /*Forward*/
-static int readpacket(CURL*, OCURI*, OCbytes*, OCdxd, long*);
+static int readpacket(OCstate*, OCURI*, OCbytes*, OCdxd, long*);
 static int readfile(char* path, char* suffix, OCbytes* packet);
 static int readfiletofile(char* path, char* suffix, FILE* stream, unsigned long*);
+static int curlerr2ocerr(CURLcode cstat);
+static int geterror(CURLcode cstat, int stat);
 
 int
 readDDS(OCstate* state, OCtree* tree)
@@ -34,9 +36,9 @@ readDDS(OCstate* state, OCtree* tree)
 
     ocurisetconstraints(state->uri,tree->constraint);
 
-ocset_user_password(state);
+    ocset_user_password(state);
 
-    stat = readpacket(state->curl,state->uri,state->packet,OCDDS,
+    stat = readpacket(state,state->uri,state->packet,OCDDS,
 			&lastmodified);
     if(stat == OC_NOERR) state->ddslastmodified = lastmodified;
 
@@ -47,17 +49,19 @@ int
 readDAS(OCstate* state, OCtree* tree)
 {
     int stat = OC_NOERR;
+    CURLcode cstat = CURLE_OK;
 
     ocurisetconstraints(state->uri,tree->constraint);
-    stat = readpacket(state->curl,state->uri,state->packet,OCDAS,NULL);
+    cstat = readpacket(state,state->uri,state->packet,OCDAS,NULL);
 
-    return stat;
+    return geterror(cstat,stat);
 }
 
 int
-readversion(CURL* curl, OCURI* url, OCbytes* packet)
+readversion(OCstate* state, OCURI* url, OCbytes* packet)
 {
-   return readpacket(curl,url,packet,OCVER,NULL);
+    CURLcode cstat = readpacket(state,url,packet,OCVER,NULL);
+    return geterror(cstat,OC_NOERR);
 }
 
 static
@@ -69,12 +73,14 @@ char* ocdxdextension[] ={
 };
 
 static int
-readpacket(CURL* curl,OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
+readpacket(OCstate* state, OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 {
    int stat;
    int fileprotocol = 0;
    char* suffix = ocdxdextension[dxd];
    char* fetchurl = NULL;
+   CURL* curl = state->curl;
+   CURLcode cstat = CURLE_OK;
 
    fileprotocol = (strcmp(url->protocol,"file")==0);
 
@@ -91,19 +97,21 @@ readpacket(CURL* curl,OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 	MEMCHECK(fetchurl,OC_ENOMEM);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch url=%s\n",fetchurl); fflush(stderr);}
-        stat = ocfetchurl(curl,fetchurl,packet,lastmodified);
+	state->error.curlerrorbuf[0]='\0'; /* make sure it is defined */
+        cstat = ocfetchurl(curl,fetchurl,packet,lastmodified);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
     }
     free(fetchurl);
-    return OCTHROW(stat);
+    return OCTHROW(geterror(cstat,stat));
 }
 
 int
 readDATADDS(OCstate* state, OCtree* tree, OCflags flags)
 {
-    int stat;
+    int stat = OC_NOERR;
     long lastmod = -1;
+    CURLcode cstat = CURLE_OK;
 
     if((flags & OCINMEMORY) != 0) {
         ocurisetconstraints(state->uri,tree->constraint);
@@ -130,16 +138,16 @@ readDATADDS(OCstate* state, OCtree* tree, OCflags flags)
             MEMCHECK(readurl,OC_ENOMEM);
             if (ocdebug > 0) 
                 {fprintf(stderr, "fetch url=%s\n", readurl);fflush(stderr);}
-            stat = ocfetchurl_file(state->curl, readurl, tree->data.file,
+            cstat = ocfetchurl_file(state->curl, readurl, tree->data.file,
                                    &tree->data.datasize, &lastmod);
-            if(stat == OC_NOERR)
+            if(cstat == CURLE_OK)
                 state->datalastmodified = lastmod;
             if (ocdebug > 0) 
                 {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
         }
         free(readurl);
     }
-    return OCTHROW(stat);
+    return OCTHROW(geterror(cstat,stat));
 }
 
 static int
@@ -199,4 +207,25 @@ readfile(char* path, char* suffix, OCbytes* packet)
     return OCTHROW(stat);
 }
 
+static int
+geterror(CURLcode cstat, int stat)
+{
+    if(stat != OC_NOERR && cstat != CURLE_OK) {
+	oc_log(LOGERR,"readpacket: %s",curl_easy_strerror(cstat));
+	stat = curlerr2ocerr(cstat);
+    }
+    return stat;
+}
 
+static int
+curlerr2ocerr(CURLcode cstat)
+{
+    switch (cstat) {
+    case CURLE_OK: return OC_NOERR;
+    case CURLE_URL_MALFORMAT: return OC_EBADURL;
+    case CURLE_COULDNT_CONNECT: return OC_EDAPSVC;
+    case CURLE_OUT_OF_MEMORY: return OC_ENOMEM;
+    default: break;
+    }
+    return OC_ECURL;
+}

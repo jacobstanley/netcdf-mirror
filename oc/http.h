@@ -4,17 +4,19 @@
 #ifndef HTTP_H
 #define HTTP_H 1
 
+#ifdef IGNORE
 extern int curlopen(CURL** curlp);
 extern void curlclose(CURL*);
+#endif
 
-extern int ocfetchurl(CURL*, char*, OCbytes*, long*);
-extern int ocfetchurl_file(CURL*, char*, FILE*, unsigned long*, long*);
+extern CURLcode ocfetchurl(CURL*, char*, OCbytes*, long*);
+extern CURLcode ocfetchurl_file(CURL*, char*, FILE*, unsigned long*, long*);
 
 extern long ocfetchhttpcode(CURL* curl);
 
-extern int ocfetchlastmodified(CURL* curl, char* url, long* filetime);
+extern CURLcode ocfetchlastmodified(CURL* curl, char* url, long* filetime);
 
-extern int occurlopen(CURL** curlp);
+extern CURLcode occurlopen(CURL** curlp);
 extern void occurlclose(CURL* curlp);
 
 #endif /*HTTP_H*/
