@@ -516,7 +516,7 @@ AC_CHECK_PROGS([DOXYGEN], [doxygen])
 if test -z "$DOXYGEN"; then 
    AC_MSG_WARN([Doxygen not found - documentation will not be built])
 else
-   NETCDF_DOC_CODE_FILES="\
+   NETCDF_DOC_CODE_FILES='\
        $(srcdir)/include/netcdf.$(srcdir)/examples/C/simple_xy_wr.c \
        $(srcdir)/examples/C/simple_xy_rd.c \
        $(srcdir)/examples/C/sfc_pres_temp_wr.c \
@@ -536,14 +536,14 @@ else
        $(srcdir)/libdispatch/dv2i.c $(srcdir)/libdispatch/dvlen.c \
        $(srcdir)/libdispatch/denum.c $(srcdir)/libdispatch/dopaque.c \
        $(srcdir)/libdispatch/dtype.c $(srcdir)/libsrc4/nc4file.c \
-       $(srcdir)/ncdump/ncdump.c"
-   NETCDF_DOC_ONLY_FILES="\
+       $(srcdir)/ncdump/ncdump.c'
+   NETCDF_DOC_ONLY_FILES='\
        $(srcdir)/mainpage.doc $(srcdir)/tutorial.doc \
        $(srcdir)/man4/install.doc $(srcdir)/man4/dispatch.doc \
        $(srcdir)/man4/guide.doc $(srcdir)/man4/types.doc \
        $(srcdir)/man4/notes.doc $(srcdir)/man4/cdl.doc \
        $(srcdir)/man4/architecture.doc $(srcdir)/man4/internal.doc \
-       $(srcdir)/../COPYRIGHT"
+       $(srcdir)/COPYRIGHT'
 fi
 
 # If we have doxygen, and it's enabled, then process the file.
