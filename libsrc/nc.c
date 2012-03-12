@@ -1086,7 +1086,7 @@ NC3_open(const char * path, int ioflags,
 		*chunksizehintp = ncp->chunk;
 
 
-#ifndef USE_NEWIO
+#ifdef USE_NEWIO
 	ncstdio_uid(ncp->nciop,&ncp->int_ncid);
 #else
 	ncp->int_ncid = ncp->nciop->fd;
