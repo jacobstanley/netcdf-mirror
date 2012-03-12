@@ -516,22 +516,22 @@ AC_CHECK_PROGS([DOXYGEN], [doxygen])
 if test -z "$DOXYGEN"; then 
    AC_MSG_WARN([Doxygen not found - documentation will not be built])
 else
-   NETCDF_DOC_CODE_FILES='../include/netcdf.h \
-../examples/C/simple_xy_wr.c ../examples/C/simple_xy_rd.c \
-../examples/C/sfc_pres_temp_wr.c ../examples/C/sfc_pres_temp_rd.c \
-../examples/C/pres_temp_4D_wr.c ../examples/C/pres_temp_4D_rd.c \
-../examples/C/simple_nc4_wr.c ../examples/C/simple_nc4_rd.c \
-../examples/C/simple_xy_nc4_wr.c ../examples/C/simple_xy_nc4_rd.c \
-../libdispatch/dfile.c  ../libdispatch/ddim.c \
-../libdispatch/dattget.c ../libdispatch/dattinq.c  ../libdispatch/dattput.c \
-../libdispatch/datt.c ../libdispatch/dvar.c ../libdispatch/dvarinq.c \
-../libdispatch/dvarput.c ../libdispatch/dvarget.c ../libdispatch/derror.c \
-../libdispatch/dcompound.c ../libdispatch/dv2i.c \
-../libdispatch/dvlen.c ../libdispatch/denum.c ../libdispatch/dopaque.c \
-../libdispatch/dtype.c ../libsrc4/nc4file.c ../ncdump/ncdump.c'
+   NETCDF_DOC_CODE_FILES='$(srcdir)/include/netcdf.h \
+$(srcdir)/examples/C/simple_xy_wr.c $(srcdir)/examples/C/simple_xy_rd.c \
+$(srcdir)/examples/C/sfc_pres_temp_wr.c $(srcdir)/examples/C/sfc_pres_temp_rd.c \
+$(srcdir)/examples/C/pres_temp_4D_wr.c $(srcdir)/examples/C/pres_temp_4D_rd.c \
+$(srcdir)/examples/C/simple_nc4_wr.c $(srcdir)/examples/C/simple_nc4_rd.c \
+$(srcdir)/examples/C/simple_xy_nc4_wr.c $(srcdir)/examples/C/simple_xy_nc4_rd.c \
+$(srcdir)/libdispatch/dfile.c  $(srcdir)/libdispatch/ddim.c \
+$(srcdir)/libdispatch/dattget.c $(srcdir)/libdispatch/dattinq.c  $(srcdir)/libdispatch/dattput.c \
+$(srcdir)/libdispatch/datt.c $(srcdir)/libdispatch/dvar.c $(srcdir)/libdispatch/dvarinq.c \
+$(srcdir)/libdispatch/dvarput.c $(srcdir)/libdispatch/dvarget.c $(srcdir)/libdispatch/derror.c \
+$(srcdir)/libdispatch/dcompound.c $(srcdir)/libdispatch/dv2i.c \
+$(srcdir)/libdispatch/dvlen.c $(srcdir)/libdispatch/denum.c $(srcdir)/libdispatch/dopaque.c \
+$(srcdir)/libdispatch/dtype.c $(srcdir)/libsrc4/nc4file.c $(srcdir)/ncdump/ncdump.c'
    NETCDF_DOC_ONLY_FILES="mainpage.doc tutorial.doc \
-../COPYRIGHT install.doc dispatch.doc guide.doc types.doc \
-notes.doc cdl.doc architecture.doc internal.doc"
+$(srcdir)/COPYRIGHT $(srcdir)/man4/install.doc $(srcdir)/man4/dispatch.doc $(srcdir)/man4/guide.doc $(srcdir)/man4/types.doc \
+$(srcdir)/man4/notes.doc $(srcdir)/man4/cdl.doc $(srcdir)/man4/architecture.doc $(srcdir)/man4/internal.doc"
 fi
 
 # If we have doxygen, and it's enabled, then process the file.
