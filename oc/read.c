@@ -30,7 +30,7 @@ static int geterror(CURLcode cstat, int stat);
 int
 readDDS(OCstate* state, OCtree* tree)
 {
-    int stat;
+    int stat = OC_NOERR;
     long lastmodified = -1;
 
 
@@ -75,7 +75,7 @@ char* ocdxdextension[] ={
 static int
 readpacket(OCstate* state, OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 {
-   int stat;
+   int stat = OC_NOERR;
    int fileprotocol = 0;
    char* suffix = ocdxdextension[dxd];
    char* fetchurl = NULL;
@@ -153,7 +153,7 @@ readDATADDS(OCstate* state, OCtree* tree, OCflags flags)
 static int
 readfiletofile(char* path, char* suffix, FILE* stream, unsigned long* sizep)
 {
-    int stat;
+    int stat = OC_NOERR;
     OCbytes* packet = ocbytesnew();
     size_t len;
     /* check for leading file:/// */
@@ -176,7 +176,7 @@ unwind:
 static int
 readfile(char* path, char* suffix, OCbytes* packet)
 {
-    int stat;
+    int stat = OC_NOERR;
     char buf[1024];
     char filename[1024];
     int count,size,fd;
