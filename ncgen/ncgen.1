@@ -799,6 +799,36 @@ and the shorter will be padded to produce this.
 .in +5
 datalist: var={"1","t","w","o","\\0"}, {"t","h","r","e","e"};
 .in -5
+.LP
+Consider an even more complicated case.        
+.in +5
+.nf
+variables: char var(u,u2,u3);
+datalist: var={{"1", "two"}}, {{"three"},{"four","xy"}};
+.fi
+.in -5
+In this case u again will have the effective length of two.
+The u2 dimensions will have a size = max(1,2) = 2;
+Within each instance of u2, the rules above will apply, leading to this.
+.in +5
+.nf
+datalist: var={{"1","t","w","o"}}, {{"t","h","r","e","e"},{"f","o","u","r","x","y"}};
+.fi
+.in -5
+The  effective  size  of u3 will be the max of the two instance lengths
+(six in this case) and the shorter ones will be padded to produce this.
+.in +5
+.nf
+datalist: var={{"1","t","w","o","\0","\0"}}, {{"t","h","r","e","e","\0"},{"f","o","u","r","x","y"}};
+.fi
+.in -5
+Note however that the first instance of u2 is less than the max length
+of u2, so we need to add a filler for another instance of u2, producing this.
+.in +5
+.nf
+datalist: var={{"1","t","w","o","\0","\0"},{"\0","\0","\0","\0","\0","\0"}}, {{"t","h","r","e","e","\0"},{"f","o","u","r","x","y"}};
+.fi
+.in -5
 
 .SH BUGS
 .LP

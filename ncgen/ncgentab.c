@@ -1800,7 +1800,7 @@ yyreduce:
 
 /* Line 1806 of yacc.c  */
 #line 210 "ncgen.y"
-    {if (derror_count > 0) exit(6);}
+    {if (error_count > 0) YYABORT;}
     break;
 
   case 7:
@@ -3209,7 +3209,6 @@ void
 parse_init(void)
 {
     int i;
-    derror_count=0;
     opaqueid = 0;
     arrayuid = 0;
     symlist = NULL;

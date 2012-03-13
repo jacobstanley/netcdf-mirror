@@ -207,7 +207,7 @@ Constant       constant;
 ncdesc: NETCDF
 	DATASETID
         rootgroup
-        {if (derror_count > 0) exit(6);}
+        {if (error_count > 0) YYABORT;}
         ;
 
 rootgroup: '{'
@@ -901,7 +901,6 @@ void
 parse_init(void)
 {
     int i;
-    derror_count=0;
     opaqueid = 0;
     arrayuid = 0;
     symlist = NULL;
