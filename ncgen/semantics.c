@@ -888,7 +888,7 @@ thisunlim->name,thisunlim->dim.declsize,xproduct,unlimsize);
 		    length += con->value.stringv.len;
 	            break;
 		default:
-		    semwarn(datalistline(data),"Illegal character constant");	      
+		    semwarn(datalistline(data),"Illegal character constant: %d",con->nctype);
 	        }
 	    }
 	} else { /* Data list should be a list of simple non-char constants */
