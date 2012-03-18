@@ -6,7 +6,7 @@ leakcheck=0
 timing=0
 
 PARAMS="[log]"
-PARAMS="${PARAMS}[show=fetch]"
+#PARAMS="${PARAMS}[show=fetch]"
 
 #OCLOGFILE=/dev/null
 OCLOGFILE="" ; export OCLOGFILE
