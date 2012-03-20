@@ -238,8 +238,12 @@ fill_NC_var(NC *ncp, const NC_var *varp, size_t varsize, size_t recno)
 		const size_t chunksz = MIN(remaining, ncp->chunk);
 		size_t ii;
 
+#ifdef USE_VFS
+		status = ncvfs_read(ncp->nciop,xp,offset,chunksz,NULL);
+#else
 		status = ncp->nciop->get(ncp->nciop, offset, chunksz,
 				 RGN_WRITE, &xp);	
+#endif
 		if(status != NC_NOERR)
 		{
 			return status;
@@ -266,12 +270,11 @@ fill_NC_var(NC *ncp, const NC_var *varp, size_t varsize, size_t recno)
 
 		}
 
+#ifndef USE_VFS
 		status = ncp->nciop->rel(ncp->nciop, offset, RGN_MODIFIED);
-
 		if(status != NC_NOERR)
-		{
 			break;
-		}
+#endif
 
 		remaining -= chunksz;
 		if(remaining == 0)
@@ -360,12 +363,18 @@ NCtouchlast(NC *ncp, const NC_var *const *varpp, size_t recno)
 		void *xp;
 
 
+#ifdef USE_VFS
+		status = ncvfs_read(ncp->nciop,xp,offset,varp->xsz,NULL);
+#else
 		status = ncp->nciop->get(ncp->nciop, offset, varp->xsz,
 				 RGN_WRITE, &xp);	
+#endif
 		if(status != NC_NOERR)
 			return status;
 		(void)memset(xp, 0, varp->xsz);
+#ifndef USE_VFS
 		status = ncp->nciop->rel(ncp->nciop, offset, RGN_MODIFIED);
+#endif
 	}
 	return status;
 }
@@ -671,8 +680,12 @@ putNCvx_$1_$2(NC *ncp, const NC_var *varp,
 		size_t extent = MIN(remaining, ncp->chunk);
 		size_t nput = ncx_howmany(varp->type, extent);
 
+#ifdef USE_VFS
+		int lstatus = ncvfs_read(ncp->nciop,xp,offset,extent,NULL);
+#else
 		int lstatus = ncp->nciop->get(ncp->nciop, offset, extent,
 				 RGN_WRITE, &xp);	
+#endif
 		if(lstatus != NC_NOERR)
 			return lstatus;
 		
@@ -683,8 +696,10 @@ putNCvx_$1_$2(NC *ncp, const NC_var *varp,
 			status = lstatus;
 		}
 
+#ifndef USE_VFS
 		(void) ncp->nciop->rel(ncp->nciop, offset,
 				 RGN_MODIFIED);	
+#endif
 
 		remaining -= extent;
 		if(remaining == 0)
@@ -778,8 +793,12 @@ getNCvx_$1_$2(const NC *ncp, const NC_var *varp,
 		size_t extent = MIN(remaining, ncp->chunk);
 		size_t nget = ncx_howmany(varp->type, extent);
 
+#ifdef USE_VFS
+		int lstatus = ncvfs_read(ncp->nciop,(void*)xp,offset,extent,NULL);
+#else
 		int lstatus = ncp->nciop->get(ncp->nciop, offset, extent,
 				 0, (void **)&xp);	/* cast away const */
+#endif
 		if(lstatus != NC_NOERR)
 			return lstatus;
 		
@@ -787,7 +806,9 @@ getNCvx_$1_$2(const NC *ncp, const NC_var *varp,
 		if(lstatus != NC_NOERR && status == NC_NOERR)
 			status = lstatus;
 
+#ifndef USE_VFS
 		(void) ncp->nciop->rel(ncp->nciop, offset, 0);	
+#endif
 
 		remaining -= extent;
 		if(remaining == 0)

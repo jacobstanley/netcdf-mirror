@@ -854,7 +854,7 @@ fprintf(stderr, "\tncio_px_move small\n");
 	if(to > from)
 		(void) memmove(base + diff, base, nbytes); 
 	else
-		(void) memmove(base, base + diff, nbytes); 
+v		(void) memmove(base, base + diff, nbytes); 
 		
 	(void) px_rel(pxp, lower, RGN_MODIFIED);
 

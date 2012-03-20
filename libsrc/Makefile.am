@@ -14,13 +14,19 @@ libnetcdf3_la_CPPFLAGS += -DDLL_EXPORT
 endif # BUILD_DLL
 
 # These files comprise the netCDF-3 classic library code.
-libnetcdf3_la_SOURCES = v1hpg.c onstack.h                             	\
+libnetcdf3_la_SOURCES = onstack.h                             	\
 nclistmgr.c putget.c attr.c nc3dispatch.c nc.c var.c dim.c ncx.c	\
 ncx.h lookup3.c pstdint.h
 
-if USE_NEWIO
-libnetcdf3_la_SOURCES += ncstdio.h ncstdio.h ncFile.c
-else !USE_NEWIO
+if !USE_VFS
+libnetcdf3_la_SOURCES += v1hpg.c
+else
+libnetcdf3_la_SOURCES += v1hvfs.c
+endif
+
+if USE_VFS
+libnetcdf3_la_SOURCES += ncvfs.h ncvfs.c ncFile.c
+else !USE_VFS
 # Does the user want to use ffio, a replacement for posixio for Cray
 # computers?
 if USE_FFIO
@@ -28,7 +34,7 @@ libnetcdf3_la_SOURCES += ffio.c
 else !USE_FFIO
 libnetcdf3_la_SOURCES += posixio.c
 endif !USE_FFIO
-endif !USE_NEWIO
+endif !USE_VFS
 
 noinst_LTLIBRARIES = libnetcdf3.la
 
@@ -62,3 +68,10 @@ netcdf.3: $(top_srcdir)/man4/netcdf.m4
 	m4 $(M4FLAGS) $(ARGS_MANPAGE) $? >$@  || rm $@
 
 
+# Include temporary test for VFS to avoid having to do all of e.g nctest
+
+LDADD = ${top_builddir}/liblib/libnetcdf.la 
+AM_CPPFLAGS += -I$(top_builddir)/liblib
+
+TESTS = tst_vfs
+check_PROGRAMS = $(TESTS)
