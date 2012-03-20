@@ -7,6 +7,8 @@
 #ifndef _NCX_H_
 #define _NCX_H_
 
+#include "ncdispatch.h"
+
 /*
  * An external data representation interface.
 
@@ -23,14 +25,12 @@
  * 
  */
 
-#include "config.h" /* output of 'configure' */
+#include <config.h> /* output of 'configure' */
 #include "rnd.h"
 #include <stddef.h> /* size_t */
 #include <errno.h>
 #include <sys/types.h> /* off_t */
-#include "ncdispatch.h"
-#include "ncvfs.h"
-
+#include <ncdispatch.h>
 #define longlong long long
 
 #if defined(_CRAY) && !defined(_CRAYIEEE) && !defined(__crayx1)
@@ -744,9 +744,5 @@ extern int
 ncx_putn_void(void **xpp, size_t nchars, const void *vp);
 extern int
 ncx_pad_putn_void(void **xpp, size_t nchars, const void *vp);
-
-#ifdef USE_VFS
-extern int nc_padfile(ncvfs* filep, off_t newsize);
-#endif
 
 #endif /* _NCX_H_ */

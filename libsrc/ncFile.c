@@ -3,46 +3,36 @@
  *	See netcdf/COPYRIGHT file for copying and redistribution conditions.
  */
 
-#include "config.h"
-
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include "netcdf.h"
-#include "nc.h"
-#include "ncvfs.h"
 
 /*
-Implement the ncvfs.h interface using unix stdio.h
+Implement the ncstdio.h interface using unix stdio.h
 */
 
 /* Forward */
-static int ncFile_read(ncvfs*,void*,const off_t, const size_t,size_t*);
-static int ncFile_write(ncvfs*,const void*,const off_t, const size_t,size_t*);
-static int ncFile_free(ncvfs*);
-static int ncFile_close(ncvfs*,int);
-static int ncFile_flush(ncvfs*);
-static int ncFile_seek(ncvfs*,off_t,int,off_t*);
-static int ncFile_sync(ncvfs*);
-static int ncFile_uid(ncvfs*,int*);
+static int NCFile_read(ncstdio*,void*,const size_t,size_t*);
+static int NCFile_write(ncstdio*,const void*,const size_t,size_t*);
+static int NCFile_free(ncstdio*);
+static int NCFile_close(ncstdio*,int);
+static int NCFile_flush(ncstdio*)
+static int NCFile_seek(ncstdio*,off_t);
+static int NCFile_sync(ncstdio*,off_t);
+static int NCFile_uid(ncstdio*,int*);
 
 /* Define the stdio.h base operators */
 
 
-struct ncvfs_ops ncFile_ops = {
-ncFile_read,
-ncFile_write,
-ncFile_free,
-ncFile_close,
-ncFile_flush,
-ncFile_seek,
-ncFile_sync,
-ncFile_uid
+struct NCFile_ops NCFile_ops = {
+NCFile_read,
+NCFile_write,
+NCFile_free,
+NCFile_close,
+NCFile_flush,
+NCFile_seek,
+NCFile_sync,
+NCFile_uid
 };
 
 /* In order to implement the close with delete, we
@@ -50,11 +40,11 @@ ncFile_uid
 */
 struct ncFileState {
     char* path;
-    FILE* file;
+    File* file;
 };
 
-static struct ncFileState*
-getstate(ncvfs* iop)
+static struct ncFileState
+getState(ncstdio* iop)
 {
     if(iop != NULL) {
 	if(iop->state != NULL) {
@@ -65,23 +55,21 @@ getstate(ncvfs* iop)
 }
 
 int
-ncFile_create(const char *path, int ioflags, ncvfs** filepp)
+ncFile_create(const char *path, int ioflags, ncstdio** filepp)
 {
-    ncvfs* filep;
-    FILE* f;
+    ncstdio* filep;
+    File* f;
     struct ncFileState* state;
 
-    if(path == NULL || strlen(path) == 0)
-	return NC_EINVAL;
     f = fopen(path,"w+");
     if(f == NULL)
 	return errno;
-    filep = (ncvfs*)calloc(sizeof(ncvfs),1);
+    filep = (ncstdio*)calloc(sizeof(ncstdio),1);
     if(filep == NULL) {fclose(f); return NC_ENOMEM;}
-    state = (struct ncFileState*)calloc(sizeof(struct ncFileState),1);
+    state = (ncstdio*)calloc(sizeof(ncFileState),1);
     if(state == NULL) {fclose(f); free(filep); return NC_ENOMEM;}
-    filep->ops = &ncFile_ops;
-    filep->ioflags = (ioflags|NC_WRITE);
+    filep->ops = &NCFILE_ops;
+    filep->ioflags = ioflags;
     filep->state = (void*)state;
 	state->path = strdup(path);
 	state->file = f;
@@ -90,24 +78,23 @@ ncFile_create(const char *path, int ioflags, ncvfs** filepp)
 }
 
 int
-ncFile_open(const char *path, int ioflags, ncvfs** filepp)
+ncFile_open(const char *path, int ioflags, ncstdio** filepp)
 {
-    ncvfs* filep;
-    FILE* f;
-    struct ncFileState* state;
+    ncstdio* filep;
+    File* f;
 
-    if(fIsSet(ioflags,NC_WRITE))
-        f = fopen(path,"w+");
-    else
+    if(fIsSet(ioflags,NC_NOCLOBBER))
         f = fopen(path,"r");
+    else
+        f = fopen(path,"w+");
     if(f == NULL)
 	return errno;
 
-    filep = (ncvfs*)calloc(sizeof(ncvfs),1);
+    filep = (ncstdio*)calloc(sizeof(ncstdio),1);
     if(filep == NULL) {fclose(f); return NC_ENOMEM;}
-    state = (struct ncFileState*)calloc(sizeof(struct ncFileState),1);
+    state = (ncstdio*)calloc(sizeof(ncFileState),1);
     if(state == NULL) {fclose(f); free(filep); return NC_ENOMEM;}
-    filep->ops = &ncFile_ops;
+    filep->ops = &NCFILE_ops;
     filep->ioflags = ioflags;
     filep->state = (void*)state;
 	state->path = strdup(path);
@@ -117,11 +104,11 @@ ncFile_open(const char *path, int ioflags, ncvfs** filepp)
 }
 
 static int 
-ncFile_close(ncvfs* filep, int delfile)
+NCFile_close(ncstdio* filep, int delfile)
 {
     struct ncFileState* state;
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL || state->file == NULL) return NC_NOERR;
     fclose(state->file);
     state->file = NULL;
@@ -131,11 +118,11 @@ ncFile_close(ncvfs* filep, int delfile)
 }
 
 static int 
-ncFile_free(ncvfs* filep)
+NCFile_free(ncstdio* filep)
 {
     struct ncFileState* state;
     if(filep == NULL) return NC_NOERR;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state != NULL) {
 	if(state->file != NULL) return NC_EINVAL;
 	if(state->path != NULL)
@@ -147,11 +134,11 @@ ncFile_free(ncvfs* filep)
 }
 
 static int
-ncFile_flush(ncvfs* filep)
+NCFile_flush(ncstdio* filep);
 {
-    struct ncFileState* state;
+    File* state;
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL) return NC_EINVAL;
     if(state->file == NULL) return NC_EINVAL;
     fflush(state->file);	
@@ -159,14 +146,14 @@ ncFile_flush(ncvfs* filep)
 }
 
 static int
-ncFile_sync(ncvfs* filep)
+NCFile_sync(ncstdio* filep);
 {
-    struct ncFileState* state;
+    File* state;
 #ifdef USE_FSYNC
     int fd;
 #endif
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL) return NC_EINVAL;
     if(state->file == NULL) return NC_EINVAL;
 #ifdef HAVE_FSYNC
@@ -183,59 +170,49 @@ ncFile_sync(ncvfs* filep)
 }
 
 static int
-ncFile_seek(ncvfs* filep, off_t pos, int whence, off_t* oldpos)
+NCFile_seek(ncstdio* filep, off_t pos);
 {
     struct ncFileState* state;
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL) return NC_EINVAL;
     if(state->file == NULL) return NC_EINVAL;
-#ifdef HAVE_FTELLO
-    if(oldpos) *oldpos = (off_t)ftello(state->file);
-#else
-    if(oldpos) *oldpos = (off_t)ftell(state->file);
-#endif
-    if(!fseek(state->file,pos,whence))
-	return errno;
+    if(!fseek(state->file,pos)) return (errno > 0 ?errno : EINVAL);
     return NC_NOERR;
 }
 
 static int
-ncFile_read(ncvfs* filep, void* memory, const off_t offset, const size_t size, size_t* actualp)
+NCFile_read(ncstdio* filep, void* memory, const size_t size, size_t* actualp);
 {
     struct ncFileState* state;
     size_t actual;    
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL || state->file == NULL) return NC_EINVAL;
-    if(fseek(state->file,offset,SEEK_SET) < 0)
-	return errno;
     actual = fread(memory,1,size,state->file);
     if(actualp) *actualp = actual;    
     return (actual < size ? NC_EIO : NC_NOERR);
 }
 
 static int
-ncFile_write(ncvfs* filep, const void* memory, const off_t offset, const size_t size, size_t* actualp)
+NCFile_write(ncstdio* filep, const void* memory, const size_t size, size_t* actual);
 {
     struct ncFileState* state;
     size_t actual;    
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL || state->file == NULL) return NC_EINVAL;
-    if(fseek(state->file,offset,SEEK_SET) < 0)
-	return errno;
     actual = fwrite(memory,1,size,state->file);
     if(actualp) *actualp = actual;    
     return (actual < size ? NC_EIO : NC_NOERR);
 }
 
 static int 
-ncFile_uid(ncvfs* filep, int* idp)
+NCFile_uid(ncstdio* filep, int* idp)
 {
     struct ncFileState* state;
     if(filep == NULL) return NC_EINVAL;
-    state = getstate(filep);
+    state = (struct ncFileState*)filep->state;
     if(state == NULL || state->file == NULL) return NC_EINVAL;
     if(idp) *idp = fileno(state->file);
     return NC_NOERR;

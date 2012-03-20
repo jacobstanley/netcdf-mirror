@@ -5,8 +5,8 @@ if test $# != 0 ; then
 cmds=$@
 fi
 
-#HDF5=1
-#DAP=1
+HDF5=1
+DAP=1
 #CDMR=1
 #RPC=1
 #PGI=1
@@ -129,7 +129,6 @@ FLAGS="$FLAGS --disable-pnetcdf"
 #FLAGS="$FLAGS --enable-benchmarks"
 FLAGS="$FLAGS --enable-extra-tests"
 #FLAGS="$FLAGS --enable-logging"
-FLAGS="$FLAGS --enable-vfs"
 
 FLAGS="$FLAGS --disable-shared"
 #FLAGS="$FLAGS --enable-shared"

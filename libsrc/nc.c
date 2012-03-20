@@ -14,21 +14,12 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 
 #include "nc.h"
 #include "ncdispatch.h"
 #include "nc3dispatch.h"
 #include "rnd.h"
 #include "ncx.h"
-#ifdef USE_VFS
-#include "ncvfs.h"
-#endif
 
 /* This is the default create format for nc_create and nc__create. */
 int default_create_format = NC_FORMAT_CLASSIC;
@@ -38,11 +29,6 @@ int default_create_format = NC_FORMAT_CLASSIC;
 #define VER_CLASSIC 1
 #define VER_64BIT_OFFSET 2
 #define VER_HDF5 3
-
-#define NC_NUMRECS_OFFSET 4
-#define NC_NUMRECS_EXTENT 4
-
-#define MAX_INT 2147483647
 
 int
 NC_check_id(int ncid, NC **ncpp)
@@ -290,18 +276,17 @@ int
 read_numrecs(NC *ncp)
 {
 	int status = NC_NOERR;
+	const void *xp = NULL;
 	size_t nrecs = NC_get_numrecs(ncp);
-#ifdef USE_VFS
-	const char xpp[NC_NUMRECS_EXTENT];
-	const void* xp = (void*)xpp;
-#else
-	const void* xp = NULL;
-#endif
 
 	assert(!NC_indef(ncp));
 
-#ifdef USE_VFS
-	status = ncvfs_read(ncp->nciop,(void*)xp,0,NC_NUMRECS_EXTENT,NULL);
+#define NC_NUMRECS_OFFSET 4
+#define NC_NUMRECS_EXTENT 4
+#ifdef USE_NEWIO
+	if(!(status = ncstdio_seek(ncp->nciop,NC_NUMRECS_OFFSET))
+	    return status;
+	status = ncstdio_read(ncp->nciop,NC_NUMRECS_EXTENT, (void*)&xp);
 #else
 	status = ncp->nciop->get(ncp->nciop,
 		 NC_NUMRECS_OFFSET, NC_NUMRECS_EXTENT, 0, (void **)&xp);
@@ -310,11 +295,12 @@ read_numrecs(NC *ncp)
 	if(status != NC_NOERR)
 		return status;
 
-
 	status = ncx_get_size_t(&xp, &nrecs);
-#ifndef USE_VFS
+
+#ifndef USE_NEWIO
 	(void) ncp->nciop->rel(ncp->nciop, NC_NUMRECS_OFFSET, 0);
 #endif
+
 	if(status == NC_NOERR)
 	{
 		NC_set_numrecs(ncp, nrecs);
@@ -333,17 +319,15 @@ int
 write_numrecs(NC *ncp)
 {
 	int status = NC_NOERR;
-#ifdef USE_VFS
-	char* xpp[NC_NUMRECS_EXTENT];
-	void* xp = (void*)xpp;
-#else
 	void *xp = NULL;
-#endif
+
 	assert(!NC_readonly(ncp));
 	assert(!NC_indef(ncp));
 
-#ifdef USE_VFS
-	status = ncvfs_read(ncp->nciop,(void*)xp, NC_NUMRECS_OFFSET,NC_NUMRECS_EXTENT,NULL);
+#ifdef USE_NEWIO
+	if(!(status = ncstdio_seek(ncp->nciop,NC_NUMRECS_OFFSET))
+	    return status;
+	status = ncstdio_read(ncp->nciop,NC_NUMRECS_EXTENT, (void*)&xp);
 #else
 	status = ncp->nciop->get(ncp->nciop,
 		 NC_NUMRECS_OFFSET, NC_NUMRECS_EXTENT, RGN_WRITE, &xp);
@@ -356,7 +340,7 @@ write_numrecs(NC *ncp)
 		status = ncx_put_size_t(&xp, &nrecs);
 	}
 
-#ifndef USE_VFS
+#ifndef USE_NEWIO
 	(void) ncp->nciop->rel(ncp->nciop, NC_NUMRECS_OFFSET, RGN_MODIFIED);
 #endif
 	if(status == NC_NOERR)
@@ -535,30 +519,7 @@ fill_added(NC *gnu, NC *old)
 }
 
 
-#ifdef USE_VFS
-static int
-move(ncvfs* iop, off_t to, off_t from, size_t nbytes)
-{
-    int status = ENOERR;
-    char *base = NULL;
-
-    if(to == from)
-        return ENOERR; /* NOOP */
-
-    base = (char*)malloc(nbytes);
-    if(base == NULL)
-	return NC_ENOMEM;
-    status = ncvfs_read(iop, (void*)base, from, nbytes, NULL);
-    if(status != ENOERR) goto fail;
-    status = ncvfs_write(iop,(void*)base,to, nbytes,NULL);
-    if(status != ENOERR) goto fail;
-    return status;
-fail:
-    if(base != NULL) free(base);
-    return status;
-}
-#endif /*USE_VFS*/
-
+#ifndef USE_NEWIO
 /*
  * Move the records "out". 
  * Fill as needed.
@@ -601,12 +562,8 @@ move_recs_r(NC *gnu, NC *old)
 
 		assert(gnu_off > old_off);
 
-#ifdef USE_VFS
-		status = move(gnu->nciop,gnu_off,old_off,old_varp->len);
-#else
 		status = gnu->nciop->move(gnu->nciop, gnu_off, old_off,
 			 old_varp->len, 0);
-#endif
 		if(status != NC_NOERR)
 			return status;
 		
@@ -655,12 +612,9 @@ move_vars_r(NC *gnu, NC *old)
 
 		assert(gnu_off > old_off);
 
-#ifdef USE_VFS
-		status = move(gnu->nciop,gnu_off,old_off,old_varp->len);
-#else
 		status = gnu->nciop->move(gnu->nciop, gnu_off, old_off,
 			 old_varp->len, 0);
-#endif
+
 		if(status != NC_NOERR)
 			return status;
 		
@@ -668,6 +622,7 @@ move_vars_r(NC *gnu, NC *old)
 
 	return NC_NOERR;
 }
+#endif /*!NEWIO*/
 
 /*
  * Given a valid ncp, return NC_EVARSIZE if any variable has a bad len 
@@ -842,8 +797,8 @@ NC_endef(NC *ncp,
 
 	fClr(ncp->flags, NC_CREAT | NC_INDEF);
 
-#ifdef USE_VFS
-	return ncvfs_sync(ncp->nciop);
+#ifdef USE_NEWIO
+	return ncstdio_sync(ncp->nciop);
 #else
 	return ncp->nciop->sync(ncp->nciop);
 #endif
@@ -945,28 +900,10 @@ NC3_create(const char *path, int ioflags,
 	int status;
 	void *xp = NULL;
 	int sizeof_off_t = 0;
-#ifdef USE_VFS
-	size_t chunksizehint = 0;
-#endif
 
 #if ALWAYS_NC_SHARE /* DEBUG */
 	fSet(ioflags, NC_SHARE);
 #endif
-
-#ifdef USE_VFS
-	/* need to define a chunksize */
-        chunksizehint = 0;
-	if(chunksizehintp == NULL || *chunksizehintp == 0) {
-#ifdef HAVE_STAT
-	    struct stat sb;
-	    if(stat(path, &sb) == 0)
-		chunksizehint = sb.st_blksize;
-#endif
-	    if(chunksizehint == 0)
-	        chunksizehint = 8192; /*guess*/
-	    chunksizehintp = &chunksizehint;
-	}	    	    
-#endif /*USE_VFS*/
 
 	ncp = new_NC(chunksizehintp,dispatch);
 	if(ncp == NULL)
@@ -999,9 +936,8 @@ NC3_create(const char *path, int ioflags,
 
 	assert(ncp->xsz == ncx_len_NC(ncp,sizeof_off_t));
 	
-#ifdef USE_VFS
+#ifdef USE_NEWIO
 	status = ncFile_create(path,ioflags,&ncp->nciop);
-	if(status == EEXIST) {status = NC_EEXIST; goto unwind_alloc;}
 #else
 	status = ncio_create(path, ioflags,
 		initialsz,
@@ -1018,7 +954,6 @@ NC3_create(const char *path, int ioflags,
 
 	fSet(ncp->flags, NC_CREAT);
 
-#ifndef USE_VFS
 	if(fIsSet(ncp->nciop->ioflags, NC_SHARE))
 	{
 		/*
@@ -1030,22 +965,18 @@ NC3_create(const char *path, int ioflags,
 		 */
 		fSet(ncp->flags, NC_NSYNC);
 	}
-#endif
 
-#ifdef USE_VFS
-	status = ncx_put_NC(ncp, NULL, sizeof_off_t, ncp->xsz);
-#else
 	status = ncx_put_NC(ncp, &xp, sizeof_off_t, ncp->xsz);
-#endif
 	if(status != NC_NOERR)
 		goto unwind_ioc;
+
 	add_to_NCList(ncp);
 
 	if(chunksizehintp != NULL)
 		*chunksizehintp = ncp->chunk;
 
-#ifdef USE_VFS
-	ncvfs_uid(ncp->nciop,&ncp->int_ncid);
+#ifdef USE_NEWIO
+	ncstdio_uid(ncp->nciop,&ncp->int_ncid);
 #else
 	ncp->int_ncid = ncp->nciop->fd;
 #endif
@@ -1055,15 +986,14 @@ NC3_create(const char *path, int ioflags,
 	return NC_NOERR;
 
 unwind_ioc:
-#ifdef USE_VFS
-	ncvfs_close(ncp->nciop,1); /* delete */
+#ifdef USE_NEWIO
+	ncstdio_close(ncdp->nciop,1); /* delete */
 #else
 	(void) ncio_close(ncp->nciop, 1); /* N.B.: unlink */
 	ncp->nciop = NULL;
 #endif
 	/*FALLTHRU*/
 unwind_alloc:
-	if(xp != NULL) free(xp);
 	free_NC(ncp);
 	return status;
 }
@@ -1122,7 +1052,7 @@ NC3_open(const char * path, int ioflags,
 		return NC_EINVAL;
 #endif
 
-#ifdef USE_VFS
+#ifdef USE_NEWIO
 	status = ncFile_open(path,ioflags,&ncp->nciop);
 #else
 	status = ncio_open(path, ioflags,
@@ -1156,8 +1086,8 @@ NC3_open(const char * path, int ioflags,
 		*chunksizehintp = ncp->chunk;
 
 
-#ifdef USE_VFS
-	ncvfs_uid(ncp->nciop,&ncp->int_ncid);
+#ifdef USE_NEWIO
+	ncstdio_uid(ncp->nciop,&ncp->int_ncid);
 #else
 	ncp->int_ncid = ncp->nciop->fd;
 #endif
@@ -1167,8 +1097,8 @@ NC3_open(const char * path, int ioflags,
 	return NC_NOERR;
 
 unwind_ioc:
-#ifdef USE_VFS
-	(void)ncvfs_close(ncp->nciop,0);
+#ifdef USE_NEWIO
+	(void)ncstdio_close(ncp->nciop,0);
 #else
 	(void) ncio_close(ncp->nciop, 0);
 	ncp->nciop = NULL;
@@ -1221,8 +1151,8 @@ NC3_close(int ncid)
 	{
 		status = NC_sync(ncp);
 		/* flush buffers before any filesize comparisons */
-#ifdef USE_VFS
-		(void)ncvfs_sync(ncp->nciop);
+#ifdef USE_NEWIO
+		(void)ncstdio_sync(ncp->nciop);
 #else
 		(void) ncp->nciop->sync(ncp->nciop);
 #endif
@@ -1232,34 +1162,31 @@ NC3_close(int ncid)
 	 * If file opened for writing and filesize is less than
 	 * what it should be (due to previous use of NOFILL mode),
 	 * pad it to correct size, as reported by NC_calcsize().
-	 * If the file is read-only then make no attempt to pad.
 	 */
-	if (status == ENOERR && !NC_readonly(ncp)) {
+	if (status == ENOERR) {
+	    off_t filesize; 	/* current size of open file */
 	    off_t calcsize;	/* calculated file size, from header */
-#ifndef USE_VFS
-            off_t filesize; 	/* current size of open file */
+#ifdef USE_NEWIO
+#else
+	    status = ncio_filesize(ncp->nciop, &filesize);
 #endif
+	    if(status != ENOERR)
+		return status;
 	    status = NC_calcsize(ncp, &calcsize);
 	    if(status != NC_NOERR)
 		return status;
-#ifdef USE_VFS
-	    status = nc_padfile(ncp->nciop, calcsize);
-	    if(status != NC_NOERR)
-		return status;
-#else
-	    status = ncio_filesize(ncp->nciop, &filesize);
-	    if(status != ENOERR)
-	        return status;
 	    if(filesize < calcsize && !NC_readonly(ncp)) {
-   	        status = ncio_pad_length(ncp->nciop, calcsize);
+#ifdef USE_NEWIO
+#else
+		status = ncio_pad_length(ncp->nciop, calcsize);
+#endif
 		if(status != ENOERR)
 		    return status;
-    	    }
-#endif
+	    }
 	}
 
-#ifdef USE_VFS
-	(void)ncvfs_close(ncp->nciop,0);
+#ifdef USE_NEWIO
+	(void*)ncstdio_close(ncp->nciop,0);
 #else
 	(void) ncio_close(ncp->nciop, 0);
 	ncp->nciop = NULL;
@@ -1307,8 +1234,8 @@ NC3_abort(int ncid)
 	}
 
 
-#ifdef USE_VFS
-	(void)ncvfs_close(ncp->nciop,doUnlink);
+#ifdef USE_NEWIO
+	(void)ncstdio_close(ncp->nciop,doUnlink);
 #else
 	(void) ncio_close(ncp->nciop, doUnlink);
 	ncp->nciop = NULL;
@@ -1422,8 +1349,8 @@ NC3_sync(int ncid)
 	if(status != NC_NOERR)
 		return status;
 
-#ifdef USE_VFS
-	status = ncvfs_sync(ncp->nciop);
+#ifdef USE_NEWIO
+	status = ncstdio_sync(ncp->nciop);
 #else
 	status = ncp->nciop->sync(ncp->nciop);
 #endif
@@ -1646,7 +1573,7 @@ nc_delete_mp(const char * path, int basepe)
 		return NC_EINVAL;
 #endif
 
-#ifdef USE_VFS
+#ifdef USE_NEWIO
 	status = ncFile_open(path,NC_NOWRITE,&ncp->nciop);
 #else
 	status = ncio_open(path, NC_NOWRITE,
@@ -1663,8 +1590,8 @@ nc_delete_mp(const char * path, int basepe)
 	{
 		/* Not a netcdf file, don't delete */
 		/* ??? is this the right semantic? what if it was just too big? */
-#ifdef USE_VFS
-	status = ncvfs_close(ncp->nciop,0);
+#ifdef USE_NEWIO
+	status = ncstdio_close(ncp->nciop,0);
 #else
 		(void) ncio_close(ncp->nciop, 0);
 	ncp->nciop = NULL;
@@ -1672,8 +1599,8 @@ nc_delete_mp(const char * path, int basepe)
 	}
 	else
 	{
-#ifdef USE_VFS
-	status = ncvfs_close(ncp->nciop,1);
+#ifdef USE_NEWIO
+	status = ncstdio_close(ncp->nciop,1);
 #else
 		/* ncio_close does the unlink */
 		status = ncio_close(ncp->nciop, 1); /* ncio_close does the unlink */
@@ -1691,28 +1618,3 @@ nc_delete(const char * path)
 {
         return nc_delete_mp(path, 0);
 }
-
-
-#ifdef USE_VFS
-int 
-nc_padfile(ncvfs* filep, off_t newsize)
-{
-    off_t pos = 0;
-    char zero[1];
-    int status = NC_NOERR;
-
-    if(filep == NULL) return NC_EINVAL;
-    zero[0] = 0;
-    status = ncvfs_seek(filep,0,SEEK_CUR,&pos); /* save current position */
-    if(status != NC_NOERR)
-	return status;
-    status = ncvfs_write(filep,zero,newsize-1,1,NULL);
-    if(status != NC_NOERR)
-	return status;
-    status = ncvfs_seek(filep,pos,SEEK_SET,NULL); /* restore position */
-    if(status != NC_NOERR)
-	return status;
-
-    return NC_NOERR;
-}
-#endif /*USE_VFS*/

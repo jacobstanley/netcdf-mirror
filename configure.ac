@@ -213,7 +213,7 @@ test "x$enable_cdmremote" = xyes || enable_cdmremote=no
 if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
 AC_MSG_RESULT($enable_cdmremote)
 
-# Capture the state of the --enable-dap flag
+## Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
 AC_ARG_ENABLE([dap],
                  [AS_HELP_STRING([--disable-dap],
@@ -221,33 +221,29 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-# Capture the state of the --enable-rpc flag
-AC_MSG_CHECKING([whether rpc client and server are to be built])
-AC_ARG_ENABLE([rpc],
-                 [AS_HELP_STRING([--enable-rpc],
-                                 [build with rpc client and server support.])])
-test "x$enable_rpc" = xyes || enable_rpc=no
-AC_MSG_RESULT($enable_rpc)
+# OC now has its own version of rpc (really xdr), so no longer need the library
+## Capture the state of the --enable-rpc flag
+#AC_MSG_CHECKING([whether rpc client and server are to be built])
+#AC_ARG_ENABLE([rpc],
+#                 [AS_HELP_STRING([--enable-rpc],
+#                                 [build with rpc client and server support.])])
+#test "x$enable_rpc" = xyes || enable_rpc=no
+#AC_MSG_RESULT($enable_rpc)
 
-# Curl support is required if these flags are set:
+# Curl support is required if and only if any of these flags are set:
 # 1. --enable-dap
 # 2. --enable-cdmremote
 # 3. --enable-rpc
 
-# If --disable-dap && --disable cdmremote && --disable-rpc,
-# then libcurl is not required
 if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = "xyes" -o "x$enable_rpc" = "xyes" ; then
 require_curl=yes
 else
 require_curl=no
 fi
 
-# Do a lib test for curl
-AC_CHECK_LIB([curl], [curl_easy_setopt])
-found_curl=no
-if test "x$ac_cv_lib_curl_curl_easy_setopt" = xyes ; then
-found_curl=yes
-fi
+# See if the user provided us with a curl library
+# Do an initial lib test for curl, but suppress the default action
+AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
 
 # If curl is required but there is no curl, then complain
 if test $require_curl = yes -a $found_curl = no ; then
@@ -255,7 +251,13 @@ if test $require_curl = yes -a $found_curl = no ; then
   enable_dap=no
   enable_cdmremote=no
   enable_rpc=no
+elif test $require_curl = yes -a $found_curl = yes ; then
+  # Redo the check lib to actually add -lcurl
+  AC_CHECK_LIB([curl], [curl_easy_setopt])
 fi
+
+#AC_SEARCH_LIBS([curl_easy_setopt], [curl], [found_curl=yes],[found_curl=no])
+
 
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
@@ -334,20 +336,15 @@ test "x$enable_ffio" = xyes || enable_ffio=no
 AC_MSG_RESULT($enable_ffio)
 AM_CONDITIONAL(USE_FFIO, [test x$enable_ffio = xyes])
 
-# Does the user want to use the new vfs mechanism?
-AC_MSG_CHECKING([whether VFS module will be used])
-AC_ARG_ENABLE([vfs],
-              [AS_HELP_STRING([--enable-vfs],
-                              [use vfs module])])
-test "x$enable_vfs" = xyes || enable_vfs=no
-AC_MSG_RESULT($enable_vfs)
-if test "x$enable_vfs" = xyes ; then
-AC_DEFINE([USE_VFS], [1], [if true, use the new IO module])
-fi
-AM_CONDITIONAL(USE_VFS, [test "x$enable_vfs" = xyes])
-
-# Desirable for VFS
-AC_CHECK_FUNCS([ftello stat])
+# Does the user want to use the new io mechanism?
+#AC_MSG_CHECKING([whether new IO module will be used])
+#AC_ARG_ENABLE([newio],
+#              [AS_HELP_STRING([--enable-newio],
+#                              [use new io module (not yet implemented)])])
+#test "x$enable_newio" = xyes || enable_newio=no
+#AC_MSG_RESULT($enable_newio)
+enable_newio=no
+AM_CONDITIONAL(USE_NEWIO, [test x$enable_newio = xyes])
 
 # Does the user want to enable the user-provided NEC-SX vectorization
 # patch.

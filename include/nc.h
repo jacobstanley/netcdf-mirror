@@ -284,11 +284,7 @@ struct NC {
 #define NC_HDIRTY 0x80  /* header info has changed */
 /*	NC_NOFILL in netcdf.h, historical interface */
 	int flags;
-#ifdef USE_VFS
-	struct ncvfs* nciop;
-#else
 	ncio *nciop;
-#endif
 	size_t chunk;	/* largest extent this layer will request from ncio->get() */
 	size_t xsz;	/* external size of this header, == var[0].begin */
 	off_t begin_var; /* position of the first (non-record) var */
