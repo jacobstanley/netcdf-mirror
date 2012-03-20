@@ -334,15 +334,20 @@ test "x$enable_ffio" = xyes || enable_ffio=no
 AC_MSG_RESULT($enable_ffio)
 AM_CONDITIONAL(USE_FFIO, [test x$enable_ffio = xyes])
 
-# Does the user want to use the new io mechanism?
-#AC_MSG_CHECKING([whether new IO module will be used])
-#AC_ARG_ENABLE([newio],
-#              [AS_HELP_STRING([--enable-newio],
-#                              [use new io module (not yet implemented)])])
-#test "x$enable_newio" = xyes || enable_newio=no
-#AC_MSG_RESULT($enable_newio)
-enable_newio=no
-AM_CONDITIONAL(USE_NEWIO, [test x$enable_newio = xyes])
+# Does the user want to use the new vfs mechanism?
+AC_MSG_CHECKING([whether VFS module will be used])
+AC_ARG_ENABLE([vfs],
+              [AS_HELP_STRING([--enable-vfs],
+                              [use vfs module])])
+test "x$enable_vfs" = xyes || enable_vfs=no
+AC_MSG_RESULT($enable_vfs)
+if test "x$enable_vfs" = xyes ; then
+AC_DEFINE([USE_VFS], [1], [if true, use the new IO module])
+fi
+AM_CONDITIONAL(USE_VFS, [test "x$enable_vfs" = xyes])
+
+# Desirable for VFS
+AC_CHECK_FUNCS([ftello stat])
 
 # Does the user want to enable the user-provided NEC-SX vectorization
 # patch.
