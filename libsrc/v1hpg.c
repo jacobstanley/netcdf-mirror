@@ -2,6 +2,7 @@
  *	Copyright 1996, University Corporation for Atmospheric Research
  *      See netcdf/COPYRIGHT file for copying and redistribution conditions.
  */
+/* $Id: v1hpg.c,v 1.70 2010/05/26 21:43:34 dmh Exp $ */
 
 #include "config.h"
 #include "nc.h"
@@ -11,10 +12,6 @@
 #include <assert.h>
 #include "rnd.h"
 #include "ncx.h"
-
-/* This file is derived from v1hpg.c, but uses
-   the new VFS module instead of ncio.
-*/
 
 /*
  * This module defines the external representation
@@ -38,27 +35,107 @@
 static const schar ncmagic[] = {'C', 'D', 'F', 0x02};
 static const schar ncmagic1[] = {'C', 'D', 'F', 0x01};
 
+
 /*
  * v1hs == "Version 1 Header Stream"
  *
- * Because of the way that ncio works, we read the whole
- * header into memory
+ * The netcdf file version 1 header is
+ * of unknown and potentially unlimited size.
+ * So, we don't know how much to get() on
+ * the initial read. We build a stream, 'v1hs'
+ * on top of ncio to do the header get.
  */
-
 typedef struct v1hs {
-	ncvfs* nciop;
-	off_t offset;	/* offset in file of the beginning of the header */
-	size_t extent;	/* size of the header */
-        int version;    /* format variant:NC_FORMAT_CLASSIC | NC_FORMAT_64BIT*/
-	void *base;	/* in-memory header */
-	void *pos;	/* current position in header */
-	void *end;	/* end of in-memory header base + extent */
+	ncio *nciop;
+	off_t offset;	/* argument to nciop->get() */
+	size_t extent;	/* argument to nciop->get() */
+	int flags;	/* set to RGN_WRITE for write */
+        int version;    /* format variant: NC_FORMAT_CLASSIC or NC_FORMAT_64BIT */
+	void *base;	/* beginning of current buffer */
+	void *pos;	/* current position in buffer */
+	void *end;	/* end of current buffer = base + extent */
 } v1hs;
+
+
+/*
+ * Release the stream, invalidate buffer
+ */
+static int
+rel_v1hs(v1hs *gsp)
+{
+	int status;
+	if(gsp->offset == OFF_NONE || gsp->base == NULL)
+		return ENOERR;
+	status = gsp->nciop->rel(gsp->nciop, gsp->offset,
+			 gsp->flags == RGN_WRITE ? RGN_MODIFIED : 0);
+	gsp->end = NULL;
+	gsp->pos = NULL;
+	gsp->base = NULL;
+	return status;
+}
+
+
+/*
+ * Release the current chunk and get the next one.
+ * Also used for initialization when gsp->base == NULL.
+ */
+static int
+fault_v1hs(v1hs *gsp, size_t extent)
+{
+	int status;
+
+	if(gsp->base != NULL)
+	{
+		const ptrdiff_t incr = (char *)gsp->pos - (char *)gsp->base;
+		status = rel_v1hs(gsp);
+		if(status)
+			return status;
+		gsp->offset += incr;
+	}
+	
+	if(extent > gsp->extent)
+		gsp->extent = extent;	
+
+	status = gsp->nciop->get(gsp->nciop,
+		 	gsp->offset, gsp->extent,
+			gsp->flags, &gsp->base);
+	if(status)
+		return status;
+
+	gsp->pos = gsp->base;
+	gsp->end = (char *)gsp->base + gsp->extent;
+
+	return ENOERR;
+}
+
+
+/*
+ * Ensure that 'nextread' bytes are available.
+ */
+static int
+check_v1hs(v1hs *gsp, size_t nextread)
+{
+
+#if 0 /* DEBUG */
+fprintf(stderr, "nextread %lu, remaining %lu\n",
+	(unsigned long)nextread,
+	(unsigned long)((char *)gsp->end - (char *)gsp->pos));
+#endif
+
+	if((char *)gsp->pos + nextread <= (char *)gsp->end)
+		return ENOERR;
+	return fault_v1hs(gsp, nextread);
+}
+
+/* End v1hs */
 
 /* Write a size_t to the header */
 static int
 v1h_put_size_t(v1hs *psp, const size_t *sp)
 {
+	int status = check_v1hs(psp, X_SIZEOF_SIZE_T);
+	if(status != ENOERR)
+		return status;
 	return ncx_put_size_t(&psp->pos, sp);
 }
 
@@ -67,6 +144,9 @@ v1h_put_size_t(v1hs *psp, const size_t *sp)
 static int
 v1h_get_size_t(v1hs *gsp, size_t *sp)
 {
+	int status = check_v1hs(gsp, X_SIZEOF_SIZE_T);
+	if(status != ENOERR)
+		return status;
 	return ncx_get_size_t((const void **)(&gsp->pos), sp);
 }
 
@@ -80,6 +160,9 @@ static int
 v1h_put_nc_type(v1hs *psp, const nc_type *typep)
 {
 	const int itype = (int) *typep;
+	int status = check_v1hs(psp, X_SIZEOF_INT);
+	if(status != ENOERR)
+		return status;
 	status =  ncx_put_int_int(psp->pos, &itype);
 	psp->pos = (void *)((char *)psp->pos + X_SIZEOF_INT);
 	return status;
@@ -91,6 +174,9 @@ static int
 v1h_get_nc_type(v1hs *gsp, nc_type *typep)
 {
 	int type = 0;
+	int status = check_v1hs(gsp, X_SIZEOF_INT);
+	if(status != ENOERR)
+		return status;
 	status =  ncx_get_int_int(gsp->pos, &type);
 	gsp->pos = (void *)((char *)gsp->pos + X_SIZEOF_INT);
 	if(status != ENOERR)
@@ -119,6 +205,9 @@ static int
 v1h_put_NCtype(v1hs *psp, NCtype type)
 {
 	const int itype = (int) type;
+	int status = check_v1hs(psp, X_SIZEOF_INT);
+	if(status != ENOERR)
+		return status;
 	status = ncx_put_int_int(psp->pos, &itype);
 	psp->pos = (void *)((char *)psp->pos + X_SIZEOF_INT);
 	return status;
@@ -129,6 +218,9 @@ static int
 v1h_get_NCtype(v1hs *gsp, NCtype *typep)
 {
 	int type = 0;
+	int status = check_v1hs(gsp, X_SIZEOF_INT);
+	if(status != ENOERR)
+		return status;
 	status =  ncx_get_int_int(gsp->pos, &type);
 	gsp->pos = (void *)((char *)gsp->pos + X_SIZEOF_INT);
 	if(status != ENOERR)
@@ -179,6 +271,9 @@ v1h_put_NC_string(v1hs *psp, const NC_string *ncstrp)
 	status = v1h_put_size_t(psp, &ncstrp->nchars);
 	if(status != ENOERR)
 		return status;
+	status = check_v1hs(psp, _RNDUP(ncstrp->nchars, X_ALIGN));
+	if(status != ENOERR)
+		return status;
 	status = ncx_pad_putn_text(&psp->pos, ncstrp->nchars, ncstrp->cp);
 	if(status != ENOERR)
 		return status;
@@ -204,6 +299,18 @@ v1h_get_NC_string(v1hs *gsp, NC_string **ncstrpp)
 	{
 		return NC_ENOMEM;
 	}
+
+
+#if 0
+/* assert(ncstrp->nchars == nchars || ncstrp->nchars - nchars < X_ALIGN); */
+	assert(ncstrp->nchars % X_ALIGN == 0);
+	status = check_v1hs(gsp, ncstrp->nchars);
+#else
+	
+	status = check_v1hs(gsp, _RNDUP(ncstrp->nchars, X_ALIGN));
+#endif
+	if(status != ENOERR)
+		goto unwind_alloc;
 
 	status = ncx_pad_getn_text((const void **)(&gsp->pos),
 		 nchars, ncstrp->cp);
@@ -467,6 +574,10 @@ v1h_put_NC_attrV(v1hs *psp, const NC_attr *attrp)
 	do {
 		nbytes = MIN(perchunk, remaining);
 	
+		status = check_v1hs(psp, nbytes);
+		if(status != ENOERR)
+			return status;
+	
 		(void) memcpy(psp->pos, value, nbytes);
 
 		psp->pos = (void *)((char *)psp->pos + nbytes);
@@ -520,6 +631,10 @@ v1h_get_NC_attrV(v1hs *gsp, NC_attr *attrp)
 
 	do {
 		nget = MIN(perchunk, remaining);
+	
+		status = check_v1hs(gsp, nget);
+		if(status != ENOERR)
+			return status;
 	
 		(void) memcpy(value, gsp->pos, nget);
 
@@ -744,6 +859,9 @@ v1h_put_NC_var(v1hs *psp, const NC_var *varp)
 	if(status != ENOERR)
 		return status;
 
+	status = check_v1hs(psp, ncx_len_int(varp->ndims));
+	if(status != ENOERR)
+		return status;
 	status = ncx_putn_int_int(&psp->pos,
 			varp->ndims, varp->dimids);
 	if(status != ENOERR)
@@ -761,6 +879,9 @@ v1h_put_NC_var(v1hs *psp, const NC_var *varp)
 	if(status != ENOERR)
 		return status;
 
+	status = check_v1hs(psp, psp->version == 1 ? 4 : 8);
+	if(status != ENOERR)
+		 return status;
 	status = ncx_put_off_t(&psp->pos, &varp->begin, psp->version == 1 ? 4 : 8);
 	if(status != ENOERR)
 		return status;
@@ -793,6 +914,9 @@ v1h_get_NC_var(v1hs *gsp, NC_var **varpp)
 		goto unwind_name;
 	}
 
+	status = check_v1hs(gsp, ncx_len_int(ndims));
+	if(status != ENOERR)
+		goto unwind_alloc;
 	status = ncx_getn_int_int((const void **)(&gsp->pos),
 			ndims, varp->dimids);
 	if(status != ENOERR)
@@ -810,6 +934,9 @@ v1h_get_NC_var(v1hs *gsp, NC_var **varpp)
 	if(status != ENOERR)
 		 goto unwind_alloc;
 
+	status = check_v1hs(gsp, gsp->version == 1 ? 4 : 8);
+	if(status != ENOERR)
+		 goto unwind_alloc;
 	status = ncx_get_off_t((const void **)&gsp->pos,
 			       &varp->begin, gsp->version == 1 ? 4 : 8);
 	if(status != ENOERR)
@@ -1051,11 +1178,10 @@ ncx_len_NC(const NC *ncp, size_t sizeof_off_t)
 
 /* Write the file header */
 int
-ncx_put_NC(const NC *ncp, off_t offset, size_t extent)
+ncx_put_NC(const NC *ncp, void **xpp, off_t offset, size_t extent)
 {
 	int status = ENOERR;
 	v1hs ps; /* the get stream */
-	size_t actual;
 
 	assert(ncp != NULL);
 
@@ -1069,19 +1195,43 @@ ncx_put_NC(const NC *ncp, off_t offset, size_t extent)
 	else 
 	  ps.version = 1;
 
-	/* Assume that ncp->xsz is the size of the header on disk */
-	ps.offset = 0;
-	ps.extend = ncp->xsz;
-        ps.base = malloc(ps.extent);
-        if(ps.base == NULL)
-	    return NC_ENOMEM;
-	ps.end = ps.base + ps.extent;
-	ps.pos = 0;
-	status = ncvfs_read(ncp->nciop,ps.base,ps.offset,ps.extent,&actual);
-	if(status != NC_NOERR)
-	    return NC_NOERR;
-	if(actual != ps.extent)
-	    return NC_ENOTNC;	
+	if(xpp == NULL)
+	{
+		/*
+		 * Come up with a reasonable stream read size.
+		 */
+		extent = ncp->xsz;
+		if(extent <= MIN_NC_XSZ)
+		{
+			/* first time read */
+			extent = ncp->chunk;
+			/* Protection for when ncp->chunk is huge;
+			 * no need to read hugely. */
+	      		if(extent > 4096)
+				extent = 4096;
+		}
+		else if(extent > ncp->chunk)
+		{
+			extent = ncp->chunk;
+		}
+		
+		ps.offset = 0;
+		ps.extent = extent;
+		ps.base = NULL;
+		ps.pos = ps.base;
+
+		status = fault_v1hs(&ps, extent);
+		if(status)
+			return status;
+	}
+	else
+	{
+		ps.offset = offset;
+		ps.extent = extent;
+		ps.base = *xpp;
+		ps.pos = ps.base;
+		ps.end = (char *)ps.base + ps.extent;
+	}
 
 	if (ps.version == 2)
 	  status = ncx_putn_schar_schar(&ps.pos, sizeof(ncmagic), ncmagic);
@@ -1141,43 +1291,28 @@ nc_get_NC(NC *ncp)
 		/*
 		 * Come up with a reasonable stream read size.
 		 */
-#ifndef USE_VFS
-	        off_t filesize = 0;
-#endif
+	        off_t filesize;
 		size_t extent = MIN_NC_XSZ;
 		
 		extent = ncp->xsz;
 		if(extent <= MIN_NC_XSZ)
 		{
-#ifdef USE_VFS
-			size_t actual;
-			char checksize[sizeof(ncmagic)];
-			status = ncvfs_read(ncp->nciop, checksize, 0, sizeof(checksize),&actual);
-		        if(status)
-			    return status;
-			if(actual < sizeof(ncmagic)) { /* too small, not netcdf */
-			    status = NC_ENOTNC;
-			    return status;
-			}
-#else
 		        status = ncio_filesize(ncp->nciop, &filesize);
 			if(status)
 			    return status;
 			if(filesize < sizeof(ncmagic)) { /* too small, not netcdf */
+
 			    status = NC_ENOTNC;
 			    return status;
 			}
-#endif
 			/* first time read */
 			extent = ncp->chunk;
 			/* Protection for when ncp->chunk is huge;
 			 * no need to read hugely. */
 	      		if(extent > 4096)
 				extent = 4096;
-#ifndef USE_VFS
 			if(extent > filesize)
 			        extent = filesize;
-#endif
 		}
 		else if(extent > ncp->chunk)
 		{
@@ -1188,11 +1323,7 @@ nc_get_NC(NC *ncp)
 		 * Invalidate the I/O buffers to force a read of the header
 		 * region.
 		 */
-#ifdef USE_VFS
-		status = ncvfs_sync(gs.nciop);
-#else
 		status = gs.nciop->sync(gs.nciop);
-#endif
 		if(status)
 			return status;
 
