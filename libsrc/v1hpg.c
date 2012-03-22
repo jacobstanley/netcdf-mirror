@@ -66,7 +66,7 @@ rel_v1hs(v1hs *gsp)
 	int status;
 	if(gsp->offset == OFF_NONE || gsp->base == NULL)
 		return ENOERR;
-	status = gsp->nciop->rel(gsp->nciop, gsp->offset,
+	status = ncio_rel(gsp->nciop, gsp->offset,
 			 gsp->flags == RGN_WRITE ? RGN_MODIFIED : 0);
 	gsp->end = NULL;
 	gsp->pos = NULL;
@@ -96,7 +96,7 @@ fault_v1hs(v1hs *gsp, size_t extent)
 	if(extent > gsp->extent)
 		gsp->extent = extent;	
 
-	status = gsp->nciop->get(gsp->nciop,
+	status = ncio_get(gsp->nciop,
 		 	gsp->offset, gsp->extent,
 			gsp->flags, &gsp->base);
 	if(status)
@@ -1323,7 +1323,7 @@ nc_get_NC(NC *ncp)
 		 * Invalidate the I/O buffers to force a read of the header
 		 * region.
 		 */
-		status = gs.nciop->sync(gs.nciop);
+		status = ncio_sync(gs.nciop);
 		if(status)
 			return status;
 

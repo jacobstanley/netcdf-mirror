@@ -39,7 +39,10 @@ extern int num_spaces;
 #define DIMENSION_LIST "DIMENSION_LIST"
 #define NAME "NAME"
 
+/* Forward */
 static int NC4_enddef(int ncid);
+static int nc4_rec_read_types(NC_GRP_INFO_T *grp);
+static int nc4_rec_read_vars(NC_GRP_INFO_T *grp);
 
 #ifdef IGNORE
 /* This extern points to the pointer that holds the list of open
@@ -696,7 +699,9 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
    NC_TYPE_INFO_T *type;
    htri_t is_str, equal = 0;
    hid_t class, native_typeid, hdf_typeid;
+#if 0
    nc_type my_nc_type = 0;
+#endif
    H5T_order_t order;
    int endianness;
    nc_type nc_type_constant[NUM_TYPES] = {NC_CHAR, NC_BYTE, NC_SHORT, NC_INT, NC_FLOAT,
@@ -771,7 +776,9 @@ get_type_info2(NC_HDF5_FILE_INFO_T *h5, hid_t datasetid,
 	       return NC_EHDFERR;
 	    if (equal)
 	    {
+#if 0
 	       my_nc_type = nc_type_constant[t];
+#endif
 	       break;
 	    }
 	 }
@@ -1794,7 +1801,7 @@ nc4_rec_read_types_cb(hid_t grpid, const char *name, const H5L_info_t *info,
     return (H5_ITER_CONT);
 }
 
-int
+static int
 nc4_rec_read_types(NC_GRP_INFO_T *grp)
 {
     hsize_t idx=0;
@@ -1858,7 +1865,9 @@ nc4_rec_read_vars_cb(hid_t grpid, const char *name, const H5L_info_t *info,
     char oname[NC_MAX_NAME + 1];
     NC_GRP_INFO_T *child_grp;
     NC_GRP_INFO_T *grp = (NC_GRP_INFO_T *) (_op_data);
+#if 0
     NC_HDF5_FILE_INFO_T *h5 = grp->file->nc4_info;
+#endif
 
     memset(oname, 0, NC_MAX_NAME);
     /* Open this critter. */
@@ -1907,7 +1916,7 @@ nc4_rec_read_vars_cb(hid_t grpid, const char *name, const H5L_info_t *info,
     return (H5_ITER_CONT);
 }
 
-int
+static int
 nc4_rec_read_vars(NC_GRP_INFO_T *grp)
 {
     hsize_t idx = 0;

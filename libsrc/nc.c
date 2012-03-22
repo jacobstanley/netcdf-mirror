@@ -283,7 +283,7 @@ read_numrecs(NC *ncp)
 
 #define NC_NUMRECS_OFFSET 4
 #define NC_NUMRECS_EXTENT 4
-	status = ncp->nciop->get(ncp->nciop,
+	status = ncio_get(ncp->nciop,
 		 NC_NUMRECS_OFFSET, NC_NUMRECS_EXTENT, 0, (void **)&xp);
 					/* cast away const */
 	if(status != NC_NOERR)
@@ -291,7 +291,7 @@ read_numrecs(NC *ncp)
 
 	status = ncx_get_size_t(&xp, &nrecs);
 
-	(void) ncp->nciop->rel(ncp->nciop, NC_NUMRECS_OFFSET, 0);
+	(void) ncio_rel(ncp->nciop, NC_NUMRECS_OFFSET, 0);
 
 	if(status == NC_NOERR)
 	{
@@ -316,7 +316,7 @@ write_numrecs(NC *ncp)
 	assert(!NC_readonly(ncp));
 	assert(!NC_indef(ncp));
 
-	status = ncp->nciop->get(ncp->nciop,
+	status = ncio_get(ncp->nciop,
 		 NC_NUMRECS_OFFSET, NC_NUMRECS_EXTENT, RGN_WRITE, &xp);
 	if(status != NC_NOERR)
 		return status;
@@ -326,7 +326,7 @@ write_numrecs(NC *ncp)
 		status = ncx_put_size_t(&xp, &nrecs);
 	}
 
-	(void) ncp->nciop->rel(ncp->nciop, NC_NUMRECS_OFFSET, RGN_MODIFIED);
+	(void) ncio_rel(ncp->nciop, NC_NUMRECS_OFFSET, RGN_MODIFIED);
 
 	if(status == NC_NOERR)
 		fClr(ncp->flags, NC_NDIRTY);
@@ -546,7 +546,7 @@ move_recs_r(NC *gnu, NC *old)
 
 		assert(gnu_off > old_off);
 	
-		status = gnu->nciop->move(gnu->nciop, gnu_off, old_off,
+		status = ncio_move(gnu->nciop, gnu_off, old_off,
 			 old_varp->len, 0);
 
 		if(status != NC_NOERR)
@@ -598,7 +598,7 @@ move_vars_r(NC *gnu, NC *old)
 
 		assert(gnu_off > old_off);
 
-		status = gnu->nciop->move(gnu->nciop, gnu_off, old_off,
+		status = ncio_move(gnu->nciop, gnu_off, old_off,
 			 old_varp->len, 0);
 
 		if(status != NC_NOERR)
@@ -783,7 +783,7 @@ NC_endef(NC *ncp,
 
 	fClr(ncp->flags, NC_CREAT | NC_INDEF);
 
-	return ncp->nciop->sync(ncp->nciop);
+	return ncio_sync(ncp->nciop);
 }
 
 #ifdef LOCKNUMREC
@@ -918,10 +918,9 @@ NC3_create(const char *path, int ioflags,
 
 	assert(ncp->xsz == ncx_len_NC(ncp,sizeof_off_t));
 	
-	status = ncio_create(path, ioflags,
-		initialsz,
-		0, ncp->xsz, &ncp->chunk,
-		&ncp->nciop, &xp);
+        status =  ncio_create(path, ioflags, initialsz,
+			      0, ncp->xsz, &ncp->chunk,
+			      &ncp->nciop, &xp);
 	if(status != NC_NOERR)
 	{
 		/* translate error status */
@@ -1022,9 +1021,7 @@ NC3_open(const char * path, int ioflags,
 		return NC_EINVAL;
 #endif
 
-	status = ncio_open(path, ioflags,
-		0, 0, &ncp->chunk,
-		&ncp->nciop, 0);
+	status = ncio_open(path, ioflags, 0, 0, &ncp->chunk, &ncp->nciop, 0);
 	if(status)
 		goto unwind_alloc;
 
@@ -1109,7 +1106,7 @@ NC3_close(int ncid)
 	{
 		status = NC_sync(ncp);
 		/* flush buffers before any filesize comparisons */
-		(void) ncp->nciop->sync(ncp->nciop);
+		(void) ncio_sync(ncp->nciop);
 	}
 
 	/* 
@@ -1289,7 +1286,7 @@ NC3_sync(int ncid)
 	if(status != NC_NOERR)
 		return status;
 
-	status = ncp->nciop->sync(ncp->nciop);
+	status = ncio_sync(ncp->nciop);
 	if(status != NC_NOERR)
 		return status;
 

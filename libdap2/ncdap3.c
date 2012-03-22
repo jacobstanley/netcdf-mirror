@@ -15,10 +15,6 @@
 #include "ncd3dispatch.h"
 #include "dapalign.h"
 #include "dapdump.h"
-#ifdef IGNORE
-#include "oc.h"
-#include "ocdrno.h"
-#endif
 
 static NCerror buildncstructures3(NCDAPCOMMON*);
 static NCerror builddims(NCDAPCOMMON*);
@@ -307,6 +303,9 @@ fprintf(stderr,"ncdap3: final constraint: %s\n",dapcomm->oc.url->constraint);
 	}
     }
 
+
+#ifdef IGNORE
+/* Not needed as all the NC3D writing functions return NC_EPERM */
     {
         /* Mark as no longer writable and no longer indef;
            requires breaking abstraction  */
@@ -314,10 +313,10 @@ fprintf(stderr,"ncdap3: final constraint: %s\n",dapcomm->oc.url->constraint);
         ncstat = NC_check_id(drno->substrate, &nc);
         /* Mark as no longer writeable */
         fClr(nc->nciop->ioflags, NC_WRITE);
-        /* Mark as no longer indef;
-           (do NOT use nc_enddef until diskless is working)*/
+        /* Mark as no longer indef */
 	fSet(nc->flags, NC_INDEF);	
     }
+#endif
 
     if(ncpp) *ncpp = (NC*)drno;
 

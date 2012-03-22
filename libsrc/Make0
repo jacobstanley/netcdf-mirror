@@ -1,0 +1,10 @@
+# Test c output
+T=tst
+#VG=valgrind --leak-check=full
+
+CFLAGS=-g -O0 -I.. -I../include
+LDFLAGS=../liblib/.libs/libnetcdf.a
+
+all::
+	gcc -o t ${CFLAGS} ${T}.c ${LDFLAGS} -lm
+	${VG} ./t
