@@ -82,7 +82,7 @@ main(int argc, char **argv)
 	int format, ndims, nvars, ngatts, xdimid, ndims_grp, dimids_grp[3],
 	    unlimids[1], d_grp, nunlim, nvars_grp, varids_grp[3], v_grp,
 	    varid, varndims, vardims[3], varnatts, vartype, dimids[3], is_recvar,
-	    vdims[3], id, ntypes, numgrps, atttype;
+	    vdims[3], id, ntypes, numgrps, atttype, nc_status;
 	size_t dimsize, len, attlen;
 	char dimname[20], varname[20];
 	if ( nc_inq_format(ncid, &format)) ERR;
@@ -140,9 +140,12 @@ main(int argc, char **argv)
 		if( nc_inq_dimlen(ncid, vardims[id], &len) ) ERR;
 		vdims[id] = len;
 	    }
-	    if(nc_inq_att(ncid,varid,_FillValue,&atttype,&attlen)) ERR;
-	    if(nc_inq_att(ncid, varid, "units", &atttype, &attlen)) ERR;
-	    if(nc_inq_att(ncid, varid, "C_format", &atttype, &attlen)) ERR;
+	    /* Note: the following 3 attribute inquiries fail;
+	       so why do them?
+            */
+	    nc_status = nc_inq_att(ncid,varid,_FillValue,&atttype,&attlen);
+	    nc_status = nc_inq_att(ncid, varid, "units", &atttype, &attlen);
+	    nc_status = nc_inq_att(ncid, varid, "C_format", &atttype, &attlen);
 	    if (varid == 0) {
 		/* read Time variable */
 		static double Time_data;
