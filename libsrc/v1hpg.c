@@ -1211,9 +1211,7 @@ ncx_put_NC(const NC *ncp, void **xpp, off_t offset, size_t extent)
 				extent = 4096;
 		}
 		else if(extent > ncp->chunk)
-		{
-			extent = ncp->chunk;
-		}
+		    extent = ncp->chunk;
 		
 		ps.offset = 0;
 		ps.extent = extent;
@@ -1315,9 +1313,7 @@ nc_get_NC(NC *ncp)
 			        extent = filesize;
 		}
 		else if(extent > ncp->chunk)
-		{
-			extent = ncp->chunk;
-		}
+		    extent = ncp->chunk;
 
 		/*
 		 * Invalidate the I/O buffers to force a read of the header

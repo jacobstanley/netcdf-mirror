@@ -155,11 +155,11 @@ extern int ncio_close(ncio* const, int);
 
 extern int ncio_create(const char *path, int ioflags, size_t initialsz,
                        off_t igeto, size_t igetsz, size_t *sizehintp,
-                       ncio** nciopp, void** const igetvpp);
+                       ncio** nciopp, void** const mempp);
 
 extern int ncio_open(const char *path, int ioflags,
                      off_t igeto, size_t igetsz, size_t *sizehintp,
-                     ncio** nciopp, void** const igetvpp);
+                     ncio** nciopp, void** const mempp);
 
 /* With the advent of diskless io, we need to provide
    for multiple ncio packages at the same time,
