@@ -11,9 +11,10 @@ redistribution conditions.
 #include <stdlib.h>
 #include <netcdf.h>
 
-#define FILE_NAME "tst_diskless.nc"
+#define FILE_NAME "/tmp/tst_diskless.nc"
 
 #define FLAGS (NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL)
+#define PERIST (NC_WRITE)
 
 int
 main(int argc, char **argv) 
@@ -34,7 +35,7 @@ main(int argc, char **argv)
       short short_data = 2, short_data_in;
 
       /* Create a netCDF file (which exists only in memory). */
-      if (nc_create(FILE_NAME, FLAGS, &ncid)) ERR;
+      if (nc_create(FILE_NAME, (argc > 1?(FLAGS|PERSIST):FLAGS), &ncid)) ERR;
 
       /* Create some variables. */
       if (nc_def_var(ncid, RESISTOR, NC_INT, 0, NULL, &varid0)) ERR;
@@ -103,7 +104,7 @@ main(int argc, char **argv)
       /* Create a netCDF file (which exists only in memory). I am
        * confident that the world-famous netCDF format is the way to
        * store my data! */
-      if (nc_create(FILE_NAME, FLAGS, &ncid)) ERR;
+      if (nc_create(FILE_NAME, (argc > 1?(FLAGS|PERSIST):FLAGS), &ncid)) ERR;
 
       /* Create some atts. They will help document my data forever. */
       if (nc_put_att_text(ncid, NC_GLOBAL, ATT0_NAME, 
@@ -175,7 +176,7 @@ main(int argc, char **argv)
       short short_data = 2, short_data_in;
 
       /* Create a netCDF file (which exists only in memory). */
-      if (nc_create(FILE_NAME, FLAGS, &ncid)) ERR;
+      if (nc_create(FILE_NAME, (argc > 1?(FLAGS|PERSIST):FLAGS), &ncid)) ERR;
 
       /* Create some variables. */
       if (nc_def_var(ncid, DUNE, NC_INT, 0, NULL, &varid0)) ERR;

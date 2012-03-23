@@ -209,10 +209,17 @@ nc4_create_file(const char *path, int cmode, MPI_Comm comm, MPI_Info info,
                 NC_FILE_INFO_T *nc) 
 {
    hid_t fcpl_id, fapl_id;
-   unsigned flags = (cmode & NC_NOCLOBBER) ? 
-      H5F_ACC_EXCL : H5F_ACC_TRUNC;
+   unsigned flags;
    FILE *fp;
    int retval = NC_NOERR;
+   int persist = 0; /* Should diskless try to persist its data into file?*/
+
+   if(cmode & NC_DISKLESS)
+       flags = H5F_ACC_TRUNC;
+   else if(cmode & NC_NOCLOBBER)
+       flags = H5F_ACC_EXCL;
+   else
+       flags = H5F_ACC_TRUNC;
 
    LOG((3, "nc4_create_file: path %s mode 0x%x", path, cmode));
    assert(nc && path);
@@ -220,9 +227,10 @@ nc4_create_file(const char *path, int cmode, MPI_Comm comm, MPI_Info info,
 
    /* If this file already exists, and NC_NOCLOBBER is specified,
       return an error. */
-   if (!(cmode & NC_DISKLESS) && (cmode & NC_NOCLOBBER)
-       && (fp = fopen(path, "r")))
-   {
+   if (cmode & NC_DISKLESS) {
+	if(cmode & NC_WRITE)
+	    persist = 1;
+   } else if ((cmode & NC_NOCLOBBER) && (fp = fopen(path, "r"))) {
       fclose(fp);
       return NC_EEXIST;
    }
@@ -269,7 +277,8 @@ nc4_create_file(const char *path, int cmode, MPI_Comm comm, MPI_Info info,
    }
 #else /* only set cache for non-parallel... */
    if(cmode & NC_DISKLESS) {
-	 if (H5Pset_fapl_core(fapl_id, 4096, 0))
+	 int persist = (cmode & NC_WRITE)?1:0;
+	 if (H5Pset_fapl_core(fapl_id, 4096, persist))
 	    BAIL(NC_EDISKLESS);
    }
    if (H5Pset_cache(fapl_id, 0, nc4_chunk_cache_nelems, nc4_chunk_cache_size, 
@@ -383,6 +392,7 @@ NC4_create(const char* path, int cmode, size_t initialsz, int basepe,
                  | NC_NETCDF4 | NC_CLASSIC_MODEL
                  | NC_SHARE | NC_MPIIO | NC_MPIPOSIX | NC_LOCK | NC_PNETCDF
 		 | NC_DISKLESS
+		 | NC_WRITE /* to support diskless persistence */
                  )
        || (cmode & NC_MPIIO && cmode & NC_MPIPOSIX)
        || (cmode & NC_64BIT_OFFSET && cmode & NC_NETCDF4)
@@ -2209,6 +2219,10 @@ nc4_open_file(const char *path, int mode, MPI_Comm comm,
 
    LOG((3, "nc4_open_file: path %s mode %d", path, mode));
    assert(path && nc);
+
+   /* Stop diskless open in its tracks */
+   if(mode & NC_DISKLESS)
+	return NC_EDISKLESS;
 
    /* Add necessary structs to hold netcdf-4 file data. */
    if ((retval = nc4_nc4f_list_add(nc, path, mode)))

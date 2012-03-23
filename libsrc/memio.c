@@ -16,6 +16,15 @@
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #ifndef HAVE_SSIZE_T
 #define ssize_t int
@@ -62,6 +71,7 @@
 
 typedef struct NCMEMIO {
     int locked; /* => we cannot realloc */
+    int persist; /* => save to a file; triggered by NC_WRITE */
     char* memory;
     off_t alloc;
     off_t size;
@@ -84,7 +94,7 @@ static int memio_nfd(void);
 
 /* Create a new ncio struct to hold info about the file. */
 static ncio* 
-memio_new(const char* filepath, int ioflags, size_t initialsize)
+memio_new(const char* filepath, int ioflags, size_t initialsize, int persist)
 {
     ncio* nciop = NULL;
     NCMEMIO* memio = NULL;
@@ -118,6 +128,7 @@ memio_new(const char* filepath, int ioflags, size_t initialsize)
     memio->pos = 0;
     memio->memory = (char*)malloc(memio->alloc);
     if(memio->memory == NULL) goto fail;
+    memio->persist = persist;
 
     return nciop;
 fail:
@@ -152,13 +163,14 @@ memio_create(const char* path, int ioflags,
     ncio* nciop;
     int fd;
     int status;
-
-    fSet(ioflags, NC_WRITE);
+    int persist = (ioflags & NC_WRITE?1:0);
 
     if(path == NULL ||* path == 0)
         return NC_EINVAL;
 
-    nciop = memio_new(path, ioflags, initialsz);
+    fSet(ioflags, NC_WRITE);
+
+    nciop = memio_new(path, ioflags, initialsz, persist);
     if(nciop == NULL)
         return NC_ENOMEM;
 
@@ -337,8 +349,22 @@ memio_close(ncio* nciop, int doUnlink)
     int status = NC_NOERR;
     NCMEMIO* memio;
     if(nciop == NULL || nciop->pvt == NULL) return NC_NOERR;
+    /* See if the user wants the contents persisted to a file */
     memio = (NCMEMIO*)nciop->pvt;
     if(memio != NULL) {
+        if(memio->persist) {
+	    /* Try to open the file for writing */
+	    int fd = open(nciop->path, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	    if(fd >= 0) {
+		long count = write(fd, memio->memory, memio->size);
+		if(count < 0)
+		    status = errno;
+		else if(count < memio->size)
+		    status = NC_EDISKLESS;
+		(void)close(fd);		
+	    } else
+		status = errno;
+	}
         /* Free up things */
         memio_free(memio);
 	free(memio);
