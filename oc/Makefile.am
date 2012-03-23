@@ -34,7 +34,7 @@ endif
 
 .PHONEY: bison
 
-bison daptab.c daptab.h: dap.y
+bison:: dap.y
 	rm -f dap.tab.c dap.tab.h
 	bison --debug -d -p dap dap.y
 	mv dap.tab.c daptab.c; mv dap.tab.h daptab.h
