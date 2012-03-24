@@ -13,7 +13,12 @@ redistribution conditions.
 
 #define FILE_NAME "tst_diskless.nc"
 
+#ifdef USE_NETCDF4
+#define FLAGS (NC_DISKLESS|NC_NETCDF4|NC_CLASSIC_MODEL)
+#else
 #define FLAGS (NC_DISKLESS)
+#endif
+
 #define PERSIST (NC_WRITE)
 
 int
