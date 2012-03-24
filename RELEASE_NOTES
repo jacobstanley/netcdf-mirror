@@ -10,7 +10,7 @@ VERSION         COMMENTS
 		[NCF-110][NCF-109][NCF-5][LIBCF-10]
 
 		Modified ncio mechanism to support multiple ncio packages;
-		this is so it is possible to have e.g. posixio and memio
+		this is so that it is possible to have e.g. posixio and memio
 		operating at the same time.
 
 		Cleanup up a bunch of lint issues (unused variables, etc).
