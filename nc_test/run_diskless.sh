@@ -13,7 +13,7 @@ HASNC4=`../nc-config --has-nc4`
 
 echo ""
 echo "Test diskless netCDF classic file without persistence"
-cmd="tst_diskless";
+cmd="./tst_diskless";
 echo "cmd=$cmd"
 $cmd
 echo "*** PASS: diskless netCDF classic file without persistence"
@@ -21,7 +21,7 @@ echo "*** PASS: diskless netCDF classic file without persistence"
 if test "x$HASNC4" = "xyes" ; then
 echo ""
 echo "Test diskless netCDF enhanced file without persistence"
-cmd="tst_diskless netcdf4";
+cmd="./tst_diskless netcdf4";
 echo "cmd=$cmd"
 $cmd
 echo "*** PASS: diskless netCDF enhanced file without persistence"
@@ -29,7 +29,7 @@ fi #HASNC4
 
 echo ""
 echo "Test diskless netCDF classic file with persistence"
-cmd="tst_diskless persist";
+cmd="./tst_diskless persist";
 echo "cmd=$cmd"
 rm -f $FILE1
 $cmd
@@ -45,7 +45,7 @@ fi
 if test "x$HASNC4" = "xyes" ; then
 echo ""
 echo "Test diskless netCDF enhanced file with persistence"
-cmd="tst_diskless netcdf4 persist";
+cmd="./tst_diskless netcdf4 persist";
 echo "cmd=$cmd"
 rm -f $FILE1
 $cmd
@@ -66,7 +66,7 @@ if test "x$HASNC4" = "xyes" ; then
 ok=""
 echo ""
 echo "Test extended enhanced diskless netCDF with persistence"
-cmd="tst_diskless2"
+cmd="./tst_diskless2"
 echo "cmd=$cmd"
 rm -f $FILE2 tst_diskless2.cdl
 $cmd
