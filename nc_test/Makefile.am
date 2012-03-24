@@ -9,7 +9,7 @@ include $(top_srcdir)/lib_flags.am
 
 # These files are created by the tests.
 CLEANFILES = nc_test_classic.nc nc_test_64bit.nc nc_test_netcdf4.nc	\
-tst_*.nc t_nc.nc large_files.nc quick_large_files.nc 
+tst_*.nc t_nc.nc large_files.nc quick_large_files.nc diskless.nc
 
 # These are the tests which are always run.
 TESTPROGRAMS = t_nc tst_small nc_test tst_misc tst_norm tst_names	\
@@ -42,7 +42,7 @@ endif
 
 # Set up the tests.
 check_PROGRAMS = $(TESTPROGRAMS) 
-TESTS = $(TESTPROGRAMS)
+TESTS = $(TESTPROGRAMS) run_diskless.sh
 
 # This will run a bunch of the test programs with valgrind, the memory
 # checking tool. (Valgrind must be present for this to work.)
