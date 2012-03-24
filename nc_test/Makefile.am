@@ -9,14 +9,14 @@ include $(top_srcdir)/lib_flags.am
 
 # These files are created by the tests.
 CLEANFILES = nc_test_classic.nc nc_test_64bit.nc nc_test_netcdf4.nc	\
-tst_*.nc t_nc.nc large_files.nc quick_large_files.nc diskless.nc
+tst_*.nc t_nc.nc large_files.nc quick_large_files.nc tst_diskless.nc tst_diskless2.nc
 
 # These are the tests which are always run.
 TESTPROGRAMS = t_nc tst_small nc_test tst_misc tst_norm tst_names	\
 tst_nofill tst_nofill2 tst_nofill3 tst_diskless
 
 if USE_NETCDF4
-TESTPROGRAMS += tst_atts
+TESTPROGRAMS += tst_atts tst_diskless2
 endif
 
 # These are the source files for the main workhorse test program,
@@ -59,6 +59,9 @@ endif # USE_VALGRIND_TESTS
 # Distribute the .c files so that m4 isn't required on the users
 # machine.
 EXTRA_DIST = test_get.m4 test_put.m4 run_valgrind_tests.sh run_diskless.sh
+
+# ref_tst_diskless2.cdl is for diff comparison and to produce tst_diskless2.c
+EXTRA_DIST += ref_tst_diskless2.cdl
 
 # Only clean these on mainatiner-clean, because they require m4 to
 # regenerate.

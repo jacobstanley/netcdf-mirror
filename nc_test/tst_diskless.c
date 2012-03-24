@@ -39,7 +39,7 @@ main(int argc, char **argv)
 {
 
     int i, flags, persist, usenetcdf4;
-    char* filename = "diskless.nc";
+    char* filename = "tst_diskless.nc";
 
     /* Set defaults */
     persist = 0;
