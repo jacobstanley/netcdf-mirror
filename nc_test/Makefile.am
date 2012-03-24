@@ -13,10 +13,10 @@ tst_*.nc t_nc.nc large_files.nc quick_large_files.nc tst_diskless.nc tst_diskles
 
 # These are the tests which are always run.
 TESTPROGRAMS = t_nc tst_small nc_test tst_misc tst_norm tst_names	\
-tst_nofill tst_nofill2 tst_nofill3 tst_diskless
+tst_nofill tst_nofill2 tst_nofill3
 
 if USE_NETCDF4
-TESTPROGRAMS += tst_atts tst_diskless2
+TESTPROGRAMS += tst_atts
 endif
 
 # These are the source files for the main workhorse test program,
@@ -41,9 +41,12 @@ endif
 
 
 # Set up the tests.
-check_PROGRAMS = $(TESTPROGRAMS) 
+check_PROGRAMS = $(TESTPROGRAMS) tst_diskless
+if USE_NETCDF4
+check_PROGRAMS += tst_diskless2
+endif
+
 TESTS = $(TESTPROGRAMS) run_diskless.sh
-TESTENVIRONMENT=TOPSRCDIR=${top_srcdir}
 
 # This will run a bunch of the test programs with valgrind, the memory
 # checking tool. (Valgrind must be present for this to work.)
