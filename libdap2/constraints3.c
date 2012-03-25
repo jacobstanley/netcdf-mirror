@@ -109,8 +109,6 @@ Only care about projections
 #ifdef DEBUG
 fprintf(stderr,"mapconstraint.projections: %s\n",
 		dumpprojections(dceprojections));
-fprintf(stderr,"mapconstraint.selections: %s\n",
-		dumpselections(dceselections));
 #endif
 
 done:

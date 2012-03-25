@@ -13,18 +13,10 @@
 #else
 #include <unistd.h>
 #endif
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include "nc.h"
 
 #ifndef HAVE_SSIZE_T
 #define ssize_t int
@@ -78,9 +70,6 @@ typedef struct NCMEMIO {
     off_t pos;
 } NCMEMIO;
 
-/* Static counter for pseudo file descriptors (incremented) */
-static int pseudofd = 0;
-
 /* Forward */
 static int memio_rel(ncio *const nciop, off_t offset, int rflags);
 static int memio_get(ncio *const nciop, off_t offset, size_t extent, int rflags, void **const vpp);
@@ -90,7 +79,6 @@ static int memio_filesize(ncio* nciop, off_t* filesizep);
 static int memio_pad_length(ncio* nciop, off_t length);
 static int memio_close(ncio* nciop, int);
 static void memio_free(void *const pvt);
-static int memio_nfd(void);
 
 /* Create a new ncio struct to hold info about the file. */
 static ncio* 
@@ -174,9 +162,7 @@ memio_create(const char* path, int ioflags,
     if(nciop == NULL)
         return NC_ENOMEM;
 
-    if(pseudofd == 0)
-	pseudofd = 1+memio_nfd(); /* initialize to max+1 */
-    fd = pseudofd++;
+    fd = nc__pseudofd();
     *((int* )&nciop->fd) = fd; 
 
     if(igetsz != 0)
@@ -261,23 +247,6 @@ unwind_open:
 #endif
 }
 
-
-/* Get maximum file descriptor number */
-static int
-memio_nfd(void)
-{
-    int nfd = 32767; /* default */
-#ifdef HAVE_GETRLIMIT
-    struct rlimit rl;
-    if(getrlimit(RLIMIT_NOFILE,&rl) == 0) {
-	if(rl.rlim_max != RLIM_INFINITY)
-	    nfd = rl.rlim_max;
-	if(rl.rlim_cur != RLIM_INFINITY)
-	    nfd = rl.rlim_cur;
-    }
-#endif
-    return nfd;
-}
 
 /* 
  *  Get file size in bytes.

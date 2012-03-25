@@ -1362,19 +1362,21 @@ NC_get_numrecs(const NC *ncp) {
 }
 
 void
-NC_set_numrecs(NC *ncp, size_t nrecs) {
-	shmem_t numrec = (shmem_t) nrecs;
-	/* update local value too */
-	ncp->lock[LOCKNUMREC_VALUE] = (ushmem_t) numrec;
-	shmem_short_put((shmem_t *) ncp->lock + LOCKNUMREC_VALUE, &numrec, 1,
-		ncp->lock[LOCKNUMREC_BASEPE]);
+NC_set_numrecs(NC *ncp, size_t nrecs)
+{
+    shmem_t numrec = (shmem_t) nrecs;
+    /* update local value too */
+    ncp->lock[LOCKNUMREC_VALUE] = (ushmem_t) numrec;
+    shmem_short_put((shmem_t *) ncp->lock + LOCKNUMREC_VALUE, &numrec, 1,
+    ncp->lock[LOCKNUMREC_BASEPE]);
 }
 
-void NC_increase_numrecs(NC *ncp, size_t nrecs) {
-	/* this is only called in one place that's already protected
-	 * by a lock ... so don't worry about it */
-	if (nrecs > NC_get_numrecs(ncp))
-		NC_set_numrecs(ncp, nrecs);
+void NC_increase_numrecs(NC *ncp, size_t nrecs)
+{
+    /* this is only called in one place that's already protected
+     * by a lock ... so don't worry about it */
+    if (nrecs > NC_get_numrecs(ncp))
+	NC_set_numrecs(ncp, nrecs);
 }
 
 #endif /* LOCKNUMREC */
@@ -1548,3 +1550,4 @@ nc_delete(const char * path)
 {
         return nc_delete_mp(path, 0);
 }
+

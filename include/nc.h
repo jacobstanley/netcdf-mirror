@@ -421,4 +421,9 @@ extern NC* find_in_NCList(int ext_ncid);
 extern void free_NCList(void);/* reclaim whole list */
 extern int count_NCList(void); /* return # of entries in NClist */
 
+/* Create a pseudo file descriptor that does not
+   overlap real file descriptors
+*/
+extern int nc__pseudofd(void);
+
 #endif /* _NC_H_ */
