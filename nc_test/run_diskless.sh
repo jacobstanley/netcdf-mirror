@@ -33,7 +33,7 @@ cmd="./tst_diskless persist";
 echo "cmd=$cmd"
 rm -f $FILE1
 $cmd
-if test -e $FILE1 ; then
+if test -f $FILE1 ; then
 echo "$FILE1 created"
 ../ncdump/ncdump $FILE1
 echo "***PASS: diskless netCDF classic file with persistence"
@@ -49,7 +49,7 @@ cmd="./tst_diskless netcdf4 persist";
 echo "cmd=$cmd"
 rm -f $FILE1
 $cmd
-if test -e $FILE1 ; then
+if test -f $FILE1 ; then
 echo "$FILE1 created"
 ../ncdump/ncdump $FILE1
 echo "***PASS: diskless netCDF enhanced file with persistence"
@@ -70,13 +70,13 @@ cmd="./tst_diskless2"
 echo "cmd=$cmd"
 rm -f $FILE2 tst_diskless2.cdl
 $cmd
-if test -e $FILE2 ; then
+if test -f $FILE2 ; then
   echo "$FILE2 created"
   # Do a cyle test
   if ../ncdump/ncdump $FILE2 |sed -e s/tst_diskless2/tmp1/ > tmp1.cdl ; then
-    if ../ncgen/ncgen -k3 tmp1.cdl -o tmp1.nc ;then
+    if ../ncgen/ncgen -k3 -o tmp1.nc tmp1.cdl ;then
       if ../ncdump/ncdump tmp1.nc >tmp2.cdl ; then
-        if diff -wBb tmp1.cdl tmp2.cdl ; then
+        if diff -wb tmp1.cdl tmp2.cdl ; then
           ok=yes
         fi
       fi
