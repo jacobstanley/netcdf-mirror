@@ -158,7 +158,8 @@ available: NC_NOCLOBBER (do not overwrite existing file), NC_SHARE
 (limit write caching - netcdf classic files onlt), NC_64BIT_OFFSET
 (create 64-bit offset file), NC_NETCDF4 (create netCDF-4/HDF5 file),
 NC_CLASSIC_MODEL (enforce netCDF classic mode on netCDF-4/HDF5
-files). See discussion below.
+files), NC_DISKLESS (store data only in memory), NC_WRITE.
+See discussion below.
 
 \param ncidp Pointer to location where returned netCDF ID is to be
 stored.
@@ -202,6 +203,21 @@ types, multiple unlimited dimensions, or new atomic types. The
 advantage of this restriction is that such files are guaranteed to
 work with existing netCDF software.
 
+Setting NC_DISKLESS causes netCDF to create the file only in memory.
+This allows for the use of files that have no long term purpose. Note that
+with one exception, the in-memory file is destroyed upon calling
+nc_close. If, however, the flag combination (NC_DISKLESS|NC_WRITE)
+is used, then at close, the contents of the memory file will be
+made persistent in the file path that was specified in the nc_create
+call. If NC_DISKLESS is going to be used for creating a large classic file,
+it behooves one to use either nc__create or nc_create_mp and specify
+an appropriately large value of the initialsz parameter. This is
+because the in-memory file is kept as a single piece of heap memory,
+and specifying the initial size will reduce the number of heap reallocations. 
+
+Note that nc_create(path,cmode,ncidp) is equivalent to the invocation of
+nc__create(path,cmode,NC_SIZEHINT_DEFAULT,NULL,ncidp).
+
 \returns ::NC_NOERR No error.
 
 \returns ::NC_ENOMEM System out of memory.
@@ -210,6 +226,9 @@ work with existing netCDF software.
 
 \returns ::NC_EFILEMETA Error writing netCDF-4 file-level metadata in
 HDF5 file. (netCDF-4 files only).
+
+\returns ::NC_EDISKLESS if there was an error in creating the
+in-memory file.
 
 \note When creating a netCDF-4 file HDF5 error reporting is turned
 off, if it is on. This doesn't stop the HDF5 error stack from
@@ -273,6 +292,33 @@ the classic netCDF-3 data model.
      if (status != NC_NOERR) handle_error(status);
 @endcode
 
+In this example we create a in-memory netCDF classic dataset named
+diskless.nc whose content will be lost when nc_close() is called.
+
+@code
+     #include <netcdf.h>
+        ...
+     int status = NC_NOERR;
+     int ncid;
+        ...
+     status = nc_create("foo_HDF5_classic.nc", NC_DISKLESS, &ncid);
+     if (status != NC_NOERR) handle_error(status);
+@endcode
+
+In this example we create a in-memory netCDF classic dataset named
+diskless.nc and specify that it should be made persistent
+in a file named diskless.nc when nc_close() is called.
+
+@code
+     #include <netcdf.h>
+        ...
+     int status = NC_NOERR;
+     int ncid;
+        ...
+     status = nc_create("foo_HDF5_classic.nc", NC_DISKLESS|NC_WRITE, &ncid);
+     if (status != NC_NOERR) handle_error(status);
+@endcode
+
 A variant of nc_create(), nc__create() (note the double underscore) allows
 users to specify two tuning parameters for the file that it is
 creating.  */
@@ -296,21 +342,26 @@ Like nc_create(), this function creates a netCDF file.
 be advantageous to set the size of the output file at creation
 time. This parameter sets the initial size of the file at creation
 time. This only applies to classic and 64-bit offset files.
+The special value NC_SIZEHINT_DEFAULT (which is the value 0),
+lets the netcdf library choose a suitable initial size.
 
-\param chunksizehintp A pointer to the chunk size hint, which controls
-a space versus time tradeoff, memory allocated in the netcdf library
-versus number of system calls. Because of internal requirements, the
-value may not be set to exactly the value requested. The actual value
-chosen is returned by reference. Using the value NC_SIZEHINT_DEFAULT
-causes the library to choose a default. How the system chooses the
-default depends on the system. On many systems, the "preferred I/O
-block size" is available from the stat() system call, struct stat
-member st_blksize. If this is available it is used. Lacking that,
-twice the system pagesize is used. Lacking a call to discover the
-system pagesize, we just set default bufrsize to 8192. The bufrsize is
-a property of a given open netcdf descriptor ncid, it is not a
-persistent property of the netcdf dataset. This only applies to
-classic and 64-bit offset files.
+\param chunksizehintp A pointer to the chunk size hint,
+which controls a space versus time tradeoff, memory
+allocated in the netcdf library versus number of system
+calls. Because of internal requirements, the value may not
+be set to exactly the value requested. The actual value
+chosen is returned by reference. Using a NULL pointer or
+having the pointer point to the value NC_SIZEHINT_DEFAULT
+causes the library to choose a default. How the system
+chooses the default depends on the system. On many systems,
+the "preferred I/O block size" is available from the stat()
+system call, struct stat member st_blksize. If this is
+available it is used. Lacking that, twice the system
+pagesize is used. Lacking a call to discover the system
+pagesize, we just set default bufrsize to 8192. The bufrsize
+is a property of a given open netcdf descriptor ncid, it is
+not a persistent property of the netcdf dataset. This only
+applies to classic and 64-bit offset files.
 
 \param ncidp Pointer to location where returned netCDF ID is to be
 stored.
@@ -414,6 +465,9 @@ nc_open()returns the value NC_NOERR if no errors occurred. Otherwise,
 the returned status indicates an error. Possible causes of errors
 include:
 
+Note that nc_open(path,cmode,ncidp) is equivalent to the invocation of
+nc__open(path,cmode,NC_SIZEHINT_DEFAULT,NULL,ncidp).
+
 \returns ::NC_NOERR No error.
 
 \returns ::NC_ENOMEM Out of memory.
@@ -470,8 +524,9 @@ system calls.
 Because of internal requirements, the value may not be set to exactly
 the value requested. The actual value chosen is returned by reference.
 
-Using the value NC_SIZEHINT_DEFAULT causes the library to choose a
-default. How the system chooses the default depends on the system. On
+Using a NULL pointer or having the pointer point to the value
+NC_SIZEHINT_DEFAULT causes the library to choose a default. 
+How the system chooses the default depends on the system. On
 many systems, the "preferred I/O block size" is available from the
 stat() system call, struct stat member st_blksize. If this is
 available it is used. Lacking that, twice the system pagesize is used.
@@ -1372,13 +1427,6 @@ NC_create(const char *path, int cmode, size_t initialsz,
 	 dispatcher = NCCR_dispatch_table;
       else
 #endif
-#ifdef USE_DAP
-#ifdef NOTUSED
-      if(model == (NC_DISPATCH_NC4 | NC_DISPATCH_NCD))
- 	dispatcher = NCD4_dispatch_table;
-      else
-#endif
-#endif
       if(model == (NC_DISPATCH_NC4))
  	dispatcher = NC4_dispatch_table;
       else
@@ -1489,13 +1537,6 @@ NC_open(const char *path, int cmode,
    if(model == (NC_DISPATCH_NC4 | NC_DISPATCH_NCR))
 	dispatcher = NCCR_dispatch_table;
    else
-#endif
-#if defined(USE_NETCDF4) && defined(USE_DAP)
-#ifdef NOTUSED
-   if(model == (NC_DISPATCH_NC4 | NC_DISPATCH_NCD))
-	dispatcher = NCD4_dispatch_table;
-   else
-#endif
 #endif
 #if defined(USE_DAP)
    if(model == (NC_DISPATCH_NC3 | NC_DISPATCH_NCD))
