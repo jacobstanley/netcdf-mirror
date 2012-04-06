@@ -144,7 +144,6 @@ rm -f $FILE4
 time ./tst_diskless4 create
 # Validate it
 ../ncdump/ncdump -h $FILE4 |diff - tst_diskless4.cdl
-mv -f $FILE4 ${FILE4}.save
 
 echo ""
 echo "Create 1G file diskless"
