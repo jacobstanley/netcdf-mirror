@@ -119,8 +119,6 @@ rm -f $FILE3
 cmd="./tst_diskless3 diskless"
 echo "cmd=$cmd"
 $cmd
-# save output as a cdl file
-../ncdump/ncdump $FILE3 >tst_diskless3_memory.cdl
 
 # compare
 diff tst_diskless3_file.cdl tst_diskless3_memory.cdl
