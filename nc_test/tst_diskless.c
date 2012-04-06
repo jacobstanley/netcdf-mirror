@@ -80,7 +80,6 @@ printf("*** testing diskless file with scalar vars...");
     if (nc_def_var(ncid, CAPACITOR, NC_FLOAT, 0, NULL, &varid1)) ERR;
     if (nc_def_var(ncid, NUM555, NC_SHORT, 0, NULL, &varid2)) ERR;
     if (nc_enddef(ncid)) ERR;
-
     
     /* Write some data to this file. */
     if (nc_put_vara_int(ncid, varid0, NULL, NULL, &int_data)) ERR;

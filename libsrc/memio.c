@@ -39,8 +39,8 @@
 #include "instr.h"
 #endif
 
-#ifndef NCIO_MAXBLOCKSIZE
-#define NCIO_MAXBLOCKSIZE 268435456 /* sanity check, about X_SIZE_T_MAX/8 */
+#ifndef MEMIO_MAXBLOCKSIZE
+#define MEMIO_MAXBLOCKSIZE 268435456 /* sanity check, about X_SIZE_T_MAX/8 */
 #endif
 
 #undef MIN  /* system may define MIN somewhere and complain */
@@ -57,7 +57,7 @@
 #endif
 
 /* Define the amount by which memory is incremented on realloc */
-#define DEFAULT_BLOCKSIZE 4096
+#define DEFAULT_BLOCKSIZE (0x8000)
 
 #define TACTIC_INCR 1
 #define TACTIC_DOUBLE 2
@@ -283,6 +283,12 @@ memio_open(const char* path,
     fd = nc__pseudofd();
     *((int* )&nciop->fd) = fd; 
 
+    /* Use half the filesize as the blocksize */
+    if(sizehintp) {
+        memio_filesize(nciop,sizehintp);
+        if(*sizehintp == 0) *sizehintp = MEMIO_MAXBLOCKSIZE;
+    }
+
     if(igetsz != 0)
     {
         status = nciop->get(nciop,
@@ -292,8 +298,6 @@ memio_open(const char* path,
         if(status != NC_NOERR)
             goto unwind_open;
     }
-
-    *sizehintp = NCIO_MAXBLOCKSIZE;
 
     *nciopp = nciop;
     return NC_NOERR;
@@ -404,7 +408,7 @@ static int
 guarantee(ncio* nciop, off_t endpoint)
 {
     NCMEMIO* memio = (NCMEMIO*)nciop->pvt;
-    if(endpoint >= memio->alloc) {
+    if(endpoint > memio->alloc) {
 	/* extend the allocated memory and size */
 	int status = memio_pad_length(nciop,endpoint);
 	if(status != NC_NOERR) return status;

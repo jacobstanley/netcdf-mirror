@@ -6,7 +6,9 @@ set -e
 FILE1=tst_diskless.nc
 FILE2=tst_diskless2.nc
 FILE3=tst_diskless3.nc
+FILE4=tst_diskless4.nc
 
+if test 0 = 1 ; then
 echo ""
 echo "Testing in-memory (diskless) files with and without persistence"
 
@@ -126,5 +128,44 @@ $cmd
 diff tst_diskless3_file.cdl tst_diskless3_memory.cdl
 
 # cleanup
-#rm -f $FILE3 tst_diskless3_file.cdl tst_diskless3_memory.cdl
+rm -f $FILE3 tst_diskless3_file.cdl tst_diskless3_memory.cdl
+fi
+
+# Create the reference ncdump output for tst_diskless4
+rm -fr tst_diskless4.cdl
+cat >tst_diskless4.cdl <<EOF
+netcdf tst_diskless4 {
+dimensions:
+	dim = 1073741824 ;
+variables:
+	byte var(dim) ;
+}
+EOF
+
+echo ""
+echo "Create 1G file"
+rm -f $FILE4
+time ./tst_diskless4 create
+# Validate it
+../ncdump/ncdump -h $FILE4 |diff - tst_diskless4.cdl
+mv -f $FILE4 ${FILE4}.save
+
+echo ""
+echo "Create 1G file diskless"
+rm -f $FILE4
+time ./tst_diskless4 creatediskless
+# Validate it
+../ncdump/ncdump -h $FILE4 |diff - tst_diskless4.cdl
+
+echo ""
+echo "Open 1G file without diskless"
+time ./tst_diskless4 open
+
+echo ""
+echo "Open 1G file diskless"
+time ./tst_diskless4 opendiskless
+
+# cleanup
+#rm -f $FILE4
+
 exit
