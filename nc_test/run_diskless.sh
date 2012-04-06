@@ -5,6 +5,7 @@ set -e
 #Constants
 FILE1=tst_diskless.nc
 FILE2=tst_diskless2.nc
+FILE3=tst_diskless3.nc
 
 echo ""
 echo "Testing in-memory (diskless) files with and without persistence"
@@ -94,3 +95,36 @@ else
 fi
 
 fi #HASNC4
+
+
+
+echo ""
+echo "Testing nc_open in-memory (diskless) files"
+
+# clear old files
+rm -f tst_diskless_file.cdl tst_diskless_memory.cdl
+
+echo ""
+echo "Create and modify file without using diskless"
+rm -f $FILE3
+cmd="./tst_diskless3";
+echo "cmd=$cmd"
+$cmd
+# save output as a cdl file
+../ncdump/ncdump $FILE3 >tst_diskless_file.cdl
+
+echo ""
+echo "Create and modify file using diskless"
+rm -f $FILE3
+cmd="./tst_diskless3 diskless"
+echo "cmd=$cmd"
+$cmd
+# save output as a cdl file
+../ncdump/ncdump $FILE3 >tst_diskless_memory.cdl
+
+# compare
+diff tst_diskless_file.cdl tst_diskless_memory.cdl
+
+# cleanup
+#rm -f $FILE3 tst_diskless_file.cdl tst_diskless_memory.cdl
+exit

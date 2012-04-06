@@ -134,9 +134,9 @@ NC_check_file_type(const char *path, int use_parallel, void *mpi_info,
    else if(magic[0] == 'C' && magic[1] == 'D' && magic[2] == 'F') 
    {
       if(magic[3] == '\001') 
-	 *cdf = 1;
+	 *cdf = 1; /* netcdf classic version 1 */
       else if(magic[3] == '\002') 
-	 *cdf = 2;
+	 *cdf = 2; /* netcdf classic version 2 */
    }
     
    return NC_NOERR;

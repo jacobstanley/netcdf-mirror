@@ -39,6 +39,10 @@
 #include "instr.h"
 #endif
 
+#ifndef NCIO_MAXBLOCKSIZE
+#define NCIO_MAXBLOCKSIZE 268435456 /* sanity check, about X_SIZE_T_MAX/8 */
+#endif
+
 #undef MIN  /* system may define MIN somewhere and complain */
 #define MIN(mm,nn) (((mm) < (nn)) ? (mm) : (nn))
 
@@ -80,22 +84,63 @@ static int memio_pad_length(ncio* nciop, off_t length);
 static int memio_close(ncio* nciop, int);
 static void memio_free(void *const pvt);
 
+/* Mnemonic */
+#define DOOPEN 1
+
 /* Create a new ncio struct to hold info about the file. */
-static ncio* 
-memio_new(const char* filepath, int ioflags, size_t initialsize, int persist)
+static int
+memio_new(int doOpen, const char* filepath, int ioflags, size_t initialsize, int persist, ncio** nciopp)
 {
+    int status = NC_NOERR;
     ncio* nciop = NULL;
     NCMEMIO* memio = NULL;
+    int openfd = -1;
+    off_t filesize = (off_t) initialsize;
+    errno = 0;
+
+    if(doOpen) {
+        /* Diskless open has the following constraints:
+           1. file must be classic version 1
+           2. file size must be <= 0x7ffffffff bytes
+           if either constraint is violated, then the open defaults
+           to file based open.
+         */
+	int oflags;
+        if(fIsSet(ioflags,NC_64BIT_OFFSET) || fIsSet(ioflags,NC_NETCDF4)) {
+             status = NC_EDISKLESS; /* violates constraints */
+	     goto fail;
+	}
+
+        /* Open the file, but make sure we can write it if needed */
+	oflags = fIsSet(ioflags, NC_WRITE) ? O_RDWR : O_RDONLY;    
+#ifdef O_BINARY
+	fSet(oflags, O_BINARY);
+#endif
+#ifdef vms
+	openfd = open(filepath, oflags, 0, "ctx=stm");
+#else
+	openfd = open(filepath, oflags, 0);
+#endif
+        if(openfd < 0) {status = errno; goto fail;}
+
+        /* get current filesize  = max(|file|,initialize)*/
+        filesize = lseek(openfd,0,SEEK_END);
+        if(filesize < 0) {status = errno; goto fail;}
+	/* move pointer back to beginning of file */
+	(void)lseek(openfd,0,SEEK_SET);
+        if(filesize < (off_t)initialsize)
+            filesize = (off_t)initialsize;
+        if(filesize > NC_MAX_INT) {status = NC_EDISKLESS; goto fail;}
+    }
 
     nciop = (ncio* )calloc(1,sizeof(ncio));
-    if(nciop == NULL)
-	goto fail;
+    if(nciop == NULL) {status = NC_ENOMEM; goto fail;}
     
     nciop->ioflags = ioflags;
-    *((int*)&nciop->fd) = -1;
+    *((int*)&nciop->fd) = -1; /* caller will fix */
 
     *((char**)&nciop->path) = strdup(filepath);
-    if(nciop->path == NULL) goto fail;
+    if(nciop->path == NULL) {status = NC_ENOMEM; goto fail;}
 
     *((ncio_relfunc**)&nciop->rel) = memio_rel;
     *((ncio_getfunc**)&nciop->get) = memio_get;
@@ -106,26 +151,40 @@ memio_new(const char* filepath, int ioflags, size_t initialsize, int persist)
     *((ncio_closefunc**)&nciop->close) = memio_close;
 
     memio = (NCMEMIO*)calloc(1,sizeof(NCMEMIO));
-    if(memio == NULL) goto fail;
+    if(memio == NULL) {status = NC_ENOMEM; goto fail;}
     *((void* *)&nciop->pvt) = memio;
 
-    memio->alloc = initialsize;
+    memio->alloc = filesize;
     if(memio->alloc < DEFAULT_BLOCKSIZE)
 	memio->alloc = DEFAULT_BLOCKSIZE;
-    memio->size = 0;
+    memio->size = (doOpen?memio->alloc:0);
     memio->pos = 0;
     memio->memory = (char*)malloc(memio->alloc);
-    if(memio->memory == NULL) goto fail;
+    if(memio->memory == NULL) {status = NC_ENOMEM; goto fail;}
     memio->persist = persist;
 
-    return nciop;
+    if(doOpen) {
+	/* Read the file into the memio memory */
+	ssize_t count = read(openfd, memio->memory, (size_t)filesize);
+	if(count < filesize) {status = NC_ENOTNC; goto fail;}
+    }
+
+    if(nciopp) *nciopp = nciop;
+
+done:
+    if(openfd >= 0) close(openfd);
+    return status;
+
 fail:
     if(nciop != NULL) {
         if(nciop->path != NULL) free((char*)nciop->path);
         if(memio != NULL) {
+	    if(memio->memory != NULL) {
+		free(memio->memory); memio->memory = NULL;
+	    }
         }
     }
-    return NULL;
+    goto done;
 }
 
 /* Create a file, and the ncio struct to go with it. This function is
@@ -158,9 +217,9 @@ memio_create(const char* path, int ioflags,
 
     fSet(ioflags, NC_WRITE);
 
-    nciop = memio_new(path, ioflags, initialsz, persist);
-    if(nciop == NULL)
-        return NC_ENOMEM;
+    status = memio_new(!DOOPEN, path, ioflags, initialsz, persist, &nciop);
+    if(status != NC_NOERR)
+        return status;
 
     fd = nc__pseudofd();
     *((int* )&nciop->fd) = fd; 
@@ -207,22 +266,21 @@ memio_open(const char* path,
     off_t igeto, size_t igetsz, size_t* sizehintp,
     ncio* *nciopp, void** const mempp)
 {
-    /* Currrently, diskless open not supported */
-#if 1
-    return NC_EDISKLESS;
-#else
     ncio* nciop;
     int fd;
     int status;
+    int persist = (fIsSet(ioflags,NC_WRITE)?1:0);
 
     if(path == NULL ||* path == 0)
         return EINVAL;
 
-    nciop = memio_new(path, ioflags, 0);
-    if(nciop == NULL)
-        return ENOMEM;
+    assert(sizehintp != NULL);
 
-    fd = --pseudofd;
+    status = memio_new(DOOPEN, path, ioflags, *sizehintp, persist, &nciop);
+    if(status != NC_NOERR)
+	return status;
+
+    fd = nc__pseudofd();
     *((int* )&nciop->fd) = fd; 
 
     if(igetsz != 0)
@@ -235,8 +293,7 @@ memio_open(const char* path,
             goto unwind_open;
     }
 
-    /* Pick a default sizehint */
-    if(sizehintp) *sizehintp = DEFAULT_BLOCKSIZE;
+    *sizehintp = NCIO_MAXBLOCKSIZE;
 
     *nciopp = nciop;
     return NC_NOERR;
@@ -244,7 +301,6 @@ memio_open(const char* path,
 unwind_open:
     memio_close(nciop,1);
     return status;
-#endif
 }
 
 
