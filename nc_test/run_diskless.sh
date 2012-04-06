@@ -112,8 +112,6 @@ rm -f $FILE3
 cmd="./tst_diskless3";
 echo "cmd=$cmd"
 $cmd
-# save output as a cdl file
-../ncdump/ncdump $FILE3 >tst_diskless3_file.cdl
 
 echo ""
 echo "Create and modify file using diskless"
