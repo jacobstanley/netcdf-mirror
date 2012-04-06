@@ -102,7 +102,7 @@ echo ""
 echo "Testing nc_open in-memory (diskless) files"
 
 # clear old files
-rm -f tst_diskless_file.cdl tst_diskless_memory.cdl
+rm -f tst_diskless3_file.cdl tst_diskless3_memory.cdl
 
 echo ""
 echo "Create and modify file without using diskless"
@@ -111,7 +111,7 @@ cmd="./tst_diskless3";
 echo "cmd=$cmd"
 $cmd
 # save output as a cdl file
-../ncdump/ncdump $FILE3 >tst_diskless_file.cdl
+../ncdump/ncdump $FILE3 >tst_diskless3_file.cdl
 
 echo ""
 echo "Create and modify file using diskless"
@@ -120,11 +120,11 @@ cmd="./tst_diskless3 diskless"
 echo "cmd=$cmd"
 $cmd
 # save output as a cdl file
-../ncdump/ncdump $FILE3 >tst_diskless_memory.cdl
+../ncdump/ncdump $FILE3 >tst_diskless3_memory.cdl
 
 # compare
-diff tst_diskless_file.cdl tst_diskless_memory.cdl
+diff tst_diskless3_file.cdl tst_diskless3_memory.cdl
 
 # cleanup
-#rm -f $FILE3 tst_diskless_file.cdl tst_diskless_memory.cdl
+#rm -f $FILE3 tst_diskless3_file.cdl tst_diskless3_memory.cdl
 exit
