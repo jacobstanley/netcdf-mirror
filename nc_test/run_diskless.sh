@@ -1,6 +1,7 @@
 #!/bin/sh
 
-set -e
+#temporary suspension
+#set -e
 
 #Constants
 FILE1=tst_diskless.nc
