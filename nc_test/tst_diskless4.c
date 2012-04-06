@@ -27,10 +27,13 @@
 #define FILE_NAME "tst_diskless4.nc"
 #define CHUNKSIZE 4096
 #define GIG1 (1024*1024*1024)
-#define PIECES (GIG1 / CHUNKSIZE)
 #define DATASIZE (CHUNKSIZE/sizeof(int))
 
 typedef enum Tag {Create,CreateDiskless,Open,OpenDiskless} Tag;
+
+static size_t varsize;
+static size_t pieces;
+static float gigsize;
 
 int
 main(int argc, char **argv) {
@@ -42,6 +45,20 @@ main(int argc, char **argv) {
     int cmode = 0;
     int ncid,varid;
     int dimids[1];
+
+    /* First, determine a reasonable file size that malloc will actually allocate
+       on this machine
+     */
+
+    for(varsize=GIG1;;varsize/=2) {
+	void* memory = malloc(varsize);
+	if(memory != NULL) {free(memory); break;}
+	free(memory);
+    }
+
+    /* Compute other values relative to varsize */
+    pieces = varsize/CHUNKSIZE;
+    gigsize = (varsize/GIG1);
 
     if(argc > 1) {
         if(strcmp(argv[1],"create")==0) tag = Create;
@@ -55,10 +72,10 @@ main(int argc, char **argv) {
     }
     
     switch (tag) {
-    case Create: printf("\n*** Create 1G file\n"); break;
-    case CreateDiskless: printf("\n*** Create 1G file diskless\n"); break;
-    case Open: printf("\n*** Open 1G file\n"); break;
-    case OpenDiskless: printf("\n*** Open 1G file diskless\n"); break;
+    case Create: printf("\n*** Create %0.2gG file\n",gigsize); break;
+    case CreateDiskless: printf("\n*** Create %0.2gG diskless\n",gigsize); break;
+    case Open: printf("\n*** Open %0.2gG file\n",gigsize); break;
+    case OpenDiskless: printf("\n*** Open %0.2gG file diskless\n",gigsize); break;
     }
 
     switch (tag) {
@@ -83,7 +100,7 @@ main(int argc, char **argv) {
     switch (tag) {
     case Create:
     case CreateDiskless:
-        if(nc_def_dim(ncid, "dim", GIG1, &dimids[0])) ERR;
+        if(nc_def_dim(ncid, "dim", varsize, &dimids[0])) ERR;
         if(nc_def_var(ncid, "var", NC_BYTE, 1, dimids, &varid)) ERR;
         if(nc_enddef(ncid)) ERR;
 	break;
@@ -98,7 +115,7 @@ main(int argc, char **argv) {
     case Create:
     case CreateDiskless:
 	/* Fill and put as integers */
-	for(i=0;i<PIECES;i++) {
+	for(i=0;i<pieces;i++) {
 	   start[0] = i*CHUNKSIZE;
 	   count[0] = CHUNKSIZE;
 	   for(j=0;j<DATASIZE;j++) data[j] = (i*CHUNKSIZE)+j;
@@ -108,13 +125,10 @@ main(int argc, char **argv) {
     case Open:
     case OpenDiskless:
 	/* Read the var contents and validate */
-	for(i=0;i<PIECES;i++) {
+	for(i=0;i<pieces;i++) {
 	   int status = 0;
 	   start[0] = i*CHUNKSIZE;
 	   count[0] = CHUNKSIZE;
-if(i==262143) {
-int x = 0;
-}
 	   if((status=nc_get_vara(ncid,varid,start,count,(void*)data)))
 		ERR;
 	   for(j=0;j<DATASIZE;j++) {
