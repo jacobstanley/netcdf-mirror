@@ -100,13 +100,10 @@ memio_new(int doOpen, const char* filepath, int ioflags, size_t initialsize, int
 
     if(doOpen) {
         /* Diskless open has the following constraints:
-           1. file must be classic version 1
-           2. file size must be <= 0x7ffffffff bytes
-           if either constraint is violated, then the open defaults
-           to file based open.
+           1. file must be classic version 1 or 2.
          */
 	int oflags;
-        if(fIsSet(ioflags,NC_64BIT_OFFSET) || fIsSet(ioflags,NC_NETCDF4)) {
+        if(fIsSet(ioflags,NC_NETCDF4)) {
              status = NC_EDISKLESS; /* violates constraints */
 	     goto fail;
 	}
@@ -130,7 +127,6 @@ memio_new(int doOpen, const char* filepath, int ioflags, size_t initialsize, int
 	(void)lseek(openfd,0,SEEK_SET);
         if(filesize < (off_t)initialsize)
             filesize = (off_t)initialsize;
-        if(filesize > NC_MAX_INT) {status = NC_EDISKLESS; goto fail;}
     }
 
     nciop = (ncio* )calloc(1,sizeof(ncio));

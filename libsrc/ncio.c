@@ -46,9 +46,7 @@ ncio_open(const char *path, int ioflags,
                      ncio** iopp, void** const mempp)
 {
     /* Diskless open has the following constraints:
-       1. file must be classic version 1
-       2. file size must be <= 0x7ffffffff bytes
-       if either constraint is violated, then fail.
+       1. file must be classic version 1 or 2
      */
     if(fIsSet(ioflags,NC_DISKLESS)) {
         return memio_open(path,ioflags,igeto,igetsz,sizehintp,iopp,mempp);
