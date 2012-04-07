@@ -43,7 +43,7 @@ static float gigsize;
 static void
 err_report(int status, char* file, int line)
 {
-    fprintf("***FAIL: %s: line=%d status=%d %s\n",file,line,status,nc_strerror(status));
+    printf("***FAIL: %s: line=%d status=%d %s\n",file,line,status,nc_strerror(status));
 #ifdef XFAIL
     exit(0);
 #else
