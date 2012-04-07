@@ -68,7 +68,7 @@ main(int argc, char **argv)
        on this machine
      */
 
-    for(varsize=(GIG/2);;varsize/=2) {
+    for(varsize=GIG;;varsize/=2) {
 	void* memory = malloc(varsize);
 	if(memory != NULL) {free(memory); break;}
 	free(memory);
