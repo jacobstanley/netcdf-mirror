@@ -68,7 +68,7 @@ main(int argc, char **argv)
        on this machine
      */
 
-    for(varsize=GIG;;varsize/=2) {
+    for(varsize=GIG/2;;varsize/=2) {
 	void* memory = malloc(varsize);
 	if(memory != NULL) {free(memory); break;}
 	free(memory);
@@ -90,10 +90,10 @@ main(int argc, char **argv)
     }
     
     switch (tag) {
-    case Create: printf("\n*** Create %0.2gG file\n",gigsize); break;
-    case CreateDiskless: printf("\n*** Create %0.2gG diskless\n",gigsize); break;
-    case Open: printf("\n*** Open %0.2gG file\n",gigsize); break;
-    case OpenDiskless: printf("\n*** Open %0.2gG file diskless\n",gigsize); break;
+    case Create: printf("\n*** Create file\n"); break;
+    case CreateDiskless: printf("\n*** Create file diskless\n"); break;
+    case Open: printf("\n*** Open file\n"); break;
+    case OpenDiskless: printf("\n*** Open file diskless\n"); break;
     }
 
     switch (tag) {

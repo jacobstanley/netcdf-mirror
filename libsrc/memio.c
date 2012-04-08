@@ -18,6 +18,26 @@
 #endif
 #include "nc.h"
 
+/* Turn off MMAP until we can figure out why it doesn't work */
+#undef HAVE_MMAP
+
+#ifdef HAVE_MMAP
+# ifdef HAVE_MREMAP
+    /* This is conditionalized by __USE_GNU ; why? */
+    extern void *mremap(void*,size_t,size_t,int);
+#   ifndef MREMAP_MAYMOVE
+#     define MREMAP_MAYMOVE 1
+#   endif
+# else /*!HAVE_MREMAP*/
+   /* !mremap => !mmap */
+#  undef HAVE_MMAP
+# endif /*!HAVE_MREMAP*/
+#endif /*HAVE_MMAP*/
+
+#ifdef HAVE_MMAP
+#include <sys/mman.h>
+#endif
+
 #ifndef HAVE_SSIZE_T
 #define ssize_t int
 #endif
@@ -72,6 +92,9 @@ typedef struct NCMEMIO {
     off_t alloc;
     off_t size;
     off_t pos;
+#ifdef HAVE_MMAP
+    int mapfd;
+#endif
 } NCMEMIO;
 
 /* Forward */
@@ -82,52 +105,19 @@ static int memio_sync(ncio *const nciop);
 static int memio_filesize(ncio* nciop, off_t* filesizep);
 static int memio_pad_length(ncio* nciop, off_t length);
 static int memio_close(ncio* nciop, int);
-static void memio_free(void *const pvt);
 
 /* Mnemonic */
 #define DOOPEN 1
 
 /* Create a new ncio struct to hold info about the file. */
 static int
-memio_new(int doOpen, const char* filepath, int ioflags, size_t initialsize, int persist, ncio** nciopp)
+memio_new(const char* path, int ioflags, off_t initialsize, ncio** nciopp, NCMEMIO** memiop)
 {
     int status = NC_NOERR;
     ncio* nciop = NULL;
     NCMEMIO* memio = NULL;
     int openfd = -1;
-    off_t filesize = (off_t) initialsize;
     errno = 0;
-
-    if(doOpen) {
-        /* Diskless open has the following constraints:
-           1. file must be classic version 1 or 2.
-         */
-	int oflags;
-        if(fIsSet(ioflags,NC_NETCDF4)) {
-             status = NC_EDISKLESS; /* violates constraints */
-	     goto fail;
-	}
-
-        /* Open the file, but make sure we can write it if needed */
-	oflags = fIsSet(ioflags, NC_WRITE) ? O_RDWR : O_RDONLY;    
-#ifdef O_BINARY
-	fSet(oflags, O_BINARY);
-#endif
-#ifdef vms
-	openfd = open(filepath, oflags, 0, "ctx=stm");
-#else
-	openfd = open(filepath, oflags, 0);
-#endif
-        if(openfd < 0) {status = errno; goto fail;}
-
-        /* get current filesize  = max(|file|,initialize)*/
-        filesize = lseek(openfd,0,SEEK_END);
-        if(filesize < 0) {status = errno; goto fail;}
-	/* move pointer back to beginning of file */
-	(void)lseek(openfd,0,SEEK_SET);
-        if(filesize < (off_t)initialsize)
-            filesize = (off_t)initialsize;
-    }
 
     nciop = (ncio* )calloc(1,sizeof(ncio));
     if(nciop == NULL) {status = NC_ENOMEM; goto fail;}
@@ -135,7 +125,7 @@ memio_new(int doOpen, const char* filepath, int ioflags, size_t initialsize, int
     nciop->ioflags = ioflags;
     *((int*)&nciop->fd) = -1; /* caller will fix */
 
-    *((char**)&nciop->path) = strdup(filepath);
+    *((char**)&nciop->path) = strdup(path);
     if(nciop->path == NULL) {status = NC_ENOMEM; goto fail;}
 
     *((ncio_relfunc**)&nciop->rel) = memio_rel;
@@ -150,22 +140,18 @@ memio_new(int doOpen, const char* filepath, int ioflags, size_t initialsize, int
     if(memio == NULL) {status = NC_ENOMEM; goto fail;}
     *((void* *)&nciop->pvt) = memio;
 
-    memio->alloc = filesize;
+    memio->alloc = initialsize;
     if(memio->alloc < DEFAULT_BLOCKSIZE)
 	memio->alloc = DEFAULT_BLOCKSIZE;
-    memio->size = (doOpen?memio->alloc:0);
+    memio->size = 0;
     memio->pos = 0;
-    memio->memory = (char*)malloc(memio->alloc);
-    if(memio->memory == NULL) {status = NC_ENOMEM; goto fail;}
-    memio->persist = persist;
-
-    if(doOpen) {
-	/* Read the file into the memio memory */
-	ssize_t count = read(openfd, memio->memory, (size_t)filesize);
-	if(count < filesize) {status = NC_ENOTNC; goto fail;}
-    }
+    memio->persist = fIsSet(ioflags,NC_WRITE);
+#ifdef HAVE_MMAP
+    memio->mapfd = -1;
+#endif
 
     if(nciopp) *nciopp = nciop;
+    if(memiop) *memiop = memio;
 
 done:
     if(openfd >= 0) close(openfd);
@@ -206,19 +192,63 @@ memio_create(const char* path, int ioflags,
     ncio* nciop;
     int fd;
     int status;
+    NCMEMIO* memio = NULL;
+#ifdef HAVE_MMAP
     int persist = (ioflags & NC_WRITE?1:0);
+    int oflags;
+#endif
 
     if(path == NULL ||* path == 0)
         return NC_EINVAL;
 
-    fSet(ioflags, NC_WRITE);
+    /* For diskless open has, the file must be classic version 1 or 2.*/
+    if(fIsSet(ioflags,NC_NETCDF4))
+        return NC_EDISKLESS; /* violates constraints */
 
-    status = memio_new(!DOOPEN, path, ioflags, initialsz, persist, &nciop);
+    status = memio_new(path, ioflags, initialsz, &nciop, &memio);
     if(status != NC_NOERR)
         return status;
 
+#ifdef HAVE_MMAP
+
+#ifdef MAP_ANONYMOUS
+    if(!persist) { /* use anonymous mmap */
+	memio->mapfd = -1;
+	memio->memory = (char*)mmap(NULL,memio->alloc,
+                                    PROT_READ|PROT_WRITE,MAP_PRIVATE,
+                                    memio->mapfd,0);
+    } else
+#endif
+    { /*!persist || MAP ANONYMOUS not defined*/
+	/* Open the file, but make sure we can write it if needed */
+        oflags = (persist ? O_RDWR : O_RDONLY);    
+#ifdef O_BINARY
+        fSet(oflags, O_BINARY);
+#endif
+	oflags |= (O_CREAT|O_TRUNC);
+        if(fIsSet(ioflags,NC_NOCLOBBER))
+	    oflags |= O_EXCL;
+#ifdef vms
+        fd = open(path, oflags, 0, "ctx=stm");
+#else
+        fd  = open(path, oflags, S_IRUSR|S_IRGRP|S_IWUSR|S_IWGRP);
+#endif
+	if(fd < 0) {status = errno; goto unwind_open;}
+	memio->memory = (char*)mmap(NULL,memio->alloc,
+                                    PROT_READ|PROT_WRITE,MAP_PRIVATE,
+                                    fd,0);
+	memio->mapfd = fd;
+    } /*!persist*/
+
+#else /*!HAVE_MMAP*/
+    memio->memory = (char*)malloc(memio->alloc);
+    if(memio->memory == NULL) {status = NC_ENOMEM; goto unwind_open;}
+#endif /*!HAVE_MMAP*/
+
     fd = nc__pseudofd();
     *((int* )&nciop->fd) = fd; 
+
+    fSet(nciop->ioflags, NC_WRITE);
 
     if(igetsz != 0)
     {
@@ -266,24 +296,72 @@ memio_open(const char* path,
     int fd;
     int status;
     int persist = (fIsSet(ioflags,NC_WRITE)?1:0);
+    int oflags;
+    NCMEMIO* memio = NULL;
+    size_t sizehint;
+    off_t filesize;
+#ifndef HAVE_MMAP
+    ssize_t count;
+#endif
 
     if(path == NULL ||* path == 0)
         return EINVAL;
 
     assert(sizehintp != NULL);
+    sizehint = *sizehintp;
 
-    status = memio_new(DOOPEN, path, ioflags, *sizehintp, persist, &nciop);
+    /* Open the file, but make sure we can write it if needed */
+    oflags = (persist ? O_RDWR : O_RDONLY);    
+#ifdef O_BINARY
+    fSet(oflags, O_BINARY);
+#endif
+    oflags |= O_EXCL;
+#ifdef vms
+    fd = open(path, oflags, 0, "ctx=stm");
+#else
+    fd  = open(path, oflags, S_IRUSR|S_IRGRP|S_IWUSR|S_IWGRP);
+#endif
+    if(fd < 0) {status = errno; goto unwind_open;}
+
+    /* get current filesize  = max(|file|,initialize)*/
+    filesize = lseek(fd,0,SEEK_END);
+    if(filesize < 0) {status = errno; goto unwind_open;}
+    /* move pointer back to beginning of file */
+    (void)lseek(fd,0,SEEK_SET);
+    if(filesize < (off_t)sizehint)
+        filesize = (off_t)sizehint;
+
+    status = memio_new(path, ioflags, filesize, &nciop, &memio);
     if(status != NC_NOERR)
 	return status;
 
-    fd = nc__pseudofd();
-    *((int* )&nciop->fd) = fd; 
+#ifdef HAVE_MMAP
+
+    memio->mapfd = fd;
+    memio->memory = (char*)mmap(NULL,memio->alloc,
+                                    persist?(PROT_READ|PROT_WRITE):(PROT_READ),
+				    MAP_PRIVATE,
+                                    memio->mapfd,0);
+
+#else /*!HAVE_MMAP*/
+
+    memio->memory = (char*)malloc(memio->alloc);
+    if(memio->memory == NULL) {status = NC_ENOMEM; goto unwind_open;}
+
+    /* Read the file into the memio memory */
+    count = read(fd, memio->memory, (size_t)filesize);
+    if(count < filesize) {status = NC_ENOTNC; goto unwind_open;}
+    (void)close(fd); /* until memio_close() */
+
+#endif/*!HAVE_MMAP*/
+
+    memio->size = memio->alloc;
 
     /* Use half the filesize as the blocksize */
-    if(sizehintp) {
-        memio_filesize(nciop,sizehintp);
-        if(*sizehintp == 0) *sizehintp = MEMIO_MAXBLOCKSIZE;
-    }
+    sizehint = filesize/2;
+
+    fd = nc__pseudofd();
+    *((int* )&nciop->fd) = fd; 
 
     if(igetsz != 0)
     {
@@ -295,11 +373,12 @@ memio_open(const char* path,
             goto unwind_open;
     }
 
+    *sizehintp = sizehint;
     *nciopp = nciop;
     return NC_NOERR;
 
 unwind_open:
-    memio_close(nciop,1);
+    memio_close(nciop,0);
     return status;
 }
 
@@ -337,24 +416,35 @@ memio_pad_length(ncio* nciop, off_t length)
     /* Realloc the allocated memory */
     if(memio->locked > 0)
 	return NC_EDISKLESS;
+
     if(length > memio->alloc) {
-	off_t actual;
+	off_t newsize;
 	char* newmem;
 	switch(TACTIC) {
 	case TACTIC_DOUBLE:
-	    actual = (memio->alloc * 2);
+	    newsize = (memio->alloc * 2);
 	    break;
 	case TACTIC_INCR:
 	default:
-	    actual = length + (length % DEFAULT_BLOCKSIZE);
+	    newsize = length + (length % DEFAULT_BLOCKSIZE);
 	    break;
 	}
-        newmem = (char*)realloc(memio->memory,actual);
+
+#ifdef HAVE_MMAP
+	newmem = (char*)mremap(memio->memory,memio->alloc,newsize,MREMAP_MAYMOVE);
 	if(newmem == NULL) return NC_ENOMEM;
-	memio->memory = newmem;
+
+#else /*!HAVE_MMAP*/
+
+        newmem = (char*)realloc(memio->memory,newsize);
+	if(newmem == NULL) return NC_ENOMEM;
 	/* zero out the extra memory */
-        memset((void*)(newmem+memio->alloc),0,(actual - memio->alloc));
-	memio->alloc = actual;
+        memset((void*)(newmem+memio->alloc),0,(newsize - memio->alloc));
+
+#endif /*!HAVE_MMAP*/
+
+	memio->memory = newmem;
+	memio->alloc = newsize;
     }  
     memio->size = length;
     return NC_NOERR;
@@ -374,27 +464,46 @@ memio_close(ncio* nciop, int doUnlink)
     int status = NC_NOERR;
     NCMEMIO* memio;
     if(nciop == NULL || nciop->pvt == NULL) return NC_NOERR;
-    /* See if the user wants the contents persisted to a file */
+
     memio = (NCMEMIO*)nciop->pvt;
-    if(memio != NULL) {
-        if(memio->persist) {
-	    /* Try to open the file for writing */
-	    int fd = open(nciop->path, O_WRONLY|O_CREAT|O_TRUNC, 0666);
-	    if(fd >= 0) {
-		long count = write(fd, memio->memory, memio->size);
-		if(count < 0)
-		    status = errno;
-		else if(count < memio->size)
-		    status = NC_EDISKLESS;
-		(void)close(fd);		
-	    } else
+    assert(memio != NULL);
+
+#ifdef HAVE_MMAP
+
+    status = munmap(memio->memory,memio->alloc);
+    if(status) goto done;
+
+    /* Do we need to close the file? */
+    if(memio->mapfd >= 0)
+	(void)close(memio->mapfd);
+
+#else /*!HAVE_MMAP*/
+
+    /* See if the user wants the contents persisted to a file */
+    if(memio->persist) {
+	/* Try to open the file for writing */
+	int fd = open(nciop->path, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	if(fd >= 0) {
+	    long count = write(fd, memio->memory, memio->size);
+	    if(count < 0)
 		status = errno;
-	}
-        /* Free up things */
-        memio_free(memio);
-	free(memio);
-    }
-    /* do cleanup of ncio structure */
+	    else if(count < memio->size)
+		status = NC_EDISKLESS;
+	    (void)close(fd);		
+	} else
+	    status = errno;
+     }
+
+     /* Free up things */
+     if(memio->memory != NULL) free(memio->memory);
+
+#endif /*!HAVE_MMAP*/
+
+#ifdef HAVE_MMAP
+done:
+#endif
+    /* do cleanup  */
+    if(memio != NULL) free(memio);
     if(nciop->path != NULL) free((char*)nciop->path);
     free(nciop);
     return status;
@@ -504,17 +613,4 @@ static int
 memio_sync(ncio* const nciop)
 {
     return NC_NOERR; /* do nothing */
-}
-
-/*
- * free up anything hanging off pvt;
- */
-static void
-memio_free(void *const pvt)
-{
-    if(pvt != NULL) {
-        NCMEMIO* memio;
-        memio = (NCMEMIO*)pvt;
-	if(memio->memory != NULL) free(memio->memory);
-    }
 }
