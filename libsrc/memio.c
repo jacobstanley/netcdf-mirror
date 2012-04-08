@@ -59,6 +59,10 @@
 #define SEEK_END 2
 #endif
 
+/* Define the mode flags for create: rw by owner, no access by anyone else */
+#define OPENMODE 0600
+#define OPENANYMODE 0666
+
 #include "ncio.h"
 #include "fbits.h"
 #include "rnd.h"
@@ -262,7 +266,7 @@ memio_create(const char* path, int ioflags,
 #ifdef vms
         fd = open(path, oflags, 0, "ctx=stm");
 #else
-        fd  = open(path, oflags, S_IRUSR|S_IRGRP|S_IWUSR|S_IWGRP);
+        fd  = open(path, oflags, OPENMODE);
 #endif
         if(fd < 0) {status = errno; goto unwind_open;}
 
@@ -357,7 +361,7 @@ memio_open(const char* path,
 #ifdef vms
     fd = open(path, oflags, 0, "ctx=stm");
 #else
-    fd  = open(path, oflags, S_IRUSR|S_IRGRP|S_IWUSR|S_IWGRP);
+    fd  = open(path, oflags, OPENMODE);
 #endif
     if(fd < 0) {status = errno; goto unwind_open;}
 
@@ -514,7 +518,7 @@ memio_close(ncio* nciop, int doUnlink)
         /* See if the user wants the contents persisted to a file */
         if(memio->persist) {
 	    /* Try to open the file for writing */
-	    int fd = open(nciop->path, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	    int fd = open(nciop->path, O_WRONLY|O_CREAT|O_TRUNC, OPENMODE);
 	    if(fd >= 0) {
 	        long count = write(fd, memio->memory, memio->size);
 	        if(count < 0)
