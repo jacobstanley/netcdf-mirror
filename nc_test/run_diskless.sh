@@ -1,7 +1,6 @@
 #!/bin/sh
 
-#temporary suspension
-#set -e
+set -e
 
 #Constants
 FILE1=tst_diskless.nc
@@ -143,6 +142,6 @@ echo ""
 time ./tst_diskless4 opendiskless
 
 # cleanup
-#rm -f $FILE4
+rm -f $FILE4 tst_diskless4.cdl
 
 exit

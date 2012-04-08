@@ -14,8 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define XFAIL
-
+#undef XFAIL
 
 /* 
  * Depending on argv, do one of the following:

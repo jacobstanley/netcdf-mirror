@@ -561,11 +561,9 @@ AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr strcat strcpy \
 		mkstemp getpid \
 		getrlimit gettimeofday fsync MPI_Comm_f2c])
 
-# memio would like to have this
-AC_CHECK_FUNCS([memmove])
-# or this
+# check for memio support
 AC_FUNC_MMAP
-AC_CHECK_FUNCS([mremap])
+AC_CHECK_FUNCS([memmove getpagesize sysconf mremap])
 
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
