@@ -107,6 +107,11 @@ memio_new(const char* path, int ioflags, off_t initialsize, ncio** nciopp, NCMEM
 #endif
     errno = 0;
 
+    /* Always force the allocated size to be a multiple of pagesize */
+    if(initialsize == 0) initialsize = pagesize;
+    if((initialsize % pagesize) != 0)
+	initialsize += (pagesize - (initialsize % pagesize));
+
     nciop = (ncio* )calloc(1,sizeof(ncio));
     if(nciop == NULL) {status = NC_ENOMEM; goto fail;}
     
@@ -128,10 +133,9 @@ memio_new(const char* path, int ioflags, off_t initialsize, ncio** nciopp, NCMEM
     if(memio == NULL) {status = NC_ENOMEM; goto fail;}
     *((void* *)&nciop->pvt) = memio;
 
-    memio->memory = NULL;
     memio->alloc = initialsize;
-    if(memio->alloc < pagesize)
-	memio->alloc = pagesize;
+
+    memio->memory = NULL;
     memio->size = 0;
     memio->pos = 0;
     memio->persist = fIsSet(ioflags,NC_WRITE);
@@ -187,6 +191,7 @@ memio_create(const char* path, int ioflags,
     status = memio_new(path, ioflags, initialsz, &nciop, &memio);
     if(status != NC_NOERR)
         return status;
+    memio->size = 0;
 
     if(!persist) {
 	memio->memory = (char*)malloc(memio->alloc);
@@ -299,11 +304,10 @@ memio_open(const char* path,
     status = memio_new(path, ioflags, filesize, &nciop, &memio);
     if(status != NC_NOERR)
 	return status;
+    memio->size = filesize;
 
     memio->memory = (char*)malloc(memio->alloc);
     if(memio->memory == NULL) {status = NC_ENOMEM; goto unwind_open;}
-
-    memio->size = memio->alloc;
 
     /* Read the file into the memio memory */
     /* We need to do multiple reads because there is no
