@@ -507,11 +507,12 @@ memio_move(ncio* const nciop, off_t to, off_t from, size_t nbytes, int ignored)
 
     if(nciop == NULL || nciop->pvt == NULL) return NC_EINVAL;
     memio = (NCMEMIO*)nciop->pvt;
-    if(from < to) {
-       /* extend if "to" is not currently allocated */
-       status = guarantee(nciop,to+nbytes);
-       if(status != NC_NOERR) return status;
-    }
+    /* Guarantee src and dest exist */
+    status = guarantee(nciop,to+nbytes);
+    if(status != NC_NOERR) return status;
+    status = guarantee(nciop,from+nbytes);
+    if(status != NC_NOERR) return status;
+
     /* check for overlap */
     if((to + nbytes) > from || (from + nbytes) > to) {
 	/* Ranges overlap */

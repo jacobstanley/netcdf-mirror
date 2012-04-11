@@ -8,10 +8,10 @@ PARMS=""; ARGS=""; CON="" ; CE="";  OCON="" ; VAR=""
 #PARMS="${PARMS}[nocache]"
 #PARMS="${PARMS}[noprefetch]"
 #PARMS="${PARMS}[wholevar]"
-#PARMS="${PARMS}[show=fetch]"
+PARMS="${PARMS}[show=fetch]"
 
-F="http://motherlode.ucar.edu:8080/thredds/dodsC/testdods/in.nc"
-VAR="var_nm%2edot"
+F="http://motherlode.ucar.edu:8080/dts/test.GridFile"
+VAR="UTMGrid.Data%20Fields.Vegetation"
 
 PROG="./ncd"
 #PROG="../ncdump/ncdump"
@@ -70,5 +70,7 @@ F="http://motherlode.ucar.edu:8080/thredds/dodsC/station/metar/Surface_METAR_201
 CON="weather[0:10]"
 F="http://nomad1.ncep.noaa.gov:9090/dods/reanalyses/reanalysis-1/6hr/pgb/pgb"
 VAR=hgtprs
+F="http://motherlode.ucar.edu:8080/thredds/dodsC/testdods/in.nc"
+VAR="var_nm%2edot"
 fi
 

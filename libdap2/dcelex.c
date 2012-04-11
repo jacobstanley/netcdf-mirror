@@ -24,7 +24,7 @@ static void ceaddyytext(DCElexstate* lex, int c);
 static char* wordchars1 =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+_/%\\";
 static char* wordcharsn =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+_/%\\";
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+_/%\\ ";
 
 /* Number characters */
 static char* numchars1="+-0123456789";
