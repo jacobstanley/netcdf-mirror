@@ -575,7 +575,8 @@ AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr strcat strcpy \
 # check for memio support
 AC_CHECK_FUNCS([memmove getpagesize sysconf])
 
- Does the user want to use the mmap for NC_DISKLESS?
+# check for mmap support
+# Does the user want to use the mmap for NC_DISKLESS?
 AC_MSG_CHECKING([whether mmap will be used for in-memory files])
 AC_ARG_ENABLE([mmap],
               [AS_HELP_STRING([--enable-mmap],
