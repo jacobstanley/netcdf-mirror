@@ -35,7 +35,7 @@
 
 #include "oc.h"
 #include "ocdatatypes.h"
-#include "constraints.h"
+#include "occonstraints.h"
 #include "ocnode.h"
 #include "ocutil.h"
 #include "oclog.h"
@@ -75,6 +75,7 @@ typedef struct OCstate
 	char* code;
 	char* message;
 	long  httpcode;
+	char  curlerrorbuf[CURL_ERROR_SIZE]; /* to get curl error message */
     } error;
     /* Store .rc file info */
     struct OCcurlflags {

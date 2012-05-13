@@ -9,7 +9,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
 # These files get added to the distribution.
-EXTRA_DIST = README COPYRIGHT RELEASE_NOTES test_prog.c lib_flags.am
+EXTRA_DIST = README COPYRIGHT RELEASE_NOTES INSTALL test_prog.c lib_flags.am
 
 # Doxygen doesn't build nicely in vpath builds.
 # Don't do this; it wipes out any exported values
@@ -17,6 +17,11 @@ EXTRA_DIST = README COPYRIGHT RELEASE_NOTES test_prog.c lib_flags.am
 
 pkgconfigdir=$(libdir)/pkgconfig
 pkgconfig_DATA = netcdf.pc
+
+# We need a way to automatically generate INSTALL from
+# man4/install.doc, now that we've switched from texinfo to doxygen.
+# INSTALL:
+#	non-existent-doxygen-to-text-utility <  man4/install.doc > INSTALL
 
 # Does the user want to build the V2 API?
 if BUILD_V2
@@ -40,7 +45,6 @@ if USE_NETCDF4
 H5_TEST_DIR = h5_test
 LIBSRC4_DIR = libsrc4
 NC_TEST4 = nc_test4
-# LIBDISKLESS = libdiskless
 endif
 
 # Build the opendap client?
@@ -62,15 +66,21 @@ if BUILD_RPC
 LIBRPC = librpc
 endif
 
+# Define Test directories
+if BUILD_TESTSETS
+TESTDIRS = $(V2_TEST) nc_test $(NC_TEST4) $(NCDAPTESTDIR)
+endif
+
 WIN32=win32
 
 # This is the list of subdirs for which Makefiles will be constructed
 # and run. ncgen must come before ncdump, because their tests
 # depend on it. 
 SUBDIRS = include $(H5_TEST_DIR) libdispatch $(OCLIB) libsrc		\
-$(LIBDISKLESS) $(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBRPC) liblib $(V2_TEST) \
-nc_test $(NCGEN3) $(NCGEN) $(NCDUMP) $(NC_TEST4) $(NCDAPTESTDIR) man4	\
-$(EXAMPLES) $(WIN32)
+$(LIBSRC4_DIR) $(DAP2) $(LIBCDMR) $(LIBRPC) liblib  \
+$(NCGEN3) $(NCGEN) $(NCDUMP) \
+$(TESTDIRS) \
+man4 $(EXAMPLES) $(WIN32)
 
 # Remove these generated files, for a distclean.
 DISTCLEANFILES = VERSION comps.txt test_prog

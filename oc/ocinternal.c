@@ -15,11 +15,11 @@
 #include "ocdata.h"
 #include "occontent.h"
 #include "occlientparams.h"
-#include "rc.h"
-#include "curlfunctions.h"
+#include "ocrc.h"
+#include "occurlfunctions.h"
 
-#include "http.h"
-#include "read.h"
+#include "ochttp.h"
+#include "ocread.h"
 
 /* Note: TMPPATH must end in '/' */
 #ifdef __CYGWIN__
@@ -381,7 +381,7 @@ ocextractddsinmemory(OCstate* state, OCtree* tree, OCflags flags)
 	tree->text = NULL;
     /* Extract the inmemory contents */
     tree->data.memory = ocbytesextract(state->packet);
-#ifdef IGNORE
+#ifdef OCIGNORE
     /* guarantee the data part is on an 8 byte boundary */
     if(tree->data.bod % 8 != 0) {
         unsigned long count = tree->data.datasize - tree->data.bod;
@@ -404,6 +404,7 @@ ocextractddsinfile(OCstate* state, OCtree* tree, OCflags flags)
     /* Read until we find the separator (or EOF)*/
     ocbytesclear(state->packet);
     rewind(tree->data.file);
+    bodfound = 0;
     do {
         char chunk[1024];
 	size_t count;

@@ -25,12 +25,17 @@ utils.h utils.c dimmap.h dimmap.c
 # This is the man page.
 man_MANS = ncdump.1 nccopy.1
 
+if BUILD_TESTSETS
 if !BUILD_DLL
 # These tests are run for both netCDF-4 and non-netCDF-4 builds.
 check_PROGRAMS = rewrite-scalar ctest ctest64 ncdump tst_utf8
 TESTS = run_tests.sh tst_64bit.sh ctest ctest64 tst_output.sh	\
 tst_lengths.sh tst_calendars.sh tst_utf8 run_utf8_tests.sh      \
 tst_nccopy3.sh tst_charfill.sh tst_iter.sh
+
+if LARGE_FILE_TESTS
+TESTS += tst_iter.sh
+endif
 
 if USE_NETCDF4
 # NetCDF-4 has some extra tests.
@@ -54,6 +59,31 @@ tst_h_rdc0_CPPFLAGS = -I${top_srcdir}/nc_test ${AM_CPPFLAGS}
 endif #!USE_NETCDF4
 endif #!BUILD_DLL
 
+# Can't run ncgen to generate ctest.c and ctest64.c on cross-compiles.
+BUILT_SOURCES = ctest.c ctest64.c
+if EXTRA_TESTS
+ctest.c:
+	$(top_builddir)/ncgen/ncgen -lc -o ctest0.nc $(top_srcdir)/ncgen/c0.cdl >$(srcdir)/ctest.c
+
+ctest64.c:
+	$(top_builddir)/ncgen/ncgen -v2 -lc -o ctest0_64.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest64.c
+else
+ctest.c:
+	cp ref_ctest.c ctest.c
+
+ctest64.c:
+	cp ref_ctest64.c ctest64.c
+endif
+
+if !BUILD_DLL
+TESTS += tst_ncgen4_classic.sh
+if USE_NETCDF4
+TESTS += tst_ncgen4.sh
+endif
+endif
+
+endif BUILD_TESTSETS
+
 CLEANFILES = test0.nc test1.cdl test1.nc test2.cdl ctest1.cdl ctest.c	\
 ctest64.c ctest0.nc ctest0_64.nc c1.cdl ctest1_64.cdl c0.nc small.nc	\
 small2.nc c0tmp.nc c1.ncml utf8.cdl utf8_64.cdl utf8.nc utf8_64.nc	\
@@ -70,7 +100,7 @@ tst_special_atts.cdl tst_nans.cdl tst_format_att_64.cdl			\
 tst_vlen_data.cdl tst_solar_1.cdl tst_format_att.cdl tst_inflated.nc    \
 tmp_subset.cdl tst_inflated4.nc tst_deflated.nc tst_chunking.nc tmp*.nc \
 tst_charfill.nc tmp_tst_charfill.cdl \
-tst_iter.nc ref_tst_iter.cdl tst_iter.cdl \
+iter.* \
 tst_nc_test_netcdf4_4_0.cdl
 
 # These files all have to be included with the distribution.
@@ -94,31 +124,9 @@ ref_tst_charfill.cdl tst_charfill.cdl tst_charfill.sh                   \
 tst_iter.sh
 
 
-# Can't run ncgen to generate ctest.c and ctest64.c on cross-compiles.
-BUILT_SOURCES = ctest.c ctest64.c
-if EXTRA_TESTS
-ctest.c:
-	$(top_builddir)/ncgen/ncgen -lc -o ctest0.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest.c
-
-ctest64.c:
-	$(top_builddir)/ncgen/ncgen -v2 -lc -o ctest0_64.nc $(top_srcdir)/ncgen/c0.cdl > $(srcdir)/ctest64.c
-else
-ctest.c:
-	cp ref_ctest.c ctest.c
-
-ctest64.c:
-	cp ref_ctest64.c ctest64.c
-endif # CROSS_COMPILING
-
 # NCGEN4 additions
 SUBDIRS=cdl4 expected4
 EXTRA_DIST += tst_ncgen4_shared.sh tst_ncgen4.sh tst_ncgen4_classic.sh	\
 tst_ncgen4_diff.sh tst_ncgen4_cycle.sh ref_ctest.c ref_ctest64.c
 
 CLEANFILES += results/*.nc results/*.dmp results/*.dmp2 tmp*.cdl
-if !BUILD_DLL
-TESTS += tst_ncgen4_classic.sh
-if USE_NETCDF4
-TESTS += tst_ncgen4.sh
-endif
-endif

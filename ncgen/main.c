@@ -41,6 +41,8 @@ int specials_flag; /* 1=> special attributes are present */
 int usingclassic;
 int cmode_modifier;
 
+int diskless;
+
 size_t nciterbuffersize;
 
 struct Vlendata* vlendata;
@@ -166,12 +168,14 @@ main(
     enhanced_flag = 0;
     specials_flag = 0;
 
+    diskless = 0;
+
 #if _CRAYMPP && 0
     /* initialize CRAY MPP parallel-I/O library */
     (void) par_io_init(32, 32);
 #endif
 
-    while ((c = getopt(argc, argv, "hbcfk:l:no:v:xdM:D:B:")) != EOF)
+    while ((c = getopt(argc, argv, "hbcfk:l:no:v:xdM:D:B:P")) != EOF)
       switch(c) {
 	case 'd':
 	  debug = 1;	  
@@ -261,6 +265,9 @@ main(
 	case 'B':
 	  nciterbuffersize = atoi(optarg);
 	  break;
+	case 'P': /* diskless with persistence */
+	  diskless = 1;
+	  break;
 	case '?':
 	  usage();
 	  return(8);
@@ -279,7 +286,8 @@ main(
 
     if(languages == 0) {
 	binary_flag = 1; /* default */
-        if(k_flag == 0)
+	/* Treat -k or -o as an implicit -lb assuming no other -l flags */
+        if(k_flag == 0 && netcdf_name == NULL)
 	    syntax_only = 1;
     }
 
@@ -319,6 +327,9 @@ main(
     }
 #endif
 
+    if(!binary_flag)
+	diskless = 0;
+
     argc -= optind;
     argv += optind;
 
@@ -344,7 +355,8 @@ main(
     parse_init();
     ncgin = fp;
     if(debug >= 2) {ncgdebug=1;}
-    if(ncgparse() != 0) return 1;
+    if(ncgparse() != 0)
+        return 1;
 
     /* Compute the k_flag (1st pass) using rules in the man page (ncgen.1).*/
 
@@ -374,9 +386,9 @@ main(
 	return 0;
     }
 
-    if(specials_flag && k_flag == 0)
+    if(specials_flag > 0 && k_flag == 0)
 #ifdef USE_NETCDF4
-	k_flag = 4;
+	k_flag = 3;
 #else
 	k_flag = 1;
 #endif
@@ -395,8 +407,11 @@ main(
     default: ASSERT(0); /* cannot happen */
     }
 
+    if(diskless)
+	cmode_modifier |= (NC_DISKLESS|NC_NOCLOBBER);
+
     processsemantics();
-    if(!syntax_only) 
+    if(!syntax_only && error_count == 0) 
         define_netcdf();
 
     return 0;
@@ -413,4 +428,5 @@ init_netcdf(void) /* initialize global counts, flags */
 
     codebuffer = bbNew();
     stmt = bbNew();
+    error_count = 0; /* Track # of errors */
 }

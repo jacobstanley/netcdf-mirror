@@ -207,7 +207,7 @@ converttype(OCtype etype, char* value, char* memory)
     case OC_Int64:
 	if(sscanf(value,"%lld",&llv) != 1) goto fail;
         /*else if(iv > OC_INT64_MAX || iv < OC_INT64_MIN) goto fail;*/
-	*((signed long long*)memory) = (signed long long)iv;
+	*((signed long long*)memory) = (signed long long)llv;
 	break;
     case OC_UInt64:
 	if(sscanf(value,"%llu",&ullv) != 1) goto fail;
@@ -438,7 +438,7 @@ mergedas1(OCnode* dds, OCnode* das)
 
 
 
-#ifdef IGNORE
+#ifdef OCIGNORE
 
 int
 ocddsdasmerge(OCstate* state, OCnode* ddsroot, OCnode* dasroot)
@@ -607,7 +607,7 @@ void
 ocmarkcacheable(OCstate* state, OCnode* ddsroot)
 {
     int i,j;
-#ifdef IGNORE
+#ifdef OCIGNORE
     int ok;
 #endif
     OClist* treenodes = ddsroot->tree->nodes;
@@ -619,20 +619,20 @@ ocmarkcacheable(OCstate* state, OCnode* ddsroot)
 	/* collect node path */
         oclistclear(path);
         occollectpathtonode(node,path);	
-#ifdef IGNORE
+#ifdef OCIGNORE
         ok = 1;
 #endif
 	for(j=1;j<oclistlength(path)-1;j++) {/* skip top level dataset and node itself*/
             OCnode* pathnode = (OCnode*)oclistget(path,j);
 	    if(pathnode->octype != OC_Structure
 		|| pathnode->array.rank > 0) {
-#ifdef IGNORE
+#ifdef OCIGNORE
 	    ok=0;
 #endif
 	    break;
 	    }
 	}	
-#ifdef IGNORE
+#ifdef OCIGNORE
 	if(ok) {
    	    node->cache.cacheable = 1;
 	    node->cache.valid = 0;
@@ -662,7 +662,8 @@ occomputeskipdatar(OCstate* state, OCnode* xnode, ocoffset_t offset)
     OCerror stat = OC_NOERR;
     int i,nfields;
     int scalar = 0;
-    ocoffset_t instancesize, totalsize;
+    ocoffset_t instancesize = 0;
+    ocoffset_t totalsize = 0;
 
     scalar = (xnode->array.rank == 0 ? 1 : 0);
 
@@ -703,7 +704,8 @@ occomputeskipdatar(OCstate* state, OCnode* xnode, ocoffset_t offset)
 		totalsize += 2*XDRUNIT; /* overhead is double count */
 	    break;
 
-	default: OCPANIC("unexpected etype"); /* better not happen */
+	default:
+	    OCPANIC("unexpected etype"); /* better not happen */
 	}
 	break;
 
@@ -746,6 +748,7 @@ occomputeskipdatar(OCstate* state, OCnode* xnode, ocoffset_t offset)
     default: OCPANIC("unexpected octype"); /* better not happen */
     }
 
+    xnode->skip.offset = offset;
     xnode->skip.instancesize = instancesize;
     xnode->skip.totalsize = totalsize;
 

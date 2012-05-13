@@ -14,13 +14,13 @@ TESTFILES='tst_comp tst_comp2 tst_enum_data tst_fillbug
 
 echo "*** Testing netCDF-4 features of nccopy on ncdump/*.nc files"
 for i in $TESTFILES ; do
-    echo "*** copy $i.nc to copy_of_$i.nc ..."
-    ./nccopy $i.nc copy_of_$i.nc
-    ./ncdump -n copy_of_$i $i.nc > tmp.cdl
-    ./ncdump copy_of_$i.nc > copy_of_$i.cdl
-    echo "*** compare " with copy_of_$i.cdl
-    diff copy_of_$i.cdl tmp.cdl
-    rm copy_of_$i.nc copy_of_$i.cdl tmp.cdl
+    echo "*** copy $i.nc to $i_copy.nc ..."
+    ./nccopy "$i.nc" "$i_copy.nc"
+    ./ncdump -n "$i_copy" "$i.nc" > tmp.cdl
+    ./ncdump "$i_copy.nc" > "$i_copy.cdl"
+    echo "*** compare " with "$i_copy.cdl"
+    diff "$i_copy.cdl" tmp.cdl
+    rm "$i_copy.nc" "$i_copy.cdl" tmp.cdl
 done
 echo "*** Create deflatable files for testing ..."
 ./tst_compress
@@ -48,13 +48,13 @@ rm tst_deflated.nc tst_inflated.nc tst_inflated4.nc tmp.nc
 
 echo "*** Testing nccopy -d1 -s on ncdump/*.nc files"
 for i in $TESTFILES ; do
-    echo "*** nccopy -d1 -s $i.nc copy_of_$i.nc ..."
-    ./nccopy -d1 -s $i.nc copy_of_$i.nc
-    ./ncdump -n copy_of_$i $i.nc > tmp.cdl
-    ./ncdump copy_of_$i.nc > copy_of_$i.cdl
-    echo "*** compare " with copy_of_$i.cdl
-    diff copy_of_$i.cdl tmp.cdl
-    rm copy_of_$i.nc copy_of_$i.cdl tmp.cdl
+    echo "*** nccopy -d1 -s $i.nc $i_copy.nc ..."
+    ./nccopy -d1 -s "$i.nc" "$i_copy.nc"
+    ./ncdump -n "$i_copy" "$i.nc" > tmp.cdl
+    ./ncdump "$i_copy.nc" > "$i_copy.cdl"
+    echo "*** compare " with "$i_copy.cdl"
+    diff "$i_copy.cdl" tmp.cdl
+    rm "$i_copy.nc" "$i_copy.cdl" tmp.cdl
 done
 echo "*** Create chunkable file for testing ..."
 ./tst_chunking

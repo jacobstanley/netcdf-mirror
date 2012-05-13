@@ -15,10 +15,6 @@
 #include "ncd3dispatch.h"
 #include "dapalign.h"
 #include "dapdump.h"
-#ifdef IGNORE
-#include "oc.h"
-#include "ocdrno.h"
-#endif
 
 static NCerror buildncstructures3(NCDAPCOMMON*);
 static NCerror builddims(NCDAPCOMMON*);
@@ -50,19 +46,6 @@ nc3dinitialize(void)
 }
 
 /**************************************************/
-#ifdef NOTUSED
-int
-NCD3_new_nc(NC** ncpp)
-{
-    NCDAPCOMMON* ncp;
-    /* Allocate memory for this info. */
-    if (!(ncp = calloc(1, sizeof(struct NCDAP3)))) 
-       return NC_ENOMEM;
-    if(ncpp) *ncpp = (NC*)ncp;
-    return NC_NOERR;
-}
-#endif
-/**************************************************/
 
 /* See ncd3dispatch.c for other version */
 int
@@ -76,7 +59,8 @@ NCD3_open(const char * path, int mode,
     NC* drno = NULL;
     NCDAPCOMMON* dapcomm = NULL;
     const char* value;
-    char* tmpname = NULL;
+    /* We will use a fake file descriptor as our internal in-memory filename */
+    char tmpname[32];
 
     if(!nc3dinitialized) nc3dinitialize();
 
@@ -97,6 +81,7 @@ NCD3_open(const char * path, int mode,
 
     drno->dispatch = dispatch;
     drno->dispatchdata = dapcomm;
+    drno->int_ncid = nc__pseudofd(); /* create a unique id */
     dapcomm->controller = (NC*)drno;
 
     dapcomm->cdf.separator = ".";
@@ -129,17 +114,14 @@ NCD3_open(const char * path, int mode,
 	SETFLAG(dapcomm->controls,NCF_UNCONSTRAINABLE);
 
     /* Use libsrc code for storing metadata */
-    tmpname = nulldup(PSEUDOFILE);
+
+    snprintf(tmpname,sizeof(tmpname),"%d",drno->int_ncid);
     /* Now, use the file to create the netcdf file */
     if(sizeof(size_t) == sizeof(unsigned int))
-	ncstat = nc_create(tmpname,NC_CLOBBER,&drno->substrate);
+	ncstat = nc_create(tmpname,NC_DISKLESS,&drno->substrate);
     else
-	ncstat = nc_create(tmpname,NC_CLOBBER|NC_64BIT_OFFSET,&drno->substrate);
+	ncstat = nc_create(tmpname,NC_DISKLESS|NC_64BIT_OFFSET,&drno->substrate);
     if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
-
-    /* free the filename so it will automatically go away*/
-    unlink(tmpname);
-    nullfree(tmpname);
 
     /* Avoid fill */
     nc_set_fill(drno->substrate,NC_NOFILL,NULL);
@@ -281,8 +263,9 @@ fprintf(stderr,"constrained dds: %s\n",dumptree(dapcomm->cdf.ddsroot));
 	/* ignore all constraints */
 	dapcomm->oc.urltext = nc_uribuild(dapcomm->oc.url,NULL,NULL,0);
     } else {
-         nc_urisetconstraints(dapcomm->oc.url,
-			   buildconstraintstring3(dapcomm->oc.dapconstraint));
+	char* constraintstring = buildconstraintstring3(dapcomm->oc.dapconstraint);
+        nc_urisetconstraints(dapcomm->oc.url,constraintstring);
+	nullfree(constraintstring);
         dapcomm->oc.urltext = nc_uribuild(dapcomm->oc.url,NULL,NULL,NC_URICONSTRAINTS);
     }
 
@@ -306,30 +289,30 @@ fprintf(stderr,"ncdap3: final constraint: %s\n",dapcomm->oc.url->constraint);
 	}
     }
 
-    {
-        /* Mark as no longer writable and no longer indef;
-           requires breaking abstraction  */
-	NC* nc;
-        ncstat = NC_check_id(drno->substrate, &nc);
-        /* Mark as no longer writeable */
-        fClr(nc->nciop->ioflags, NC_WRITE);
-        /* Mark as no longer indef;
-           (do NOT use nc_enddef until diskless is working)*/
-	fSet(nc->flags, NC_INDEF);	
-    }
+#ifdef BUG
+    /* The libsrc code (NC_begins) assumes that
+       a created files is new and hence must have an
+       unlimited dimension of 0 initially, which will
+       wipe out the effect of the NC_set_numrecs in builddims.
+       There is no easy workaround, so we suppress the call
+       to nc_enddef
+    */
+    ncstat = nc_enddef(drno->substrate);
+    if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
+#endif
 
     if(ncpp) *ncpp = (NC*)drno;
 
     return ncstat;
 
 done:
-    if(drno != NULL) NCD3_abort(drno->ext_ncid);
+    if(drno != NULL) NCD3_close(drno->ext_ncid);
     if(ocstat != OC_NOERR) ncstat = ocerrtoncerr(ocstat);
     return THROW(ncstat);
 }
 
 int
-NCD3_abort(int ncid)
+NCD3_close(int ncid)
 {
     NC* drno;
     NCDAPCOMMON* dapcomm;
@@ -339,7 +322,7 @@ NCD3_abort(int ncid)
     if(ncstatus != NC_NOERR) return THROW(ncstatus);
 
     dapcomm = (NCDAPCOMMON*)drno->dispatchdata;
-    ncstatus = nc_abort(drno->substrate);
+    ncstatus = nc_close(drno->substrate);
 
     /* remove ourselves from NClist */
     del_from_NCList(drno);
@@ -419,7 +402,7 @@ builddims(NCDAPCOMMON* dapcomm)
         if(ncstat != NC_NOERR) {THROWCHK(ncstat); goto done;}
 
         /* Set the effective size of UNLIMITED;
-           note that this cannot be done thru the normal API.*/
+           note that this cannot easily be done thru the normal API.*/
         NC_set_numrecs(ncsub,unlimited->dim.declsize);
     }
 

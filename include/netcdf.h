@@ -109,33 +109,41 @@ extern "C" {
 #define NC_FILL		0	/**< Argument to nc_set_fill() to clear NC_NOFILL */
 #define NC_NOFILL	0x100	/**< Argument to nc_set_fill() to turn off filling of data. */
 
-#define NC_NOWRITE	0	/**< Set read-only access for nc_open(). */
-#define NC_WRITE    	0x0001	/**< Set read-write access for nc_open(). */
+/* Define the ioflags bits for nc_create and nc_open.
+   currently unused: 0x0010,0x0020,0x0040,0x0080
+   and the whole upper 16 bits
+*/
 
-#define NC_CLOBBER	 0       /**< Destroy existing file. Mode flag for nc_create(). */
-#define NC_NOCLOBBER	 0x0004	/**< Don't destroy existing file. Mode flag for nc_create(). */
-#define NC_64BIT_OFFSET  0x0200  /**< Use large (64-bit) file offsets. Mode flag for nc_create(). */
-#define NC_NETCDF4       0x1000  /**< Use netCDF-4/HDF5 format. Mode flag for nc_create(). */
+#define NC_NOWRITE	 0x0000	/**< Set read-only access for nc_open(). */
+#define NC_WRITE    	 0x0001	/**< Set read-write access for nc_open(). */
+/* unused: 0x0002 */
+#define NC_CLOBBER	 0x0000 /**< Destroy existing file. Mode flag for nc_create(). */
+#define NC_NOCLOBBER     0x0004	/**< Don't destroy existing file. Mode flag for nc_create(). */
+
+#define NC_DISKLESS      0x0008  /**< Create a diskless file. Mode flag for nc_create(). */
+
 #define NC_CLASSIC_MODEL 0x0100 /**< Enforce classic model. Mode flag for nc_create(). */
-/* NC_DISKLESS isn't ready for prime time yet */
-/* #define NC_DISKLESS      0x0002  /\**< Create a diskless file. Mode flag for nc_create(). *\/ */
-
-/** Share updates, limit cacheing.
-Use this in mode flags for both nc_create() and nc_open(). */
-#define NC_SHARE       0x0800	
-/** Turn on MPI I/O.
-Use this in mode flags for both nc_create() and nc_open(). */
-#define NC_MPIIO       0x2000 
-/** Turn on MPI POSIX I/O.
-Use this in mode flags for both nc_create() and nc_open(). */
-#define NC_MPIPOSIX    0x4000
-#define NC_PNETCDF     0x8000	/**< Use parallel-netcdf library. Mode flag for nc_open(). */
+#define NC_64BIT_OFFSET  0x0200  /**< Use large (64-bit) file offsets. Mode flag for nc_create(). */
 
 /** \deprecated The following flag currently is ignored, but use in
  * nc_open() or nc_create() may someday support use of advisory
  * locking to prevent multiple writers from clobbering a file
  */
-#define NC_LOCK		0x0400	
+#define NC_LOCK          0x0400	
+
+/** Share updates, limit cacheing.
+Use this in mode flags for both nc_create() and nc_open(). */
+#define NC_SHARE         0x0800	
+
+#define NC_NETCDF4       0x1000  /**< Use netCDF-4/HDF5 format. Mode flag for nc_create(). */
+
+/** Turn on MPI I/O.
+Use this in mode flags for both nc_create() and nc_open(). */
+#define NC_MPIIO         0x2000 
+/** Turn on MPI POSIX I/O.
+Use this in mode flags for both nc_create() and nc_open(). */
+#define NC_MPIPOSIX      0x4000
+#define NC_PNETCDF       0x8000	/**< Use parallel-netcdf library. Mode flag for nc_open(). */
 
 /** Format specifier for nc_set_default_format().  Starting with
  * version 3.6, there are different format netCDF files. 4.0
@@ -360,13 +368,15 @@ by the desired type. */
 #define NC_ESTORAGE      (-126)    /**< Can't specify both contiguous and chunking. */
 #define NC_EBADCHUNK     (-127)    /**< Bad chunksize. */
 #define NC_ENOTBUILT     (-128)    /**< Attempt to use feature that was not turned on when netCDF was built. */
-#define NC4_LAST_ERROR   (-128) 
+#define NC_EDISKLESS     (-129)    /**< Error in using diskless  access. */  
+
+#define NC4_LAST_ERROR   (-129) 
 
 /* This is used in netCDF-4 files for dimensions without coordinate
  * vars. */
 #define DIM_WITHOUT_VARIABLE "This is a netCDF dimension but not a netCDF variable."
 
-/* This is here at the request of the NCO team to support the stupid
+/* This is here at the request of the NCO team to support our
  * mistake of having chunksizes be first ints, then size_t. Doh! */
 #define NC_HAVE_NEW_CHUNKING_API 1
 
@@ -1862,7 +1872,9 @@ ncrecput(int ncid, long recnum, void *const *datap);
 #endif
 
 /* Temporary hack to shut up warnings */
+#ifndef __MINGW32_VERSION 
 #define END_OF_MAIN()
+#endif
 
 #endif /* _NETCDF_ */
 

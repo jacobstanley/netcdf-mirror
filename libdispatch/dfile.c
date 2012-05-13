@@ -9,6 +9,19 @@ Research/Unidata. See COPYRIGHT file for more info.
 */
 
 #include "config.h"
+#include <stdlib.h>
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 #include "ncdispatch.h"
 
 static int nc_initialized = 0;
@@ -50,13 +63,17 @@ of the interfaces for these operations.
 */
 /**@{*/
 
-size_t NC_coord_zero[NC_MAX_VAR_DIMS];
-size_t NC_coord_one[NC_MAX_VAR_DIMS];
+size_t* NC_coord_zero;
+size_t* NC_coord_one;
 
 static void
 nc_local_initialize(void)
 {
     int i;
+    NC_coord_zero = (size_t*)malloc(sizeof(size_t)*NC_MAX_VAR_DIMS);
+    if(NC_coord_zero == NULL) abort();
+    NC_coord_one = (size_t*)malloc(sizeof(size_t)*NC_MAX_VAR_DIMS);
+    if(NC_coord_one == NULL) abort();
     for(i=0;i<NC_MAX_VAR_DIMS;i++) {
 	NC_coord_one[i] = 1;
 	NC_coord_zero[i] = 0;
@@ -117,9 +134,9 @@ NC_check_file_type(const char *path, int use_parallel, void *mpi_info,
    else if(magic[0] == 'C' && magic[1] == 'D' && magic[2] == 'F') 
    {
       if(magic[3] == '\001') 
-	 *cdf = 1;
+	 *cdf = 1; /* netcdf classic version 1 */
       else if(magic[3] == '\002') 
-	 *cdf = 2;
+	 *cdf = 2; /* netcdf classic version 2 */
    }
     
    return NC_NOERR;
@@ -141,7 +158,8 @@ available: NC_NOCLOBBER (do not overwrite existing file), NC_SHARE
 (limit write caching - netcdf classic files onlt), NC_64BIT_OFFSET
 (create 64-bit offset file), NC_NETCDF4 (create netCDF-4/HDF5 file),
 NC_CLASSIC_MODEL (enforce netCDF classic mode on netCDF-4/HDF5
-files). See discussion below.
+files), NC_DISKLESS (store data only in memory), NC_WRITE.
+See discussion below.
 
 \param ncidp Pointer to location where returned netCDF ID is to be
 stored.
@@ -185,6 +203,24 @@ types, multiple unlimited dimensions, or new atomic types. The
 advantage of this restriction is that such files are guaranteed to
 work with existing netCDF software.
 
+Setting NC_DISKLESS causes netCDF to create the file only in memory.
+This allows for the use of files that have no long term purpose. Note that
+with one exception, the in-memory file is destroyed upon calling
+nc_close. If, however, the flag combination (NC_DISKLESS|NC_WRITE)
+is used, then at close, the contents of the memory file will be
+made persistent in the file path that was specified in the nc_create
+call. If NC_DISKLESS is going to be used for creating a large classic file,
+it behooves one to use either nc__create or nc_create_mp and specify
+an appropriately large value of the initialsz parameter to avoid
+to many extensions to the in-memory space for the file.
+
+Normally, NC_DISKLESS allocates space in the heap for storing
+the in-memory file. If, however, the ./configure flags --enable-mmap
+is used, then mmap will be used.
+
+Note that nc_create(path,cmode,ncidp) is equivalent to the invocation of
+nc__create(path,cmode,NC_SIZEHINT_DEFAULT,NULL,ncidp).
+
 \returns ::NC_NOERR No error.
 
 \returns ::NC_ENOMEM System out of memory.
@@ -193,6 +229,9 @@ work with existing netCDF software.
 
 \returns ::NC_EFILEMETA Error writing netCDF-4 file-level metadata in
 HDF5 file. (netCDF-4 files only).
+
+\returns ::NC_EDISKLESS if there was an error in creating the
+in-memory file.
 
 \note When creating a netCDF-4 file HDF5 error reporting is turned
 off, if it is on. This doesn't stop the HDF5 error stack from
@@ -208,7 +247,7 @@ that name does not already exist:
 @code
      #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
         ...
      status = nc_create("foo.nc", NC_NOCLOBBER, &ncid);
@@ -221,7 +260,7 @@ be in the 64-bit offset format.
 @code
      #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
         ...
      status = nc_create("foo_large.nc", NC_NOCLOBBER|NC_64BIT_OFFSET, &ncid);
@@ -234,7 +273,7 @@ be in the HDF5 format.
 @code
      #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
         ...
      status = nc_create("foo_HDF5.nc", NC_NOCLOBBER|NC_NETCDF4, &ncid);
@@ -249,10 +288,37 @@ the classic netCDF-3 data model.
 @code
      #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
         ...
      status = nc_create("foo_HDF5_classic.nc", NC_NOCLOBBER|NC_NETCDF4|NC_CLASSIC_MODEL, &ncid);
+     if (status != NC_NOERR) handle_error(status);
+@endcode
+
+In this example we create a in-memory netCDF classic dataset named
+diskless.nc whose content will be lost when nc_close() is called.
+
+@code
+     #include <netcdf.h>
+        ...
+     int status = NC_NOERR;
+     int ncid;
+        ...
+     status = nc_create("foo_HDF5_classic.nc", NC_DISKLESS, &ncid);
+     if (status != NC_NOERR) handle_error(status);
+@endcode
+
+In this example we create a in-memory netCDF classic dataset named
+diskless.nc and specify that it should be made persistent
+in a file named diskless.nc when nc_close() is called.
+
+@code
+     #include <netcdf.h>
+        ...
+     int status = NC_NOERR;
+     int ncid;
+        ...
+     status = nc_create("foo_HDF5_classic.nc", NC_DISKLESS|NC_WRITE, &ncid);
      if (status != NC_NOERR) handle_error(status);
 @endcode
 
@@ -262,7 +328,7 @@ creating.  */
 int
 nc_create(const char *path, int cmode, int *ncidp)
 {
-   return NC_create(path, cmode, 0, 0, NULL, 0, NULL, ncidp);
+   return nc__create(path,cmode,NC_SIZEHINT_DEFAULT,NULL,ncidp);
 }
 
 /*!
@@ -279,21 +345,26 @@ Like nc_create(), this function creates a netCDF file.
 be advantageous to set the size of the output file at creation
 time. This parameter sets the initial size of the file at creation
 time. This only applies to classic and 64-bit offset files.
+The special value NC_SIZEHINT_DEFAULT (which is the value 0),
+lets the netcdf library choose a suitable initial size.
 
-\param chunksizehintp A pointer to the chunk size hint, which controls
-a space versus time tradeoff, memory allocated in the netcdf library
-versus number of system calls. Because of internal requirements, the
-value may not be set to exactly the value requested. The actual value
-chosen is returned by reference. Using the value NC_SIZEHINT_DEFAULT
-causes the library to choose a default. How the system chooses the
-default depends on the system. On many systems, the "preferred I/O
-block size" is available from the stat() system call, struct stat
-member st_blksize. If this is available it is used. Lacking that,
-twice the system pagesize is used. Lacking a call to discover the
-system pagesize, we just set default bufrsize to 8192. The bufrsize is
-a property of a given open netcdf descriptor ncid, it is not a
-persistent property of the netcdf dataset. This only applies to
-classic and 64-bit offset files.
+\param chunksizehintp A pointer to the chunk size hint,
+which controls a space versus time tradeoff, memory
+allocated in the netcdf library versus number of system
+calls. Because of internal requirements, the value may not
+be set to exactly the value requested. The actual value
+chosen is returned by reference. Using a NULL pointer or
+having the pointer point to the value NC_SIZEHINT_DEFAULT
+causes the library to choose a default. How the system
+chooses the default depends on the system. On many systems,
+the "preferred I/O block size" is available from the stat()
+system call, struct stat member st_blksize. If this is
+available it is used. Lacking that, twice the system
+pagesize is used. Lacking a call to discover the system
+pagesize, we just set default bufrsize to 8192. The bufrsize
+is a property of a given open netcdf descriptor ncid, it is
+not a persistent property of the netcdf dataset. This only
+applies to classic and 64-bit offset files.
 
 \param ncidp Pointer to location where returned netCDF ID is to be
 stored.
@@ -311,7 +382,7 @@ and initial size for the file.
 \code
 #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
      int intialsz = 2048;
      int *bufrsize;
@@ -357,7 +428,7 @@ support is enabled, then the path may be an OPeNDAP URL rather than a
 file path.
  
 \param mode The mode flag may include NC_WRITE (for read/write
-access) and NC_SHARE (see below).
+access) and NC_SHARE (see below) and NC_DISKLESS (see below).
 
 \param ncidp Pointer to location where returned netCDF ID is to be
 stored.
@@ -382,6 +453,19 @@ limited. Since the buffering scheme is optimized for sequential
 access, programs that do not access data sequentially may see some
 performance improvement by setting the NC_SHARE flag.
 
+This procedure may also be invoked with the NC_DISKLESS flag
+set in the mode argument, but ONLY if the file type is NOT NC_NETCDF4,
+which means it must be a classic format file.
+If NC_DISKLESS is specified, then the whole file is read completely into
+memory. In effect this creates an in-memory cache of the file.
+If the mode flag also specifies NC_WRITE, then the in-memory cache
+will be re-written to the disk file when nc_close() is called.
+For some kinds of manipulations, having the in-memory cache can
+speed up file processing. But in simple cases, non-cached
+processing may actually be faster than using cached processing.
+You will need to experiment to determine if the in-memory caching
+is worthwhile for your application.
+
 It is not necessary to pass any information about the format of the
 file being opened. The file type will be detected automatically by the
 netCDF library.
@@ -396,6 +480,9 @@ errors, it simply stops their display to the user through stderr.
 nc_open()returns the value NC_NOERR if no errors occurred. Otherwise,
 the returned status indicates an error. Possible causes of errors
 include:
+
+Note that nc_open(path,cmode,ncidp) is equivalent to the invocation of
+nc__open(path,cmode,NC_SIZEHINT_DEFAULT,NULL,ncidp).
 
 \returns ::NC_NOERR No error.
 
@@ -413,7 +500,7 @@ named foo.nc for read-only, non-shared access:
 @code
 #include <netcdf.h>
    ... 
-int status;
+int status = NC_NOERR;
 int ncid;
    ... 
 status = nc_open("foo.nc", 0, &ncid);
@@ -453,8 +540,9 @@ system calls.
 Because of internal requirements, the value may not be set to exactly
 the value requested. The actual value chosen is returned by reference.
 
-Using the value NC_SIZEHINT_DEFAULT causes the library to choose a
-default. How the system chooses the default depends on the system. On
+Using a NULL pointer or having the pointer point to the value
+NC_SIZEHINT_DEFAULT causes the library to choose a default. 
+How the system chooses the default depends on the system. On
 many systems, the "preferred I/O block size" is available from the
 stat() system call, struct stat member st_blksize. If this is
 available it is used. Lacking that, twice the system pagesize is used.
@@ -572,7 +660,7 @@ named foo.nc and put it into define mode:
 \code
 #include <netcdf.h>
    ... 
-int status;
+int status = NC_NOERR;
 int ncid;
    ... 
 status = nc_open("foo.nc", NC_WRITE, &ncid);  
@@ -634,7 +722,7 @@ netCDF dataset named foo.nc and put it into data mode:
 \code
      #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
         ...
      status = nc_create("foo.nc", NC_NOCLOBBER, &ncid);
@@ -649,7 +737,7 @@ netCDF dataset named foo.nc and put it into data mode:
 int
 nc_enddef(int ncid)
 {
-   int status;
+   int status = NC_NOERR;
    NC *ncp;
    status = NC_check_id(ncid, &ncp); 
    if(status != NC_NOERR) return status;
@@ -903,7 +991,7 @@ netCDF dataset named foo.nc and release its netCDF ID:
 \code
      #include <netcdf.h>
         ...
-     int status;
+     int status = NC_NOERR;
      int ncid;
         ...
      status = nc_create("foo.nc", NC_NOCLOBBER, &ncid);
@@ -1307,12 +1395,6 @@ NC_create(const char *path, int cmode, size_t initialsz,
    if((isurl = NC_testurl(path)))
 	model = NC_urlmodel(path);
 
-   /* /\* Look to the incoming cmode for hints *\/ */
-   /* if(model == 0) { */
-   /*    if(cmode & NC_DISKLESS) */
-   /* 	model = NC_DISPATCH_DISKLESS; */
-   /* } */
-
    /* Look to the incoming cmode for hints */
    if(model == 0) {
       if(cmode & NC_NETCDF4 || cmode & NC_PNETCDF)
@@ -1361,17 +1443,8 @@ NC_create(const char *path, int cmode, size_t initialsz,
 	 dispatcher = NCCR_dispatch_table;
       else
 #endif
-#ifdef USE_DAP
-#ifdef NOTUSED
-      if(model == (NC_DISPATCH_NC4 | NC_DISPATCH_NCD))
- 	dispatcher = NCD4_dispatch_table;
-      else
-#endif
-#endif
       if(model == (NC_DISPATCH_NC4))
  	dispatcher = NC4_dispatch_table;
-      /* else if(model == (NC_DISPATCH_DISKLESS)) */
-      /* 	 dispatcher = NCD_dispatch_table; */
       else
 #endif /*USE_NETCDF4*/
 #ifdef USE_DAP
@@ -1481,13 +1554,6 @@ NC_open(const char *path, int cmode,
 	dispatcher = NCCR_dispatch_table;
    else
 #endif
-#if defined(USE_NETCDF4) && defined(USE_DAP)
-#ifdef NOTUSED
-   if(model == (NC_DISPATCH_NC4 | NC_DISPATCH_NCD))
-	dispatcher = NCD4_dispatch_table;
-   else
-#endif
-#endif
 #if defined(USE_DAP)
    if(model == (NC_DISPATCH_NC3 | NC_DISPATCH_NCD))
 	dispatcher = NCD3_dispatch_table;
@@ -1514,4 +1580,35 @@ NC_open(const char *path, int cmode,
    }
    return stat;
 }
+
+/*Provide an internal function for generating pseudo file descriptors
+  for systems that are not file based (e.g. dap, memio).
+*/
+
+/* Static counter for pseudo file descriptors (incremented) */
+static int pseudofd = 0;
+
+/* Create a pseudo file descriptor that does not
+   overlap real file descriptors
+*/
+int
+nc__pseudofd(void)
+{
+    if(pseudofd == 0)  {
+        int maxfd = 32767; /* default */
+#ifdef HAVE_GETRLIMIT
+        struct rlimit rl;
+        if(getrlimit(RLIMIT_NOFILE,&rl) == 0) {
+	    if(rl.rlim_max != RLIM_INFINITY)
+	        maxfd = rl.rlim_max;
+	    if(rl.rlim_cur != RLIM_INFINITY)
+	        maxfd = rl.rlim_cur;
+	}
+	pseudofd = maxfd+1;
+#endif
+    }
+
+    return pseudofd++;
+}
+
 

@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 ## Process this file with autoconf to produce a configure script.
 
-# This is part of Unidata's netCDF package. Copyright 2005-2011, see
+# This is part of Unidata's netCDF package. Copyright 2005-2012, see
 # the COPYRIGHT file for more information.
 
 # Recall that ${VAR-exp} expands to $VAR if var is set (even to null),
@@ -15,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.2-rc2], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.2], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -38,7 +38,7 @@ AC_CONFIG_HEADERS([config.h])
 # This call is required by automake.
 AM_INIT_AUTOMAKE([foreign dist-zip subdir-objects])
 
-# Check for the existance of this file before proceeding.
+# Check for the existence of this file before proceeding.
 AC_CONFIG_SRCDIR([libsrc/nc.c])
 
 AC_MSG_NOTICE([checking user options])
@@ -83,7 +83,7 @@ AC_MSG_RESULT($enable_valgrind_tests)
 
 # Does the user want to build netcdf-4?
 AC_MSG_CHECKING([whether we should try to build netCDF-4])
-AC_ARG_ENABLE([netcdf-4], [AS_HELP_STRING([--disable-netcdf-4],
+AC_ARG_ENABLE([netcdf-4], [AS_HELP_STRING([--enable-netcdf-4],
               [build with netcdf-4 (HDF5 and zlib required)])])
 test "x$enable_netcdf_4" = xno || enable_netcdf_4=yes
 AC_MSG_RESULT([$enable_netcdf_4])
@@ -92,7 +92,7 @@ AC_MSG_RESULT([$enable_netcdf_4])
 # --enable-netcdf-4 is the controlling enable switch
 if test "x$enable_netcdf_4" = "x" ; then
   AC_ARG_ENABLE([netcdf4], [AS_HELP_STRING([--enable-netcdf4],
-              [build with netcdf-4 (HDF5 and zlib required)])])
+              [(just a synonym for enable-netcdf-4)])])
   enable_netcdf_4="$enable_netcdf4"
 fi
 
@@ -213,7 +213,7 @@ test "x$enable_cdmremote" = xyes || enable_cdmremote=no
 if test "x$enable_netcdf_4" = "xno" ; then enable_cdmremote=no ; fi
 AC_MSG_RESULT($enable_cdmremote)
 
-# Capture the state of the --enable-dap flag
+## Capture the state of the --enable-dap flag
 AC_MSG_CHECKING([whether DAP client is to be built])
 AC_ARG_ENABLE([dap],
                  [AS_HELP_STRING([--disable-dap],
@@ -221,33 +221,40 @@ AC_ARG_ENABLE([dap],
 test "x$enable_dap" = xno || enable_dap=yes
 AC_MSG_RESULT($enable_dap)
 
-# Capture the state of the --enable-rpc flag
-AC_MSG_CHECKING([whether rpc client and server are to be built])
-AC_ARG_ENABLE([rpc],
-                 [AS_HELP_STRING([--enable-rpc],
-                                 [build with rpc client and server support.])])
-test "x$enable_rpc" = xyes || enable_rpc=no
-AC_MSG_RESULT($enable_rpc)
+# OC now has its own version of rpc (really xdr), so no longer need the library
+## Capture the state of the --enable-rpc flag
+#AC_MSG_CHECKING([whether rpc client and server are to be built])
+#AC_ARG_ENABLE([rpc],
+#                 [AS_HELP_STRING([--enable-rpc],
+#                                 [build with rpc client and server support.])])
+#test "x$enable_rpc" = xyes || enable_rpc=no
+#AC_MSG_RESULT($enable_rpc)
 
-# Curl support is required if these flags are set:
+# Curl support is required if and only if any of these flags are set:
 # 1. --enable-dap
 # 2. --enable-cdmremote
 # 3. --enable-rpc
 
-# If --disable-dap && --disable cdmremote && --disable-rpc,
-# then libcurl is not required
 if test "x$enable_dap" = "xyes" -o "x$enable_cdmremote" = "xyes" -o "x$enable_rpc" = "xyes" ; then
 require_curl=yes
 else
 require_curl=no
 fi
 
-# Do a lib test for curl
-AC_CHECK_LIB([curl], [curl_easy_setopt])
-found_curl=no
-if test "x$ac_cv_lib_curl_curl_easy_setopt" = xyes ; then
-found_curl=yes
-fi
+# See if the user provided us with a curl library
+# Do an initial lib test for curl, but suppress the default action
+
+case "$host_os" in 
+*mingw*)     
+			
+	     AC_CHECK_LIB([curl],[curl_easy_setopt])
+	     AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no]);;
+*)
+	AC_CHECK_LIB([curl],[curl_easy_setopt])
+	AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
+	;;
+esac
+
 
 # If curl is required but there is no curl, then complain
 if test $require_curl = yes -a $found_curl = no ; then
@@ -255,7 +262,26 @@ if test $require_curl = yes -a $found_curl = no ; then
   enable_dap=no
   enable_cdmremote=no
   enable_rpc=no
+elif test $require_curl = yes -a $found_curl = yes ; then
+
+case "$host_os" in 
+*mingw*)     
+AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
+AC_CHECK_LIB([curl], [curl_easy_setopt])
+;;
+*)
+AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
+AC_CHECK_LIB([curl], [curl_easy_setopt])
+;;
+esac
+
+  # Redo the check lib to actually add -lcurl
+  
+  
 fi
+
+#AC_SEARCH_LIBS([curl_easy_setopt], [curl], [found_curl=yes],[found_curl=no])
+
 
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
@@ -332,6 +358,9 @@ AC_ARG_ENABLE([ffio],
                               [use ffio instead of posixio (ex. on the Cray)])])
 test "x$enable_ffio" = xyes || enable_ffio=no
 AC_MSG_RESULT($enable_ffio)
+if test "x$enable_ffio" = xyes; then
+   AC_DEFINE([USE_FFIO], [1], [if true, use ffio instead of posixio])
+fi
 AM_CONDITIONAL(USE_FFIO, [test x$enable_ffio = xyes])
 
 # Does the user want to enable the user-provided NEC-SX vectorization
@@ -350,6 +379,7 @@ dnl fi
 nc_build_c=yes
 nc_build_v2=yes
 nc_build_utilities=yes
+nc_build_tests=yes
 nc_build_examples=yes
 
 # Does the user want to build examples?
@@ -383,6 +413,16 @@ test "x$nc_build_c" = xno && enable_utilities=no
 test "x$enable_utilities" = xno && nc_build_utilities=no
 AC_MSG_RESULT($nc_build_utilities)
 AM_CONDITIONAL(BUILD_UTILITIES, [test x$nc_build_utilities = xyes])
+
+# Does the user want to disable all tests?
+AC_MSG_CHECKING([whether test should be built and run])
+AC_ARG_ENABLE([testsets],
+              [AS_HELP_STRING([--disable-testsets],
+                              [don't build or run netCDF tests])])
+test "x$enable_testsets" = xno || enable_testsets=yes
+nc_build_tests=$enable_testsets
+AC_MSG_RESULT($nc_build_tests)
+AM_CONDITIONAL(BUILD_TESTSETS, [test x$nc_build_tests = xyes])
 
 # Does the user want to run tests for large files (> 2GiB)?
 AC_MSG_CHECKING([whether large file (> 2GB) tests should be run])
@@ -505,32 +545,17 @@ AC_MSG_NOTICE([finding other utilities])
 AC_CHECK_PROGS([DOXYGEN], [doxygen])
 if test -z "$DOXYGEN"; then 
    AC_MSG_WARN([Doxygen not found - documentation will not be built])
-else
-   NETCDF_DOC_CODE_FILES='../include/netcdf.h \
-../examples/C/simple_xy_wr.c ../examples/C/simple_xy_rd.c \
-../examples/C/sfc_pres_temp_wr.c ../examples/C/sfc_pres_temp_rd.c \
-../examples/C/pres_temp_4D_wr.c ../examples/C/pres_temp_4D_rd.c \
-../examples/C/simple_nc4_wr.c ../examples/C/simple_nc4_rd.c \
-../examples/C/simple_xy_nc4_wr.c ../examples/C/simple_xy_nc4_rd.c \
-../libdispatch/dfile.c  ../libdispatch/ddim.c \
-../libdispatch/dattget.c ../libdispatch/dattinq.c  ../libdispatch/dattput.c \
-../libdispatch/datt.c ../libdispatch/dvar.c ../libdispatch/dvarinq.c \
-../libdispatch/dvarput.c ../libdispatch/dvarget.c ../libdispatch/derror.c \
-../libdispatch/dcompound.c ../libdispatch/dv2i.c \
-../libdispatch/dvlen.c ../libdispatch/denum.c ../libdispatch/dopaque.c \
-../libdispatch/dtype.c ../libsrc4/nc4file.c ../ncdump/ncdump.c'
-   NETCDF_DOC_ONLY_FILES="mainpage.doc tutorial.doc \
-../COPYRIGHT install.doc dispatch.doc guide.doc types.doc \
-notes.doc cdl.doc architecture.doc internal.doc"
 fi
-
 # If we have doxygen, and it's enabled, then process the file.
 if test "x$enable_doxygen" != xno; then
    if test -n "$DOXYGEN"; then
       AC_CONFIG_FILES([man4/Doxyfile])
-      AC_SUBST(NETCDF_DOC_CODE_FILES, ${NETCDF_DOC_CODE_FILES})
-      AC_SUBST(NETCDF_DOC_ONLY_FILES, ${NETCDF_DOC_ONLY_FILES})
    fi
+# Note: the list of files to input to doxygen
+# has been moved to man4/Doxyfile.in so
+# that make distcheck works correctly.
+# Any new inputs should be inserted into
+# man4/Doxyfile.in and possibley man4/Makefile.am
 fi
 
 # Find the install program.
@@ -570,6 +595,41 @@ AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr strcat strcpy \
                 strdup strcasecmp strtod strtoll strtoull strstr \
 		mkstemp getpid \
 		getrlimit gettimeofday fsync MPI_Comm_f2c])
+
+# check for memio support
+AC_CHECK_FUNCS([memmove getpagesize sysconf])
+
+# check for mmap support
+# Does the user want to use the mmap for NC_DISKLESS?
+AC_MSG_CHECKING([whether mmap will be used for in-memory files])
+AC_ARG_ENABLE([mmap],
+              [AS_HELP_STRING([--enable-mmap],
+                              [use mmap for in-memory (NC_DISKLESS) files])])
+test "x$enable_mmap" = xyes || enable_mmap=no
+AC_MSG_RESULT($enable_mmap)
+
+# check for diskless support
+# Does the user want to use the mmap for NC_DISKLESS?
+AC_MSG_CHECKING([whether to use diskless])
+AC_ARG_ENABLE([diskless],
+              [AS_HELP_STRING([--enable-mmap],
+                              [use mmap for in-memory (NC_DISKLESS) files])])
+test "x$enable_diskless" = xyes || enable_diskless=no
+AC_MSG_RESULT($enable_diskless)
+
+# check for mmap and mremap
+AC_FUNC_MMAP
+AC_CHECK_FUNCS([mremap])
+if test "x$ac_cv_func_mmap_fixed_mapped" != xyes -o "x$ac_cv_func_mremap" != xyes ; then
+  echo "mmap function or mremap function is not available: disabling mmap"
+  enable_mmap="no"
+fi
+
+if test "x$enable_mmap" = xyes; then
+  AC_DEFINE([USE_MMAP], [1], [if true, use mmap for in-memory files])
+fi
+AM_CONDITIONAL(USE_MMAP, [test x$enable_mmap = xyes])
+
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
 AC_STRUCT_ST_BLKSIZE
@@ -594,8 +654,10 @@ if test "x$enable_netcdf_4" = xyes || test "x$enable_dap" = xyes; then
 fi
 
 # We need the math library.
-AC_CHECK_LIB([m], [floor], [], 
+AC_CHECK_LIB([m], [floor], [],
 [AC_MSG_ERROR([Can't find or link to the math library.])])
+
+#AC_CHECK_LIB([msvcr80],[_set_output_format])
 
 if test "x$enable_netcdf_4" = xyes; then
 
@@ -727,36 +789,6 @@ AC_MSG_RESULT([$BINFILE_NAME $FC $CXX])
 
 UD_FTPBINDIR
 
-##################################################
-# OC has been modified to not depend on xdr.h, so suppress here
-## Require some version of xdr/rpc if --enable-dap is set.
-## See if autoconf can find it; check libc, librpc, librpcsvc and libnsl
-#if test "x$enable_dap" = xyes; then
-#   AC_SEARCH_LIBS([xdr_void],[c rpc nsl rpcsvc],
-#   		  [dap_xdrlib=$ac_res],[dap_xdrlib=])
-#  if test -z "$dap_xdrlib" -a "x$enable_dap" = "xyes"; then
-#    AC_MSG_ERROR(Cannot locate library containing xdr functions.)
-#  else
-#  if test "$dap_xdrlib" = "lc" ; then
-#    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
-#  elif test "$dap_xdrlib" = "none required" ; then
-#    AC_MSG_NOTICE(XDR Functions appear to be in libc.)	
-#  else
-#    dap_xdrlib=`echo $dap_xdrlib | sed -e s/-l//g`
-#    AC_MSG_NOTICE(XDR Functions appear to be in lib${dap_xdrlib}.)	
-#    # Add to library list
-#    AC_CHECK_LIB($dap_xdrlib,xdr_void)
-#  fi
-#  # Fix to get working on OS X (thanks to Fedor Baart)
-#  AC_CHECK_HEADERS([rpc/types.h rpc/xdr.h], [
-#       AC_DEFINE([HAVE_RPC_TYPES_H], [], [no rpc/types.h])
-#       AC_DEFINE([HAVE_RPC_XDR_H], [], [no rpc/xdr.h])
-#       ], [], [[#ifdef HAVE_RPC_TYPES_H
-#  # include <rpc/types.h>
-#  #endif]])
-#fi
-#fi
-
 AC_MSG_CHECKING([value of LIBS])
 AC_MSG_RESULT([$LIBS])
 
@@ -851,4 +883,7 @@ AC_CONFIG_FILES([Makefile
 		  ],
                   [test -f  nc-config && chmod 755 nc-config])
 AC_OUTPUT()
+
+
+
 

@@ -8,8 +8,6 @@
 #include "odom.h"
 #include "offsets.h"
 
-#undef ITERBUG
-
 /**************************************************/
 /* Code for generating data lists*/
 /**************************************************/
@@ -115,17 +113,28 @@ generate_array(Symbol* vsym,
 
     ASSERT(rank > 0);
 
-    /* Start by doing the two easy cases */
+    /* Start by doing easy cases */
 
-    if(typecode == NC_CHAR) { /* case 1: character typed variable, rank > 0 */
+#ifdef CHARBUG
+    if(typecode == NC_CHAR) { /* case: character typed variable, rank > 0 */
 	Bytebuffer* charbuf = bbNew();
-        odom = newodometer(dimset,NULL,NULL);
         gen_chararray(dimset,vsym->data,charbuf,filler);
 	generator->charconstant(generator,code,charbuf);
 	bbFree(charbuf);
+        odom = newodometer(dimset,NULL,NULL);
         writer(generator,vsym,code,odom->rank,odom->start,odom->count);
     } else
-
+#else /*!CHARBUG*/
+    /* Case: char var && dim 1..n are not unlimited */
+    if(findunlimited(dimset,1) == rank && typecode == NC_CHAR) {
+	Bytebuffer* charbuf = bbNew();
+	gen_leafchararray(dimset,0,vsym->data,charbuf,filler);
+	generator->charconstant(generator,code,charbuf);
+	bbFree(charbuf);
+        odom = newodometer(dimset,NULL,NULL);
+        writer(generator,vsym,code,odom->rank,odom->start,odom->count);
+    } else
+#endif
     /* Case 2: dim 1..n are not unlimited */
     if(findunlimited(dimset,1) == rank) {
 	size_t offset = 0; /* where are we in the data list */
@@ -164,7 +173,11 @@ generate_array(Symbol* vsym,
 
     { /* Hard case: multiple unlimited dimensions */
         /* Setup iterator and odometer */
+#ifdef CHARBUG
         nc_get_iter(vsym,nciterbuffersize,&iter);
+#else
+	nc_get_iter(vsym,NC_MAX_UINT,&iter); /* effectively infinite */
+#endif
         odom = newodometer(dimset,NULL,NULL);
 	for(;;) {/* iterate in nelem chunks */
 	    /* get nelems count and modify odometer */
@@ -199,15 +212,24 @@ generate_arrayr(Symbol* vsym,
     Dimset* dimset = &vsym->typ.dimset;
     int rank = dimset->ndims;
     int lastunlimited;
+    int typecode = basetype->typ.typecode;
 
     lastunlimited = findlastunlimited(dimset);
     if(lastunlimited == rank) lastunlimited = 0;
 
     ASSERT(rank > 0);
     ASSERT(dimindex >= 0 && dimindex < rank);
-    ASSERT(basetype->typ.typecode != NC_CHAR);
 
-
+#ifdef CHARBUG
+    ASSERT(typecode != NC_CHAR); 
+#else /*!CHARBUG*/
+    if(dimindex == lastunlimited && typecode == NC_CHAR) {
+	Bytebuffer* charbuf = bbNew();
+	gen_leafchararray(dimset,dimindex,list,charbuf,filler);
+	generator->charconstant(generator,code,charbuf);
+	bbFree(charbuf);
+    } else
+#endif /*!CHARBUG*/
     if(dimindex == lastunlimited) {
 	int uid,i;
 	Odometer* slabodom;
@@ -255,7 +277,12 @@ generate_arrayr(Symbol* vsym,
 	    if(nofill_flag && con == NULL)
 		break;
 #endif
-	    if(!islistconst(con))
+	    if(con == NULL || con->nctype == NC_FILL) {
+		if(filler == NULL)
+		    filler = getfiller(vsym);
+	        generate_arrayr(vsym,code,filler,odom,nextunlimited,NULL,generator);
+		
+	    } else if(!islistconst(con))
 	        semwarn(constline(con),"Expected {...} representing unlimited list");
 	    else {
 	        Datalist* sublist = con->value.compoundv;
@@ -394,6 +421,35 @@ generate_fieldarray(Symbol* basetype, Constant* con, Dimset* dimset,
     }
 }
 
+
+/* An opaque string value might not conform
+   to the size of the opaque to which it is being
+   assigned. Normalize it to match the required
+   opaque length (in bytes).
+   Note that the string is a sequence of nibbles (4 bits).
+*/
+static void
+normalizeopaquelength(Constant* prim, unsigned long nbytes)
+{
+    int nnibs = 2*nbytes;
+    ASSERT(prim->nctype==NC_OPAQUE);
+    if(prim->value.opaquev.len == nnibs) { 
+        /* do nothing*/
+    } else if(prim->value.opaquev.len > nnibs) { /* truncate*/
+	prim->value.opaquev.stringv[nnibs] = '\0';
+	prim->value.opaquev.len = nnibs;
+    } else {/* prim->value.opaquev.len < nnibs => expand*/
+        char* s;
+	s = (char*)emalloc(nnibs+1);
+	memset(s,'0',nnibs);
+	memcpy(s,prim->value.opaquev.stringv,prim->value.opaquev.len);
+	s[nnibs] = '\0';
+	efree(prim->value.opaquev.stringv);
+	prim->value.opaquev.stringv=s;
+	prim->value.opaquev.len = nnibs;
+    }
+}
+
 static void
 generate_primdata(Symbol* basetype, Constant* prim, Bytebuffer* codebuf,
 		  Datalist* filler, Generator* generator)
@@ -419,8 +475,8 @@ generate_primdata(Symbol* basetype, Constant* prim, Bytebuffer* codebuf,
         if(basetype->subclass != NC_ENUM) {
 	    semerror(constline(prim),"Conversion to enum not supported (yet)");
 	} break;
-     case NC_OPAQUE:
-	setprimlength(&target,basetype->typ.size*2);
+     case NC_OPAQUE: 
+	normalizeopaquelength(&target,basetype->typ.size);
 	break;
     default:
 	break;

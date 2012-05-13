@@ -1800,7 +1800,7 @@ yyreduce:
 
 /* Line 1806 of yacc.c  */
 #line 210 "ncgen.y"
-    {if (derror_count > 0) exit(6);}
+    {if (error_count > 0) YYABORT;}
     break;
 
   case 7:
@@ -3209,7 +3209,6 @@ void
 parse_init(void)
 {
     int i;
-    derror_count=0;
     opaqueid = 0;
     arrayuid = 0;
     symlist = NULL;
@@ -3240,11 +3239,12 @@ makeprimitivetype(nc_type nctype)
     sym->objectclass=NC_TYPE;
     sym->subclass=NC_PRIM;
     sym->ncid = nctype;
-    sym->typ.basetype = NULL;
     sym->typ.typecode = nctype;
     sym->typ.size = ncsize(nctype);
     sym->typ.nelems = 1;
     sym->typ.alignment = nctypealignment(nctype);
+    /* Make the basetype circular so we can always ask for it */
+    sym->typ.basetype = sym;
     sym->prefix = listnew();
     return sym;
 }
@@ -3341,17 +3341,13 @@ makeconstdata(nc_type nctype)
 #ifdef USE_NETCDF4
 	case NC_OPAQUE: {
 	    char* s;
-	    int len,padlen;
+	    int len;
 	    len = bbLength(lextext);
-	    padlen = len;
-	    if(padlen < 16) padlen = 16;
-	    if((padlen % 2) == 1) padlen++;
-	    s = (char*)emalloc(padlen+1);
-	    memset((void*)s,'0',padlen);
-	    s[padlen]='\0';
+	    s = (char*)emalloc(len+1);
 	    strncpy(s,bbContents(lextext),len);
+	    s[len] = '\0';
 	    con.value.opaquev.stringv = s;
-	    con.value.opaquev.len = padlen;
+	    con.value.opaquev.len = len;
 	    } break;
 #endif
 
@@ -3484,7 +3480,8 @@ makespecial(int tag, Symbol* vsym, Symbol* tsym, void* data, int isconst)
     char* sdata = NULL;
     int idata =  -1;
 
-    specials_flag = 1;
+    
+    specials_flag += (tag == _FILLVALUE_FLAG ? 0 : 1);
 
     if(isconst) {
 	con = (Constant*)data;

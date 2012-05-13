@@ -75,6 +75,8 @@ typedef unsigned int NCFLAGS;
 #define NCF_UNCONSTRAINABLE (0x0040) /* Not a constrainable URL */
 #define NCF_SHOWFETCH       (0x0080) /* show fetch calls */
 #define NCF_INMEMORY        (0x0100) /* cause oc to store data in memory */
+#define NCF_WHOLEVAR        (0x0200) /* retrieve only whole variables (as opposed to partial variable)
+                                        into cache */
 
 /* Define all the default on flags */
 #define DFALT_ON_FLAGS (NCF_PREFETCH)
@@ -183,9 +185,6 @@ typedef int CDFdimflags;
 typedef struct CDFdim {
     CDFdimflags    dimflags;
     struct CDFnode* basedim; /* for duplicate dimensions*/
-#ifdef IGNORE
-    struct CDFnode* srcdim; /* for cloned dimensions*/
-#endif
     struct CDFnode* array; /* parent array node */
     size_t declsize;	    /* from constrained DDS*/
     size_t declsize0;	    /* from unconstrained DDS*/
@@ -196,10 +195,6 @@ typedef struct CDFarray {
     NClist*  dimsetall; /* inherited+originals+pseudo */
     NClist*  dimsetplus; /* originals+pseudo */
     NClist*  dimset0; /* original dims from the dds */
-#ifdef IGNORE
-    NClist*  dimensions; /* inherited+originals */
-    NClist*  dimensions0; /* Complete set of dimensions for this var */
-#endif
     struct CDFnode* stringdim;
     /* Track sequence related information */
     struct CDFnode* seqdim; /* if this node is a sequence */
@@ -275,10 +270,6 @@ typedef struct CDFnode {
     int              singleton;     /* for singleton sequences */
     unsigned long    estimatedsize; /* > 0 Only for var nodes */
 } CDFnode;
-
-/**************************************************/
-/* Give PSEUDOFILE a value */
-#define PSEUDOFILE "/tmp/pseudofileXXXXXX"
 
 /**************************************************/
 /* Shared procedures */

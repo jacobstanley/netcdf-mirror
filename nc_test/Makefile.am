@@ -9,7 +9,10 @@ include $(top_srcdir)/lib_flags.am
 
 # These files are created by the tests.
 CLEANFILES = nc_test_classic.nc nc_test_64bit.nc nc_test_netcdf4.nc	\
-tst_*.nc t_nc.nc large_files.nc quick_large_files.nc 
+tst_*.nc t_nc.nc large_files.nc quick_large_files.nc \
+tst_diskless.nc tst_diskless2.nc \
+tst_diskless3.nc tst_diskless3_file.cdl tst_diskless3_memory.cdl \
+tst_diskless4.cdl tst_diskless4.nc
 
 # These are the tests which are always run.
 TESTPROGRAMS = t_nc tst_small nc_test tst_misc tst_norm tst_names	\
@@ -41,8 +44,17 @@ endif
 
 
 # Set up the tests.
-check_PROGRAMS = $(TESTPROGRAMS) 
+check_PROGRAMS = $(TESTPROGRAMS) tst_diskless tst_diskless3 tst_diskless4
+if USE_NETCDF4
+check_PROGRAMS += tst_diskless2
+endif
+
 TESTS = $(TESTPROGRAMS)
+
+TESTS += run_diskless.sh
+if LARGE_FILE_TESTS
+TESTS += run_diskless2.sh
+endif
 
 # This will run a bunch of the test programs with valgrind, the memory
 # checking tool. (Valgrind must be present for this to work.)
@@ -57,7 +69,11 @@ endif # USE_VALGRIND_TESTS
 
 # Distribute the .c files so that m4 isn't required on the users
 # machine.
-EXTRA_DIST = test_get.m4 test_put.m4 run_valgrind_tests.sh
+EXTRA_DIST = test_get.m4 test_put.m4 run_valgrind_tests.sh \
+run_diskless.sh run_diskless2.sh
+
+# ref_tst_diskless2.cdl is for diff comparison and to produce tst_diskless2.c
+EXTRA_DIST += ref_tst_diskless2.cdl
 
 # Only clean these on mainatiner-clean, because they require m4 to
 # regenerate.
