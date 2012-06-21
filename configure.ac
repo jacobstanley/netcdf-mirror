@@ -15,7 +15,7 @@ AC_REVISION([$Id: configure.ac,v 1.450 2010/05/28 19:42:47 dmh Exp $])
 AC_PREREQ([2.59])
 
 # Initialize with name, version, and support email address. 
-AC_INIT([netCDF], [4.2], [support-netcdf@unidata.ucar.edu])
+AC_INIT([netCDF], [4.2.1-rc1], [support-netcdf@unidata.ucar.edu])
 
 # Create the VERSION file, which contains the package version from
 # AC_INIT.
@@ -43,6 +43,20 @@ AC_CONFIG_SRCDIR([libsrc/nc.c])
 
 AC_MSG_NOTICE([checking user options])
 
+# If --enable-dll is specified the DLL will be built. This only works
+# on mingw.
+AC_MSG_CHECKING([whether a win32 DLL is desired])
+AC_ARG_ENABLE([dll],
+              [AS_HELP_STRING([--enable-dll],
+                              [build a win32 DLL (only works on mingw)])])
+test "x$enable_dll" = xyes || enable_dll=no
+AC_MSG_RESULT([$enable_dll])
+if test "x$enable_dll" = xyes; then
+   AC_DEFINE(DLL_NETCDF, 1, [set this only when building a DLL under MinGW])
+   AC_DEFINE(DLL_EXPORT, 1, [set this only when building a DLL under MinGW])
+fi
+AM_CONDITIONAL(BUILD_DLL, [test x$enable_dll = xyes])
+
 # Did the user specify a default minimum blocksize (NCIO_MINBLOCKSIZE) for posixio?
 AC_MSG_CHECKING([whether a NCIO_MINBLOCKSIZE was specified])
 AC_ARG_WITH([minblocksize],
@@ -53,9 +67,10 @@ AC_MSG_RESULT([$NCIO_MINBLOCKSIZE])
 AC_DEFINE_UNQUOTED([NCIO_MINBLOCKSIZE], [$NCIO_MINBLOCKSIZE], [min blocksize for posixio.])
 
 AC_ARG_ENABLE([doxygen],
-  [AS_HELP_STRING([--disable-doxygen],
-    [Disable generation of documentation.])])
-AM_CONDITIONAL([BUILD_DOCS], [test "x$enable_doxygen" != xno]) 
+  [AS_HELP_STRING([--enable-doxygen],
+    [Enable generation of documentation.])])
+test "x$enable_doxygen" = xyes || enable_doxygen=no
+AM_CONDITIONAL([BUILD_DOCS], [test "x$enable_doxygen" = xyes]) 
 
 AC_ARG_ENABLE([internal-docs],
   [AS_HELP_STRING([--enable-internal-docs],
@@ -243,45 +258,25 @@ fi
 
 # See if the user provided us with a curl library
 # Do an initial lib test for curl, but suppress the default action
-
-case "$host_os" in 
-*mingw*)     
-			
-	     AC_CHECK_LIB([curl],[curl_easy_setopt])
-	     AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no]);;
-*)
-	AC_CHECK_LIB([curl],[curl_easy_setopt])
-	AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
-	;;
-esac
-
-
+AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
+#AC_CHECK_LIB([curl.dll],[curl_easy_setopt])
 # If curl is required but there is no curl, then complain
-if test $require_curl = yes -a $found_curl = no ; then
-  AC_MSG_NOTICE([libcurl not found; disabling remote protocol(s) support])
-  enable_dap=no
-  enable_cdmremote=no
-  enable_rpc=no
-elif test $require_curl = yes -a $found_curl = yes ; then
-
-case "$host_os" in 
-*mingw*)     
-AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
-AC_CHECK_LIB([curl], [curl_easy_setopt])
-;;
-*)
-AC_CHECK_LIB([curl],[curl_easy_setopt],[found_curl=yes],[found_curl=no])
-AC_CHECK_LIB([curl], [curl_easy_setopt])
-;;
-esac
-
-  # Redo the check lib to actually add -lcurl
-  
-  
+if test $require_curl = yes ; then
+  # Removed. Why assume no curl if we are building DLL?
+  #if test $enable_dll = yes ; then
+  #  AC_MSG_NOTICE([libcurl not found; continuing])
+  #elif test $found_curl = no ; then
+  if test $found_curl = no ; then
+    AC_MSG_NOTICE([libcurl not found; disabling remote protocol(s) support])
+    enable_dap=no
+    enable_cdmremote=no
+    enable_rpc=no
+  elif test $found_curl = yes ; then
+    # Redo the check lib to actually add -lcurl
+    #AC_CHECK_LIB([curl], [curl_easy_setopt])
+    AC_SEARCH_LIBS([curl_easy_setopt],[curl curl.dll], [], [])
+  fi
 fi
-
-#AC_SEARCH_LIBS([curl_easy_setopt], [curl], [found_curl=yes],[found_curl=no])
-
 
 # Default is now to always do the short remote tests
 AC_MSG_CHECKING([whether dap remote testing should be enabled (default on)])
@@ -484,19 +479,6 @@ AC_MSG_RESULT($TEMP_LARGE)
 #AC_SUBST(TEMP_LARGE)
 AC_DEFINE_UNQUOTED([TEMP_LARGE], ["$TEMP_LARGE"], [Place to put very large netCDF test files.])
 
-# If --enable-dll is specified the DLL will be built. This only works
-# on mingw.
-AC_MSG_CHECKING([whether a win32 DLL is desired])
-AC_ARG_ENABLE([dll],
-              [AS_HELP_STRING([--enable-dll],
-                              [build a win32 DLL (only works on mingw)])])
-test "x$enable_dll" = xyes || enable_dll=no
-AC_MSG_RESULT([$enable_dll])
-AM_CONDITIONAL(BUILD_DLL, [test x$enable_dll = xyes])
-if test "x$enable_dll" = xyes; then
-   AC_DEFINE(DLL_NETCDF, 1, [set this only when building a DLL under MinGW])
-fi
-
 # According to the autoconf mailing list gurus, we must test for
 # compilers unconditionally. That is, we can't skip looking for the
 # fortran compilers, just because the user doesn't want fortran. This
@@ -583,9 +565,14 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
-AC_CHECK_HEADERS([locale.h stdio.h stdarg.h errno.h ctype.h fcntl.h malloc.h stdlib.h string.h \
-			   strings.h unistd.h sys/stat.h getopt.h sys/time.h sys/resource.h])
+AC_CHECK_HEADERS([locale.h stdio.h stdarg.h errno.h ctype.h fcntl.h malloc.h stdlib.h string.h strings.h unistd.h sys/stat.h getopt.h sys/time.h])
 AC_FUNC_VPRINTF
+
+# Do sys/resource.h separately
+#AC_CHECK_HEADERS([sys/resource.h],[havesysresource=1],[havesysresource=0])
+#if test "x$enable_dll" != xyes ; then
+AC_CHECK_HEADERS([sys/resource.h])
+#fi
 
 # Check for <stdbool.h> that conforms to C99 requirements
 AC_HEADER_STDBOOL
@@ -593,13 +580,20 @@ AC_HEADER_STDBOOL
 # Check for these functions...
 AC_CHECK_FUNCS([strlcat strerror snprintf strchr strrchr strcat strcpy \
                 strdup strcasecmp strtod strtoll strtoull strstr \
-		mkstemp getpid \
+		mkstemp rand \
 		getrlimit gettimeofday fsync MPI_Comm_f2c])
 
-# check for memio support
+# Does the user want to use NC_DISKLESS?
+AC_MSG_CHECKING([whether in-memory files are enabled])
+AC_ARG_ENABLE([diskless],
+              [AS_HELP_STRING([--disable-diskless],
+                              [disable support for in-memory (NC_DISKLESS) files])])
+test "x$enable_diskless" = xno || enable_diskless=yes
+AC_MSG_RESULT($enable_diskless)
+
+# check for useful, but not essential, memio support
 AC_CHECK_FUNCS([memmove getpagesize sysconf])
 
-# check for mmap support
 # Does the user want to use the mmap for NC_DISKLESS?
 AC_MSG_CHECKING([whether mmap will be used for in-memory files])
 AC_ARG_ENABLE([mmap],
@@ -608,27 +602,22 @@ AC_ARG_ENABLE([mmap],
 test "x$enable_mmap" = xyes || enable_mmap=no
 AC_MSG_RESULT($enable_mmap)
 
-# check for diskless support
-# Does the user want to use the mmap for NC_DISKLESS?
-AC_MSG_CHECKING([whether to use diskless])
-AC_ARG_ENABLE([diskless],
-              [AS_HELP_STRING([--enable-mmap],
-                              [use mmap for in-memory (NC_DISKLESS) files])])
-test "x$enable_diskless" = xyes || enable_diskless=no
-AC_MSG_RESULT($enable_diskless)
-
-# check for mmap and mremap
+# check for mmap and mremap availability before committing to use mmap
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([mremap])
+
 if test "x$ac_cv_func_mmap_fixed_mapped" != xyes -o "x$ac_cv_func_mremap" != xyes ; then
   echo "mmap function or mremap function is not available: disabling mmap"
-  enable_mmap="no"
+  enable_mmap=no
 fi
 
-if test "x$enable_mmap" = xyes; then
-  AC_DEFINE([USE_MMAP], [1], [if true, use mmap for in-memory files])
+# Setup the diskless and mmap conditionals
+if test "x$enable_diskless" = xyes ; then
+  AC_DEFINE([USE_DISKLESS], [1], [if true, include NC_DISKLESS code])
+  if test "x$enable_mmap" = xyes; then
+    AC_DEFINE([USE_MMAP], [1], [if true, use mmap for in-memory files])
+  fi
 fi
-AM_CONDITIONAL(USE_MMAP, [test x$enable_mmap = xyes])
 
 AC_FUNC_ALLOCA
 AC_CHECK_DECLS([isnan, isinf, isfinite, signbit],,,[#include <math.h>])
@@ -642,22 +631,21 @@ AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(size_t)
 
 if test "x$enable_netcdf_4" = xyes || test "x$enable_dap" = xyes; then
-   AC_SEARCH_LIBS([deflate], [zlib1 z], [], [
+   AC_SEARCH_LIBS([deflate], [zlibwapi zlibstat zlib zlib1 z], [], [
      AC_MSG_ERROR([Can't find or link to the z library. Turn off netCDF-4 and \
      opendap with --disable-netcdf-4 --disable-dap, or see config.log for errors.])])
 fi
 
-# We need the math library.
-AC_CHECK_LIB([m], [floor], [],
+# We need the math library
+AC_CHECK_LIB([m], [floor], [], 
 [AC_MSG_ERROR([Can't find or link to the math library.])])
-
-#AC_CHECK_LIB([msvcr80],[_set_output_format])
 
 if test "x$enable_netcdf_4" = xyes; then
 
@@ -762,6 +750,8 @@ AM_CONDITIONAL(USE_PNETCDF, [test x$enable_pnetcdf = xyes])
 AM_CONDITIONAL(USE_DISPATCH, [test x$enable_dispatch = xyes])
 AM_CONDITIONAL(BUILD_CDMREMOTE, [test "x$enable_cdmremote" = xyes]) # Alias
 AM_CONDITIONAL(BUILD_RPC, [test "x$enable_rpc" = xyes])
+AM_CONDITIONAL(BUILD_DISKLESS, [test x$enable_diskless = xyes]) 
+AM_CONDITIONAL(BUILD_MMAP, [test x$enable_mmap = xyes])
 
 # If the machine doesn't have a long long, and we want netCDF-4, then
 # we've got problems!
@@ -858,32 +848,20 @@ AC_CONFIG_FILES([Makefile
                  examples/Makefile
                  examples/C/Makefile
                  examples/CDL/Makefile
-                 win32/Makefile
-                 win32/NET/Makefile
-                 win32/NET/libsrc/Makefile
-                 win32/NET/ncdump/Makefile
-                 win32/NET/ncgen/Makefile
-                 win32/NET/examples/Makefile
-                 win32/NET/nctest/Makefile
-                 win32/NET/nc_test/Makefile
-                  oc/Makefile
-                  libdap2/Makefile
-                  libcdmr/Makefile
-                  librpc/Makefile
-                  libdispatch/Makefile
-                  liblib/Makefile
-                  ncdump/cdl4/Makefile
-                  ncdump/expected4/Makefile
-                  ncdap_test/Makefile
-                  ncdap_test/testdata3/Makefile
-                  ncdap_test/expected3/Makefile
-                  ncdap_test/expected4/Makefile
-                  ncdap_test/expectremote3/Makefile
-                  ncdap_test/expectremote4/Makefile
-		  ],
-                  [test -f  nc-config && chmod 755 nc-config])
+                 oc/Makefile
+                 libdap2/Makefile
+                 libcdmr/Makefile
+                 librpc/Makefile
+                 libdispatch/Makefile
+                 liblib/Makefile
+                 ncdump/cdl4/Makefile
+                 ncdump/expected4/Makefile
+                 ncdap_test/Makefile
+                 ncdap_test/testdata3/Makefile
+                 ncdap_test/expected3/Makefile
+                 ncdap_test/expected4/Makefile
+                 ncdap_test/expectremote3/Makefile
+                 ncdap_test/expectremote4/Makefile
+		 ],
+                 [test -f  nc-config && chmod 755 nc-config])
 AC_OUTPUT()
-
-
-
-

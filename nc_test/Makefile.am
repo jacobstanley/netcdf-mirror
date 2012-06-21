@@ -16,11 +16,15 @@ tst_diskless4.cdl tst_diskless4.nc
 
 # These are the tests which are always run.
 TESTPROGRAMS = t_nc tst_small nc_test tst_misc tst_norm tst_names	\
-tst_nofill tst_nofill2 tst_nofill3
+tst_nofill tst_nofill2 tst_nofill3 tst_atts3
 
 if USE_NETCDF4
 TESTPROGRAMS += tst_atts
 endif
+
+# if EXTRA_TESTS
+# TESTPROGRAMS += 
+# endif # EXTRA_TESTS
 
 # These are the source files for the main workhorse test program,
 # nc_test. If you pass nc_test, you are doing well.
@@ -44,16 +48,23 @@ endif
 
 
 # Set up the tests.
-check_PROGRAMS = $(TESTPROGRAMS) tst_diskless tst_diskless3 tst_diskless4
+check_PROGRAMS = $(TESTPROGRAMS)
+
+# Build Diskless test helpers
+if BUILD_DISKLESS
+check_PROGRAMS += tst_diskless tst_diskless3 tst_diskless4
 if USE_NETCDF4
 check_PROGRAMS += tst_diskless2
+endif
 endif
 
 TESTS = $(TESTPROGRAMS)
 
+if BUILD_DISKLESS
 TESTS += run_diskless.sh
 if LARGE_FILE_TESTS
 TESTS += run_diskless2.sh
+endif
 endif
 
 # This will run a bunch of the test programs with valgrind, the memory
