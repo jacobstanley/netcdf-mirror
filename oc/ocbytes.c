@@ -121,7 +121,7 @@ ocbytesappend(OCbytes* bb, char elem)
 
 /* This assumes s is a null terminated string*/
 int
-ocbytescat(OCbytes* bb, char* s)
+ocbytescat(OCbytes* bb, const char* s)
 {
     ocbytesappendn(bb,(void*)s,strlen(s)+1); /* include trailing null*/
     /* back up over the trailing null*/
@@ -131,7 +131,7 @@ ocbytescat(OCbytes* bb, char* s)
 }
 
 int
-ocbytesappendn(OCbytes* bb, void* elem, unsigned int n)
+ocbytesappendn(OCbytes* bb, const void* elem, unsigned int n)
 {
   if(bb == NULL || elem == NULL) return ocbytesfail();
   if(n == 0) {n = strlen((char*)elem);}
@@ -145,7 +145,7 @@ ocbytesappendn(OCbytes* bb, void* elem, unsigned int n)
 }
 
 int
-ocbytesprepend(OCbytes* bb, char elem)
+ocbytesprepend(OCbytes* bb, const char elem)
 {
   int i; /* do not make unsigned */
   if(bb == NULL) return ocbytesfail();

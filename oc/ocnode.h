@@ -10,8 +10,8 @@
 */
 typedef struct OCdiminfo {
     struct OCnode* array;   /* defining array node (if known)*/
-    unsigned int arrayindex;/* rank position ofthis dimension in the array*/
-    ocindex_t declsize;	    /* from DDS*/
+    size_t arrayindex;	    /* rank position ofthis dimension in the array*/
+    size_t declsize;	    /* from DDS*/
 } OCdiminfo;
 
 /*! Specifies the Arrayinfo.*/
@@ -19,7 +19,8 @@ typedef struct OCarrayinfo {
     /* The complete set of dimension info applicable to this node*/
     OClist*  dimensions;
     /* convenience (because they are computed so often*/
-    unsigned int rank; /* == |dimensions|*/
+    size_t rank; /* == |dimensions|*/
+    size_t* sizes;
 } OCarrayinfo;
 
 /*! Specifies Attribute info */
@@ -33,13 +34,14 @@ typedef struct OCattribute {
 /*! Specifies the Attinfo.*/
 /* This is the form as it comes out of the DAS parser*/
 typedef struct OCattinfo {
-    int isglobal;   /* is this supposed to be a global attribute set?*/
+    int isglobal; /* is this supposed to be a global attribute set?*/
+    int isdods;   /* is this a global DODS_XXX  attribute set */
     OClist* values; /* oclist<char*>*/
 } OCattinfo;
 
 /*! Specifies the OCnode. */
-typedef struct OCnode {
-    unsigned int    magic;
+struct OCnode {
+    OCheader header; /* class=OC_Node */
     OCtype	    octype;
     OCtype          etype; /* essentially the dap type from the dds*/
     char*           name;
@@ -55,25 +57,7 @@ typedef struct OCnode {
     OClist* subnodes; /*oclist<OCnode*>*/
     /*int     attributed;*/ /* 1 if merge was done*/
     OClist* attributes; /* oclist<OCattribute*>*/
-    struct OCSKIP {/* Support fast skipping ; in following, 0 => undefined */
-	ocindex_t count;        /* no. instances (== dimension cross product); may be indeterminate*/
-	ocoffset_t instancesize;/*size of single instance; may be indeterminate*/
-	ocoffset_t totalsize;   /* usually: count*instancesize + overhead; may be indeterminate */
-	ocoffset_t offset;      /* mostly for debugging */
-    } skip;
-#ifdef OCIGNORE
-    struct {/* do simple index cache */
-	int cacheable; /* is this object cacheable? */
-	int valid;   /* is this cache valid */
-	ocindex_t index; /* last index */
-	ocoffset_t offset; /* position of the last indexed instance */	
-    } cache;
-#endif
-#ifdef OC_DAP4
-    OCtypeinfo      typdef;
-    OCgroupinfo     group;
-#endif
-} OCnode;
+};
 
 #if SIZEOF_SIZE_T == 4
 #define OCINDETERMINATE  ((size_t)0xffffffff)
@@ -81,5 +65,22 @@ typedef struct OCnode {
 #if SIZEOF_SIZE_T == 8
 #define OCINDETERMINATE  ((size_t)0xffffffffffffffff)
 #endif
+
+extern OCnode* ocnode_new(char* name, OCtype ptype, OCnode* root);
+extern void occollectpathtonode(OCnode* node, OClist* path);
+extern void occomputefullnames(OCnode* root);
+extern void occomputesemantics(OClist*);
+extern void ocaddattribute(OCattribute* attr, OCnode* parent);
+extern OCattribute* ocmakeattribute(char* name, OCtype ptype, OClist* values);
+extern size_t ocsetsize(OCnode* node);
+extern OCerror occorrelate(OCnode*,OCnode*);
+extern void ocmarkcacheable(OCstate* state, OCnode* ddsroot);
+
+extern void octree_free(struct OCtree* tree);
+extern void ocroot_free(OCnode* root);
+extern void ocnodes_free(OClist*);
+
+/* Merge DAS with DDS or DATADDS*/
+extern int ocddsdasmerge(struct OCstate*, OCnode* das, OCnode* dds);
 
 #endif /*OCNODE_H*/

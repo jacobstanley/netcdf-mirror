@@ -2,9 +2,10 @@
    See the COPYRIGHT dap for more information. */
 
 /*
-Draft OC External Interface
+OC External Interface
 Created: 4/4/2009
-Last Revised: 4/14/2009
+Last Revised: 6/7/2012
+Version: 2.0
 */
 
 #ifndef OC_H
@@ -13,154 +14,186 @@ Last Revised: 4/14/2009
 #include <stdlib.h>
 #include <stdio.h>
 
-/* if defined, use magic numbers for consistency]) */
-#define OC_FASTCONSISTENCY
-
-/* OC_MAX_DIMS should be greater or equal to max allowed by dap or netcdf*/
-#define OC_MAX_DIMS 1024
-
-/* Specifies the OCtype.*/
-/* Primitives = Duplicate of the NODE_Byte..Node_URL union nc_type*/
-
-typedef unsigned long OCtype;
-
-/* Note: use #define rather than enum so we can extend if needed
-   more easily */
-/* Primitives*/
-/* OC_Ubyte, OC_Char, OC_Int64 and OC_UInt64 are defined for future extension*/
-#define OC_NAT ((OCtype)0)
-#define OC_Char ((OCtype)1)
-#define OC_Byte ((OCtype)2)
-#define OC_UByte ((OCtype)3)
-#define OC_Int16 ((OCtype)4)
-#define OC_UInt16 ((OCtype)5)
-#define OC_Int32 ((OCtype)6)
-#define OC_UInt32 ((OCtype)7)
-#define OC_Int64 ((OCtype)8)
-#define OC_UInt64 ((OCtype)9)
-#define OC_Float32 ((OCtype)10)
-#define OC_Float64 ((OCtype)11)
-#define OC_String ((OCtype)12)
-#define OC_URL ((OCtype)13)
-
-/* Non-primitives*/
-#define OC_Dataset	((OCtype)100)
-#define OC_Sequence	((OCtype)101)
-#define OC_Grid		((OCtype)102)
-#define OC_Structure	((OCtype)103)
-#define OC_Dimension	((OCtype)104)
-#define OC_Attribute	((OCtype)105)
-#define OC_Attributeset	((OCtype)106)
-#define OC_Primitive	((OCtype)107)
-#define OC_Group	((OCtype)108)
-#define OC_Type		((OCtype)109)
-
-/* Define a set of error
-  positive are system errors
-  (needs work)
+/*!\file oc.h
 */
 
-typedef int OCerror;
-#define OC_NOERR	(0)
-#define OC_EBADID	(-1)
-#define OC_ECHAR	(-2)
-#define OC_EDIMSIZE	(-3)
-#define OC_EEDGE	(-4)
-#define OC_EINVAL	(-5)
-#define OC_EINVALCOORDS	(-6)
-#define OC_ENOMEM	(-7)
-#define OC_ENOTVAR	(-8)
-#define OC_EPERM	(-9)
-#define OC_ESTRIDE	(-10)
-#define OC_EDAP		(-11)
-#define OC_EXDR		(-12)
-#define OC_ECURL	(-13)
-#define OC_EBADURL	(-14)
-#define OC_EBADVAR	(-15)
-#define OC_EOPEN	(-16)
-#define OC_EIO   	(-17)
-#define OC_ENODATA   	(-18)
-#define OC_EDAPSVC   	(-19)
-#define OC_ENAMEINUSE  	(-20)
-#define OC_EDAS		(-21)
-#define OC_EDDS		(-22)
-#define OC_EDATADDS	(-23)
-#define OC_ERCFILE	(-24)
-#define OC_ENOFILE	(-25)
+/*!\defgroup Definitions Constants, types, etc.
+@{*/
 
-/* Define the classes of DAP DXD objects */
-typedef int OCdxd;
-#define OCDDS     0
-#define OCDAS     1
-#define OCDATADDS 2
+/*! OC_MAX_DIMS is the maximum allowable
+number of dimensions.
+Ideally, it should be greater or equal to max allowed by dap or netcdf
+*/
+#define OC_MAX_DIMENSIONS 1024
+
+/*!\enum OCdxd
+Define the legal kinds of fetch: DAS, DDS, or DataDDS
+*/
+typedef enum OCdxd {
+OCDDS=0,
+OCDAS=1,
+OCDATADDS=2
+} OCdxd;
+
+/*!\def OCDATA
+Define an alias for OCDATADDS
+*/
 #define OCDATA OCDATADDS
 
-/* Define flags */
+/*!
+\typedef OCflags
+Define flags for oc_fetch.
+*/
 typedef int OCflags;
+/*!\def OCONDISK
+Cause oc_fetch to store the retrieved data on disk.
+*/
+
 #define OCONDISK 1
+/**************************************************/
+/* OCtype */
 
-typedef enum OCmode {
-OCFIELDMODE = OC_Structure,
-OCSEQUENCEMODE = OC_Sequence,
-OCARRAYMODE = OC_Dimension,
-OCPRIMITIVEMODE = OC_Primitive,
-OCNULLMODE = OC_NAT,
-OCEMPTYMODE = 0x8000000 /* internal use only */
-} OCmode;
+/*!\enum OCtype
+Define the set of legal types. The set is divided
+into two parts. The atomic types define
+leaf nodes of the DDS. The non-atomic types
+are used to tag internal nodes of the DDS tree.
+*/
+typedef enum OCtype {
+/* Atomic Types */
+/* OC_Ubyte, OC_Char, OC_Int64 and OC_UInt64 are defined for future extension*/
+OC_NAT=0,
+OC_Char=1,
+OC_Byte=2,
+OC_UByte=3,
+OC_Int16=4,
+OC_UInt16=5,
+OC_Int32=6,
+OC_UInt32=7,
+OC_Int64=8,
+OC_UInt64=9,
+OC_Float32=10,
+OC_Float64=11,
+OC_String=12,
+OC_URL=13,
 
+/* Non-Atomic Types */
+OC_Atomic=100,
+OC_Dataset=101,
+OC_Sequence=102,
+OC_Grid=103,
+OC_Structure=104,
+OC_Dimension=105,
+OC_Attribute=106,
+OC_Attributeset=107,
+} OCtype;
 
-/* Define an unsigned alternative to off(64)_t*/
-typedef unsigned long long ocoffset_t;
+/*!\enum OCerror
+Define the set of error return codes.
+The set consists of oc errors (negative
+values) plus the set of system errors, which
+are positive.
+*/
+typedef enum OCerror {
+OC_NOERR=0,
+OC_EBADID=-1,
+OC_ECHAR=-2,
+OC_EDIMSIZE=-3,
+OC_EEDGE=-4,
+OC_EINVAL=-5,
+OC_EINVALCOORDS=-6,
+OC_ENOMEM=-7,
+OC_ENOTVAR=-8,
+OC_EPERM=-9,
+OC_ESTRIDE=-10,
+OC_EDAP=-11,
+OC_EXDR=-12,
+OC_ECURL=-13,
+OC_EBADURL=-14,
+OC_EBADVAR=-15,
+OC_EOPEN=-16,
+OC_EIO=-17,
+OC_ENODATA=-18,
+OC_EDAPSVC=-19,
+OC_ENAMEINUSE=-20,
+OC_EDAS=-21,
+OC_EDDS=-22,
+OC_EDATADDS=-23,
+OC_ERCFILE=-24,
+OC_ENOFILE=-25,
+OC_EINDEX=-26,
+OC_EBADTYPE=-27,
+OC_ESCALAR=-28,
+} OCerror;
 
-/* Define a wrapper for dimension sizes */
-typedef size_t ocindex_t;
+/*!\def OCLOGNOTE
+Tag a log entry as a note.
+*/
+#define OCLOGNOTE 0
+/*!\def OCLOGWARN
+Tag a log entry as a warning.
+*/
+#define OCLOGWARN 1
+/*!\def OCLOGERR
+Tag a log entry as an error.
+*/
+#define OCLOGERR  2
+/*!\def OCLOGDBG
+Tag a log entry as a debug note.
+*/
+#define OCLOGDBG  3
 
-/* Define the effective API */
+/**************************************************/
+/* Define the opaque types */
 
-#ifndef OCINTERNAL_H
+/*!\typedef OCobject
+Define a common opaque type.
+*/
+typedef void* OCobject;
 
-/* The OCobject type references a component of a DAS or DDS
-   (e.g. Sequence, Grid, Dataset, etc). These objects
-   are nested, so most objects reference a container object
-   and subnode objects.
+/*!\typedef OCddsnode
+The OCddsnode type provide a reference
+to a component of a DAS or DDS tree:
+e.g. Sequence, Grid, Dataset, etc.
+These objects
+are nested, so most objects reference a container object
+and subnode objects. The term ddsnode is slightly misleading
+since it also covers DAS nodes.
 */
 
+typedef OCobject OCddsnode;
 
-#ifdef OC_FASTCONSISTENCY
-/* Use unsigned int * so we can dereference to get magic number */
-typedef unsigned int* OCobject;
-#define OCNULL NULL
-#else
-typedef unsigned long OCobject;
-#define OCNULL ((OCobject)0)
-#endif
-
-/* These are the two critical types*/
-/* Think of OClink as analogous to the C stdio FILE structure;
-   it "holds" all the other state info about
-   a connection to the server, the url request, and the DAS/DDS/DATADDSinfo.
+/*!\typedef OCdasnode
+The OCdasnode is a alias for OCddsnode.
 */
-/* Renamed from OCconnection because of confusion about term "connection"
-   3/24/2010 by dmh
+
+typedef OCddsnode OCdasnode;
+
+/* Data data type */
+/*!\typedef OCdatanode
+The OCdatanode type provide a reference
+to a specific piece of data in the data
+part of a Datadds.
+*/
+typedef OCobject OCdatanode;
+
+/*!\typedef OClink
+Think of OClink as analogous to the C stdio FILE structure;
+it "holds" all the other state info about
+a connection to the server, the url request, and the DAS/DDS/DATADDSinfo.
+3/24/210: Renamed from OCconnection because of confusion about
+term "connection"
 */
 typedef OCobject OClink;
 
-/* Keep old name for back compatibility */
-typedef OClink OCconnection; /*Deprecated*/
-
-/* Tag kind of log entry*/
-#define OCLOGNOTE 0
-#define OCLOGWARN 1
-#define OCLOGERR 2
-#define OCLOGDBG 3
+/**@}*/
 
 /**************************************************/
+/* External API */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern int oc_dumpnode(OClink conn, OCobject root0);
 
 /**************************************************/
 /* Link management */
@@ -169,270 +202,276 @@ extern OCerror oc_open(const char* url, OClink*);
 extern OCerror oc_close(OClink);
 
 /**************************************************/
-/* Root management */
-/* Fetch and parse a given class of DXD the server specified
-   at open time, and using a specified set of constraints
-   and flags.
-   Return the root node of the parsed tree of objects.
-*/
-extern OCerror oc_fetchf(OClink,
-			const char* constraints,
-			OCdxd,
-			OCflags,
-			OCobject* rootp);
+/* Tree Management */
 
-
-/*
-  Equivalent to oc_fetchf with zero flag parameter
-*/
 extern OCerror oc_fetch(OClink,
 			const char* constraints,
 			OCdxd,
-			OCobject* rootp);
+			OCflags,
+			OCddsnode*);
 
-/* Release/reclaim the tree of objects associated with a given root */
-extern OCerror oc_root_free(OClink, OCobject root);
-
-/* Return the # of  OCobjects associated with a tree with specified root */
-extern unsigned int oc_inq_nobjects(OClink, OCobject root);
-
-/* Return all the OCobjects associated with a tree with specified root */
-extern OCobject* oc_inq_objects(OClink, OCobject root);
-
-/* Return the text of the DDS or DAS as received from the server */
-extern const char* oc_inq_text(OClink, OCobject root);
+extern OCerror oc_root_free(OClink, OCddsnode root);
+extern const char* oc_tree_text(OClink, OCddsnode root);
 
 /**************************************************/
-/* Object Management */
+/* Node Management */
 
-/* Any of the pointers may be NULL in the following procedure call;
-  If the object is of type Dataset, then return # of global attributes
-  If the object is of type Attribute, then return the # of values in nattrp.
-  The caller must free the resulting name string.
-*/
-extern OCerror oc_inq_object(OClink, OCobject,
+extern OCerror oc_dds_properties(OClink, OCddsnode,
 		  char** namep,
 		  OCtype* typep,
-		  OCtype* primitivetypep, /* if objecttype == OC_Primitive */
-		  OCobject* parentp,
-		  unsigned int* rankp,
-		  unsigned int* nsubnodesp,
-		  unsigned int* nattrp);
+		  OCtype* atomictypep, /* if octype == OC_Atomic */
+		  OCddsnode* containerp,  /* NULL if octype == OC_Dataset */
+		  size_t* rankp,       /* 0 if scalar */
+		  size_t* nsubnodesp,
+		  size_t* nattrp);
 
-/* Also define some more individual accessors */
+/* Define some individual accessors for convenience */
 
-extern OCerror oc_inq_name(OClink,OCobject,char**);
-extern OCerror oc_inq_class(OClink,OCobject,OCtype*);
-extern OCerror oc_inq_type(OClink,OCobject,OCtype*); /*alias for oc_inq_class*/
-extern OCerror oc_inq_primtype(OClink,OCobject,OCtype*);
-extern OCerror oc_inq_nsubnodes(OClink,OCobject,unsigned int*);
-extern OCerror oc_inq_rank(OClink,OCobject,unsigned int*);
-extern OCerror oc_inq_nattr(OClink,OCobject,unsigned int*);
-extern OCerror oc_inq_root(OClink,OCobject,OCobject*);
-extern OCerror oc_inq_container(OClink,OCobject,OCobject*);
+extern OCerror oc_dds_name(OClink,OCddsnode,char**);
+extern OCerror oc_dds_class(OClink,OCddsnode,OCtype*);
+extern OCerror oc_dds_atomictype(OClink,OCddsnode,OCtype*);
+extern OCerror oc_dds_nsubnodes(OClink,OCddsnode,size_t*);
+extern OCerror oc_dds_rank(OClink,OCddsnode,size_t*);
+extern OCerror oc_dds_attr_count(OClink,OCddsnode,size_t*);
+extern OCerror oc_dds_root(OClink,OCddsnode,OCddsnode*);
+extern OCerror oc_dds_container(OClink,OCddsnode,OCddsnode*);
 
-/* Return the subnode objects, if any, associated with a given object.
-Caller must free the returned subnodes memory.
+/* Aliases */
+#define oc_dds_octype oc_dds_class
+#define oc_dds_type oc_dds_class
+
+/* Get the i'th field of the given (container) node; return OC_EINDEX
+   if there is no such node; return OC_EBADTYPE if node is not
+   a container
 */
-extern OCerror oc_inq_subnodes(OClink,OCobject,OCobject** subnodes);
+extern OCerror oc_dds_ithfield(OClink, OCddsnode, size_t index, OCddsnode* dimids);
 
-/* Return the i'th subnode object, if any, associated with a given object */
-/* If there is none such, then return OC_EINVAL */
-extern OCerror oc_inq_ith(OClink,OCobject, unsigned int, OCobject*);
+/* Alias for oc_dds_ithfield */
+extern OCerror oc_dds_ithsubnode(OClink, OCddsnode, size_t index, OCddsnode* dimids);
 
-/* Return the dimension objects, if any, associated with a given object */
-/* Caller must free returned vector for dimids */
-/* If there are no dimensions (i.e. rank == 0), then return NULL */
-extern OCerror oc_inq_dimset(OClink,OCobject, OCobject** dimids);
+/* Return the dimension nodes, if any, associated with a given DDS node */
+/* Caller must allocate and free the vector for dimids */
+/* If the node is scalar, then return OC_ESCALAR. */
+extern OCerror oc_dds_dimensions(OClink, OCddsnode, OCddsnode* dimids);
 
-/* Return the i'th dim object, if any, associated with a given object */
-/* If there is no such dim, then return OC_EINVAL */
-extern OCerror oc_inq_ithdim(OClink,OCobject, unsigned int, OCobject*);
+/* Return the i'th dimension node, if any, associated with a given object */
+/* If there is no such dimension, then return OC_EINVAL */
+extern OCerror oc_dds_ithdimension(OClink,OCddsnode, size_t, OCddsnode*);
 
 /* Return the size and name associated with a given dimension object
    as defined in the DDS
 */
-extern OCerror oc_inq_dim(OClink,OCobject,ocindex_t*,char**);
+extern OCerror oc_dimension_properties(OClink,OCddsnode,size_t*,char**);
+
+/* For convenience, return only the dimension sizes */
+extern OCerror oc_dds_dimensionsizes(OClink,OCddsnode,size_t* dimsizes);
 
 /* Attribute Management */
 
-/* Added: 11/2/2009 DMH:
-   Provide access to DDS node attributes
-   in the form of the original underlying
-   DAS string.
-   One specifies the DDS root to get the global attributes.
-   Caller must free returned strings.
-*/
-
-extern OCerror oc_inq_attrstrings(OClink,OCobject, unsigned int i,
-			   char** name, OCtype* octype,
-			   unsigned int* nvalues,char*** stringvalues);
-
-/* Obtain the attributes associated with a given DDS OCobject.
+/* Obtain the attributes associated with a given DDS OCddsnode.
    One specifies the DDS root to get the global attributes
-   This code takes the DAS strings and does a default
-   conversion to binary values.
-*/
-extern OCerror oc_inq_attr(OClink,OCobject, unsigned int i,
-			   char** name,OCtype* octype,
-			   unsigned int* nvalues,void** values);
+   The actual attribute strings are returned and the user
+   must do any required conversion based on the octype.
+   The strings vector must be allocated and freed by caller,
+   The contents of the strings vector must also be reclaimed
+   using oc_attr_reclaim(see below). 
+   Standard practice is to call twice, once with the strings
+   argument == NULL so we get the number of values,
+   then the second time with an allocated char** vector.
 
-/* Convenience function to simplify reclaiming the allocated attribute
-   value memory
 */
-extern void oc_attr_reclaim(OCtype, unsigned int nvalues, void* values);
+extern OCerror oc_dds_attr(OClink,OCddsnode, size_t i,
+			    char** name, OCtype* octype,
+			    size_t* nvalues, char** strings);
 
-/* Access ith value string of a DAS object.
-   OCtype of the object is assumed to be OC_Attribute.
-   Note that this is  different than the above inq_attr
-   and inq_attrstrings, which work on DDS
-   objects. Note also that the return value is always a string.
+
+/* Access ith value string of a DAS OC_Attribute object.
+   OCddsnode of the object is assumed to be OC_Attribute.
+   Note that this is  different than the above oc_dds_attr
+   that works on DDS nodes.
+   Note also that the return value is always a string.
    Caller must free returned string.
 */
 
-extern OCerror oc_inq_dasattr_nvalues(OClink, OCobject,
-			unsigned int* nvaluesp);
+extern OCerror oc_das_attr_count(OClink, OCddsnode, size_t* countp);
 
-extern OCerror oc_inq_dasattr(OClink,OCobject, unsigned int,
-			      OCtype* primtypep, char** valuep);
+extern OCerror oc_das_attr(OClink,OCddsnode, size_t, OCtype*, char**);
 
 /**************************************************/
-/* Data management */
+/* Free up a ddsnode that is no longer being used */
+extern OCerror oc_dds_free(OClink, OCddsnode);
 
-/*
-These procedures allow for the location and extraction
-of data from the data packet part of a DATADDS.
-See ocuserman.html for detailed description.
+/**************************************************/
+/* Data Procedures */
+
+/* Get the root data of datadds */
+extern OCerror oc_data_getroot(OClink, OCddsnode treeroot, OCdatanode* rootp);
+
+/* Return an data for the i'th field of the specified container data */
+extern OCerror oc_data_ithfield(OClink, OCdatanode container, size_t index,
+                                OCdatanode* fieldp);
+
+/* Return the grid array data for the specified grid data */
+extern OCerror oc_data_gridarray(OClink, OCdatanode grid, OCdatanode* arrayp);
+
+/* Return the i'th grid map data for the specified grid data.
+   Map indices start at zero.
 */
+extern OCerror oc_data_gridmap(OClink, OCdatanode grid, size_t index, OCdatanode* mapp);
 
-typedef OCobject OCdata;
-
-/* Obtain the OCdata object that references the
-   whole data from a DATADDS fetch request specified
-   by the root object. This does not access the server.
+/* Return the data of the container for the specified data.
+   If it does not exist, then return OCNULL.
 */
-extern OCerror oc_data_root(OClink, OCobject root, OCdata);
+extern OCerror oc_data_container(OClink, OCdatanode data, OCdatanode* containerp);
 
-/* Create an empty OCdata object */
-extern OCdata oc_data_new(OClink);
+/* Return the data of the root for the specified data. */
+extern OCerror oc_data_root(OClink, OCdatanode data, OCdatanode* rootp);
 
-/* Reclaim a no longer needed OCdata object */
-extern OCerror oc_data_free(OClink, OCdata);
-
-/* Given an OCdata object, set the nested subnode OCdata object
-   to refer to the data associated with the i'th element of
-   the parent data object. NOTE: if the i'th element is not
-   present then this function will return OC_ENODATA.
-   See the user's manual for details on mapping multi-
-   dimensional arrays to single indices.
+/* Return the data of a dimensioned Structure corresponding
+   to the element specified by the indices.
 */
-extern OCerror oc_data_ith(OClink,
-				OCdata parentdata,
-				ocindex_t index,
-				OCdata subdata);
+extern OCerror oc_data_ithelement(OClink, OCdatanode data, size_t* indices, OCdatanode* elementp);
 
-/* Return the actual data values associated with the specified OCdata.
-   The OCdata is assumed to be referencing either a scalar
-   primitive value or a (1d) array of primitive values.
-   If scalar, then index must be 0 and count must be 1.
+/* Return the i'th record data of a Sequence data. */
+extern OCerror oc_data_ithrecord(OClink, OCdatanode data, size_t index, OCdatanode* recordp);
+
+/* Free up an data that is no longer being used */
+extern OCerror oc_data_free(OClink, OCdatanode data);
+
+/* Count the records associated with a sequence */
+extern OCerror oc_data_recordcount(OClink, OCdatanode, size_t*);
+
+/* Return the actual data values associated with the specified leaf data.
+   The OCdatanode is assumed to be referencing a leaf node that is
+   either a atomic valued scalar or array.
+   If scalar, then index and count are ignored.
+   Caller is responsible for allocating memory(of proper size)
+   and free'ing it.
 */
-extern OCerror oc_data_get(OClink,OCdata,
-                         void* memory, size_t memsize,
-                         ocindex_t index, ocindex_t count);
+extern OCerror oc_data_read(OClink, OCdatanode, size_t*, size_t*, size_t, void*);
 
-/* Return the OCdata's current index */
-extern OCerror oc_data_index(OClink,OCdata, ocindex_t*);
-
-/* Return the mode associated the specified OCdata object */
-extern OCerror oc_data_mode(OClink,OCdata, OCmode*);
-
-/* Return the OCobject associated the specified OCdata object */
-extern OCerror oc_data_object(OClink,OCdata, OCobject*);
-
-/* Compute the the count associated with the specified OCdata
-   instance. Note: this is potentially computationally costly
-   when computing # records.
+/* Like oc_data_read, but for reading a scalar.
+   Caller is responsible for allocating memory(of proper size)
+   and free'ing it.
 */
-extern OCerror oc_data_count(OClink, OCdata, ocindex_t*);
+extern OCerror oc_data_readscalar(OClink, OCdatanode, size_t, void*);
+
+/* Like oc_data_read, but caller provides a starting set of indices
+   and count of the number of elements to read.
+   Caller is responsible for allocating memory(of proper size)
+   and free'ing it.
+*/
+extern OCerror oc_data_readn(OClink, OCdatanode, size_t*, size_t, size_t, void*);
+
+
+/* Return the indices for this datas; Assumes the data
+   was obtained using oc_data_ithelement or oc_data_ithrecord;
+   if not, then an error is returned.
+*/
+extern OCerror oc_data_position(OClink, OCdatanode data, size_t* indices);
+
+/* Return the template dds node for an data */
+extern OCerror oc_data_ddsnode(OClink, OCdatanode data, OCddsnode*);
+
+/* Return the octype of the data (convenience) */
+extern OCerror oc_data_octype(OClink, OCdatanode data, OCtype*);
+
+/* Return 1 if the specified data has a valid index, 0 otherwise.
+   Valid index means it was created using
+   oc_data_ithelement or oc_data_ithrecord.
+*/
+extern int oc_data_indexed(OClink link, OCdatanode datanode);
+
+/* Return 1 if the specified data has a valid index, 0 otherwise.
+   Valid index means it was created using
+   oc_data_ithelement or oc_data_ithrecord.
+*/
+extern int oc_data_indexed(OClink, OCdatanode);
+
+/* Return 1 if the specified data can be indexed
+   Indexable means the data is pointing to
+   an indexed structure or to a sequence.
+*/
+extern int oc_data_indexable(OClink, OCdatanode);
 
 /**************************************************/
 /* Misc. OCtype-related functions */
 
-/* Return size of the given type (Primitive only) */
+/* Return size of the given type(Atomic only) */
 extern size_t oc_typesize(OCtype);
 
 /* Return a canonical printable string describing a given type:
    e.g. Byte, Int16, etc.
 */
-extern char* oc_typetostring(OCtype);
+extern const char* oc_typetostring(OCtype);
 
-/* Given a value of a primitive OC type, provide a canonical
-   string representing that value
+/* Given a value of a atomic OC type, provide a canonical
+   string representing that value; mostly for debugging.
 */
-extern OCerror oc_typeprint(OCtype, char* buf, size_t bufsize, void* value);
+extern OCerror oc_typeprint(OCtype, void* value, size_t bufsize, char* buf);
 
 /**************************************************/
 /* Logging */
 
 extern void oc_loginit(void);
-extern void oc_setlogging(int onoff); /* 1=>start logging 0=>stop */
-extern void oc_logopen(const char* logfilename);
+extern int  oc_setlogging(int onoff); /* 1=>start logging 0=>stop */
+extern int  oc_logopen(const char* logfilename);
 extern void oc_logclose(void);
 
-extern void oc_logtext(int tag, const char* text);
-
 extern void oc_log(int tag, const char* fmt, ...);
+
+extern void oc_logtext(int tag, const char* text);
 
 /**************************************************/
 /* Miscellaneous */
 
+/* Return the size of the in-memory or on-disk
+   data chunk returned by the server for a given tree.
+   Zero implies it is not defined.
+*/
+extern OCerror oc_raw_xdrsize(OClink,OCddsnode,off_t*);
+
+/* Reclaim the strings within a string vector, but not the vector itself.
+   This is useful for reclaiming the result of oc_data_read
+   or oc_dds_attr when the type is OC_String or OC_URL.
+   Note that only the strings are reclaimed, the string vector
+   is not reclaimed because it was presumably allocated by the client.
+*/
+extern void oc_reclaim_strings(size_t n, char** svec);
+
 /* Convert an OCerror to a human readable string */
-extern char* oc_errstring(int err);
+extern const char* oc_errstring(OCerror err);
 
 /* Get client parameters from the URL
    DO NOT free the result
 */
 extern const char* oc_clientparam_get(OClink, const char* param);
 
-extern OCerror oc_clientparam_delete(OClink, const char* param);
-extern OCerror oc_clientparam_insert(OClink, const char* param, const char* value);
-extern OCerror oc_clientparam_replace(OClink, const char* param, const char* value);
+/* Test is a given url responds to a DAP protocol request */
+extern OCerror oc_ping(const char* url);
 
 /**************************************************/
 /* Merging operations */
 
 /* Merge a specified DAS into a specified DDS or DATADDS */
-extern OCerror oc_attach_das(OClink, OCobject dasroot, OCobject ddsroot);
+extern OCerror oc_merge_das(OClink, OCddsnode dasroot, OCddsnode ddsroot);
 
 /**************************************************/
 /* Debugging */
-extern OCerror oc_dd(OClink,OCobject,int level);
-extern OCerror oc_ddnode(OClink,OCobject);
 
 /* When a server error is detected, then it is possible
    to get the server error info using this procedure */
 extern OCerror oc_svcerrordata(OClink link, char** codep,
                                char** msgp, long* httpp);
 
-
-
 /**************************************************/
 /* Experimental */
-
-/* New 10/31/2009: return raw information about a datadds
-*/
-
-extern OCerror oc_raw_xdrsize(OClink, OCobject, size_t*);
 
 /* Resend a url as a head request to check the Last-Modified time */
 extern OCerror oc_update_lastmodified_data(OClink);
 
 /* Get last known modification time; -1 => data unknown */
 extern long oc_get_lastmodified_data(OClink);
-
-/**************************************************/
-
-#endif /*OCINTERNAL_H*/
 
 #ifdef __cplusplus
 }

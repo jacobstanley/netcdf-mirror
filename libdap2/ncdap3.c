@@ -29,8 +29,10 @@ static NCerror buildattribute3a(NCDAPCOMMON*, NCattribute*, nc_type, int);
 
 static char* getdefinename(CDFnode* node);
 
-extern CDFnode* v4node;
 int nc3dinitialized = 0;
+
+size_t dap_one[NC_MAX_VAR_DIMS];
+size_t dap_zero[NC_MAX_VAR_DIMS];
 
 /**************************************************/
 /* Add an extra function whose sole purpose is to allow
@@ -44,8 +46,19 @@ int nc__opendap(void) {return 0;}
 int
 nc3dinitialize(void)
 {
+    int i;
     compute_nccalignments();
+    for(i=0;i<NC_MAX_VAR_DIMS;i++) {
+	dap_one[i] = 1;
+	dap_zero[i] = 0;
+    }
     nc3dinitialized = 1;
+#ifdef DEBUG
+    /* force logging to go to stderr */
+    nclogclose();
+    nclogopen(NULL);
+    ncsetlogging(1); /* turn it on */
+#endif
     return NC_NOERR;
 }
 
@@ -573,7 +586,7 @@ buildglobalattrs3(NCDAPCOMMON* dapcomm, CDFnode* root)
     if(paramcheck34(dapcomm,"show","dds")) {
 	txt = NULL;
 	if(dapcomm->cdf.ddsroot != NULL)
-  	    txt = oc_inq_text(dapcomm->oc.conn,dapcomm->cdf.ddsroot->ocnode);
+  	    txt = oc_tree_text(dapcomm->oc.conn,dapcomm->cdf.ddsroot->ocnode);
 	if(txt != NULL) {
 	    /* replace newlines with spaces*/
 	    nltxt = nulldup(txt);
@@ -584,8 +597,8 @@ buildglobalattrs3(NCDAPCOMMON* dapcomm, CDFnode* root)
     }
     if(paramcheck34(dapcomm,"show","das")) {
 	txt = NULL;
-	if(dapcomm->oc.ocdasroot != OCNULL)
-	    txt = oc_inq_text(dapcomm->oc.conn,dapcomm->oc.ocdasroot);
+	if(dapcomm->oc.ocdasroot != NULL)
+	    txt = oc_tree_text(dapcomm->oc.conn,dapcomm->oc.ocdasroot);
 	if(txt != NULL) {
 	    nltxt = nulldup(txt);
 	    for(p=nltxt;*p;p++) {if(*p == '\n' || *p == '\r' || *p == '\t') {*p = ' ';}};
@@ -664,7 +677,7 @@ getdefinename(CDFnode* node)
     NClist* path = NULL;
 
     switch (node->nctype) {
-    case NC_Primitive:
+    case NC_Atomic:
 	/* The define name is same as the fullname with elided nodes */
 	path = nclistnew();
         collectnodepath3(node,path,!WITHDATASET);
@@ -681,4 +694,12 @@ getdefinename(CDFnode* node)
 	PANIC("unexpected nctype");
     }
     return spath;
+}
+
+int
+NCDAP_ping(const char* url)
+{
+    OCerror ocstat = OC_NOERR;
+    ocstat = oc_ping(url);
+    return ocerrtoncerr(ocstat);
 }

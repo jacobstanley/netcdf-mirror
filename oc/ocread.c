@@ -18,12 +18,10 @@
 #include "ocrc.h"
 #include "occurlfunctions.h"
 
-extern int oc_curl_file_supported;
-
 /*Forward*/
-static int readpacket(CURL*, OCURI*, OCbytes*, OCdxd, long*);
-static int readfile(char* path, char* suffix, OCbytes* packet);
-static int readfiletofile(char* path, char* suffix, FILE* stream, unsigned long*);
+static int readpacket(OCstate* state, OCURI*, OCbytes*, OCdxd, long*);
+static int readfile(const char* path, const char* suffix, OCbytes* packet);
+static int readfiletofile(const char* path, const char* suffix, FILE* stream, off_t*);
 
 int
 readDDS(OCstate* state, OCtree* tree)
@@ -31,12 +29,11 @@ readDDS(OCstate* state, OCtree* tree)
     int stat = OC_NOERR;
     long lastmodified = -1;
 
-
     ocurisetconstraints(state->uri,tree->constraint);
 
-ocset_user_password(state);
+    ocset_user_password(state);
 
-    stat = readpacket(state->curl,state->uri,state->packet,OCDDS,
+    stat = readpacket(state,state->uri,state->packet,OCDDS,
 			&lastmodified);
     if(stat == OC_NOERR) state->ddslastmodified = lastmodified;
 
@@ -49,36 +46,45 @@ readDAS(OCstate* state, OCtree* tree)
     int stat = OC_NOERR;
 
     ocurisetconstraints(state->uri,tree->constraint);
-    stat = readpacket(state->curl,state->uri,state->packet,OCDAS,NULL);
+    stat = readpacket(state,state->uri,state->packet,OCDAS,NULL);
 
     return stat;
 }
 
+#if 0
 int
-readversion(CURL* curl, OCURI* url, OCbytes* packet)
+readversion(OCstate* state, OCURI* url, OCbytes* packet)
 {
-   return readpacket(curl,url,packet,OCVER,NULL);
+   return readpacket(state,url,packet,OCVER,NULL);
+}
+#endif
+
+const char*
+ocdxdextension(OCdxd dxd)
+{
+    switch(dxd) {
+    case OCDDS: return ".dds";
+    case OCDAS: return ".das";
+    case OCDATADDS: return ".dods";
+    default: break;
+    }
+    return NULL;
 }
 
-static
-char* ocdxdextension[] ={
-".dds",  /*OCDDS*/
-".das",  /*OCDAS*/
-".dods", /*OCDATADDS*/
-".vers", /*OCVERS*/
-};
-
 static int
-readpacket(CURL* curl,OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
+readpacket(OCstate* state, OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 {
    int stat = OC_NOERR;
    int fileprotocol = 0;
-   char* suffix = ocdxdextension[dxd];
+   const char* suffix = ocdxdextension(dxd);
    char* fetchurl = NULL;
+   CURL* curl = state->curl;
+
+   
 
    fileprotocol = (strcmp(url->protocol,"file")==0);
 
-   if(fileprotocol && !oc_curl_file_supported) {
+   if(fileprotocol && !state->curlflags.proto_file) {
         /* Short circuit file://... urls*/
 	/* We do this because the test code always needs to read files*/
 	fetchurl = ocuribuild(url,NULL,NULL,0);
@@ -92,6 +98,8 @@ readpacket(CURL* curl,OCURI* url,OCbytes* packet,OCdxd dxd,long* lastmodified)
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch url=%s\n",fetchurl); fflush(stderr);}
         stat = ocfetchurl(curl,fetchurl,packet,lastmodified);
+	if(stat)
+	    oc_curl_printerror(state);
 	if(ocdebug > 0)
             {fprintf(stderr,"fetch complete\n"); fflush(stderr);}
     }
@@ -107,18 +115,18 @@ readDATADDS(OCstate* state, OCtree* tree, OCflags flags)
 
     if((flags & OCONDISK) == 0) {
         ocurisetconstraints(state->uri,tree->constraint);
-        stat = readpacket(state->curl,state->uri,state->packet,OCDATADDS,&lastmod);
+        stat = readpacket(state,state->uri,state->packet,OCDATADDS,&lastmod);
         if(stat == OC_NOERR)
             state->datalastmodified = lastmod;
         tree->data.datasize = ocbyteslength(state->packet);
-    } else {
+    } else { /*((flags & OCONDISK) != 0) */
         OCURI* url = state->uri;
         int fileprotocol = 0;
         char* readurl = NULL;
 
         fileprotocol = (strcmp(url->protocol,"file")==0);
 
-        if(fileprotocol && !oc_curl_file_supported) {
+        if(fileprotocol && !state->curlflags.proto_file) {
             readurl = ocuribuild(url,NULL,NULL,0);
             stat = readfiletofile(readurl, ".dods", tree->data.file, &tree->data.datasize);
         } else {
@@ -143,7 +151,7 @@ readDATADDS(OCstate* state, OCtree* tree, OCflags flags)
 }
 
 static int
-readfiletofile(char* path, char* suffix, FILE* stream, unsigned long* sizep)
+readfiletofile(const char* path, const char* suffix, FILE* stream, off_t* sizep)
 {
     int stat = OC_NOERR;
     OCbytes* packet = ocbytesnew();
@@ -166,7 +174,7 @@ unwind:
 }
 
 static int
-readfile(char* path, char* suffix, OCbytes* packet)
+readfile(const char* path, const char* suffix, OCbytes* packet)
 {
     int stat = OC_NOERR;
     char buf[1024];

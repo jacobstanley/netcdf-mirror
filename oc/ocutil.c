@@ -116,7 +116,7 @@ freeOCnode(OCnode* cdf, int deep)
 }
 
 int
-findbod(OCbytes* buffer, size_t* bodp, size_t* ddslenp)
+ocfindbod(OCbytes* buffer, size_t* bodp, size_t* ddslenp)
 {
     unsigned int i;
     char* content;
@@ -145,30 +145,15 @@ findbod(OCbytes* buffer, size_t* bodp, size_t* ddslenp)
 
 /* Compute total # of elements if dimensioned*/
 size_t
-totaldimsize(OCnode* node)
+octotaldimsize(size_t rank, size_t* sizes)
 {
     unsigned int i;
     size_t count = 1;
-    for(i=0;i<node->array.rank;i++) {
-        OCnode* dim = (OCnode*)oclistget(node->array.dimensions,i);
-        count *= (dim->dim.declsize);
+    for(i=0;i<rank;i++) {
+        count *= sizes[i];
     }
     return count;
 }
-
-#ifdef OCIGNORE
-size_t
-totaldimsize(unsigned int rank, size_t* dimsizes)
-{
-    unsigned int i;
-    int unlim = 0;
-    unsigned long size = 1;
-    for(i=0;i<rank;i++) {
-        if(dimsizes[i] != 0) size = (size * dimsizes[i]); else unlim = 1;
-    }
-    return size;
-}
-#endif
 
 size_t
 octypesize(OCtype etype)
@@ -220,7 +205,7 @@ octypetostring(OCtype octype)
     case OC_Dimension:    return "OC_Dimension";
     case OC_Attribute:    return "OC_Attribute";
     case OC_Attributeset: return "OC_Attributeset";
-    case OC_Primitive:    return "OC_Primitive";
+    case OC_Atomic:       return "OC_Atomic";
     default: break;
     }
     return NULL;
@@ -239,6 +224,15 @@ octypetoddsstring(OCtype octype)
     case OC_Float64:      return "Float64";
     case OC_String:       return "String";
     case OC_URL:          return "Url";
+    /* Non-atomics*/
+    case OC_Dataset:      return "Dataset";
+    case OC_Sequence:     return "Sequence";
+    case OC_Grid:         return "Grid";
+    case OC_Structure:    return "Structure";
+    case OC_Dimension:    return "Dimension";
+    case OC_Attribute:    return "Attribute";
+    case OC_Attributeset: return "Attributeset";
+    case OC_Atomic:       return "Atomic";
     default: break;
     }
     return "<unknown>";
@@ -246,7 +240,7 @@ octypetoddsstring(OCtype octype)
 
 
 OCerror
-octypeprint(OCtype etype, char* buf, size_t bufsize, void* value)
+octypeprint(OCtype etype, void* value, size_t bufsize, char* buf)
 {
     if(buf == NULL || bufsize == 0 || value == NULL) return OC_EINVAL;
     buf[0] = '\0';
@@ -380,6 +374,14 @@ ocerrstring(int err)
 	    return "OC_ERCFILE: Malformed or unreadable run-time configuration file";
 	case OC_ENOFILE:
 	    return "OC_ENOFILE: cannot read content of URL";
+
+	/* oc_data related errors */
+	case OC_EINDEX:
+	    return "OC_EINDEX: index argument too large";
+	case OC_EBADTYPE:
+	    return "OC_EBADTYPE: argument of wrong OCtype";
+	case OC_ESCALAR:
+	    return "OC_ESCALAR: argument is a scalar and should not be or is not scalar and should be.";
 	default: break;
     }
     return "<unknown error code>";
@@ -439,4 +441,114 @@ ocdataddsmsg(OCstate* state, OCtree* tree)
     xxdr_setpos(xdrs,ckp);
 done:
     return;
+}
+
+/* Given some set of indices [i0][i1]...[in] (where n == rank-1)
+   and the maximum sizes, compute the linear offset
+   for set of dimension indices.
+*/
+size_t
+ocarrayoffset(size_t rank, size_t* sizes, size_t* indices)
+{
+    unsigned int i;
+    size_t count = 0;
+    for(i=0;i<rank;i++) {
+	count *= sizes[i];
+	count += indices[i];
+    }
+    return count;
+}
+
+/* Inverse of ocarrayoffset: convert linear index to a set of indices */
+void
+ocarrayindices(size_t index, int rank, size_t* sizes, size_t* indices)
+{
+    int i;
+    for(i=rank-1;i>=0;i--) {
+	indices[i] = index % sizes[i];
+	index = (index - indices[i]) / sizes[i];
+    }
+}
+
+/* Given some set of edge counts [i0][i1]...[in] (where n == rank-1)
+   and the maximum sizes, compute the linear offset
+   for the last edge position
+*/
+size_t
+ocedgeoffset(size_t rank, size_t* sizes, size_t* edges)
+{
+    unsigned int i;
+    size_t count = 0;
+    for(i=0;i<rank;i++) {
+	count *= sizes[i];
+	count += (edges[i]-1);
+    }
+    return count;
+}
+
+int
+ocvalidateindices(size_t rank, size_t* sizes, size_t* indices)
+{
+    int i;
+    for(i=0;i<rank;i++) {
+	if(indices[i] >= sizes[i]) return 0;
+    }
+    return 1;
+}
+
+int
+oc_ispacked(OCnode* node)
+{
+    OCtype octype = node->octype;
+    OCtype etype = node->etype;
+    int isscalar = (node->array.rank == 0);
+    int packed;
+
+    if(isscalar || octype != OC_Atomic)
+	return 0; /* is not packed */
+    packed = (etype == OC_Byte
+	      || etype == OC_UByte
+              || etype == OC_Char) ? 1 : 0;
+    return packed;
+}
+
+/* Must be consistent with ocx.h.OCDT */
+#define NMODES 6
+#define MAXMODENAME 8 /*max (strlen(modestrings[i])) */
+char* modestrings[NMODES+1] = {
+"FIELD", /* ((OCDT)(1<<0)) field of a container */
+"ELEMENT", /* ((OCDT)(1<<1)) element of a structure array */
+"RECORD", /* ((OCDT)(1<<2)) record of a sequence */
+"ARRAY", /* ((OCDT)(1<<3)) is structure array */
+"SEQUENCE", /* ((OCDT)(1<<4)) is sequence */
+"ATOMIC", /* ((OCDT)(1<<5)) is atomic leaf */
+NULL,
+};
+
+const char*
+ocdtmodestring(OCDT mode,int compact)
+{
+
+    static char result[1+(NMODES*(MAXMODENAME+1))]; /* hack to avoid malloc */
+    int i;
+    char* p = result;
+    result[0] = '\0';
+    if(mode == 0) {
+	if(compact) *p++ = '-';
+	else strcat(result,"NONE");
+    } else for(i=0;;i++) {
+	char* ms = modestrings[i];
+	if(ms == NULL) break;
+	if(!compact && i > 0) strcat(result,",");
+        if(fisset(mode,(1<<i))) {
+	    if(compact) *p++ = ms[0];
+	    else strcat(result,ms);
+	}
+    }
+    /* pad compact list out to NMODES in length (+1 for null terminator) */
+    if(compact) {
+	while((p-result) < NMODES) *p++ = ' ';
+	*p = '\0';
+    }
+    return result;
 }

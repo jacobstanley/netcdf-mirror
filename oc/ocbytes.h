@@ -34,12 +34,12 @@ EXTERNC int ocbytesget(OCbytes*,unsigned int);
 EXTERNC int ocbytesset(OCbytes*,unsigned int,char);
 
 /* Append one byte */
-EXTERNC int ocbytesappend(OCbytes*,char); /* Add at Tail */
+EXTERNC int ocbytesappend(OCbytes*,const char); /* Add at Tail */
 /* Append n bytes */
-EXTERNC int ocbytesappendn(OCbytes*,void*,unsigned int); /* Add at Tail */
+EXTERNC int ocbytesappendn(OCbytes*,const void*,unsigned int); /* Add at Tail */
 
 /* Concatenate a null-terminated string to the end of the buffer */
-EXTERNC int ocbytescat(OCbytes*,char*);
+EXTERNC int ocbytescat(OCbytes*,const char*);
 /* Set the contents of the buffer; mark the buffer as non-extendible */
 EXTERNC int ocbytessetcontents(OCbytes*, char*, unsigned int);
 

@@ -10,8 +10,8 @@
 #define LOGDBG 3
 
 extern void oc_loginit(void);
-extern void oc_setlogging(int tf);
-extern void oc_logopen(const char* file);
+extern int oc_setlogging(int tf);
+extern int oc_logopen(const char* file);
 extern void oc_logclose(void);
 
 extern void oc_log(int tag, const char* fmt, ...);

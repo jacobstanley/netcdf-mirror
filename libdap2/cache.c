@@ -4,7 +4,6 @@
  *   $Header$
  *********************************************************************/
 #include "ncdap3.h"
-#include "dapodom.h"
 #include "dapdump.h"
 
 static int iscacheableconstraint(DCEconstraint* con);
@@ -207,8 +206,8 @@ buildcachenode34(NCDAPCOMMON* nccomm,
 {
     NCerror ncstat = NC_NOERR;
     OCerror ocstat = OC_NOERR;
-    OCconnection conn = nccomm->oc.conn;
-    OCobject ocroot = OCNULL;
+    OClink conn = nccomm->oc.conn;
+    OCddsnode ocroot = NULL;
     CDFnode* dxdroot = NULL;
     NCcachenode* cachenode = NULL;
     char* ce = NULL;
@@ -240,8 +239,7 @@ buildcachenode34(NCDAPCOMMON* nccomm,
 
     /* save the root content*/
     cachenode->ocroot = ocroot;
-    cachenode->content = oc_data_new(conn);
-    ocstat = oc_data_root(conn,ocroot,cachenode->content);
+    ocstat = oc_data_getroot(conn,ocroot,&cachenode->content);
     if(ocstat) {THROWCHK(ocerrtoncerr(ocstat)); goto done;}
 
     /* capture the packet size */
@@ -310,6 +308,10 @@ void
 freenccachenode(NCDAPCOMMON* nccomm, NCcachenode* node)
 {
     if(node == NULL) return;
+#ifdef DEBUG
+fprintf(stderr,"freecachenode: %s\n",
+	dumpcachenode(node));
+#endif
     oc_data_free(nccomm->oc.conn,node->content);
     dcefree((DCEnode*)node->constraint);
     freecdfroot34(node->datadds);

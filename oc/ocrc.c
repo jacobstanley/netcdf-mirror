@@ -11,8 +11,6 @@
 
 #include "ocinternal.h"
 #include "ocdebug.h"
-#include "ocdata.h"
-#include "occontent.h"
 #include "oclog.h"
 
 #include "ocrc.h"
@@ -26,9 +24,6 @@
 
 #define HTTPPREFIXDEPRECATED "CURL."
 #define HTTPPREFIX           "HTTP."
-
-/* the .dodsrc triple store */
-struct OCTriplestore* ocdodsrc = NULL;
 
 static int parseproxy(OCstate* state, char* v);
 static int rcreadline(FILE* f, char* more, int morelen);
@@ -230,9 +225,11 @@ sorttriplestore(void)
 {
     int i, nsorted;
     struct OCTriple* sorted = NULL;
+    struct OCTriplestore* ocdodsrc = ocglobalstate.ocdodsrc;
 
+    if(ocdodsrc == NULL) return; /* nothing to sort */
     if(ocdodsrc->ntriples <= 1) return; /* nothing to sort */
-   if(ocdebug > 2)
+    if(ocdebug > 2)
         ocdodsrcdump("initial:",ocdodsrc->triples,ocdodsrc->ntriples);
 
     sorted = (struct OCTriple*)malloc(sizeof(struct OCTriple)*ocdodsrc->ntriples);
@@ -283,6 +280,7 @@ ocdodsrc_read(char* basename, char* path)
     char line0[MAXRCLINESIZE];
     FILE *in_file = NULL;
     int linecount = 0;
+    struct OCTriplestore* ocdodsrc = ocglobalstate.ocdodsrc;
 
     if(ocdodsrc == NULL) {
         ocdodsrc = (struct OCTriplestore*)malloc(sizeof(struct OCTriplestore));
@@ -290,6 +288,7 @@ ocdodsrc_read(char* basename, char* path)
 	    oc_log(LOGERR,"ocdodsrc_read: out of memory");
 	    return 0;
 	}
+        ocglobalstate.ocdodsrc = ocdodsrc;
     }
     ocdodsrc->ntriples = 0;
 
@@ -363,6 +362,8 @@ ocdodsrc_process(OCstate* state)
     int stat = 0;
     char* value;
     char* url = ocuribuild(state->uri,NULL,NULL,OCURIENCODE);
+    struct OCTriplestore* ocdodsrc = ocglobalstate.ocdodsrc;
+
     if(ocdodsrc == NULL) goto done;
     value = curllookup("DEFLATE",url);
     if(value != NULL) {
@@ -487,7 +488,9 @@ char*
 ocdodsrc_lookup(char* key, char* url)
 {
     int i,found;
+    struct OCTriplestore* ocdodsrc = ocglobalstate.ocdodsrc;
     struct OCTriple* triple = ocdodsrc->triples;
+
     if(key == NULL || ocdodsrc == NULL) return NULL;
     if(url == NULL) url = "";
     /* Assume that the triple store has been properly sorted */
@@ -515,6 +518,8 @@ static void
 ocdodsrcdump(char* msg, struct OCTriple* triples, int ntriples)
 {
     int i;
+    struct OCTriplestore* ocdodsrc = ocglobalstate.ocdodsrc;
+
     if(msg != NULL) fprintf(stderr,"%s\n",msg);
     if(ocdodsrc == NULL) {
 	fprintf(stderr,"<EMPTY>\n");

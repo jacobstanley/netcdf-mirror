@@ -4,9 +4,6 @@
 #include "config.h"
 #include "ocinternal.h"
 #include "ocdebug.h"
-#include "ocdata.h"
-#include "occontent.h"
-
 #include "ocrc.h"
 
 /* Condition on libcurl version */
@@ -15,7 +12,40 @@
 #define CURLOPT_KEYPASSWD CURLOPT_SSLKEYPASSWD
 #endif
 
+
 static char* combinecredentials(const char* user, const char* pwd);
+
+void
+oc_curl_debug(OCstate* state)
+{
+    curl_easy_setopt(state->curl,CURLOPT_VERBOSE,1);
+    curl_easy_setopt(state->curl,CURLOPT_ERRORBUFFER,(void*)state->curlerror);
+}
+
+void
+oc_curl_printerror(OCstate* state)
+{
+    fprintf(stderr,"curl error details: %s\n",state->curlerror);
+}
+
+/* Determine if this version of curl supports
+       "file://..." &/or "https://..." urls.
+*/
+void
+oc_curl_protocols(struct OCGLOBALSTATE* state)
+{
+    const char* const* proto; /*weird*/
+    curl_version_info_data* curldata;
+    curldata = curl_version_info(CURLVERSION_NOW);
+    for(proto=curldata->protocols;*proto;proto++) {
+        if(strcmp("file",*proto)==0) {state->curl.proto_file=1;break;}
+        if(strcmp("http",*proto)==0) {state->curl.proto_https=1;break;}
+    }
+    if(ocdebug > 0) {
+        oc_log(LOGNOTE,"Curl file:// support = %d",state->curl.proto_file);
+        oc_log(LOGNOTE,"Curl https:// support = %d",state->curl.proto_https);
+    }
+}
 
 
 /* Set various general curl flags */
@@ -64,7 +94,7 @@ ocset_curl_flags(OCstate* state)
     cstat = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     OCDBG1(1,"CURLOPT_FOLLOWLOCATION=%ld",1L);
     cstat = curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 10L);
-    OCDBG1(1,"CURLOPT_FOLLOWLOCATION=%ld",1L);
+    OCDBG1(1,"CURLOPT_MAXREDIRS=%ld",10L);
 
     cstat = curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, state->error.curlerrorbuf);
     OCDBG1(1,"CURLOPT_ERRORBUFFER",0);

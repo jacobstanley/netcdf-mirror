@@ -38,9 +38,11 @@
    elements of XDR. Assumes read-only
 */
 
+#undef ENDIAN_VALIDATE
 #undef XXDRTRACE
 
 #include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -48,6 +50,10 @@
 #include <stdarg.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef ENDIAN_VALIDATE
+#include <arpa/inet.h>
 #endif
 
 #include "xxdr.h"
@@ -77,6 +83,37 @@ int xxdr_getbytes(XXDR* xdrs, char* memory, off_t count)
     return 1;
 }
 
+/* get a (unsigned) char from underlying stream*/
+int
+xxdr_uchar(XXDR* xdr, unsigned char* ip)
+{
+   unsigned int ii;
+   if(!ip) return 0;
+   if(!xdr->getbytes(xdr,(char*)&ii,sizeof(unsigned int)))
+	return 0;
+    /*convert from network order*/
+    if(!xxdr_network_order) {
+        swapinline32(&ii);
+    }
+    *ip = (unsigned char)ii;
+    return 1;
+}
+
+/* get an unsigned short from underlying stream*/
+int
+xxdr_ushort(XXDR* xdr, unsigned short* ip)
+{
+   unsigned int ii;
+   if(!ip) return 0;
+   if(!xdr->getbytes(xdr,(char*)&ii,sizeof(unsigned int)))
+	return 0;
+    /*convert from network order*/
+    if(!xxdr_network_order) {
+        swapinline32(&ii);
+    }
+    *ip = (unsigned short)ii;
+    return 1;
+}
 
 /* get a unsigned int from underlying stream*/
 int
@@ -460,4 +497,15 @@ xxdr_init()
     char *byte = (char *)&testint;
     xxdr_big_endian = (byte[0] == 0 ? 1 : 0);
     xxdr_network_order = xxdr_big_endian;
+#ifdef ENDIAN_VALIDATE
+    /* validate using ntohl */
+    if(ntohl(testint) == testint) {
+	if(!xxdr_network_order) {
+	    fprintf(stderr,"xxdr_init: endian mismatch\n");
+	    fflush(stderr);
+	    exit(1);	
+	}
+    }
+#endif
+
 }

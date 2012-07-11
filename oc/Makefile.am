@@ -11,16 +11,24 @@
 AM_CPPFLAGS =  -I$(top_srcdir) -I$(top_srcdir)/include
 
 # OC Sources; include the daptab.[ch] to avoid the need for bison by user
-SRC= occurlfunctions.c dapparse.c daplex.c ocuri.c ochttp.c ocbytes.c	\
-oc.c occontent.c ocdebug.c ocdrno.c ocdump.c	\
-ocinternal.c oclist.c oclog.c ocnode.c ocutil.c occlientparams.c	\
-ocrc.c ocread.c xxdr.c daptab.c
+SRC=oc.c \
+daplex.c dapparse.c daptab.c \
+occlientparams.c occompile.c occurlfunctions.c \
+ocdata.c ocdebug.c ocdump.c  \
+ocinternal.c ocnode.c \
+ochttp.c \
+ocrc.c ocread.c ocutil.c \
+ocbytes.c oclist.c ocuri.c oclog.c \
+xxdr.c
 
-HDRS= occurlfunctions.h occonstraints.h dapparselex.h ocuri.h ochttp.h \
-ocbytes.h occontent.h ocdata.h ocdatatypes.h ocdebug.h ocdrno.h ocdump.h \
-ocinternal.h oclist.h oclog.h ocnode.h occlientparams.h ocutil.h ocrc.h	\
-ocread.h xxdr.h daptab.h \
-oc.h
+HDRS=oc.h ocx.h \
+dapparselex.h daptab.h \
+occlientparams.h occompile.h occonstraints.h occurlfunctions.h \
+ocdata.h ocdatatypes.h ocdebug.h ocdump.h \
+ocinternal.h ocnode.h \
+ochttp.h ocrc.h ocread.h ocutil.h \
+ocbytes.h oclist.h ocuri.h oclog.h \
+xxdr.h
 
 if BUILD_DAP
 noinst_LTLIBRARIES = liboc.la
@@ -39,4 +47,5 @@ bison:: dap.y
 	rm -f dap.tab.c dap.tab.h
 	bison --debug -d -p dap dap.y
 	mv dap.tab.c daptab.c; mv dap.tab.h daptab.h
+
 

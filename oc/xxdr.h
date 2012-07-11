@@ -55,6 +55,16 @@
     * XDRUNIT)
 #endif
 
+/* signature: void swapinline16(unsigned short* sp) */
+#define swapinline16(ip) \
+{ \
+    char dst[2]; \
+    char* src = (char*)(sp); \
+    dst[0] = src[1]; \
+    dst[1] = src[0]; \
+    *(sp) = *((unsigned short*)dst); \
+}
+
 /* signature: void swapinline32(unsigned int* ip) */
 #define swapinline32(ip) \
 { \
@@ -129,6 +139,12 @@ extern int xxdr_network_order; /* does this machine match network order? */
    not round up to the XDRUNIT boundary
 */
 extern int xxdr_getbytes(XXDR*,char*,off_t);
+
+/* get a single unsigned char from underlying stream*/
+extern int xxdr_uchar(XXDR* , unsigned char*);
+
+/* get a single unsigned short from underlying stream*/
+extern int xxdr_ushort(XXDR* , unsigned short*);
 
 /* get an int from underlying stream*/
 extern int xxdr_uint(XXDR* , unsigned int*);

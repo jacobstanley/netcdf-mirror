@@ -12,24 +12,19 @@
 
 #include "ocinternal.h"
 #include "ocdebug.h"
-#include "ocdata.h"
-#include "occontent.h"
 #include "occlientparams.h"
 #include "ocrc.h"
 #include "occurlfunctions.h"
-
 #include "ochttp.h"
 #include "ocread.h"
+#include "dapparselex.h"
 
 /* Note: TMPPATH must end in '/' */
-#ifdef __WIN32__
-#define TMPPATH1 "/cygdrive/c/temp/"
-#define TMPPATH2 "c:/"
-#elif defined(WIN32)
-#define TMPPATH1 "c:\\temp/"
-#define TMPPATH2 ".\\"
-#elif defined(WIN32)
-#define TMPPATH1 "c:\\temp/"
+#ifdef __CYGWIN__
+#define TMPPATH1 "c:/temp/"
+#define TMPPATH2 "./"
+#elif WIN32
+#define TMPPATH1 "c:\\temp\\"
 #define TMPPATH2 ".\\"
 #else
 #define TMPPATH1 "/tmp/"
@@ -37,7 +32,7 @@
 #endif
 
 /* Define default rc files and aliases*/
-static char* rcfilenames[3] = {".dodsrc",".ocrc",NULL};
+static char* rcfilenames[4] = {".daprc",".dodsrc",".ocrc",NULL};
 
 static int ocextractddsinmemory(OCstate*,OCtree*,int);
 static int ocextractddsinfile(OCstate*,OCtree*,int);
@@ -57,38 +52,25 @@ extern OCnode* makeunlimiteddimension(void);
 #include <sys/stat.h>
 #endif
 
-/* Global flags*/
-int oc_curl_file_supported;
-int oc_curl_https_supported;
+/* Collect global state info in one place */
+struct OCGLOBALSTATE ocglobalstate;
 
 int
 ocinternalinitialize(void)
 {
     int stat = OC_NOERR;
 
+    if(!ocglobalstate.initialized) {
+        memset((void*)&ocglobalstate,0,sizeof(ocglobalstate));
+	ocglobalstate.initialized = 1;
+    }
+
     /* Compute some xdr related flags */
     xxdr_init();
 
     oc_loginit();
 
-    /* Determine if this version of curl supports
-       "file://..." &/or "https://..." urls.
-    */
-    {
-        const char* const* proto; /*weird*/
-        curl_version_info_data* curldata;
-        curldata = curl_version_info(CURLVERSION_NOW);
-        oc_curl_file_supported = 0;
-        oc_curl_https_supported = 0;
-        for(proto=curldata->protocols;*proto;proto++) {
-            if(strcmp("file",*proto)==0) {oc_curl_file_supported=1;break;}
-            if(strcmp("https",*proto)==0) {oc_curl_https_supported=1;break;}
-        }
-        if(ocdebug > 0) {
-            oc_log(LOGNOTE,"Curl file:// support = %d",oc_curl_file_supported);
-            oc_log(LOGNOTE,"Curl https:// support = %d",oc_curl_file_supported);
-        }
-    }
+    oc_curl_protocols(&ocglobalstate); /* see what protocols are supported */
 
     /* compile the .dodsrc, if any */
     {
@@ -156,7 +138,8 @@ ocopen(OCstate** statep, const char* url)
     if(state == NULL) {OCTHROWCHK(stat=OC_ENOMEM); goto fail;}
 
     /* Setup DAP state*/
-    state->magic = OCMAGIC;
+    state->header.magic = OCMAGIC;
+    state->header.occlass = OC_State;
     state->curl = curl;
     state->trees = oclistnew();
     state->uri = tmpurl;
@@ -169,9 +152,6 @@ ocopen(OCstate** statep, const char* url)
     /* set curl properties for this link */
     ocsetcurlproperties(state);
 
-    /* Set up list to support reuse/reclamation of OCcontent objects. */
-    state->contentlist = NULL;
-
     if(statep) *statep = state;
     return OCTHROW(stat);   
 
@@ -183,7 +163,7 @@ fail:
 }
 
 OCerror
-ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
+ocfetch(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
         OCnode** rootp)
 {
     OCtree* tree = NULL;
@@ -235,7 +215,7 @@ ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
                    will modify packet */
                 stat = ocextractddsinfile(state,tree,flags);
 	    }
-	} else { /*in memory*/
+	} else { /*inmemory*/
             stat = readDATADDS(state,tree,flags);
 	    if(stat == OC_NOERR) {
                 /* Separate the DDS from data and return the dds;
@@ -243,6 +223,8 @@ ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
             stat = ocextractddsinmemory(state,tree,flags);
 	}
 	}
+	break;
+    default:
 	break;
     }/*switch*/
     if(stat != OC_NOERR) {
@@ -290,8 +272,6 @@ ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
     }
 
     if(kind != OCDAS) {
-        /* Process ocnodes to assign offsets and sizes where possible */
-        occomputeskipdata(state,root);
         /* Process ocnodes to mark those that are cacheable */
         ocmarkcacheable(state,root);
         /* Process ocnodes to handle various semantic issues*/
@@ -310,6 +290,10 @@ ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
 		= xxdr_memcreate(tree->data.memory,tree->data.datasize,tree->data.bod);
 	}
         MEMCHECK(tree->data.xdrs,OC_ENOMEM);
+	/* Compile the data into a more accessible format */
+	stat = occompile(state,tree->root);
+	if(stat != OC_NOERR)
+	    goto unwind;
     }
 
     /* Put root into the state->trees list */
@@ -319,9 +303,66 @@ ocfetchf(OCstate* state, const char* constraint, OCdxd kind, OCflags flags,
     return stat;
 
 unwind:
-    ocfreetree(tree);
+    octree_free(tree);
 fail:
     return OCTHROW(stat);
+}
+
+static OCerror
+createtempfile(OCstate* state, OCtree* tree)
+{
+    int fd;
+    char* name = NULL;
+    fd = createtempfile1(TMPPATH1,&name);
+    if(fd < 0)
+        fd = createtempfile1(TMPPATH2,&name);
+    if(fd < 0) {
+        oc_log(LOGERR,"oc_open: attempt to open tmp file failed: %s",name);
+        return errno;
+    }
+#ifdef OCDEBUG
+    oc_log(LOGNOTE,"oc_open: using tmp file: %s",name);
+#endif
+    tree->data.filename = name; /* remember our tmp file name */
+    tree->data.file = fdopen(fd,"w+");
+    if(tree->data.file == NULL) return OC_EOPEN;
+    /* unlink the temp file so it will automatically be reclaimed */
+    if(ocdebug == 0) unlink(tree->data.filename);
+    return OC_NOERR;
+}
+
+int
+createtempfile1(char* tmppath, char** tmpnamep)
+{
+    int fd;
+    char* tmpname = NULL;
+    tmpname = (char*)malloc(strlen(tmppath)+strlen("dataddsXXXXXX")+1);
+    if(tmpname == NULL) return -1;
+    strcpy(tmpname,tmppath);
+#ifdef HAVE_MKSTEMP
+    strcat(tmpname,"dataddsXXXXXX");
+    /* Note Potential problem: old versions of this function
+       leave the file in mode 0666 instead of 0600 */
+    fd = mkstemp(tmpname);
+#else /* !HAVE_MKSTEMP */
+    /* Need to simulate by using some kind of pseudo-random number */
+    strcat(tmpname,"datadds");
+    {
+	int rno = rand();
+	char spid[7];
+	if(rno < 0) rno = -rno;
+        sprintf(spid,"%06d",rno);
+        strcat(tmpname,spid);
+#  ifdef WIN32
+        fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
+#  else
+        fd=open(tmpname,O_RDWR|O_CREAT|O_EXCL, S_IRWXU);
+#  endif
+    }
+#endif /* !HAVE_MKSTEMP */
+    if(tmpname == NULL) return -1;
+    if(tmpnamep) *tmpnamep = tmpname;
+    return fd;
 }
 
 void
@@ -334,22 +375,13 @@ occlose(OCstate* state)
     /* Ok in this case because we are popping the root out of state->trees */
     for(i=0;i<oclistlength(state->trees);i++) {
 	OCnode* root = (OCnode*)oclistpop(state->trees);
-	ocfreeroot(root);
+	ocroot_free(root);
     }
     oclistfree(state->trees);
     ocurifree(state->uri);
     ocbytesfree(state->packet);
     ocfree(state->error.code);
     ocfree(state->error.message);
-    if(state->contentlist != NULL) {
-	struct OCcontent* next;
-	struct OCcontent* curr = state->contentlist;
-	while(curr != NULL) {
-	    next = curr->next;
-	    ocfree(curr);
-	    curr = next;
-	}
-    }
     ocfree(state->curlflags.useragent);
     ocfree(state->curlflags.cookiejar);
     ocfree(state->curlflags.cookiefile);
@@ -371,7 +403,7 @@ ocextractddsinmemory(OCstate* state, OCtree* tree, OCflags flags)
     OCerror stat = OC_NOERR;
     size_t ddslen, bod, bodfound;
     /* Read until we find the separator (or EOF)*/
-    bodfound = findbod(state->packet,&bod,&ddslen);
+    bodfound = ocfindbod(state->packet,&bod,&ddslen);
     if(!bodfound) {/* No BOD; pretend */
 	bod = tree->data.bod;
 	ddslen = tree->data.datasize;
@@ -418,7 +450,7 @@ ocextractddsinfile(OCstate* state, OCtree* tree, OCflags flags)
         count = fread(chunk,1,sizeof(chunk),tree->data.file);
 	if(count <= 0) break; /* EOF;*/
         ocbytesappendn(state->packet,chunk,count);
-	bodfound = findbod(state->packet,&bod,&ddslen);
+	bodfound = ocfindbod(state->packet,&bod,&ddslen);
     } while(!bodfound);
     if(!bodfound) {/* No BOD; pretend */
 	bod = tree->data.bod;
@@ -439,68 +471,9 @@ ocextractddsinfile(OCstate* state, OCtree* tree, OCflags flags)
     return OCTHROW(stat);
 }
 
-static OCerror
-createtempfile(OCstate* state, OCtree* tree)
-{
-    int fd;
-    char* name = NULL;
-    fd = createtempfile1(TMPPATH1,&name);
-    if(fd < 0)
-        fd = createtempfile1(TMPPATH2,&name);
-    if(fd < 0) {
-        oc_log(LOGERR,"oc_open: attempt to open tmp file failed: %s",name);
-        return errno;
-    }
-#ifdef OCDEBUG
-    oc_log(LOGNOTE,"oc_open: using tmp file: %s",name);
-#endif
-    tree->data.filename = name; /* remember our tmp file name */
-    tree->data.file = fdopen(fd,"w+");
-    if(tree->data.file == NULL) return OC_EOPEN;
-    /* unlink the temp file so it will automatically be reclaimed */
-    if(ocdebug == 0) unlink(tree->data.filename);
-    return OC_NOERR;
-}
-
-int
-createtempfile1(char* tmppath, char** tmpnamep)
-{
-    int fd = 0;
-    char* tmpname = NULL;
-    tmpname = (char*)malloc(strlen(tmppath)+strlen("dataddsXXXXXX")+1);
-    if(tmpname == NULL) return -1;
-    strcpy(tmpname,tmppath);
-#ifdef HAVE_MKSTEMP
-    strcat(tmpname,"dataddsXXXXXX");
-    /* Note Potential problem: old versions of this function
-       leave the file in mode 0666 instead of 0600 */
-    fd = mkstemp(tmpname);
-#else /* !HAVE_MKSTEMP */
-    /* Need to simulate by using some kind of pseudo-random number */
-    strcat(tmpname,"datadds");
-    {
-	int rno = rand();
-	char spid[7];
-	if(rno < 0) rno = -rno;
-        sprintf(spid,"%06d",rno);
-        strcat(tmpname,spid);
-#  ifdef WIN32
-        fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT|O_EXCL|FILE_ATTRIBUTE_TEMPORARY, _S_IREAD|_S_IWRITE);
-	//fd=open(tmpname,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
-#  else
-        fd=open(tmpname,O_RDWR|O_CREAT|O_EXCL, S_IRWXU);
-#  endif
-    }
-#endif /* !HAVE_MKSTEMP */
-    if(tmpname == NULL) return -1;
-    if(tmpnamep) *tmpnamep = tmpname;
-    return fd;
-}
-
 /* Allow these (non-alpha-numerics) to pass thru */
 static char okchars[] = "&/:;,.=?@'\"<>{}!|\\^[]`~";
 static char hexdigits[] = "0123456789abcdef";
-
 
 /* Modify constraint to use %XX escapes */
 static char*

@@ -5,7 +5,6 @@
  *********************************************************************/
 
 #include "ncdap3.h"
-#include "dapodom.h"
 #include "dapdebug.h"
 #include "dapdump.h"
 #include "dceparselex.h"
@@ -117,7 +116,7 @@ qualifyprojectionnames3(DCEprojection* proj)
 
     ASSERT((proj->discrim == CES_VAR
             && proj->var->annotation != NULL
-            && ((CDFnode*)proj->var->annotation)->ocnode != OCNULL));
+            && ((CDFnode*)proj->var->annotation)->ocnode != NULL));
     collectnodepath3((CDFnode*)proj->var->annotation,fullpath,!WITHDATASET);
 #ifdef DEBUG
 fprintf(stderr,"qualify: %s -> ",
@@ -256,7 +255,7 @@ matchpartialname3(NClist* nodes, NClist* segments, CDFnode** nodep)
 	if(node->nctype != NC_Sequence
                && node->nctype != NC_Structure
                && node->nctype != NC_Grid
-               && node->nctype != NC_Primitive
+               && node->nctype != NC_Atomic
           )
 	    continue;
 	nclistpush(namematches,(ncelem)node);

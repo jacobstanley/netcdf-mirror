@@ -8,7 +8,8 @@
 
 static void addedges(OCnode* node);
 static void setroot(OCnode*,OClist*);
-static int isglobalname(char* name);
+static int isglobalname(const char* name);
+static int isdodsname(const char* name);
 static OCnode* newocnode(char* name, OCtype octype, DAPparsestate* state);
 static OCtype octypefor(Object etype);
 static char* scopeduplicates(OClist* list);
@@ -173,20 +174,32 @@ dap_attrset(DAPparsestate* state, Object name, Object attributes)
     attset = newocnode((char*)name,OC_Attributeset,state);
     /* Check var set vs global set */
     attset->att.isglobal = isglobalname(name);
+    attset->att.isdods = isdodsname(name);
     attset->subnodes = (OClist*)attributes;
     addedges(attset);
     return attset;
 }
 
 static int
-isglobalname(char* name)
+isglobalname(const char* name)
 {
     int len = strlen(name);
     int glen = strlen("global");
-    char* p;
+    const char* p;
     if(len < glen) return 0;
     p = name + (len - glen);
     if(strcasecmp(p,"global") != 0)
+	return 0;
+    return 1;
+}
+
+static int
+isdodsname(const char* name)
+{
+    int len = strlen(name);
+    int glen = strlen("DODS");
+    if(len < glen) return 0;
+    if(ocstrncmp(name,"DODS",glen) != 0)
 	return 0;
     return 1;
 }
@@ -232,7 +245,7 @@ Object
 dap_makebase(DAPparsestate* state, Object name, Object etype, Object dimensions)
 {
     OCnode* node;
-    node = newocnode((char*)name,OC_Primitive,state);
+    node = newocnode((char*)name,OC_Atomic,state);
     node->etype = octypefor(etype);
     dimension(node,(OClist*)dimensions);
     return node;
@@ -338,7 +351,7 @@ flatten(char* s, char* tmp, int tlen)
 static OCnode*
 newocnode(char* name, OCtype octype, DAPparsestate* state)
 {
-    OCnode* node = ocmakenode(name,octype,state->root);
+    OCnode* node = ocnode_new(name,octype,state->root);
     oclistpush(state->ocnodes,(ocelem)node);
     return node;
 }
@@ -413,7 +426,7 @@ static void
 dap_parse_cleanup(DAPparsestate* state)
 {
     daplexcleanup(&state->lexstate);
-    if(state->ocnodes != NULL) ocfreenodes(state->ocnodes);
+    if(state->ocnodes != NULL) ocnodes_free(state->ocnodes);
     state->ocnodes = NULL;
     free(state);
 }
@@ -422,7 +435,7 @@ static DAPparsestate*
 dap_parse_init(char* buf)
 {
     DAPparsestate* state = (DAPparsestate*)ocmalloc(sizeof(DAPparsestate)); /*ocmalloc zeros*/
-    MEMCHECK(state,(DAPparsestate*)NULL);
+    MEMCHECK(state,NULL);
     if(buf==NULL) {
         dap_parse_error(state,"dap_parse_init: no input buffer");
 	dap_parse_cleanup(state);

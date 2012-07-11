@@ -102,6 +102,8 @@ extern char* dcetostring(DCEnode* node);
 extern char* dcelisttostring(NClist* list,char*);
 extern void dcetobuffer(DCEnode* node, NCbytes* buf);
 extern void dcelisttobuffer(NClist* list, NCbytes* buf,char*);
+extern char* dcerawtostring(DCEnode*);
+extern char* dcerawlisttostring(NClist*);
 
 extern NClist* dceallnodes(DCEnode* node, CEsort which);
 
@@ -116,6 +118,17 @@ extern int dceiswholeseglist(NClist*);
 extern int dceiswholeprojection(DCEprojection*);
 extern int dcesamepath(NClist* list1, NClist* list2);
 extern int dcemergeprojections(DCEprojection* dst, DCEprojection* src);
+
+extern void dcesegment_transpose(DCEsegment* seg,
+				 size_t* start,
+				 size_t* count,
+				 size_t* stride,
+				 size_t* sizes
+				);
+
+
+extern size_t dcesafesegmentsize(DCEsegment*);
+extern int dcesafeindex(DCEsegment* seg);
 
 extern int dceverbose;
 

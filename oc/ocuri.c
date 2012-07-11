@@ -60,6 +60,7 @@ ocstrndup(const char* s, size_t len)
 }
 #endif
 
+#if 0
 /* Do not trust strncmp */
 static int
 ocuristrncmp(const char* s1, const char* s2, size_t len)
@@ -76,12 +77,13 @@ ocuristrncmp(const char* s1, const char* s2, size_t len)
     /* 1st len chars are same */
     return 0;
 }
+#endif
 
 static char* legalprotocols[] = {
-"file:",
-"http:",
-"https:",
-"ftp:",
+"file",
+"http",
+"https",
+"ftp",
 NULL /* NULL terminate*/
 };
 
@@ -108,22 +110,27 @@ ocuriparse(const char* uri0, OCURI** ocurip)
 
     /* accumulate parse points*/
     char* protocol = NULL;
-    char* params = NULL;
     char* host = NULL;
     char* port = NULL;
     char* constraint = NULL;
     char* user = NULL;
     char* pwd = NULL;
     char* file = NULL;
+    char* prefixparams = NULL;
+    char* suffixparams = NULL;
 
-    if(uri0 == NULL)
-	return OC_EBADURL;
+
+    if(uri0 == NULL || strlen(uri0) == 0)
+	goto fail;
 
     ocuri = (OCURI*)calloc(1,sizeof(OCURI));
-    if(ocuri == NULL) return 0;
+    if(ocuri == NULL)
+	goto fail;
 
     /* make local copy of uri */
-    uri = nulldup(uri0);
+    uri = (char*)malloc(strlen(uri0)+2); /* +1 for trailing null, +1 if we
+                                            need to append a char */
+    strcpy(uri,uri0);
 
     /* remove all whitespace*/
     p = uri;
@@ -134,40 +141,42 @@ ocuriparse(const char* uri0, OCURI** ocurip)
 
     /* break up the uri string into pieces*/
 
-    /* 1. leading bracketed parameters */
+    /* leading bracketed parameters */
     if(*p == LBRACKET) {
-	params = p+1;
+	prefixparams = p+1;
 	/* find end of the clientparams*/
         for(;*p;p++) {if(p[0] == RBRACKET && p[1] != LBRACKET) break;}
 	if(*p == 0) goto fail; /* malformed client params*/
-	*p = '\0'; /* leave off the trailing rbracket for now */
+	*p = '\0'; /* wipe out the last rbracket */
 	p++; /* move past the params*/
     }
 
+    /* Tag the protocol */
+    protocol = p;    
+    p1 = strchr(p,':');
+    if(!p1)
+	goto fail;
+    *p1 = '\0';
+    p = p1+1;
+
     /* verify that the uri starts with an acceptable protocol*/
     for(pp=legalprotocols;*pp;pp++) {
-        if(ocuristrncmp(p,*pp,strlen(*pp))==0) break;
+        if(strcmp(protocol,*pp)==0) break;
     }
     if(*pp == NULL) goto fail; /* illegal protocol*/
-    /* save the protocol */
-    protocol = *pp;
 
-    /* 4. skip protocol */
-    p += strlen(protocol);
-
-    /* 5. skip // */
+    /* skip // */
     if(*p != '/' && *(p+1) != '/')
 	goto fail;
     p += 2;
 
-    /* 6. Mark the end of the host section */
+    /* locate the end of the host section */
     file = strchr(p,'/');
-    if(file) {
-	*file++ = '\0'; /* warning: we just overwrote the leading / */
-    } else
-        goto fail;
+    /* Temporarily overwrite the '/' */
+    *file = '\0';
 
-    /* 7. extract any user:pwd */
+    /* extract any user:pwd */
+    host = p;
     p1 = strchr(p,'@');
     if(p1) {/* Assume we have user:pwd@ */
 	*p1 = '\0';
@@ -175,20 +184,29 @@ ocuriparse(const char* uri0, OCURI** ocurip)
 	pwd = strchr(p,':');
 	if(!pwd) goto fail; /* malformed */
 	*pwd++ = '\0';
-	p = pwd+strlen(pwd)+1;
     }
 
-    /* 8. extract host and port */
-    host = p;
+    /* extract host and port */
+    p = host;
     port = strchr(p,':');
-    if(port) {
-	*port++ = '\0';
-    }
+    if(port)
+        *port++ = '\0';
 
-    /* 9. Look for '?' */
+    /* Locate end of the file */
     constraint = strchr(file,'?');
+    if(constraint) 
+        suffixparams = strchr(constraint,'#');    
+    else
+        suffixparams = strchr(file,'#');    
+
     if(constraint) {
 	*constraint++ = '\0';
+	p = constraint;
+    }
+
+    if(suffixparams) {
+	*suffixparams++ = '\0';
+	p = suffixparams;
     }
 
     /* assemble the component pieces*/
@@ -196,8 +214,6 @@ ocuriparse(const char* uri0, OCURI** ocurip)
         ocuri->uri = nulldup(uri0);
     if(protocol && strlen(protocol) > 0) {
         ocuri->protocol = nulldup(protocol);
-        /* remove trailing ':' */
-        ocuri->protocol[strlen(protocol)-1] = '\0';
     }
     if(user && strlen(user) > 0)
         ocuri->user = nulldup(user);
@@ -207,20 +223,32 @@ ocuriparse(const char* uri0, OCURI** ocurip)
         ocuri->host = nulldup(host);
     if(port && strlen(port) > 0)
         ocuri->port = nulldup(port);
-    if(file && strlen(file) > 0) {
-	/* Add back the leading / */
-        ocuri->file = malloc(strlen(file)+2);
-	strcpy(ocuri->file,"/");
-        strcat(ocuri->file,file);
+    if(file) {
+        /* Add back the leading / */
+        if(file) *file = '/';
+        if(strlen(file) > 0)
+            ocuri->file = nulldup(file);
+	else
+	    file = NULL;
     }
     if(constraint && strlen(constraint) > 0)
         ocuri->constraint = nulldup(constraint);
     ocurisetconstraints(ocuri,constraint);
-    if(params != NULL && strlen(params) > 0) {
-        ocuri->params = (char*)malloc(1+2+strlen(params));
-        strcpy(ocuri->params,"[");
-        strcat(ocuri->params,params);
-        strcat(ocuri->params,"]");
+    if(prefixparams != NULL || suffixparams != NULL) {
+	int space = prefixparams ? strlen(prefixparams) : 0;
+	space += suffixparams ? strlen(suffixparams) : 0;
+	space += (2 + 1);
+        ocuri->params = (char*)malloc(space);
+	if(prefixparams && strlen(prefixparams) > 0) {
+            strcpy(ocuri->params,"[");
+            strcat(ocuri->params,prefixparams);
+            strcat(ocuri->params,"]");
+	}
+	if(suffixparams && strlen(suffixparams) > 0) {
+	    strcat(ocuri->params,"[");
+            strcat(ocuri->params,suffixparams);
+            strcat(ocuri->params,"]");
+	}
     }
 
 #ifdef OCXDEBUG

@@ -2325,6 +2325,8 @@ main(int argc, char *argv[])
     boolean xml_out = false;    /* if true, output NcML instead of CDL */
     boolean kind_out = false;	/* if true, just output kind of netCDF file */
 
+fprintf(stderr,"arg[0]=%s\n",argv[0]); fflush(stderr);
+
 #if defined(WIN32) || defined(msdos) || defined(WIN64)
     putenv("PRINTF_EXPONENT_DIGITS=2"); /* Enforce unix/linux style exponent formatting. */
 #endif
@@ -2348,7 +2350,7 @@ main(int argc, char *argv[])
 #endif
     }
 
-    while ((c = getopt(argc, argv, "b:cd:f:g:hijkl:n:p:stv:xw")) != EOF)
+    while ((c = getopt(argc, argv, "b:cd:f:g:hikl:n:p:stv:xw")) != EOF)
       switch(c) {
 	case 'h':		/* dump header only, no data */
 	  formatting_specs.header_only = true;
@@ -2434,7 +2436,7 @@ main(int argc, char *argv[])
 	  break;
         case '?':
 	  usage();
-	  return 0;
+	  return EXIT_FAILURE;
       }
 
     set_max_len(max_len);
@@ -2446,7 +2448,7 @@ main(int argc, char *argv[])
     if (argc != 1)
     {
        usage();
-       return 0;
+       return EXIT_FAILURE;
     }
 
     i = 0;

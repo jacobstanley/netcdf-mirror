@@ -58,6 +58,8 @@ typedef struct DAPparsestate {
     struct CEstate* cestate;
 } DAPparsestate;
 
+extern int dapdebug; /* global state */
+
 extern int daperror(DAPparsestate* state, const char* msg);
 extern void dap_parse_error(DAPparsestate*,const char *fmt, ...);
 /* bison parse entry point */
@@ -91,5 +93,8 @@ extern void daplexinit(char* input, DAPlexstate** lexstatep);
 extern void daplexcleanup(DAPlexstate** lexstatep);
 extern void dapsetwordchars(DAPlexstate* lexstate, int kind);
 extern char* dapdecode(DAPlexstate*,char*);
+
+extern OCerror DAPparse(OCstate*, struct OCtree*, char*);
+extern char* dimnameanon(char* basename, unsigned int index);
 
 #endif /*DAPPARSELEX_H*/

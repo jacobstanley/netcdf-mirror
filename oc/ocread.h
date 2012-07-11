@@ -10,6 +10,4 @@ extern int readDAS(OCstate*, OCtree*);
 
 extern int readDATADDS(OCstate*, OCtree*, int inmemory);
 
-extern int readversion(CURL*, OCURI*, OCbytes*);
-
 #endif /*READ_H*/

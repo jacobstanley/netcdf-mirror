@@ -1,17 +1,38 @@
 THISDIR=../oc
-OCDIR=/home/dmh/svn/oc
+OCDIR=/home/dmh/svn/oc2.0
+
+# Make consistent with Makefile.am
+SRC=oc.c \
+daplex.c dapparse.c daptab.c \
+occlientparams.c occompile.c occurlfunctions.c \
+ocdata.c ocdebug.c ocdump.c  \
+ocinternal.c ocnode.c \
+ochttp.c \
+ocrc.c ocread.c ocutil.c \
+ocbytes.c oclist.c ocuri.c oclog.c \
+xxdr.c
+
+HDRS=oc.h ocx.h \
+dapparselex.h daptab.h \
+occlientparams.h occompile.h occonstraints.h occurlfunctions.h \
+ocdata.h ocdatatypes.h ocdebug.h ocdump.h \
+ocinternal.h ocnode.h \
+ochttp.h ocrc.h ocread.h ocutil.h \
+ocbytes.h oclist.h ocuri.h oclog.h \
+xxdr.h
+
+FILES=${HDRS} ${SRC} dap.y
 
 all::
 
 makeoc::
 	rm -f ${THISDIR}/*.[chy]
-	for f in ${OCDIR}/*.[chy] ; do \
+	for file in ${FILES} ; do \
+	    f="${OCDIR}/$$file" ; \
 	        base=`basename $$f` ; \
 		cat $$f | tr -d '' >${THISDIR}/$$base; \
 	done
-	rm -f ce.y ceparse.c celex.c ceparselex.h
-	rm -f octest.c config.h occompile.[ch]
-	rm -f ocdebug.h
+	rm -f ocdebug.h 
 	sed -e 's|^[#]if 1|#if 0|g' \
 	    < ${OCDIR}/ocdebug.h | tr -d '\r' >./ocdebug.h
 	# This should match the bison command in Makefile.am
@@ -19,13 +40,10 @@ makeoc::
 	bison --debug -d -p dap dap.y
 	mv dap.tab.c daptab.c; mv dap.tab.h daptab.h
 
-#	# Temporary
-#	sed -e 's|dapdecode(parsestate->lexstate,|(|' \
-#	    < ${OCDIR}/dap.y | tr -d '\r' >./dap.y
-
 diffoc::
 	if ! test -e ${OCDIR} ; then echo "${OCDIR} not found"; exit ; fi
-	for f in ${OCDIR}/*.[chy] ; do \
+	for file in ${FILES} ; do \
+	    f="${OCDIR}/$$file" ; \
 	    x=`basename $$f | tr -d '' ` ; \
 	    if test "x$${x}" = "xdaptab.c" -o "x$${x}" = "xdaptab.h" ; then echo "ignore: $${x}"; continue; fi ;\
 	    if test -e ${THISDIR}/$$x -a -e ${OCDIR}/$$x ; then \
@@ -34,7 +52,8 @@ diffoc::
 		echo "Only in ${OCDIR}: $$x"; \
 	    fi; \
 	done
-	for f in ${OCDIR}/*.[chy] ; do \
+	for file in ${FILES} ; do \
+	    f="${OCDIR}/$$file" ; \
 	    x=`basename $$f|tr -d '' ` ; \
 	    if test "x$${x}" = "xdaptab.c" -o "x$${x}" = "xdaptab.h" ; then echo "ignore: $${x}"; continue; fi ;\
 	    if test -e ${THISDIR}/$$x -a -e ${OCDIR}/$$x ; then \

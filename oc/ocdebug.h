@@ -6,7 +6,7 @@
 
 #include <stdarg.h>
 
-#if 0
+#if 1
 #define OCDEBUG
 #define DAPDEBUG 1
 #endif
@@ -74,6 +74,8 @@ extern void* ocmalloc(size_t size);
 extern void  ocfree(void*);
 
 #define MEMCHECK(var,throw) {if((var)==NULL) return (throw);}
+#define MEMFAIL(var) MEMCHECK(var,OCTHROW(OC_ENOMEM))
+#define MEMGOTO(var,label) {if((var)==NULL) goto label;}
 
 #ifdef OCCATCHERROR
 /* Place breakpoint on ocbreakpoint to catch errors close to where they occur*/

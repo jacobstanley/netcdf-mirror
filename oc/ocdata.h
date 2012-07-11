@@ -4,25 +4,45 @@
 #ifndef OCDATA_H
 #define OCDATA_H
 
-typedef struct OCdimcounter {
-    int rank;
-    size_t index[OC_MAX_DIMS];
-    size_t size[OC_MAX_DIMS];
-} OCdimcounter;
+/*
+This structure is used to set up
+pointers into the DataDDS data packet
+to speed up access.
+This has some similarities to OCNODE.
+*/
 
-extern const char StartOfSequence;
-extern const char EndOfSequence;
+struct OCdata {
+    OCheader  header;
+    OCDT      datamode;
+    OCnode*   template;
+    OCdata*   container; /* link back to container instance */
+    size_t    index;     /* WRT to the container */
+    off_t     xdroffset;	/* Of this instance wrt xxdr_getpos() */
+    off_t     xdrsize;   /* for leafs, and as defined by xdr; if known else 0*/
+    size_t    ninstances;/* |instances| */
+    OCdata**  instances;	/* vector of instances; if rank > 0, then
+                                   it captures the array elements, else
+                                   it captures the field instances. */
+    off_t     nstrings;
+    off_t*    strings;
+};
 
-/*Forward */
-struct OCcontent;
 
-/* Skip arbitrary dimensioned instance; Handles dimensioning.*/
-extern int ocskip(OCnode* node, XXDR* xdrs);
+extern void ocdata_free(OCstate*, OCdata*);
 
-extern int occountrecords(OCnode* node, XXDR* xdrs, size_t* nrecordsp);
+extern OCerror ocdata_ithfield(OCstate*, OCdata* container, size_t index, OCdata** fieldp);
+extern OCerror ocdata_container(OCstate*, OCdata* data, OCdata** containerp);
+extern OCerror ocdata_root(OCstate*, OCdata* data, OCdata** rootp);
 
-extern int ocxdrread(struct OCcontent*, XXDR*, char* memory, size_t, ocindex_t index, ocindex_t count);
+extern OCerror ocdata_ithelement(OCstate*, OCdata* data, size_t* indices, OCdata** elementp);
+extern OCerror ocdata_ithrecord(OCstate*, OCdata* data, size_t index, OCdata** recordp);
 
-extern int ocskipinstance(OCnode* node, XXDR* xdrs, int state, int* tagp);
+extern OCerror ocdata_position(OCstate*, OCdata* data, size_t* indices);
+extern OCerror ocdata_recordcount(OCstate*, OCdata*, size_t*);
+
+extern OCerror ocdata_getroot(OCstate*, OCnode*, OCdata**);
+
+/* Atomic leaf reading */
+extern int ocdata_read(OCstate*,OCdata*,size_t,size_t,void*,size_t);
 
 #endif /*OCDATA_H*/

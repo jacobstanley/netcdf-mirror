@@ -16,6 +16,12 @@ static int oclogging = 0;
 static char* oclogfile = NULL;
 static FILE* oclogstream = NULL;
 
+/*!\defgroup OClog OClog Management
+@{*/
+
+/*!\internal
+*/
+
 void
 oc_loginit(void)
 {
@@ -32,14 +38,34 @@ oc_loginit(void)
     }
 }
 
-void
+/*!
+Enable/Disable logging.
+
+\param[in] tf If 1, then turn on logging, if 0, then turn off logging.
+
+\return The previous value of the logging flag.
+*/
+
+int
 oc_setlogging(int tf)
 {
     if(!ocloginit) oc_loginit();
+    int was = oclogging;
     oclogging = tf;
+    return was;
 }
 
-void
+/*!
+Specify a file into which to place logging output.
+
+\param[in] file The name of the file into which to place logging output.
+If the file has the value NULL, then send logging output to
+stderr.
+
+\return zero if the open failed, one otherwise.
+*/
+
+int
 oc_logopen(const char* file)
 {
     if(!ocloginit) oc_loginit();
@@ -47,6 +73,7 @@ oc_logopen(const char* file)
 	fclose(oclogstream);
 	free(oclogfile);
 	oclogfile = NULL;
+	return 0;
     }
     if(file == NULL || strlen(file) == 0) {
 	/* use stderr*/
@@ -66,9 +93,16 @@ oc_logopen(const char* file)
 	    free(oclogfile);
 	    oclogfile = NULL;
 	    oc_setlogging(0);
+	    return 0;
 	}
     }
+    return 1;
 }
+
+/*!
+Close the logging output file (unless it is stderr).
+Logging is still enabled.
+*/
 
 void
 oc_logclose(void)
@@ -81,8 +115,17 @@ oc_logclose(void)
     }
 }
 
+/*!
+Send logging messages. This uses a variable
+number of arguments and operates like the stdio
+printf function.
+
+\param[in] tag Indicate the kind of this log message.
+\param[in] format Format specification as with printf.
+*/
+
 void
-oc_log(int tag, const char* fmt, ...)
+oc_log(int tag, const char* format, ...)
 {
     va_list args;
     char* prefix;
@@ -100,14 +143,22 @@ oc_log(int tag, const char* fmt, ...)
     }
     fprintf(oclogstream,"%s:",prefix);
 
-    if(fmt != NULL) {
-      va_start(args, fmt);
-      vfprintf(oclogstream, fmt, args);
+    if(format != NULL) {
+      va_start(args, format);
+      vfprintf(oclogstream, format, args);
       va_end( args );
     }
     fprintf(oclogstream, "\n" );
     fflush(oclogstream);
 }
+
+/*!
+Send arbitrarily long text as a logging message.
+Each line will be sent using oc_log with the specified tag.
+
+\param[in] tag Indicate the kind of this log message.
+\param[in] text Arbitrary text to send as a logging message.
+*/
 
 void
 oc_logtext(int tag, const char* text)
@@ -130,3 +181,5 @@ oc_logtext(int tag, const char* text)
 	text = eol+1;
     }
 }
+
+/**@}*/

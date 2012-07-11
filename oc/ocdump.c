@@ -10,7 +10,6 @@
 #endif
 
 #include "ocinternal.h"
-#include "ocdata.h"
 #include "ocdebug.h"
 
 #define MAXLEVEL 1
@@ -39,6 +38,22 @@ dent(int n)
 static char*
 dent2(int n) {return dent(n+4);}
 
+static void
+tabto(int pos, OCbytes* buffer)
+{
+    int bol,len,pad;
+    len = ocbyteslength(buffer);
+    /* find preceding newline */
+    for(bol=len-1;;bol--) {
+	int c = ocbytesget(buffer,bol);
+	if(c < 0) break;
+	if(c == '\n') {bol++; break;}
+    }
+    len = (len - bol);
+    pad = (pos - len);
+    while(pad-- > 0) ocbytescat(buffer," ");
+}
+
 void
 ocdumpnode(OCnode* node)
 {
@@ -51,46 +66,15 @@ ocdumpnode(OCnode* node)
 }
 
 static void
-dumpskip(OCnode* node)
-{
-    char tmpc[64];
-    char tmpi[64];
-    char tmpt[64];
-    char tmpo[64];
-    if(node->skip.count == OCINDETERMINATE)
-	strcpy(tmpc,"?");
-    else
-        snprintf(tmpc,sizeof(tmpc),"%lu",(unsigned long)node->skip.count);
-    if(node->skip.instancesize == OCINDETERMINATE)
-	strcpy(tmpi,"?");
-    else
-        snprintf(tmpi,sizeof(tmpi),"%lu",(unsigned long)node->skip.instancesize);
-    if(node->skip.totalsize == OCINDETERMINATE)
-	strcpy(tmpt,"?");
-    else
-        snprintf(tmpt,sizeof(tmpt),"%lu",(unsigned long)node->skip.totalsize);
-    if(node->skip.offset == OCINDETERMINATE)
-	strcpy(tmpo,"?");
-    else
-        snprintf(tmpo,sizeof(tmpo),"%lu",(unsigned long)node->skip.offset);
-
-    fprintf(stdout," [(%s*%s)/%s@%s]",tmpi,tmpc,tmpt,tmpo);
-}
-
-static void
 dumpocnode1(OCnode* node, int depth)
 {
     unsigned int n;
     switch (node->octype) {
-    case OC_Primitive: {
+    case OC_Atomic: {
         fprintf(stdout,"[%2d]%s ",depth,dent(depth));
 	if(node->name == NULL) OCPANIC("prim without name");
 	fprintf(stdout,"%s %s",octypetostring(node->etype),node->name);
 	dumpdimensions(node);
-#ifdef OCIGNORE
-	if(node->cache.cacheable) fprintf(stdout," [cached]");
-#endif
-	dumpskip(node);
 	fprintf(stdout," &%lx",(unsigned long)node);
 	fprintf(stdout,"\n");
     } break;
@@ -109,7 +93,6 @@ dumpocnode1(OCnode* node, int depth)
 	fprintf(stdout,"struct %s",
 		(node->name?node->name:""));
 	dumpdimensions(node);
-	dumpskip(node);
 	fprintf(stdout," &%lx",(unsigned long)node);
 	fprintf(stdout,"\n");
 	for(n=0;n<oclistlength(node->subnodes);n++) {
@@ -122,7 +105,6 @@ dumpocnode1(OCnode* node, int depth)
 	fprintf(stdout,"sequence %s",
 		(node->name?node->name:""));
 	dumpdimensions(node);
-	dumpskip(node);
 	fprintf(stdout," &%lx",(unsigned long)node);
 	fprintf(stdout,"\n");
 	for(n=0;n<oclistlength(node->subnodes);n++) {
@@ -136,7 +118,6 @@ dumpocnode1(OCnode* node, int depth)
 	fprintf(stdout,"grid %s",
 		(node->name?node->name:""));
 	dumpdimensions(node);
-	dumpskip(node);
 	fprintf(stdout," &%lx",(unsigned long)node);
 	fprintf(stdout,"\n");
 	fprintf(stdout,"%sarray:\n",dent2(depth+1));
@@ -480,3 +461,193 @@ ocdd(OCstate* state, OCnode* root, int xdrencoded, int level)
     }
 }
 
+void
+ocdumpdata(OCstate* state, OCdata* data, OCbytes* buffer, int frominstance)
+{
+    char tmp[1024];
+    OCnode* template = data->template;
+    snprintf(tmp,sizeof(tmp),"%lx:",(unsigned long)data);
+    ocbytescat(buffer,tmp);
+    if(!frominstance) {
+        ocbytescat(buffer," node=");
+        ocbytescat(buffer,template->name);
+    }
+    snprintf(tmp,sizeof(tmp)," xdroffset=%ld",(unsigned long)data->xdroffset);
+    ocbytescat(buffer,tmp);
+    if(data->template->octype == OC_Atomic) {
+        snprintf(tmp,sizeof(tmp)," xdrsize=%ld",(unsigned long)data->xdrsize);
+        ocbytescat(buffer,tmp);
+    }
+    if(iscontainer(template->octype)) {
+        snprintf(tmp,sizeof(tmp)," ninstances=%d",(int)data->ninstances);
+        ocbytescat(buffer,tmp);
+    } else if(template->etype == OC_String || template->etype == OC_URL) {
+        snprintf(tmp,sizeof(tmp)," nstrings=%d",(int)data->nstrings);
+        ocbytescat(buffer,tmp);
+    }
+    ocbytescat(buffer," container=");
+    snprintf(tmp,sizeof(tmp),"%lx",(unsigned long)data->container);
+    ocbytescat(buffer,tmp);
+    ocbytescat(buffer," mode=");
+    ocbytescat(buffer,ocdtmodestring(data->datamode,0));
+}
+
+/*
+Depth Offset   Index Flags Size Type      Name
+0123456789012345678901234567890123456789012345
+0         1         2         3         4
+[001] 00000000 0000  FS    0000 Structure person
+*/
+static const int tabstops[] = {0,6,15,21,27,32,42};
+static const char* header =
+"Depth Offset   Index Flags Size Type     Name\n";
+
+void
+ocdumpdatatree(OCstate* state, OCdata* data, OCbytes* buffer, int depth)
+{
+    size_t i,rank,nsubnodes;
+    OCnode* template;
+    char tmp[1024];
+    size_t crossproduct;
+    int tabstop = 0;
+    const char* typename;
+
+    /* If this is the first call, then dump a header line */
+    if(depth == 0) {
+	ocbytescat(buffer,header);
+    }
+
+    /* get info about the template */
+    template = data->template;
+    rank = template->array.rank;
+    nsubnodes = oclistlength(template->subnodes);
+
+    /* get total dimension size */
+    if(rank > 0)
+        crossproduct = octotaldimsize(template->array.rank,template->array.sizes);
+
+    /* Dump the depth first */
+    snprintf(tmp,sizeof(tmp),"[%03d]",depth);
+    ocbytescat(buffer,tmp);
+
+    tabto(tabstops[++tabstop],buffer);
+
+    snprintf(tmp,sizeof(tmp),"%08lu",(unsigned long)data->xdroffset);
+    ocbytescat(buffer,tmp);
+
+    tabto(tabstops[++tabstop],buffer);
+
+    /* Dump the Index wrt to parent, if defined */
+    if(fisset(data->datamode,OCDT_FIELD)
+       || fisset(data->datamode,OCDT_ELEMENT)
+       || fisset(data->datamode,OCDT_RECORD)) {
+        snprintf(tmp,sizeof(tmp),"%04lu ",(unsigned long)data->index);
+        ocbytescat(buffer,tmp);
+    }
+   
+    tabto(tabstops[++tabstop],buffer);
+
+    /* Dump the mode flags in compact form */
+    ocbytescat(buffer,ocdtmodestring(data->datamode,1));
+   
+    tabto(tabstops[++tabstop],buffer);
+
+    /* Dump the size or ninstances */
+    if(fisset(data->datamode,OCDT_ARRAY)
+       || fisset(data->datamode,OCDT_SEQUENCE)) {
+        snprintf(tmp,sizeof(tmp),"%04lu",(unsigned long)data->ninstances);
+    } else {
+        snprintf(tmp,sizeof(tmp),"%04lu",(unsigned long)data->xdrsize);
+    }
+    ocbytescat(buffer,tmp);
+
+    tabto(tabstops[++tabstop],buffer);
+
+    if(template->octype == OC_Atomic) {
+	typename = octypetoddsstring(template->etype);
+    } else { /*must be container*/
+	typename = octypetoddsstring(template->octype);
+    }
+    ocbytescat(buffer,typename);
+
+    tabto(tabstops[++tabstop],buffer);
+
+    snprintf(tmp,sizeof(tmp),"%s",template->name);
+    ocbytescat(buffer,tmp);
+
+    if(rank > 0) {
+	snprintf(tmp,sizeof(tmp),"[%lu]",(unsigned long)crossproduct);
+	ocbytescat(buffer,tmp);
+    }
+    ocbytescat(buffer,"\n");
+
+    /* dump the sub-instance, which might be fields, records, or elements */
+    if(!fisset(data->datamode,OCDT_ATOMIC)) {
+        for(i=0;i<data->ninstances;i++)
+	    ocdumpdatatree(state,data->instances[i],buffer,depth+1);
+    }
+}
+
+void
+ocdumpdatapath(OCstate* state, OCdata* data, OCbytes* buffer)
+{
+    int i;
+    OCdata* path[1024];
+    char tmp[1024];
+    OCdata* pathdata;
+    OCnode* template;
+    size_t rank;
+    int isrecord;
+
+    path[0] = data;
+    for(i=1;;i++) {
+	OCdata* next = path[i-1];
+	if(next->container == NULL) break;
+	path[i] = next->container;
+    }    	        
+    /* Path is in reverse order */
+    for(i=i-1;i>=0;i--) {
+	pathdata = path[i];
+	template = pathdata->template;
+	rank = template->array.rank;
+	ocbytescat(buffer,"/");
+	ocbytescat(buffer,template->name);
+	/* Check the mode of the next step in path */
+	if(i > 0) {
+	    OCdata* next = path[i-1];
+	    if(fisset(next->datamode,OCDT_FIELD)
+		|| fisset(next->datamode,OCDT_ELEMENT)
+		|| fisset(next->datamode,OCDT_RECORD)) {
+		snprintf(tmp,sizeof(tmp),".%lu",next->index);
+	        ocbytescat(buffer,tmp);
+	    }
+	}
+	if(template->octype == OC_Atomic) {
+	    if(template->array.rank > 0) {
+	        off_t xproduct = octotaldimsize(template->array.rank,template->array.sizes);
+	        snprintf(tmp,sizeof(tmp),"[0..%lu]",(unsigned long)xproduct-1);
+	        ocbytescat(buffer,tmp);
+	    }
+	}
+	isrecord = 0;
+	if(template->octype == OC_Sequence) {
+	    /* Is this a record or a sequence ? */
+	    isrecord = (fisset(pathdata->datamode,OCDT_RECORD) ? 1 : 0);
+	}
+    }
+    /* Add suffix to path */
+    if(iscontainer(template->octype)) {
+        /* add the container type, except distinguish record and sequence */
+	ocbytescat(buffer,":");
+	if(isrecord)
+	    ocbytescat(buffer,"Record");
+	else
+	    ocbytescat(buffer,octypetoddsstring(template->octype));
+    } else if(isatomic(template->octype)) {
+	/* add the atomic etype */
+	ocbytescat(buffer,":");
+	ocbytescat(buffer,octypetoddsstring(template->etype));
+    }
+    snprintf(tmp,sizeof(tmp),"->0x%0lx",(unsigned long)pathdata);
+    ocbytescat(buffer,tmp);	
+}
